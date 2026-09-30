@@ -235,7 +235,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^3.3.2
-  go_router: ^17.3.0
+  go_router: ^18.0.2
   # Log records: SEVERE and above are written to stderr alongside the issue
   # reporter's in-memory buffer (lib/services/logging/).
   logging: ^1.3.0
@@ -281,7 +281,7 @@ dev_dependencies:
     sdk: flutter
   mocktail: ^1.0.4
   riverpod_generator: ^4.0.4
-  very_good_analysis: ^10.2.0
+  very_good_analysis: ^11.0.0
 
 flutter:
   generate: true

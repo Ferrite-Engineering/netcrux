@@ -124,7 +124,7 @@ class StreamingYosysJsonReader {
   }) async {
     final file = File(path);
     final stream = file.openRead();
-    return readStream(stream, cancellation: cancellation);
+    return await readStream(stream, cancellation: cancellation);
   }
 
   /// Reads [stream] (typically `File.openRead()` or a subprocess

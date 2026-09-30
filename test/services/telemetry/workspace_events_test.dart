@@ -78,7 +78,7 @@ void main() {
 
   Future<NetcruxWorkspaceNotifier> boot(ProviderContainer container) async {
     await container.read(netcruxWorkspaceProvider.future);
-    return container.read(netcruxWorkspaceProvider.notifier);
+    return await container.read(netcruxWorkspaceProvider.notifier);
   }
 
   Future<TabId> openTab(NetcruxWorkspaceNotifier ws, String path) => ws.openTab(

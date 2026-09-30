@@ -28,7 +28,7 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
   @override
   Future<AppSettings> build() async {
     final service = ref.watch(settingsServiceProvider);
-    return service.load();
+    return await service.load();
   }
 
   /// Records [path] at the top of the recent-projects list, evicting any

@@ -52,7 +52,7 @@ void main() {
 
   Future<void> pumpSymbol(WidgetTester tester, CellKind kind) async {
     await tester.binding.setSurfaceSize(surfaceSize);
-    addTearDown(() async => tester.binding.setSurfaceSize(null));
+    addTearDown(() async => await tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         debugShowCheckedModeBanner: false,

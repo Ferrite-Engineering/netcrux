@@ -172,7 +172,7 @@ void main() {
     controller.add(state);
     // The stream provider republishes on an event-loop turn, not a microtask.
     await Future<void>.delayed(const Duration(milliseconds: 10));
-    return container.read(collabPresenceOverlayProvider);
+    return await container.read(collabPresenceOverlayProvider);
   }
 
   test('no session paints nothing', () {

@@ -154,8 +154,8 @@ class SchematicExportController {
 
   Future<String?> _pickSavePath(String defaultName) async {
     final override = _pickSavePathOverride;
-    if (override != null) return override(defaultName);
-    return FilePicker.saveFile(
+    if (override != null) return await override(defaultName);
+    return await FilePicker.saveFile(
       // file_picker 12 requires bytes & writes the file; pass empty so it
       // only returns the chosen path and we write the slice JSON ourselves.
       bytes: Uint8List(0),

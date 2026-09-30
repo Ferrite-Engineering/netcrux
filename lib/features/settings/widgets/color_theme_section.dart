@@ -178,14 +178,14 @@ class _ColorThemeSectionState extends ConsumerState<ColorThemeSection> {
     );
     final path = result?.files.single.path;
     if (path == null) return null;
-    return File(path).readAsString();
+    return await File(path).readAsString();
   }
 
   static Future<String?> _defaultSavePackDocument(String document) async {
     // file_picker 12 writes the file itself when given bytes, so the
     // encoded document goes straight to the chosen destination and the
     // returned path becomes the confirmation message's location.
-    return FilePicker.saveFile(
+    return await FilePicker.saveFile(
       bytes: Uint8List.fromList(utf8.encode(document)),
       fileName: 'netcrux-theme.crux-theme.json',
       allowedExtensions: ['json'],

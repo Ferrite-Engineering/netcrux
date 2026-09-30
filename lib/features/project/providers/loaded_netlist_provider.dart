@@ -157,7 +157,7 @@ class LoadedNetlist extends _$LoadedNetlist {
     // to count, and a parse failure is not a Yosys failure.
     if (project.isPrebuiltNetlist ||
         !ref.read(hdlElaborationSupportedProvider)) {
-      return _loadPrebuiltNetlist(project);
+      return await _loadPrebuiltNetlist(project);
     }
     final ({NetlistModel? model, bool cached}) outcome;
     try {
@@ -450,7 +450,7 @@ Future<NetlistModel?> loadDesignNetlist(
 ) async {
   if (project.sourceFiles.isEmpty) return null;
   if (project.isPrebuiltNetlist || !ref.read(hdlElaborationSupportedProvider)) {
-    return _readPrebuiltNetlist(ref, project);
+    return await _readPrebuiltNetlist(ref, project);
   }
   await _requireYosys(ref);
   final policy = ref.read(elaborationTimeoutPolicyProvider);

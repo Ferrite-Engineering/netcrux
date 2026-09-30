@@ -191,7 +191,7 @@ Future<Workspace<NetcruxTabPayload>> namedWorkspaceRoundTrip(
     codec: const NetcruxWorkspaceCodec(),
   );
   await service.saveToPath(path, workspace);
-  return service.loadFromPath(path);
+  return await service.loadFromPath(path);
 }
 
 /// Deletes the auto-managed `{appSupportDir}/workspace.json` so a fresh
@@ -483,8 +483,8 @@ List<Override> netlistDocumentSeedBootOverrides(String netlistJson) =>
       ...designSeedBootOverrides(),
       prebuiltNetlistLoaderProvider.overrideWithValue(
         PrebuiltNetlistLoader(
-          read: (location) async => location == kSeededNetlistDocumentPath
-              ? netlistJson
+          read: (location) => location == kSeededNetlistDocumentPath
+              ? Future<String>.value(netlistJson)
               : fetchWebJson(location),
         ),
       ),

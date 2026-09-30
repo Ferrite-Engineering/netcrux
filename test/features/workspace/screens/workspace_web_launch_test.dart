@@ -33,7 +33,7 @@ List<Override> _browser({required NetlistDocumentReader read}) => <Override>[
   ),
 ];
 
-Future<String> _seed(String location) async => File(
+Future<String> _seed(String location) async => await File(
   'test/fixtures/netlist/design_seed/generated/design_seed.netlist.json',
 ).readAsString();
 

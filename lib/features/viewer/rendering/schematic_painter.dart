@@ -32,7 +32,6 @@ import 'package:netcrux/services/schematic/schematic_crossing_overlay_provider.d
 /// Sink the [SchematicCanvasRenderObject] writes its paint-time
 /// metrics into. The viewer wires this to [PaneRenderStatsNotifier];
 /// tests can supply a recording stub.
-// ignore: one_member_abstracts
 abstract interface class RenderStatsSink {
   /// Records [stats] for the most-recently-completed paint.
   void record(PaneRenderStats stats);

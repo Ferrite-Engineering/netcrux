@@ -450,7 +450,7 @@ void main() {
       final controller = await _controller(tester, container);
       await tester.runAsync(() => controller.openByPath(path));
       await tester.pump();
-      return container.read(selectedElementProvider);
+      return await container.read(selectedElementProvider);
     }
 
     testWidgets('an unknown element kind decodes to an empty selection', (

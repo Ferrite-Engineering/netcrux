@@ -31,7 +31,7 @@ void main() {
     () async {
       // Occupy a real port, then ask the CXP server to bind the same one.
       final blocker = await ServerSocket.bind('127.0.0.1', 0);
-      addTearDown(() async => blocker.close());
+      addTearDown(() async => await blocker.close());
 
       final server = NetcruxCxpServer(
         productVersion: '0.0.0-test',

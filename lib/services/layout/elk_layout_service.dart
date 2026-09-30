@@ -513,9 +513,9 @@ class ElkLayoutService {
     // out (`kElkWebSolverAvailable` is a const `false`) and the solve runs
     // on the background isolate.
     if (kElkWebSolverAvailable) {
-      return solveElkOnWeb(inputJson, _loadElkSource);
+      return await solveElkOnWeb(inputJson, _loadElkSource);
     }
-    return (_isolate ??= _ElkLayoutIsolate(_loadElkSource)).layout(
+    return await (_isolate ??= _ElkLayoutIsolate(_loadElkSource)).layout(
       inputJson,
       timeout: timeout,
     );
@@ -581,7 +581,7 @@ class ElkLayoutService {
   Future<NetlistLayout?> layoutTop(NetlistModel model) async {
     final top = model.topModule;
     if (top == null) return null;
-    return layout(top);
+    return await layout(top);
   }
 
   /// Disposes the in-process host or solver (tests) and tears down the

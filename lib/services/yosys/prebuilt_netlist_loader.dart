@@ -45,7 +45,7 @@ class PrebuiltNetlistLoader {
     Future<void>? cancelSignal,
   }) async {
     final raw = await _read(location);
-    return parse(raw, cancelSignal: cancelSignal);
+    return await parse(raw, cancelSignal: cancelSignal);
   }
 
   /// Parses an already-read netlist document.
@@ -54,7 +54,7 @@ class PrebuiltNetlistLoader {
     Future<void>? cancelSignal,
   }) async {
     if (parseOnIsolate) {
-      return parseNetlistOnIsolate(raw, cancelSignal: cancelSignal);
+      return await parseNetlistOnIsolate(raw, cancelSignal: cancelSignal);
     }
     return const StreamingYosysJsonReader().parse(raw);
   }

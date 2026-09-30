@@ -113,7 +113,7 @@ class FilelistReader {
   Future<FilelistContents> read(String path) async {
     final visited = <String>{};
     final stack = <String>[];
-    return _readInternal(path, visited: visited, stack: stack);
+    return await _readInternal(path, visited: visited, stack: stack);
   }
 
   /// Convenience: read the filelist at [path] and materialise it as

@@ -183,5 +183,5 @@ ProcessRunner resolvingProcessRunner(
   final resolved = host == null
       ? requireSpawnExecutableForHost(executable)
       : host.requireExecutable(executable);
-  return launch(resolved, arguments);
+  return await launch(resolved, arguments);
 };

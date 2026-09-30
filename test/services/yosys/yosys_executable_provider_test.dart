@@ -203,6 +203,6 @@ class _FakeAppSettings extends AppSettingsNotifier {
   @override
   Future<AppSettings> build() async {
     final service = ref.watch(settingsServiceProvider);
-    return service.load();
+    return await service.load();
   }
 }
