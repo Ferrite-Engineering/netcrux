@@ -1,0 +1,85 @@
+name: 🧪 Fixture submission
+description: Contribute a design that exposes an elaboration, layout, or analysis bug.
+title: "[Fixture]: "
+labels: ["fixture", "user-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A design that NetCrux gets wrong is the most valuable thing you can give
+        us — once it's in the suite, that behavior can never silently regress.
+
+        **Licensing — read before you attach anything.** We can only accept
+        material you can share under MIT, BSD-2/3-Clause, Apache-2.0, ISC, CC0 or
+        public domain. Please do not attach proprietary, GPL or AGPL sources; a
+        hand-built minimal case that reproduces the same behaviour is always
+        welcome, and is often better.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What does it exercise?
+      options:
+        - Elaboration — fails, errors, or produces the wrong hierarchy
+        - Schematic layout — elaborates fine but renders unreadably
+        - Tracing — fanin / fanout / cone of influence / X-trace is wrong
+        - CDC or reset-domain analysis
+        - FSM detection
+        - Netlist diff
+        - Scale / performance
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Language(s)
+      placeholder: "e.g. SystemVerilog, VHDL, mixed Verilog + VHDL"
+    validations:
+      required: true
+  - type: textarea
+    id: current-vs-expected
+    attributes:
+      label: What NetCrux does vs. what it should do
+      description: Be as precise as you can — ideally the exact instance, net, or cone that's wrong.
+      placeholder: |
+        The fanin cone of `u_cpu.u_wb.dat_o` stops at `u_cpu.u_wb.r_dat`.
+        It should continue through the ALU result mux to `u_cpu.u_alu.a` and `.b`.
+    validations:
+      required: true
+  - type: textarea
+    id: attach
+    attributes:
+      label: The fixture
+      description: |
+        Drag the RTL sources (`.v`, `.sv`, `.vhd`) into this box, or link to
+        them. If you have the elaborated Yosys netlist JSON, attach that too —
+        it lets us reproduce without guessing at your elaboration script. Keep
+        it small and self-contained: no vendor IP, no unshippable includes.
+    validations:
+      required: true
+  - type: input
+    id: yosys
+    attributes:
+      label: Yosys version + elaboration command
+      description: Output of `yosys -V`, and the exact script or command line you used.
+      placeholder: "Yosys 0.47 — yosys -p 'read_verilog -sv top.sv; hierarchy -auto-top; proc; write_json top.json'"
+    validations:
+      required: false
+  - type: dropdown
+    id: license
+    attributes:
+      label: License / origin
+      description: We can only publish permissively-licensed fixtures. See the guide for details.
+      options:
+        - My own hand-crafted design — I contribute it under CC0 / public domain
+        - Derived from an open-source project under MIT / BSD / Apache-2.0 / ISC / CC0 / public domain
+        - Other / not sure (we'll follow up — do not attach proprietary, GPL, or AGPL RTL)
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source project + version (for derived designs)
+      description: Project name and commit/tag, and anything you changed to make it elaborate standalone.
+    validations:
+      required: false

@@ -1,0 +1,5 @@
+{
+  "expectException": "YosysJsonParseException",
+  "invariant": "#3",
+  "note": "a cell connections value is a string"
+}

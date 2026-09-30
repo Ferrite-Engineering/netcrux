@@ -1,0 +1,28 @@
+{
+  "creator": "Yosys (hand-crafted fixture)",
+  "modules": {
+    "and2": {
+      "attributes": { "top": "1" },
+      "ports": {
+        "a": { "direction": "input", "bits": [2] },
+        "b": { "direction": "input", "bits": [3] },
+        "y": { "direction": "output", "bits": [4] }
+      },
+      "cells": {
+        "u_and": {
+          "hide_name": 0,
+          "type": "$and",
+          "parameters": { "A_WIDTH": "1", "B_WIDTH": "1", "Y_WIDTH": "1" },
+          "attributes": {},
+          "port_directions": { "A": "input", "B": "input", "Y": "output" },
+          "connections": { "A": [2], "B": [3], "Y": [4] }
+        }
+      },
+      "netnames": {
+        "a": { "hide_name": 0, "bits": [2], "attributes": {} },
+        "b": { "hide_name": 0, "bits": [3], "attributes": {} },
+        "y": { "hide_name": 0, "bits": [4], "attributes": {} }
+      }
+    }
+  }
+}

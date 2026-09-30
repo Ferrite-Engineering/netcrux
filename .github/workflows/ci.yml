@@ -1,0 +1,629 @@
+name: CI
+
+# ─── Trigger configuration ─────────────────────────────────────────────────────
+# Work lands directly on `main` under the auto-push convention, so `main` needs
+# the push trigger to be defended at all: with dispatch + nightly only, a broken
+# commit sat on `main` for up to a day. That is not hypothetical — on 2026-07-30
+# an unformatted file rode in and CI stayed red until someone dispatched a run.
+#
+# Cost control (macOS bills at a 10x multiplier): the push trigger runs the
+# LINUX SLICE ONLY. Full platform coverage stays on the weekly / dispatch /
+# pull-request paths, which are rare. See `_matrix` notes on the jobs below.
+on:
+  workflow_dispatch:        # Manual trigger via GitHub UI "Run workflow" button
+  schedule:
+    # WEEKLY, not nightly. The full three-platform matrix used to run every
+    # night at 05:00 UTC — $47/month for it, and on most nights it re-tested a
+    # tree no one had touched. Platform-specific regressions do not arrive
+    # daily, and the Linux slice already runs on every push, so Sunday is
+    # enough. Staggered off 05:00 because every repo in the suite fired at that
+    # minute and the resulting herd exceeded the org's concurrent-job cap —
+    # runs sat queued and were cancelled, which GitHub reports as `failure`.
+    - cron: '20 4 * * 0'
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  # Keyed by event as well as ref: a nightly must never be cancelled by a
+  # push, and a push must never be cancelled by a nightly.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  # Superseded pushes are cancelled outright. `false` on main was the source
+  # of a whole class of phantom failures: a run still QUEUED when a third
+  # push arrives is cancelled by GitHub regardless, and a run whose jobs were
+  # cancelled reports conclusion=failure — not cancelled. So main never did
+  # verify every commit, it just misreported the ones it skipped. Cancelling
+  # is honest, cheaper, and gates the thing that matters: the tip.
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Dart static analysis — zero warnings policy.
+  # ─────────────────────────────────────────────────────────────────────────────
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    # Cost guardrail: no job may run unbounded (max observed suite-wide is 29 min).
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          # crux-shared is a git submodule consumed via `path:` deps in
+          # pubspec.yaml; without recursive checkout, `flutter pub get` fails
+          # to resolve the shared packages (crux_yosys, crux_theme, ...).
+          submodules: recursive
+          # The crux-shared submodule is cloned with SUBMODULE_PAT (a read-only
+          # Contents token) when the secret exists, and with the workflow token
+          # otherwise — a fork's pull request has no secrets, and the public
+          # submodule needs none.
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      # Runs before the Flutter install: it is pure Python, so a missing header
+      # fails in seconds rather than after a toolchain download. The script is
+      # shared -- it lives in crux-shared and every repo in the suite calls the
+      # same one, so the header contract cannot drift between repos.
+      - name: SPDX headers (Apache-2.0)
+        run: python3 crux-shared/tool/spdx-headers.py --check .
+
+      # Engine binaries are NOT distributed -- every engine is spawned as a
+      # separate process. That is what keeps Apache-2.0 product code clear of
+      # GHDL's and Icarus's GPL-2.0 terms, and the bundling infrastructure
+      # already exists, so the invariant needs a gate rather than a comment.
+      - name: No bundled engine binaries
+        run: python3 crux-shared/tool/no-bundled-engines.py --check .
+
+      - name: Install Flutter (pinned)
+        id: flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          # Flutter is PINNED, not tracked. `channel: stable` alone re-resolves on
+          # every run, so 3.44.8 -> 3.44.9 on 2026-08-06 turned new analyzer lints
+          # (sort_pub_dependencies, unused_element) into red CI across five repos at
+          # once, including repos with no commits that day. Bumping this is a
+          # deliberate, reviewable commit; keep every workflow in the suite on the
+          # same version, and bump the dev machines to match.
+          flutter-version: '3.47.3'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          # `.dart_tool/build` is deliberately NOT cached. It is build_runner's
+          # incremental asset graph, and `restore-keys` is a PREFIX fallback, so
+          # a cache written before a source file moved between packages gets
+          # restored against a tree where that file no longer exists. The build
+          # then dies with `InvalidOutputException … Tried to delete from
+          # package not in the build`, which is what took the Pro overlay red after
+          # `engine_path_augmentation.dart` was consolidated into `crux_io`.
+          #
+          # The pub cache is the expensive part and is still cached; a cold
+          # build_runner run costs ~13s, measured.
+          path: |
+            ${{ steps.flutter.outputs.pub-cache-path }}
+            .dart_tool/
+            !.dart_tool/build
+          key: pub-ubuntu-latest-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-ubuntu-latest-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Third-party attribution. The narrative sections of NOTICES are
+      # hand-written; this checks only the generated inventory block, which
+      # exists because window_manager shipped for months without an entry
+      # anywhere in the file. Must run AFTER `pub get`: the classifier reads
+      # each package's LICENSE out of the pub cache, and an empty cache would
+      # classify everything as UNKNOWN.
+      - name: NOTICES lists every resolved package
+        run: python3 crux-shared/tool/notices-inventory.py --check .
+
+      - name: Riverpod codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate l10n
+        run: flutter gen-l10n
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      # Enforce the tall-style dart formatter on the repo's own sources only
+      # (never the crux-shared submodule, which has its own format-check job).
+      - name: Check formatting
+        # git ls-files lists only committed sources — excludes gitignored
+        # generated files (*.g.dart, l10n) and the crux-shared submodule.
+        run: git ls-files -z '*.dart' | xargs -0 -r dart format --output=none --set-exit-if-changed
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Flutter tests — Linux, macOS, Windows. NetCrux is desktop only.
+  # ─────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Test / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Cost guardrail: no job may run unbounded (max observed suite-wide is 29 min).
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux-only on push (the frequent trigger); all three platforms on
+        # nightly / dispatch / PR. macOS is billed at 10x, so putting the full
+        # matrix on every commit to `main` is what turns a push trigger into a
+        # four-figure month. The `A && x || y` form is Actions' ternary: both
+        # branches are non-empty arrays, so the `&&` result is never falsy.
+        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          # crux-shared is a git submodule consumed via `path:` deps in
+          # pubspec.yaml; without recursive checkout, `flutter pub get` fails
+          # to resolve the shared packages (crux_yosys, crux_theme, ...).
+          submodules: recursive
+          # The crux-shared submodule is cloned with SUBMODULE_PAT (a read-only
+          # Contents token) when the secret exists, and with the workflow token
+          # otherwise — a fork's pull request has no secrets, and the public
+          # submodule needs none.
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/elk_ffi/target
+          key: rust-${{ matrix.os }}-${{ hashFiles('native/elk_ffi/Cargo.lock') }}
+          restore-keys: rust-${{ matrix.os }}-
+
+      # The desktop layout engine. The native tests and the parity gate call
+      # requireElkFfiLibrary (test/helpers/elk_ffi_library_gate.dart), which
+      # skips locally without the library but fails under CI=true, so a
+      # missing build here turns red rather than quietly skipping the gate.
+      - name: Build the layout engine (Rust)
+        working-directory: native/elk_ffi
+        run: cargo build --release
+
+      - name: Install Flutter (pinned)
+        id: flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: '3.47.3'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          # `.dart_tool/build` is deliberately NOT cached. It is build_runner's
+          # incremental asset graph, and `restore-keys` is a PREFIX fallback, so
+          # a cache written before a source file moved between packages gets
+          # restored against a tree where that file no longer exists. The build
+          # then dies with `InvalidOutputException … Tried to delete from
+          # package not in the build`, which is what took the Pro overlay red after
+          # `engine_path_augmentation.dart` was consolidated into `crux_io`.
+          #
+          # The pub cache is the expensive part and is still cached; a cold
+          # build_runner run costs ~13s, measured.
+          path: |
+            ${{ steps.flutter.outputs.pub-cache-path }}
+            .dart_tool/
+            !.dart_tool/build
+          key: pub-${{ matrix.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ matrix.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Riverpod codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate l10n
+        run: flutter gen-l10n
+
+      # The elaboration tests skip when yosys or GHDL is missing, and before
+      # this step every one of them skipped on every run on every platform:
+      # the Verilog, VHDL and mixed-language pipeline tests, the CDC selection
+      # highlight, and the cross-probe resolution tests that run against a
+      # real elaboration. Those are the tests that notice a committed fixture
+      # going stale when an engine moves.
+      #
+      # Yosys publishes no binaries, so it comes from Ubuntu's archive. GHDL
+      # is upstream's release build, whose --synth lowering is what the VHDL
+      # path runs, checked against a SHA-256 recorded here for that version;
+      # bump the two together.
+      #
+      # Linux only. The macOS and Windows legs run weekly and stay
+      # engine-less; the skip ceiling below is what notices if this step ever
+      # stops delivering.
+      - name: Install yosys and GHDL (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GHDL_VERSION: 6.0.0
+          GHDL_SHA256: 30d6a977b8456d140bbafecbbe64b1947a3d92eeae8f5e6d9f528a174f9566e7
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y yosys
+          g="$RUNNER_TEMP/ghdl"
+          mkdir -p "$g"
+          curl --fail -sSL "https://github.com/ghdl/ghdl/releases/download/v$GHDL_VERSION/ghdl-mcode-$GHDL_VERSION-ubuntu24.04-x86_64.tar.gz" -o "$g.tgz"
+          echo "$GHDL_SHA256  $g.tgz" | sha256sum -c -
+          tar -xzf "$g.tgz" -C "$g" --strip-components=1
+          echo "$g/bin" >> "$GITHUB_PATH"
+          # Prove both start before the suite relies on them.
+          yosys -V
+          "$g/bin/ghdl" --version
+
+      # The ELK layout service's production path runs QuickJS on a worker
+      # isolate. flutter_js opens its bridge library by name, which a plain
+      # `flutter test` never builds, so the "isolate offload (production
+      # path)" test skipped on every run. The package ships the Linux library
+      # prebuilt and, under `flutter test`, reads LIBQUICKJSC_TEST_PATH.
+      - name: Point flutter_js at its prebuilt QuickJS bridge (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          root="$(python3 -c 'import json; print(next(p["rootUri"] for p in json.load(open(".dart_tool/package_config.json"))["packages"] if p["name"] == "flutter_js"))')"
+          lib="${root#file://}/linux/shared/libquickjs_c_bridge_plugin.so"
+          test -f "$lib"
+          echo "LIBQUICKJSC_TEST_PATH=$lib" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        # The JSON file reporter feeds the count check below; the console
+        # keeps the GitHub reporter.
+        run: flutter test --reporter github --file-reporter json:build/test-results.json
+
+      # A narrowed glob, a lost test directory or a mass skip leaves every
+      # remaining test green, so only the count notices. Parsed from the JSON
+      # report, never from console text: Actions sets CI=true, which colours
+      # the console even into a pipe, and a grep for the summary line then
+      # matches nothing and fails a green suite. A test that prints something
+      # shaped like a summary line fools a grep as well.
+      #
+      # Two numbers, because an engine that goes missing does not shrink the
+      # run, it converts runs into skips: MIN_TESTS is the floor on tests
+      # that ran, MAX_SKIPPED the ceiling on tests that skipped. Linux only,
+      # since the counts are per platform and Linux is the leg every push
+      # runs. Raise MIN_TESTS as tests land; lower it only in the commit that
+      # deletes tests on purpose, and say why there.
+      #
+      # Measured 2026-09-21 on this runner (run 35665235684, commit
+      # efc1e82b495cd9d35199ece822aba1082744b4ae): 2661 ran, 7 skipped. The
+      # floor is the measured count less 0.5%; the ceiling is left as-is
+      # since measured skips (7) are still within it.
+      - name: Test count did not shrink
+        if: runner.os == 'Linux'
+        env:
+          TEST_REPORT: build/test-results.json
+          MIN_TESTS: '2647'
+          MAX_SKIPPED: '9'
+        run: |
+          python3 - "$TEST_REPORT" <<'PY'
+          import json, os, sys
+          floor, ceiling = int(os.environ["MIN_TESTS"]), int(os.environ["MAX_SKIPPED"])
+          names, reasons, skipped, ran, done = {}, {}, [], 0, None
+          try:
+              lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+          except OSError as err:
+              sys.exit(f"::error::no JSON test report at {sys.argv[1]} ({err})")
+          for line in lines:
+              if not line.startswith("{"):
+                  continue
+              e = json.loads(line)
+              kind = e.get("type")
+              if kind == "testStart":
+                  t = e["test"]
+                  names[t["id"]] = t["name"]
+                  reasons[t["id"]] = t.get("metadata", {}).get("skipReason") or ""
+              elif kind == "print" and e.get("messageType") == "skip":
+                  reasons[e["testID"]] = e["message"]
+              elif kind == "testDone" and not e["hidden"]:
+                  if e["skipped"]:
+                      skipped.append(e["testID"])
+                  else:
+                      ran += 1
+              elif kind == "done":
+                  done = e
+          print(f"{ran} tests ran (floor {floor}), {len(skipped)} skipped (ceiling {ceiling})")
+          for tid in skipped:
+              print(f"  skipped: {names.get(tid, tid)} -- {reasons.get(tid, '')}")
+          if done is None:
+              sys.exit("::error::the JSON report has no 'done' event; the run did not finish")
+          if ran < floor:
+              sys.exit(f"::error::{ran} tests ran, below the floor of {floor}. A narrowed glob, a lost test directory or a mass skip does this. If tests were deleted on purpose, lower MIN_TESTS in the same commit.")
+          if len(skipped) > ceiling:
+              sys.exit(f"::error::{len(skipped)} tests skipped, above the ceiling of {ceiling}. The list above says why; an engine or service that stopped being installed shows up here first.")
+          PY
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Release builds — informational; surfaces build breakage early.
+  # Artifacts retained for 7 days for manual smoke-testing.
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-desktop:
+    name: Build / ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    # Cost guardrail: no job may run unbounded (max observed suite-wide is 29 min).
+    timeout-minutes: 45
+    needs: [analyze, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        # Same push-vs-everything-else split as `test` above: a release build
+        # per platform on every commit to `main` is the single most expensive
+        # thing this workflow could do. Linux still proves the build compiles.
+        include: ${{ github.event_name == 'push' && fromJSON('[{"os":"ubuntu-latest","target":"linux"}]') || fromJSON('[{"os":"ubuntu-latest","target":"linux"},{"os":"macos-latest","target":"macos"},{"os":"windows-latest","target":"windows"}]') }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          # crux-shared is a git submodule consumed via `path:` deps in
+          # pubspec.yaml; without recursive checkout, `flutter pub get` fails
+          # to resolve the shared packages (crux_yosys, crux_theme, ...).
+          submodules: recursive
+          # The crux-shared submodule is cloned with SUBMODULE_PAT (a read-only
+          # Contents token) when the secret exists, and with the workflow token
+          # otherwise — a fork's pull request has no secrets, and the public
+          # submodule needs none.
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      - name: Install Linux build dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/elk_ffi/target
+          key: rust-${{ matrix.os }}-${{ hashFiles('native/elk_ffi/Cargo.lock') }}
+          restore-keys: rust-${{ matrix.os }}-
+
+      # The desktop layout engine. The native tests and the parity gate call
+      # requireElkFfiLibrary (test/helpers/elk_ffi_library_gate.dart), which
+      # skips locally without the library but fails under CI=true, so a
+      # missing build here turns red rather than quietly skipping the gate.
+      - name: Build the layout engine (Rust)
+        working-directory: native/elk_ffi
+        run: cargo build --release
+
+      - name: Install Flutter (pinned)
+        id: flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: '3.47.3'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          # `.dart_tool/build` is deliberately NOT cached. It is build_runner's
+          # incremental asset graph, and `restore-keys` is a PREFIX fallback, so
+          # a cache written before a source file moved between packages gets
+          # restored against a tree where that file no longer exists. The build
+          # then dies with `InvalidOutputException … Tried to delete from
+          # package not in the build`, which is what took the Pro overlay red after
+          # `engine_path_augmentation.dart` was consolidated into `crux_io`.
+          #
+          # The pub cache is the expensive part and is still cached; a cold
+          # build_runner run costs ~13s, measured.
+          path: |
+            ${{ steps.flutter.outputs.pub-cache-path }}
+            .dart_tool/
+            !.dart_tool/build
+          key: pub-${{ matrix.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ matrix.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Riverpod codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate l10n
+        run: flutter gen-l10n
+
+      - name: Build ${{ matrix.target }} (release)
+        run: flutter build ${{ matrix.target }} --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: netcrux-${{ matrix.target }}
+          path: build/${{ matrix.target }}/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Web — the browser-only tests in headless Chrome, then a smoke build that
+  # confirms `flutter build web` produces a self-contained bundle for the
+  # read-only viewer.
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-web:
+    name: Build / web
+    runs-on: ubuntu-latest
+    # Cost guardrail: no job may run unbounded (max observed suite-wide is 29 min).
+    timeout-minutes: 45
+    needs: [analyze, test]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          # crux-shared is a git submodule consumed via `path:` deps in
+          # pubspec.yaml; without recursive checkout, `flutter pub get` fails
+          # to resolve the shared packages (crux_yosys, crux_theme, ...).
+          submodules: recursive
+          # The crux-shared submodule is cloned with SUBMODULE_PAT (a read-only
+          # Contents token) when the secret exists, and with the workflow token
+          # otherwise — a fork's pull request has no secrets, and the public
+          # submodule needs none.
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      - name: Install Flutter (pinned)
+        id: flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: '3.47.3'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          # `.dart_tool/build` is deliberately NOT cached. It is build_runner's
+          # incremental asset graph, and `restore-keys` is a PREFIX fallback, so
+          # a cache written before a source file moved between packages gets
+          # restored against a tree where that file no longer exists. The build
+          # then dies with `InvalidOutputException … Tried to delete from
+          # package not in the build`, which is what took the Pro overlay red after
+          # `engine_path_augmentation.dart` was consolidated into `crux_io`.
+          #
+          # The pub cache is the expensive part and is still cached; a cold
+          # build_runner run costs ~13s, measured.
+          path: |
+            ${{ steps.flutter.outputs.pub-cache-path }}
+            .dart_tool/
+            !.dart_tool/build
+          key: pub-ubuntu-web-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-ubuntu-web-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Riverpod codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate l10n
+        run: flutter gen-l10n
+
+      - name: Web tests (headless Chrome)
+        # The `@TestOn('browser')` files the VM test job skips: the web
+        # viewer's no-Yosys, no-isolate, no-CXP branches only compile with
+        # kIsWeb true. ubuntu-latest ships Chrome.
+        run: tool/run_web_tests.sh
+
+      - name: Build web (release)
+        run: flutter build web --release
+
+      - name: Assert web bundle contents
+        run: |
+          test -f build/web/index.html
+          test -f build/web/main.dart.js
+          test -f build/web/flutter_bootstrap.js
+          ls -la build/web/
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: netcrux-web
+          path: build/web/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Supply chain — SBOM, licence gate, advisory sweep.
+  #
+  # Runs on the same triggers as `analyze` rather than on a schedule, because
+  # the failure it prevents arrives *with a pubspec change*: somebody adds a
+  # dependency, it resolves a copyleft transitive, and nothing says so until
+  # the repository is already public. Catching that in the PR that introduces
+  # it is the whole point.
+  #
+  # The SBOM is uploaded as an artifact rather than committed. It changes on
+  # every dependency bump and nobody reviews it in a diff; what people
+  # actually want is "what shipped in the build I have", which is what an
+  # artifact attached to the run answers.
+  # ─────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
+  # The native layout engine: the elk_ffi wrapper and the vendored elkrs port.
+  # Formatting and clippy on the wrapper; the port's own suite (201 golden
+  # cases byte-identical to the ELK Java oracle, and its ports of ELK's JUnit
+  # tests) proves the vendored copy is intact on every push.
+  rust:
+    name: Rust (elk_ffi + vendored elkrs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install Rust (stable) with rustfmt + clippy
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/elk_ffi/target
+            native/vendor/elkrs/target
+          key: rust-lint-${{ hashFiles('native/elk_ffi/Cargo.lock', 'native/vendor/elkrs/Cargo.lock') }}
+          restore-keys: rust-lint-
+
+      - name: Check formatting (elk_ffi)
+        working-directory: native/elk_ffi
+        run: cargo fmt -- --check
+
+      - name: Clippy (elk_ffi, deny warnings)
+        working-directory: native/elk_ffi
+        run: cargo clippy --release -- -D warnings
+
+      - name: Vendored elkrs test suite
+        working-directory: native/vendor/elkrs
+        run: cargo test --release
+
+  supply-chain:
+    name: Supply chain
+    runs-on: ubuntu-latest
+    # Cost guardrail: no job may run unbounded.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      - name: Install Flutter (pinned)
+        id: flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          # Same pin as every other job in the suite — see `analyze`.
+          flutter-version: '3.47.3'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Licence gate
+        # Fails the build on copyleft, or on a licence the classifier cannot
+        # identify. Dev dependencies are reported and not gated: they never
+        # ship, so they carry no obligation on the artifact.
+        run: python3 crux-shared/tool/supply-chain.py --check-licences --tier open-core
+
+      - name: SBOM (CycloneDX)
+        run: python3 crux-shared/tool/supply-chain.py --sbom build/sbom.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-netcrux
+          path: build/sbom.json
+          retention-days: 90
+
+      - name: Advisories (osv.dev)
+        # Deliberately not `continue-on-error`. The script itself returns zero
+        # when osv.dev is unreachable — a gate that goes red because somebody
+        # else's service is down teaches people to ignore it — so a red here
+        # means a real advisory against a package that ships.
+        run: python3 crux-shared/tool/supply-chain.py --check-advisories

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    "../../test/fixtures/verilog/cdc_capture.v"
+  ],
+  "topModule": "cdc_capture",
+  "defines": {},
+  "includePaths": [],
+  "extraYosysCommands": [
+    "opt_clean"
+  ],
+  "lowerToStructural": false
+}

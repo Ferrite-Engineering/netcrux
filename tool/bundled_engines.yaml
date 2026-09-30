@@ -1,0 +1,66 @@
+# Version pins for the elaboration-engine binaries that NetCrux ships
+# inside its release distribution.
+#
+# Pull-request reviewers consult this file when bumping engine versions
+# so a change in behavior (Yosys command set, GHDL VHDL standard
+# support) is visible in code review. The CI helper at
+# `.github/workflows/bundled-engines.yml` consumes this manifest to
+# download + cache each binary per OS / arch.
+#
+# Release builds resolve binaries through
+# `BundledBinaryResolver.resolve(engineId)` — see
+# `lib/services/engines/bundled_binary_resolver.dart`. Debug builds
+# always shell out to `PATH` so contributors using locally-built
+# engines pick them up automatically.
+#
+# Layout of the cache directory the helper writes (and the layout
+# `BundledBinaryResolver` expects under `NETCRUX_BUNDLED_BIN_DIR`):
+#
+#   <root>/linux-x86_64/yosys
+#   <root>/linux-x86_64/ghdl
+#   <root>/macos-universal/yosys
+#   <root>/macos-universal/ghdl
+#   <root>/windows-x86_64/yosys.exe
+#   <root>/windows-x86_64/ghdl.exe
+#
+# The manifest, CI helper and Dart resolver exist so the seam does.
+# Release packaging does not place binaries here, so debug and
+# analyzer builds always fall through to PATH.
+#
+# Schema version. Bump when the schema below changes incompatibly.
+schemaVersion: 1
+
+# Each engine carries:
+#   id          — the `BundledBinaryResolver` engine identifier
+#   version     — pinned semver; bumped intentionally with the engine
+#   sources     — per-platform download URL templates. `${version}` is
+#                 substituted at fetch time. `null` means the platform
+#                 is not yet bundled.
+#
+# Note: download URL templates are documented here for reviewer-visible
+# version control. The actual download URL formats are GitHub-release
+# release assets owned by each engine's upstream repo.
+
+engines:
+  - id: yosys
+    version: "0.42"
+    sources:
+      linux-x86_64: "https://github.com/YosysHQ/yosys/releases/download/yosys-${version}/oss-cad-suite-linux-x86_64.tar.gz"
+      macos-universal: "https://github.com/YosysHQ/yosys/releases/download/yosys-${version}/oss-cad-suite-darwin-arm64.tar.gz"
+      windows-x86_64: "https://github.com/YosysHQ/yosys/releases/download/yosys-${version}/oss-cad-suite-windows-x64.zip"
+
+  # GHDL — VHDL front end. Run standalone as `ghdl --synth --out=verilog`
+  # to lower VHDL to Verilog, which Yosys then reads.
+  - id: ghdl
+    version: "4.1.0"
+    sources:
+      linux-x86_64: "https://github.com/ghdl/ghdl/releases/download/v${version}/ghdl-${version}-mcode-ubuntu22.tar.gz"
+      macos-universal: "https://github.com/ghdl/ghdl/releases/download/v${version}/ghdl-${version}-mcode-macos.tar.gz"
+      windows-x86_64: "https://github.com/ghdl/ghdl/releases/download/v${version}/ghdl-${version}-mingw-win64.zip"
+
+  # ghdl-yosys-plugin is deliberately ABSENT. VHDL is lowered by a standalone
+  # `ghdl --synth --out=verilog` run and Yosys reads the emitted Verilog, so
+  # no plugin is ever loaded (`crux_yosys` asserts the generated script emits
+  # no `plugin -i ghdl`). Pinning it here implied a GPL-3.0 plugin combined
+  # into the Yosys process, which does not happen. Do not re-add it without
+  # re-opening that licence analysis.

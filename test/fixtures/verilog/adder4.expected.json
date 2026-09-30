@@ -1,0 +1,48 @@
+{
+  "creator": "Yosys (hand-crafted fixture)",
+  "modules": {
+    "adder4": {
+      "attributes": { "top": "1" },
+      "ports": {
+        "a":    { "direction": "input",  "bits": [2, 3, 4, 5] },
+        "b":    { "direction": "input",  "bits": [6, 7, 8, 9] },
+        "cin":  { "direction": "input",  "bits": [10] },
+        "sum":  { "direction": "output", "bits": [11, 12, 13, 14] },
+        "cout": { "direction": "output", "bits": [15] }
+      },
+      "cells": {
+        "u_add": {
+          "hide_name": 0,
+          "type": "$add",
+          "parameters": { "A_WIDTH": "5", "B_WIDTH": "5", "Y_WIDTH": "5" },
+          "attributes": {},
+          "port_directions": { "A": "input", "B": "input", "Y": "output" },
+          "connections": {
+            "A": [2, 3, 4, 5, "0"],
+            "B": [6, 7, 8, 9, "0"],
+            "Y": [11, 12, 13, 14, 15]
+          }
+        },
+        "u_cin_add": {
+          "hide_name": 0,
+          "type": "$add",
+          "parameters": { "A_WIDTH": "1", "B_WIDTH": "5", "Y_WIDTH": "5" },
+          "attributes": {},
+          "port_directions": { "A": "input", "B": "input", "Y": "output" },
+          "connections": {
+            "A": [10],
+            "B": [11, 12, 13, 14, 15],
+            "Y": [11, 12, 13, 14, 15]
+          }
+        }
+      },
+      "netnames": {
+        "a":    { "hide_name": 0, "bits": [2, 3, 4, 5],    "attributes": {} },
+        "b":    { "hide_name": 0, "bits": [6, 7, 8, 9],    "attributes": {} },
+        "cin":  { "hide_name": 0, "bits": [10],            "attributes": {} },
+        "sum":  { "hide_name": 0, "bits": [11, 12, 13, 14],"attributes": {} },
+        "cout": { "hide_name": 0, "bits": [15],            "attributes": {} }
+      }
+    }
+  }
+}

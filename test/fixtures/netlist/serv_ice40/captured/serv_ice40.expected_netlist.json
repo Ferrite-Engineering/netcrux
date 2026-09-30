@@ -1,0 +1,394 @@
+{
+  "source": "serv_ice40.v",
+  "topModule": "service",
+  "moduleCount": 51,
+  "modules": [
+    {
+      "name": "ICESTORM_LC",
+      "cellCount": 35,
+      "portCount": 11,
+      "netCount": 11,
+      "cellTypeHistogram": {
+        "$specify2": 12,
+        "$specify3": 1,
+        "$specrule": 22
+      }
+    },
+    {
+      "name": "ICESTORM_RAM",
+      "cellCount": 0,
+      "portCount": 76,
+      "netCount": 76,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_CARRY",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFF",
+      "cellCount": 0,
+      "portCount": 3,
+      "netCount": 3,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFE",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFER",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFES",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFESR",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFESS",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFN",
+      "cellCount": 0,
+      "portCount": 3,
+      "netCount": 3,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNE",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNER",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNES",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNESR",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNESS",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNR",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNS",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNSR",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFNSS",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFR",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFS",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFSR",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_DFFSS",
+      "cellCount": 0,
+      "portCount": 4,
+      "netCount": 4,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_FILTER_50NS",
+      "cellCount": 0,
+      "portCount": 2,
+      "netCount": 2,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_GB",
+      "cellCount": 0,
+      "portCount": 2,
+      "netCount": 2,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_GB_IO",
+      "cellCount": 0,
+      "portCount": 11,
+      "netCount": 11,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_HFOSC",
+      "cellCount": 0,
+      "portCount": 13,
+      "netCount": 13,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_I2C",
+      "cellCount": 0,
+      "portCount": 36,
+      "netCount": 36,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_IO",
+      "cellCount": 0,
+      "portCount": 10,
+      "netCount": 10,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_IO_I3C",
+      "cellCount": 0,
+      "portCount": 12,
+      "netCount": 12,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_IO_OD",
+      "cellCount": 0,
+      "portCount": 10,
+      "netCount": 10,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_LEDDA_IP",
+      "cellCount": 0,
+      "portCount": 21,
+      "netCount": 21,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_LED_DRV_CUR",
+      "cellCount": 0,
+      "portCount": 2,
+      "netCount": 2,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_LFOSC",
+      "cellCount": 0,
+      "portCount": 3,
+      "netCount": 3,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_LUT4",
+      "cellCount": 0,
+      "portCount": 5,
+      "netCount": 5,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_MAC16",
+      "cellCount": 0,
+      "portCount": 27,
+      "netCount": 27,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_PLL40_2F_CORE",
+      "cellCount": 0,
+      "portCount": 14,
+      "netCount": 14,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_PLL40_2F_PAD",
+      "cellCount": 0,
+      "portCount": 14,
+      "netCount": 14,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_PLL40_2_PAD",
+      "cellCount": 0,
+      "portCount": 14,
+      "netCount": 14,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_PLL40_CORE",
+      "cellCount": 0,
+      "portCount": 12,
+      "netCount": 12,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_PLL40_PAD",
+      "cellCount": 0,
+      "portCount": 12,
+      "netCount": 12,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_RAM40_4K",
+      "cellCount": 13,
+      "portCount": 11,
+      "netCount": 15,
+      "cellTypeHistogram": {
+        "$logic_and": 4,
+        "$specify3": 1,
+        "$specrule": 8
+      }
+    },
+    {
+      "name": "SB_RAM40_4KNR",
+      "cellCount": 13,
+      "portCount": 11,
+      "netCount": 15,
+      "cellTypeHistogram": {
+        "$logic_and": 4,
+        "$specify3": 1,
+        "$specrule": 8
+      }
+    },
+    {
+      "name": "SB_RAM40_4KNRNW",
+      "cellCount": 13,
+      "portCount": 11,
+      "netCount": 15,
+      "cellTypeHistogram": {
+        "$logic_and": 4,
+        "$specify3": 1,
+        "$specrule": 8
+      }
+    },
+    {
+      "name": "SB_RAM40_4KNW",
+      "cellCount": 13,
+      "portCount": 11,
+      "netCount": 15,
+      "cellTypeHistogram": {
+        "$logic_and": 4,
+        "$specify3": 1,
+        "$specrule": 8
+      }
+    },
+    {
+      "name": "SB_RGBA_DRV",
+      "cellCount": 0,
+      "portCount": 8,
+      "netCount": 8,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_RGB_DRV",
+      "cellCount": 0,
+      "portCount": 8,
+      "netCount": 8,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_SPI",
+      "cellCount": 0,
+      "portCount": 48,
+      "netCount": 48,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_SPRAM256KA",
+      "cellCount": 0,
+      "portCount": 10,
+      "netCount": 10,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "SB_WARMBOOT",
+      "cellCount": 0,
+      "portCount": 3,
+      "netCount": 3,
+      "cellTypeHistogram": {}
+    },
+    {
+      "name": "service",
+      "cellCount": 966,
+      "portCount": 2,
+      "netCount": 726,
+      "cellTypeHistogram": {
+        "SB_CARRY": 104,
+        "SB_DFF": 99,
+        "SB_DFFE": 120,
+        "SB_DFFESR": 73,
+        "SB_DFFSR": 43,
+        "SB_LUT4": 509,
+        "SB_PLL40_CORE": 1,
+        "SB_RAM40_4K": 17
+      }
+    }
+  ],
+  "fingerprint": "fnv1a:9f2263b7"
+}

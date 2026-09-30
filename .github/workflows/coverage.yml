@@ -1,0 +1,145 @@
+name: Coverage
+
+# ─── Trigger configuration ─────────────────────────────────────────────────────
+# Code-coverage floor gate. Coverage is the unit+widget suite with --coverage
+# (the same tests CI already runs, plus instrumentation), so it is cheap. One
+# platform only — coverage is identical across OSes (same Dart), so Linux (the
+# cheapest) is sufficient.
+#
+# The floor (MIN_COVERAGE) is a ratchet: set to the current baseline and raised
+# as tests are added; the build fails if coverage falls below it. Generated code
+# (build_runner *.g.dart, generated l10n) is excluded by tool/coverage.sh.
+#
+# Ported from WaveCrux 2026-08-17. Until then WaveCrux was the only repo of nine
+# that measured coverage at all, which is why the other eight had no protection
+# against drifting down.
+#
+# Daily, not per push: a push already runs the full test suite in ci.yml, and
+# this job (~23 minutes, measured 2026-09-21) is the slowest thing in the repo.
+# Until this schedule existed the gate had never executed once — it ran on
+# pull requests only, in a repository whose work lands directly on `main`.
+# Measured before enabling: 84.2% against the floor of 82, and 84.3% with the
+# engines below installed.
+on:
+  workflow_dispatch:
+  pull_request:
+  schedule:
+    - cron: '25 3 * * *'
+
+concurrency:
+  # Keyed by event as well as ref so a scheduled run and a push never cancel
+  # each other.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: Coverage (line %, generated excluded)
+    runs-on: ubuntu-latest
+    # Cost guardrail: no job may run unbounded.
+    timeout-minutes: 45
+    env:
+      # Ratchet floor — raise as coverage improves. The build fails below this.
+      # Measured 85.2% on this runner 2026-09-22 (run 35671825768, commit
+      # efc1e82b495cd9d35199ece822aba1082744b4ae); floor set a couple of
+      # points below to absorb measurement variance.
+      MIN_COVERAGE: '83'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      - name: Install lcov
+        run: sudo apt-get update -y && sudo apt-get install -y lcov
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/elk_ffi/target
+          key: rust-ubuntu-latest-${{ hashFiles('native/elk_ffi/Cargo.lock') }}
+          restore-keys: rust-ubuntu-latest-
+
+      # The desktop layout engine. The native tests and the parity gate call
+      # requireElkFfiLibrary (test/helpers/elk_ffi_library_gate.dart), which
+      # skips locally without the library but fails under CI=true, so a
+      # missing build here turns red rather than quietly skipping the gate.
+      - name: Build the layout engine (Rust)
+        working-directory: native/elk_ffi
+        run: cargo build --release
+
+      - name: Install Flutter (pinned)
+        id: flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: '3.47.3'
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ${{ steps.flutter.outputs.pub-cache-path }}
+            .dart_tool/
+            !.dart_tool/build
+          key: pub-coverage-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-coverage-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Riverpod codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate l10n
+        run: flutter gen-l10n
+
+      # The same engines and QuickJS bridge as ci.yml's test job, so coverage
+      # measures the tests CI runs: without them the elaboration pipeline is
+      # reported as untested code while those tests pass one workflow over.
+      - name: Install yosys and GHDL
+        env:
+          GHDL_VERSION: 6.0.0
+          GHDL_SHA256: 30d6a977b8456d140bbafecbbe64b1947a3d92eeae8f5e6d9f528a174f9566e7
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y yosys
+          g="$RUNNER_TEMP/ghdl"
+          mkdir -p "$g"
+          curl --fail -sSL "https://github.com/ghdl/ghdl/releases/download/v$GHDL_VERSION/ghdl-mcode-$GHDL_VERSION-ubuntu24.04-x86_64.tar.gz" -o "$g.tgz"
+          echo "$GHDL_SHA256  $g.tgz" | sha256sum -c -
+          tar -xzf "$g.tgz" -C "$g" --strip-components=1
+          echo "$g/bin" >> "$GITHUB_PATH"
+          yosys -V
+          "$g/bin/ghdl" --version
+
+      - name: Point flutter_js at its prebuilt QuickJS bridge
+        run: |
+          set -euo pipefail
+          root="$(python3 -c 'import json; print(next(p["rootUri"] for p in json.load(open(".dart_tool/package_config.json"))["packages"] if p["name"] == "flutter_js"))')"
+          lib="${root#file://}/linux/shared/libquickjs_c_bridge_plugin.so"
+          test -f "$lib"
+          echo "LIBQUICKJSC_TEST_PATH=$lib" >> "$GITHUB_ENV"
+
+      - name: Test with coverage + floor gate
+        run: |
+          chmod +x tool/coverage.sh
+          tool/coverage.sh
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.filtered.info
+          if-no-files-found: ignore

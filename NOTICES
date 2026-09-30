@@ -1,0 +1,816 @@
+NetCrux open-core third-party attributions
+==========================================
+
+NetCrux is licensed under the Apache License, Version 2.0 (see LICENSE).
+This file lists third-party software that ships in or with NetCrux source
+and binary distributions, together with the license terms under which each
+component is redistributed, plus the external programs NetCrux invokes but
+does not redistribute.
+
+Notes:
+- Flutter SDK and Dart SDK packages bundled by the Flutter toolchain
+  (`flutter`, `flutter_localizations`, `flutter_test`, `integration_test`,
+  `sky_engine`, `flutter_web_plugins`, etc.) are not enumerated
+  individually here. They are governed by the Flutter and Dart project
+  licenses; see https://flutter.dev/ and https://dart.dev/ for their
+  respective notices.
+- This file covers the dependency set as of the snapshot recorded in
+  `pubspec.lock`. Run `flutter pub deps` after dependency upgrades to
+  refresh this list; see §12.
+- §1 covers the external programs NetCrux invokes; §2 covers the vendored
+  Eclipse Layout Kernel in both forms that ship inside the application, the
+  JavaScript bundle and the native Rust port behind `native/elk_ffi`, the
+  one native library NetCrux builds itself; §3 covers the native library
+  flutter_js ships with it.
+
+
+--------------------------------------------------------------------------
+1. Elaboration engines — separate programs, invoked as subprocesses
+--------------------------------------------------------------------------
+
+1.0 Process isolation
+
+NetCrux does not embed, link, or statically or dynamically bind any
+elaboration engine. Yosys is spawned as an independent operating-system
+process through the first-party `crux_yosys` package (§4), whose
+`DefaultProcessRunner.run()` calls `dart:io`'s `Process.start`; NetCrux
+passes a `-p "<script>"` command string and reads back the netlist JSON
+that Yosys writes to a temporary file. There is no `dart:ffi` usage and no
+`DynamicLibrary` load in NetCrux's own source, and the desktop CMake/Xcode
+build configurations under `linux/`, `macos/`, and `windows/` contain only
+the stock Flutter runner targets.
+
+1.1 Distribution posture
+
+NetCrux **does not distribute any engine binary**. `BundledBinaryResolver`
+(`lib/services/engines/bundled_binary_resolver.dart`) checks the
+`NETCRUX_BUNDLED_BIN_DIR` environment variable, then a Flutter bundled-asset
+path that is a documented placeholder returning null today, then falls
+through to the host `PATH`. `crux_yosys`'s own README states the same:
+"The runner and availability service today resolve the Yosys executable via
+PATH search… bundling itself is a separate piece of work."
+
+The version pins in `tool/bundled_engines.yaml` and the
+`.github/workflows/bundled-engines.yml` workflow are preparatory
+infrastructure for a future bundled-binary release. When bundling
+activates, each engine's own license obligations attach to that
+distribution — for the GPL components below, including source-conveyance
+obligations for the binaries being distributed. See §11.
+
+1.2 Yosys
+
+  Component: Yosys
+  Role:      RTL elaboration to a netlist (`read_verilog`, `hierarchy`,
+             `proc`, `write_json`). Invoked via `crux_yosys`'s
+             `YosysRunner`; availability probed with `yosys -V` by
+             `YosysAvailabilityService`.
+  License:   ISC
+  Upstream:  https://github.com/YosysHQ/yosys
+  Copyright: Claire Xen (formerly Clifford Wolf) and the Yosys
+             contributors
+  Pinned:    0.42 in `tool/bundled_engines.yaml`
+
+1.3 GHDL — wired, as a separate program
+
+  **Corrected 2026-09-13.** This section previously read "planned, not yet
+  wired" and analysed `ghdl-yosys-plugin`. Both were wrong about the shipped
+  architecture.
+
+  VHDL elaboration IS wired. The adapter is not in this repository's `lib/`
+  — it lives in the shared `crux_yosys` package (`crux-shared`), which is
+  why a search of `lib/` found nothing.
+
+  **`ghdl-yosys-plugin` is not used and is not loaded.** VHDL is lowered to
+  Verilog by a standalone `ghdl --synth --out=verilog … -e <top>` run, and
+  Yosys then reads the emitted Verilog with `read_verilog`. No `plugin -i
+  ghdl` is ever emitted; `crux_yosys`'s runner test asserts the generated
+  script contains neither `plugin -i ghdl` nor `read_vhdl`.
+
+  This materially simplifies the licensing picture. The previous analysis
+  turned on combining a GPL-3.0 plugin, GPL-2.0 GHDL and ISC Yosys into one
+  loaded process. That combination does not occur. What occurs is two
+  independent programs, each invoked across a process boundary, exchanging
+  files and diagnostic text — the §1.0 analysis, unchanged.
+
+  Component: GHDL
+  Role:      VHDL → Verilog lowering, `ghdl --synth --out=verilog`
+  License:   GPL-2.0 (GNU General Public License v2.0; the project's
+             source headers state "or later")
+  Upstream:  https://github.com/ghdl/ghdl
+  Copyright: Tristan Gingold and the GHDL contributors
+  Pinned:    4.1.0 in `tool/bundled_engines.yaml`
+
+  `tool/bundled_engines.yaml` pins no `ghdl-yosys-plugin`, and the
+  bundled-engine fetch workflow neither downloads nor caches one.
+
+1.4 Verification status of the engine licenses above
+
+Each license identifier in §1.2–§1.3 was read from the LICENSE file at the
+HEAD of the named upstream repository, not from the specific pinned release
+artifact. NetCrux redistributes no engine artifact today, so there was
+nothing to diff. Re-verify against the actual downloaded artifacts as part
+of the bundled-binary distribution work (§11).
+
+
+--------------------------------------------------------------------------
+2. Vendored JavaScript: elkjs (Eclipse Layout Kernel)
+--------------------------------------------------------------------------
+
+Component: elkjs (the JavaScript build of the Eclipse Layout Kernel)
+Version:   0.9.3 — per the commit that vendored it (`0f48b4b`, "downloaded
+           from jsdelivr at the pinned 0.9.3 release"). The bundle itself
+           carries no in-file version marker.
+File:      `assets/elk/elk.bundled.js` (~1.5 MB), declared as a Flutter
+           asset in `pubspec.yaml`
+Role:      Schematic graph layout. On desktop the bundle is executed
+           in-process by `flutter_js` (§3); on web it runs natively in the
+           browser (`elk_web_solver_web.dart`). It therefore ships in every
+           NetCrux distribution.
+License:   EPL-2.0 (Eclipse Public License 2.0)
+Upstream:  https://github.com/kieler/elkjs
+           https://github.com/eclipse-elk/elk
+
+The bundle is a browserify/UMD wrapper around four CommonJS modules. Their
+license banners, read verbatim from the vendored file:
+
+  Modules 1–3 — `elk-api.js`, the GWT-transpiled `elk-worker.min.js` core,
+  and `elk-node.js` — EPL-2.0:
+
+    /*******************************************************************************
+     * Copyright (c) 2017 Kiel University and others.
+     *
+     * This program and the accompanying materials are made
+     * available under the terms of the Eclipse Public License 2.0
+     * which is available at https://www.eclipse.org/legal/epl-2.0/
+     *
+     * SPDX-License-Identifier: EPL-2.0
+     *******************************************************************************/
+
+    /*******************************************************************************
+     * Copyright (c) 2021 Kiel University and others.
+     * This program and the accompanying materials are made available under the
+     * terms of the Eclipse Public License 2.0 which is available at
+     * http://www.eclipse.org/legal/epl-2.0.
+     *
+     * SPDX-License-Identifier: EPL-2.0
+     *******************************************************************************/
+
+  (The minified `elk-worker.min.js` core carries no banner of its own in the
+  minified output, but is the same upstream release and covered by the same
+  EPL-2.0 grant.)
+
+  Module 4 — an embedded `web-worker` npm polyfill stub, under a DIFFERENT
+  license:
+
+    /**
+     * Copyright 2020 Google LLC
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+
+  That stub sits behind a Node-only `require('web-worker')` branch that
+  NetCrux's QuickJS and browser runtimes never reach, but it is byte-present
+  in the shipped asset and is therefore attributed here. Its Apache-2.0
+  terms are the same as this repository's LICENSE.
+
+**EPL-2.0 obligation — satisfied.** EPL-2.0 §3.1(b) requires that a copy of
+the Agreement accompany the Program when it is distributed in object-code
+form. The full license text ships alongside the bundle as
+`assets/elk/LICENSE.epl-2.0.txt` (the canonical SPDX EPL-2.0 text), declared
+as a Flutter asset in `pubspec.yaml` so it travels inside every desktop and
+web distribution — not merely in the source tree. See §11.3.
+
+To refresh the bundle, download the pinned elkjs release from the upstream
+project and replace `assets/elk/elk.bundled.js`, then re-check the banners
+above — a newer release may add or drop embedded modules.
+
+2.1 Native port: elkrs, wrapped by elk_ffi
+
+Component: elkrs, a native-Rust, byte-exact reimplementation of the Eclipse
+           Layout Kernel 0.11.0 (all twelve algorithms; NetCrux uses
+           `layered`)
+Version:   0.1.1 — upstream commit `2651159`, 2026-06-17
+Files:     `native/vendor/elkrs/` (the crate source, its 201-case golden
+           corpus, the Java oracle that generated the goldens, and the
+           differential fuzzer; see `VENDORED.md` there), built into
+           `libelk_ffi.so` / `libelk_ffi.dylib` / `elk_ffi.dll` by the
+           first-party wrapper crate in `native/elk_ffi/` (Apache-2.0, this
+           repository's LICENSE)
+Role:      The desktop schematic layout engine. Same ELK JSON contract as
+           the bundle above, byte-identical output for NetCrux's inputs
+           (held to that by `test/services/layout/native_elk_parity_test.dart`),
+           at native speed and memory. The elkjs bundle stays as the browser
+           engine and as the desktop fallback selectable with
+           `NETCRUX_LAYOUT_ENGINE=elkjs`.
+License:   Labelled Apache-2.0 by its author. It is a translation of
+           Eclipse Layout Kernel source, which is EPL-2.0, so NetCrux treats
+           the vendored tree as EPL-2.0, the licence it already accepts for
+           the bundle above, and satisfies EPL-2.0 §3.1(b) the same way: the
+           Agreement ships as `assets/elk/LICENSE.epl-2.0.txt`. Any change
+           NetCrux makes under `native/vendor/elkrs/src/` stays in that
+           tree, which is public with the open core.
+Upstream:  https://github.com/depetrol/elkrs
+           https://crates.io/crates/elkrs
+           https://github.com/eclipse-elk/elk (the ported source)
+Author:    depetrol (the port); Kiel University and others (ELK)
+Changes:   none (see `native/vendor/elkrs/VENDORED.md`)
+Crates:    the port depends on `indexmap`, `serde` and `serde_json`, all
+           dual MIT / Apache-2.0; the wrapper adds nothing else. Resolved
+           versions are in `native/elk_ffi/Cargo.lock`.
+
+Verbatim license text of the port as labelled (Apache-2.0):
+
+    Apache License, Version 2.0 — the same text as this repository's
+    LICENSE, reproduced there in full.
+
+
+--------------------------------------------------------------------------
+3. flutter_js and the QuickJS engine it ships
+--------------------------------------------------------------------------
+
+3.1 flutter_js (MIT)
+
+  Component: flutter_js
+  Version:   0.8.7
+  Role:      In-process JavaScript runtime hosting the elkjs bundle on
+             desktop (`lib/services/layout/elk_layout_service.dart`).
+  License:   MIT
+  Upstream:  https://github.com/abner/flutter_js
+  Copyright: (c) 2019 Ábner Oliveira
+
+  flutter_js's own README credits two upstream packages whose code it
+  incorporates, both MIT: `flutter_qjs`
+  (https://github.com/ekibun/flutter_qjs — the QuickJS dart:ffi bridge) and
+  `flutter_jscore` (https://github.com/xuelongqy/flutter_jscore — the
+  JavaScriptCore bindings).
+
+3.2 QuickJS — a native binary that ships on Linux and Windows
+
+  The `flutter_js` package ships **prebuilt native libraries** that are
+  copied into NetCrux's Linux and Windows application bundles:
+
+    linux/shared/libquickjs_c_bridge_plugin.so
+    windows/shared/quickjs_c_bridge.dll
+
+  Symbol inspection of the Linux artifact confirms it embeds QuickJS
+  itself — it contains the strings `quickjs.c`, `libregexp.c`,
+  `libunicode.c`, and the banner `QuickJS memory usage -- 2021-03-27
+  version`.
+
+  Component: QuickJS
+  Version:   2021-03-27 (per the string embedded in the shipped binary)
+  License:   MIT
+  Upstream:  https://bellard.org/quickjs/
+  Copyright: (c) 2017-2021 Fabrice Bellard and Charlie Gordon
+
+  **Verification gap.** The `flutter_js` package ships only its own MIT
+  LICENSE file; it carries no QuickJS license text alongside the prebuilt
+  binaries, and the bridge repository
+  (https://github.com/abner/quickjs-c-bridge) exposes no machine-readable
+  license. The MIT attribution above is taken from QuickJS's own
+  well-established upstream terms, **not** from a license file present in
+  the distributed artifact. See §11.
+
+  On macOS and iOS, `flutter_js` uses the operating system's own
+  JavaScriptCore (a Swift plugin, no bundled engine), so no QuickJS binary
+  ships in the macOS distribution. On web, NetCrux does not use `flutter_js`
+  at all — elkjs runs directly in the browser's JavaScript engine.
+
+
+--------------------------------------------------------------------------
+4. Cross-suite first-party packages (crux-shared)
+--------------------------------------------------------------------------
+
+The `crux_*` packages consumed via `path:` from the `crux-shared` Git
+submodule are first-party Ferrite Engineering code, developed alongside
+NetCrux and published under the same Apache License 2.0 as this
+repository, and impose no separate attribution obligation. Each one, at
+the version this build resolves, is listed in the generated inventory (§13).
+
+
+--------------------------------------------------------------------------
+5. Dart packages by the Dart project authors (BSD-3-Clause)
+--------------------------------------------------------------------------
+
+The following packages are authored by the Dart project authors and
+distributed under a common BSD-3-Clause license. They are listed together
+because they share an identical license text differing only in the
+copyright year.
+
+Direct dependencies:
+  - meta     1.19.0  https://pub.dev/packages/meta
+  - path     1.9.1   https://pub.dev/packages/path
+
+Notable transitive dependencies:
+  - args 2.7.0, async 2.13.1, characters 1.4.1, collection 1.19.1,
+    convert 3.1.2, crypto 3.0.7, ffi 2.2.0, fixnum 1.1.1, http 1.6.0,
+    intl 0.20.3, logging 1.3.0, source_span 1.10.2, stack_trace 1.12.1,
+    string_scanner 1.4.1, sync_http 0.3.1, typed_data 1.4.0, web 1.1.1,
+    yaml 3.1.3, and the remaining `dart-lang` packages recorded in
+    `pubspec.lock`.
+
+License: BSD-3-Clause
+Upstream: https://github.com/dart-lang
+
+Representative verbatim license text (from the `path` package; the
+copyright year varies per package, e.g. 2013, 2014, 2015, 2023):
+
+    Copyright 2014, the Dart project authors.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+        * Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials provided
+          with the distribution.
+        * Neither the name of Google LLC nor the names of its
+          contributors may be used to endorse or promote products derived
+          from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+--------------------------------------------------------------------------
+6. Flutter-team-authored Dart packages (BSD-3-Clause)
+--------------------------------------------------------------------------
+
+The following packages are authored by the Flutter Authors and distributed
+under a common BSD-3-Clause license.
+
+Components and versions:
+  - go_router              17.3.0   https://pub.dev/packages/go_router
+  - path_provider          2.1.6    https://pub.dev/packages/path_provider
+  - path_provider_android  2.3.1
+  - path_provider_foundation 2.6.0
+  - path_provider_linux    2.2.1
+  - path_provider_windows  2.3.0
+  - path_provider_platform_interface 2.1.3
+  - shared_preferences     2.5.5    https://pub.dev/packages/shared_preferences
+  - shared_preferences_android 2.4.26
+  - shared_preferences_foundation 2.5.6
+  - shared_preferences_linux 2.4.1
+  - shared_preferences_web 2.4.3
+  - shared_preferences_windows 2.4.1
+  - shared_preferences_platform_interface 2.4.2
+  - url_launcher           6.3.2    https://pub.dev/packages/url_launcher
+  - url_launcher_android   6.3.32
+  - url_launcher_ios       6.4.1
+  - url_launcher_linux     3.2.2
+  - url_launcher_macos     3.2.5
+  - url_launcher_web       2.4.3
+  - url_launcher_windows   3.1.5
+  - url_launcher_platform_interface 2.3.2
+  - cross_file             0.3.5+4
+  - flutter_plugin_android_lifecycle 2.0.35
+  - plugin_platform_interface 2.1.8
+  - xdg_directories        1.1.0
+
+License: BSD-3-Clause
+Upstream: https://github.com/flutter
+
+Representative verbatim license text:
+
+    Copyright 2013 The Flutter Authors. All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+        * Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials provided
+          with the distribution.
+        * Neither the name of Google Inc. nor the names of its
+          contributors may be used to endorse or promote products derived
+          from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+--------------------------------------------------------------------------
+7. Other BSD-3-Clause Dart packages
+--------------------------------------------------------------------------
+
+7.1 package_info_plus (BSD-3-Clause)
+    Versions: package_info_plus 10.1.0,
+              package_info_plus_platform_interface 4.1.0
+    Upstream: https://github.com/fluttercommunity/plus_plugins
+    Copyright: 2017 The Chromium Authors. All rights reserved.
+    (Same BSD-3-Clause body as §6.)
+
+7.2 win32 (BSD-3-Clause)
+    Version:  6.3.0
+    Upstream: https://github.com/halildurmus/win32
+    Copyright: (c) 2024, Halil Durmus
+    (Same BSD-3-Clause body as §6. Transitive; Windows builds only.)
+
+
+--------------------------------------------------------------------------
+8. MIT-licensed Dart packages
+--------------------------------------------------------------------------
+
+8.1 file_picker (MIT)
+    Version:  12.0.0-beta.7
+    Upstream: https://github.com/miguelpruivo/flutter_file_picker
+    Copyright (c) 2018 Miguel Ruivo
+
+8.2 flutter_riverpod / riverpod / riverpod_annotation / riverpod_generator /
+    state_notifier / freezed_annotation (MIT)
+    Versions: flutter_riverpod 3.3.2, riverpod 3.3.2,
+              riverpod_annotation 4.0.3, riverpod_generator 4.0.4,
+              state_notifier 1.0.0, freezed_annotation 3.1.0
+    Upstream: https://github.com/rrousselGit/riverpod
+              https://github.com/rrousselGit/state_notifier
+    Copyright (c) 2020 Remi Rousselet
+
+8.3 flutter_js (MIT) — see §3.1 for the native libraries it ships
+    Version:  0.8.7
+    Copyright (c) 2019 Ábner Oliveira
+
+8.4 xml / petitparser (MIT)
+    Versions: xml 6.6.1, petitparser 7.0.2
+    Upstream: https://github.com/renggli/dart-xml
+              https://github.com/petitparser/dart-petitparser
+    Copyright (c) 2006-2025 Lukas Renggli.
+
+8.5 uuid (MIT)
+    Version:  4.5.3
+    Upstream: https://github.com/Daegalus/dart-uuid
+    Copyright (c) 2021 Yulian Kuncheff
+
+8.6 mocktail (MIT) — test-only
+    Version:  1.0.5
+    Upstream: https://github.com/felangel/mocktail
+    Copyright (c) 2026 Felix Angelov
+
+8.7 very_good_analysis (MIT) — lint rules, dev-only
+    Version:  10.3.0
+    Upstream: https://github.com/VeryGoodOpenSource/very_good_analysis
+    Copyright (c) 2020 Very Good Ventures
+
+The MIT License (verbatim; each component's own copyright line above
+applies in place of the placeholder):
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+--------------------------------------------------------------------------
+9. Apache-2.0-licensed Dart packages
+--------------------------------------------------------------------------
+
+The following ship the Apache License, Version 2.0 — the same license as
+NetCrux itself; their full text is identical to this repository's LICENSE.
+
+  - material_color_utilities 0.13.0  Copyright 2021 Google LLC
+  - clock 1.1.2, fake_async 1.3.3, mockito 5.6.4, webdriver 3.1.0
+    (transitive; test/tooling only)
+
+
+--------------------------------------------------------------------------
+10. Mozilla Public License 2.0 — dbus
+--------------------------------------------------------------------------
+
+Component: dbus
+Version:   0.7.14
+Role:      Transitive dependency (Linux builds only), reached through the
+           Linux implementations of `package_info_plus` /
+           `url_launcher_linux`. Pure Dart; no native linkage.
+License:   MPL-2.0
+Upstream:  https://github.com/canonical/dbus.dart
+
+MPL-2.0 is file-level copyleft: it imposes obligations on modified versions
+of the `dbus` package's own source files, and does not extend to NetCrux's
+code that merely depends on it. NetCrux does not modify `dbus`. The full
+MPL-2.0 text is at https://mozilla.org/MPL/2.0/ and in the package's own
+LICENSE file in the pub cache. Per MPL-2.0 §3.2, a binary distribution must
+inform recipients how to obtain the Source Code Form of the Covered
+Software; the unmodified upstream at the URL above satisfies that.
+
+
+--------------------------------------------------------------------------
+11. Open items / not independently verified
+--------------------------------------------------------------------------
+
+These are recorded rather than guessed. Resolve them before the public
+open-source flip.
+
+11.1 Copyright holder. Resolved 2026-07-22: the copyright holder is
+    **Ferrite Engineering LLC**. The LICENSE file's copyright line now
+    reads `Copyright 2026 Ferrite Engineering LLC`, applied in the same
+    sweep across WaveCrux, NetCrux, SimCrux, and LintCrux so all four
+    open cores name the same holder.
+
+11.2 crux-shared licensing. Resolved: the `crux-shared` submodule
+    that supplies every `crux_*` package in §4 now carries its own
+    LICENSE, NOTICES, TRADEMARK.md, CONTRIBUTING.md and SECURITY.md.
+    It is Apache-2.0, and flips public at the same moment the open
+    cores do.
+
+11.3 EPL-2.0 text is now shipped. Resolved 2026-07-23: the canonical
+    SPDX EPL-2.0 text ships as `assets/elk/LICENSE.epl-2.0.txt`, declared
+    as a Flutter asset so it accompanies elkjs (§2) in every desktop and
+    web build. This satisfies EPL-2.0 §3.1(b). If an in-app attributions
+    surface later lands (§11.8), it should surface or link this file rather
+    than duplicate it.
+
+11.4 QuickJS attribution is not sourced from the shipped artifact.
+    See §3.2 — the `flutter_js` package ships prebuilt QuickJS-containing
+    binaries on Linux and Windows with no accompanying QuickJS license
+    text, and the bridge repository publishes no machine-readable license.
+    QuickJS's MIT terms (Fabrice Bellard, Charlie Gordon) are recorded from
+    upstream, not from the artifact. Confirm the exact QuickJS revision and
+    obtain its LICENSE for redistribution alongside the binaries.
+
+11.5 ghdl-yosys-plugin license — not applicable. NetCrux neither loads nor
+    ships the GPL-3.0 plugin (§1.3), so the question of combining it with
+    GPL-2.0 GHDL and ISC Yosys in one bundle does not arise.
+
+11.6 Engine licenses are HEAD-verified, not release-verified (§1.4).
+
+11.7 GPL redistribution obligations for the future bundled-binary path.
+    `tool/bundled_engines.yaml` already describes a layout that would ship
+    `yosys` and `ghdl` executables. Shipping GPL-2.0 GHDL triggers its
+    source-conveyance obligations. This should be reviewed by
+    counsel before the first release that bundles an engine binary.
+
+11.8 The About box has no third-party attributions surface of its own.
+    This file is the source of truth for attributions.
+
+11.9 Trademark. Apache 2.0 covers the code, not the "NetCrux" name. The
+    name and logo policy is TRADEMARK.md.
+
+
+--------------------------------------------------------------------------
+12. Refresh procedure
+--------------------------------------------------------------------------
+
+To refresh this file after dependency upgrades:
+
+    flutter pub get
+    flutter pub deps --no-dev --style=compact
+
+For each new or upgraded dependency, locate its license file (typically
+`LICENSE`, `LICENSE.md`) under `~/.pub-cache/hosted/pub.dev/<name>-<version>/`
+and either add a new section here or extend the relevant existing section.
+
+Re-check §2 after any refresh of `assets/elk/elk.bundled.js` (the embedded
+module set can change between elkjs releases), §3 after any `flutter_js`
+upgrade (the shipped native libraries can change), and §1 after any change
+to `tool/bundled_engines.yaml`.
+
+-- BEGIN GENERATED INVENTORY --
+
+--------------------------------------------------------------------------
+13. Complete resolved inventory
+--------------------------------------------------------------------------
+
+Every package in pubspec.lock, with the licence its own
+LICENSE file matches. Generated: do not hand-edit inside the
+markers, and do not use it to replace the narrative sections
+above -- a package that needs explaining still needs an entry
+there.
+
+Some entries are development-only and are never redistributed
+in a product binary. They are listed anyway: `pub deps` marks
+only direct dev dependencies as such, so the shipped subset
+cannot be computed exactly, and over-listing is the safe side
+of an attribution question.
+
+  Apache-2.0 5,  BSD-3-Clause 109,  MIT 23,  MPL-2.0 1,  SDK 42
+
+  _fe_analyzer_shared                          99.0.0           BSD-3-Clause
+  analyzer                                     12.1.0           BSD-3-Clause
+  analyzer_buffer                              0.3.4            MIT
+  args                                         2.7.0            BSD-3-Clause
+  async                                        2.13.1           BSD-3-Clause
+  boolean_selector                             2.1.2            BSD-3-Clause
+  build                                        4.0.7            BSD-3-Clause
+  build_config                                 1.3.3            BSD-3-Clause
+  build_daemon                                 4.1.6            BSD-3-Clause
+  build_runner                                 2.15.1           BSD-3-Clause
+  built_collection                             5.1.1            BSD-3-Clause
+  built_value                                  8.13.0           BSD-3-Clause
+  characters                                   1.4.1            BSD-3-Clause
+  checked_yaml                                 2.0.4            BSD-3-Clause
+  cli_config                                   0.2.0            BSD-3-Clause
+  clock                                        1.1.3            Apache-2.0
+  code_assets                                  2.0.0            BSD-3-Clause
+  code_builder                                 4.12.0           BSD-3-Clause
+  collection                                   1.19.1           BSD-3-Clause
+  convert                                      3.1.2            BSD-3-Clause
+  coverage                                     1.15.1           BSD-3-Clause
+  cross_file                                   0.3.5+5          BSD-3-Clause
+  crux_a11y                                    0.2.0            SDK
+  crux_about_dialog                            0.1.0            SDK
+  crux_app_info                                0.0.1            SDK
+  crux_async                                   0.1.0            SDK
+  crux_audit                                   0.1.0            SDK
+  crux_command_palette                         0.0.2            SDK
+  crux_cxp                                     0.8.0            SDK
+  crux_cxp_ui                                  0.1.0            SDK
+  crux_dock                                    0.1.1            SDK
+  crux_eula                                    0.1.0            SDK
+  crux_file_watcher                            0.0.1            SDK
+  crux_ide_layout                              0.3.0            SDK
+  crux_io                                      0.3.0            SDK
+  crux_issue_reporter                          0.1.0            SDK
+  crux_keybindings                             0.3.0            SDK
+  crux_license                                 0.13.0           SDK
+  crux_linux_integration                       0.1.0            SDK
+  crux_menu_bar                                0.1.0            SDK
+  crux_netlist                                 0.1.0            SDK
+  crux_policy                                  0.1.0            SDK
+  crux_project                                 0.1.1            SDK
+  crux_settings                                0.0.1            SDK
+  crux_settings_ui                             0.2.0            SDK
+  crux_shortcut_action                         0.0.1            SDK
+  crux_signing                                 0.1.0            SDK
+  crux_stats_strip                             0.1.0            SDK
+  crux_status_bar                              0.1.0            SDK
+  crux_telemetry                               0.5.0            SDK
+  crux_theme                                   0.3.0            SDK
+  crux_toolbar                                 0.1.0            SDK
+  crux_updates                                 0.1.0            SDK
+  crux_window_chrome                           0.2.0            SDK
+  crux_workspace                               0.10.0           SDK
+  crux_yosys                                   0.0.1            SDK
+  crypto                                       3.0.7            BSD-3-Clause
+  dart_style                                   3.1.8            BSD-3-Clause
+  dbus                                         0.7.15           MPL-2.0
+  fake_async                                   1.3.3            Apache-2.0
+  ffi                                          2.2.0            BSD-3-Clause
+  ffi_leak_tracker                             0.1.2            BSD-3-Clause
+  file                                         7.0.1            BSD-3-Clause
+  file_picker                                  12.0.0-beta.7    MIT
+  fixnum                                       1.1.1            BSD-3-Clause
+  flutter                                      0.0.0            SDK
+  flutter_driver                               0.0.0            SDK
+  flutter_js                                   0.8.7            MIT
+  flutter_localizations                        0.0.0            SDK
+  flutter_plugin_android_lifecycle             2.0.35           BSD-3-Clause
+  flutter_riverpod                             3.3.2            MIT
+  flutter_test                                 0.0.0            SDK
+  flutter_web_plugins                          0.0.0            SDK
+  freezed_annotation                           3.1.0            MIT
+  frontend_server_client                       4.0.0            BSD-3-Clause
+  fuchsia_remote_debug_protocol                0.0.0            SDK
+  glob                                         2.2.0            BSD-3-Clause
+  go_router                                    17.5.0           BSD-3-Clause
+  graphs                                       2.3.2            BSD-3-Clause
+  hooks                                        2.2.0            BSD-3-Clause
+  http                                         1.6.0            BSD-3-Clause
+  http_multi_server                            3.2.2            BSD-3-Clause
+  http_parser                                  4.1.2            BSD-3-Clause
+  integration_test                             0.0.0            SDK
+  intl                                         0.20.3           BSD-3-Clause
+  io                                           1.1.0            BSD-3-Clause
+  jni                                          1.0.3            BSD-3-Clause
+  jni_flutter                                  1.0.3            BSD-3-Clause
+  jni_util                                     1.0.0            BSD-3-Clause
+  json_annotation                              4.12.0           BSD-3-Clause
+  leak_tracker                                 11.0.2           BSD-3-Clause
+  leak_tracker_flutter_testing                 3.0.10           BSD-3-Clause
+  leak_tracker_testing                         3.0.2            BSD-3-Clause
+  logging                                      1.3.0            BSD-3-Clause
+  matcher                                      0.12.20          BSD-3-Clause
+  material_color_utilities                     0.13.0           Apache-2.0
+  meta                                         1.19.0           BSD-3-Clause
+  mime                                         2.1.0            BSD-3-Clause
+  mockito                                      5.6.4            Apache-2.0
+  mocktail                                     1.0.5            MIT
+  node_preamble                                2.0.2            BSD-3-Clause
+  objective_c                                  9.6.0            BSD-3-Clause
+  package_config                               2.2.0            BSD-3-Clause
+  package_info_plus                            10.2.1           BSD-3-Clause
+  package_info_plus_platform_interface         4.1.0            BSD-3-Clause
+  panes                                        1.3.0            MIT
+  path                                         1.9.1            BSD-3-Clause
+  path_provider                                2.1.6            BSD-3-Clause
+  path_provider_android                        2.3.1            BSD-3-Clause
+  path_provider_foundation                     2.6.0            BSD-3-Clause
+  path_provider_linux                          2.2.2            BSD-3-Clause
+  path_provider_platform_interface             2.1.3            BSD-3-Clause
+  path_provider_windows                        2.3.0            BSD-3-Clause
+  petitparser                                  7.0.2            MIT
+  platform                                     3.2.0            BSD-3-Clause
+  plugin_platform_interface                    2.1.8            BSD-3-Clause
+  pool                                         1.5.3            BSD-3-Clause
+  process                                      5.0.6            BSD-3-Clause
+  pub_semver                                   2.2.1            BSD-3-Clause
+  pubspec_parse                                1.6.0            BSD-3-Clause
+  record_use                                   1.1.1            BSD-3-Clause
+  riverpod                                     3.3.2            MIT
+  riverpod_analyzer_utils                      1.0.0-dev.10     MIT
+  riverpod_annotation                          4.0.3            MIT
+  riverpod_generator                           4.0.4            MIT
+  screen_retriever                             0.2.2            MIT
+  screen_retriever_linux                       0.2.2            MIT
+  screen_retriever_macos                       0.2.2            MIT
+  screen_retriever_platform_interface          0.2.2            MIT
+  screen_retriever_windows                     0.2.2            MIT
+  shared_preferences                           2.5.5            BSD-3-Clause
+  shared_preferences_android                   2.4.28           BSD-3-Clause
+  shared_preferences_foundation                2.5.7            BSD-3-Clause
+  shared_preferences_linux                     2.4.1            BSD-3-Clause
+  shared_preferences_platform_interface        2.4.2            BSD-3-Clause
+  shared_preferences_web                       2.4.3            BSD-3-Clause
+  shared_preferences_windows                   2.4.1            BSD-3-Clause
+  shelf                                        1.4.2            BSD-3-Clause
+  shelf_packages_handler                       3.0.2            BSD-3-Clause
+  shelf_static                                 1.1.3            BSD-3-Clause
+  shelf_web_socket                             3.0.0            BSD-3-Clause
+  sky_engine                                   0.0.0            SDK
+  source_gen                                   4.2.4            BSD-3-Clause
+  source_map_stack_trace                       2.1.2            BSD-3-Clause
+  source_maps                                  0.10.14          BSD-3-Clause
+  source_span                                  1.10.2           BSD-3-Clause
+  stack_trace                                  1.12.2           BSD-3-Clause
+  state_notifier                               1.0.0            MIT
+  stream_channel                               2.1.4            BSD-3-Clause
+  stream_transform                             2.1.2            BSD-3-Clause
+  string_scanner                               1.4.1            BSD-3-Clause
+  sync_http                                    0.3.1            BSD-3-Clause
+  term_glyph                                   1.2.2            BSD-3-Clause
+  test                                         1.31.1           BSD-3-Clause
+  test_api                                     0.7.12           BSD-3-Clause
+  test_core                                    0.6.18           BSD-3-Clause
+  typed_data                                   1.4.0            BSD-3-Clause
+  url_launcher                                 6.3.2            BSD-3-Clause
+  url_launcher_android                         6.3.33           BSD-3-Clause
+  url_launcher_ios                             6.4.2            BSD-3-Clause
+  url_launcher_linux                           3.2.3            BSD-3-Clause
+  url_launcher_macos                           3.2.6            BSD-3-Clause
+  url_launcher_platform_interface              2.3.2            BSD-3-Clause
+  url_launcher_web                             2.4.3            BSD-3-Clause
+  url_launcher_windows                         3.1.6            BSD-3-Clause
+  uuid                                         4.6.0            MIT
+  vector_math                                  2.4.2            BSD-3-Clause
+  very_good_analysis                           10.3.0           MIT
+  vm_service                                   15.3.0           BSD-3-Clause
+  watcher                                      1.2.1            BSD-3-Clause
+  web                                          1.1.1            BSD-3-Clause
+  web_socket                                   1.0.1            BSD-3-Clause
+  web_socket_channel                           3.0.3            BSD-3-Clause
+  webdriver                                    3.2.0            Apache-2.0
+  webkit_inspection_protocol                   1.2.1            BSD-3-Clause
+  win32                                        6.4.0            BSD-3-Clause
+  window_manager                               0.5.2            MIT
+  xdg_directories                              1.1.0            BSD-3-Clause
+  xml                                          7.0.1            MIT
+  yaml                                         3.1.4            MIT
+
+-- END GENERATED INVENTORY --
+
+End of NOTICES.

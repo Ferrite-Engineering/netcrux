@@ -1,0 +1,13 @@
+# Tab walk: 12 stops, cycles
+1. Open Source Files… button
+2. Open Workspace… button
+3. WaveCrux Watch the signal you just traced. Cross-probe from the schematic into a waveform, and back. link
+4. LintCrux Grade the RTL you are browsing. The same Yosys elaboration, read against lint and CDC rules. link
+5. SimCrux Exercise the design you are reading. Run its regression and bring the failures back here. link
+6. A member of the EDACrux suite of products — edacrux.app link
+7. [Toolbar grouping] Open Project… (Ctrl+O) button
+8. Cross-Probe Panel (Ctrl+Shift+X) button
+9. Settings… (Ctrl+,) button
+10. Open Source Files… (Ctrl+Shift+O) button
+11. Open Netlist JSON… button
+12. [Welcome to NetCrux grouping] Open Project… button

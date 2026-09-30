@@ -1,0 +1,24 @@
+# Tab walk: 23 stops, cycles
+1. [Details dock grouping] Inspector button
+2. [Panel dock grouping] Diagnostics button
+3. Statistics button collapsed
+4. [Toolbar grouping] Open Project… (Ctrl+O) button
+5. Save Session As… (Ctrl+S) button
+6. Close Project (Ctrl+Shift+W) button
+7. Search… (Ctrl+F) button
+8. Cross-Probe Panel (Ctrl+Shift+X) button
+9. Settings… (Ctrl+,) button
+10. Open Source Files… (Ctrl+Shift+O) button
+11. Open Netlist JSON… button
+12. Zoom In (Ctrl+=) button
+13. Zoom Out (Ctrl+−) button
+14. Zoom to Fit (Ctrl+0) button
+15. Jump to Top (Ctrl+Home) button
+16. Pop Out of Scope (Ctrl+[) button
+17. [Active pane grouping] top.v button selected
+18. [top.v button] Close top.v button
+19. Render stats for this pane button
+20. [Browser dock Hierarchy grouping] Hide Panel button
+21. Filter scopes… edit
+22. top 1 cell button expanded selected
+23. Schematic: 1 cell, 0 nets text

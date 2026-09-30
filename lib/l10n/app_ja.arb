@@ -1,0 +1,2326 @@
+{
+  "@@locale": "ja",
+  "settingsShortcutsSection": "キーボードショートカット",
+  "@settingsShortcutsSection": {
+    "description": "Settings category title for the keyboard shortcuts editor"
+  },
+  "settingsShortcutsDescription": "鉛筆アイコンを押してショートカットを変更し、新しいキーを押します。エクスポートとインポートでキー割り当てを他のユーザーと共有できます。",
+  "@settingsShortcutsDescription": {
+    "description": "Intro note above the editable shortcuts list"
+  },
+  "settingsShortcutNotBound": "—",
+  "@settingsShortcutNotBound": {
+    "description": "Placeholder shown when an action has no key binding"
+  },
+  "settingsShortcutsKeyboardHint": "上下キーでショートカット間を移動します。Enter で変更、Delete で削除、Shift+Delete で既定値に戻します。",
+  "@settingsShortcutsKeyboardHint": {
+    "description": "Keyboard instructions for the shortcut list in Settings > Keyboard Shortcuts. Shown under the description and spoken once by a screen reader when focus enters the list."
+  },
+  "settingsShortcutNotBoundSpoken": "ショートカットなし",
+  "@settingsShortcutNotBoundSpoken": {
+    "description": "What a screen reader says for an action with no key binding. The visual placeholder is a dash, which is not spoken."
+  },
+  "settingsShortcutsImport": "インポート…",
+  "@settingsShortcutsImport": {
+    "description": "Button that imports a shared .crux-keymap shortcut file"
+  },
+  "settingsShortcutsExport": "エクスポート…",
+  "@settingsShortcutsExport": {
+    "description": "Button that exports shortcut customizations to a .crux-keymap file"
+  },
+  "settingsShortcutsResetAll": "すべてリセット",
+  "@settingsShortcutsResetAll": {
+    "description": "Button/confirm action restoring every shortcut to its default"
+  },
+  "settingsShortcutEditTooltip": "ショートカットを変更",
+  "@settingsShortcutEditTooltip": {
+    "description": "Tooltip for the per-action capture button"
+  },
+  "settingsShortcutUnbindTooltip": "ショートカットを削除",
+  "@settingsShortcutUnbindTooltip": {
+    "description": "Tooltip for the per-action unbind button"
+  },
+  "settingsShortcutResetTooltip": "デフォルトに戻す",
+  "@settingsShortcutResetTooltip": {
+    "description": "Tooltip for the per-action reset button"
+  },
+  "settingsShortcutCapturePrompt": "新しいショートカットを押してください…（Esc でキャンセル）",
+  "@settingsShortcutCapturePrompt": {
+    "description": "Prompt shown while capturing a new chord"
+  },
+  "settingsShortcutConflict": "{actions} でも使用されています",
+  "@settingsShortcutConflict": {
+    "description": "Warning under an action whose chord collides with others",
+    "placeholders": {
+      "actions": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictWins": "{others} より優先されます",
+  "@settingsShortcutConflictWins": {
+    "description": "Conflict warning on the row whose shortcut fires; lists the shadowed actions sharing the chord",
+    "placeholders": {
+      "others": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictShadowed": "{winner} に隠れて発動しません",
+  "@settingsShortcutConflictShadowed": {
+    "description": "Conflict warning on a shadowed row whose shortcut will not fire; names the winning action",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictSummary": "{count, plural, =1{1 件のショートカット競合があります} other{{count} 件のショートカット競合があります}}",
+  "@settingsShortcutConflictSummary": {
+    "description": "Summary banner above the shortcut list showing how many chords are in conflict",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutResetAllTitle": "すべてのショートカットをリセットしますか？",
+  "@settingsShortcutResetAllTitle": {
+    "description": "Title of the reset-all confirmation dialog"
+  },
+  "settingsShortcutResetAllBody": "すべてのキーボードショートカットがデフォルトに戻り、カスタマイズは削除されます。",
+  "@settingsShortcutResetAllBody": {
+    "description": "Body of the reset-all confirmation dialog"
+  },
+  "settingsShortcutResetAllCancel": "キャンセル",
+  "@settingsShortcutResetAllCancel": {
+    "description": "Cancel button in the reset-all confirmation dialog"
+  },
+  "settingsShortcutExportSuccess": "キーボードショートカットをエクスポートしました。",
+  "@settingsShortcutExportSuccess": {
+    "description": "Snackbar after a successful keymap export"
+  },
+  "settingsShortcutExportFailure": "ショートカットをエクスポートできませんでした：{error}",
+  "@settingsShortcutExportFailure": {
+    "description": "Snackbar when keymap export fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutImportEmpty": "そのファイルにはショートカットのカスタマイズが含まれていません。",
+  "@settingsShortcutImportEmpty": {
+    "description": "Snackbar when an imported keymap has no customizations"
+  },
+  "settingsShortcutImportSuccess": "{count, plural, =0{ショートカットのカスタマイズはインポートされませんでした。} =1{1 件のカスタムショートカットをインポートしました。} other{{count} 件のカスタムショートカットをインポートしました。}}",
+  "@settingsShortcutImportSuccess": {
+    "description": "Snackbar after a successful keymap import",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutImportFailure": "ショートカットをインポートできませんでした：{error}",
+  "@settingsShortcutImportFailure": {
+    "description": "Snackbar when keymap import fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutImportNewerVersion": "そのキーマップは新しいバージョンの NetCrux で保存されました（フォーマット {version}）。インポートするには NetCrux を更新してください。",
+  "@settingsShortcutImportNewerVersion": {
+    "description": "Snackbar when an imported keymap declares a schema version newer than this build supports",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutsPresetLabel": "プリセット",
+  "@settingsShortcutsPresetLabel": {
+    "description": "Label for the keymap preset chooser above the editable shortcut list"
+  },
+  "settingsShortcutsPresetDescription": "キーバインドのセットを読み込みます。読み込み後も個別のショートカットをカスタマイズできます。",
+  "@settingsShortcutsPresetDescription": {
+    "description": "Description under the keymap preset chooser"
+  },
+  "settingsShortcutsPresetNetCrux": "NetCrux（デフォルト）",
+  "@settingsShortcutsPresetNetCrux": {
+    "description": "Name of the default NetCrux keymap preset in the preset chooser"
+  },
+  "settingsShortcutsPresetCustom": "カスタム",
+  "@settingsShortcutsPresetCustom": {
+    "description": "Shown in the preset chooser when the user's bindings match no built-in preset"
+  },
+  "appTitle": "NetCrux",
+  "@appTitle": {
+    "description": "Application title shown in the window title bar and About box."
+  },
+  "actionCategoryApp": "NetCrux",
+  "@actionCategoryApp": {
+    "description": "Menu bar / overflow menu category label for the host application menu (macOS application menu, the first menu)."
+  },
+  "actionCategoryFile": "ファイル",
+  "@actionCategoryFile": {
+    "description": "Menu bar / overflow menu category label for file operations (open, save, export, recent files)."
+  },
+  "actionCategoryView": "表示",
+  "@actionCategoryView": {
+    "description": "Menu bar / overflow menu category label for view operations (panel toggles, layout, zoom)."
+  },
+  "actionCategoryNavigate": "ナビゲーション",
+  "@actionCategoryNavigate": {
+    "description": "Menu bar / overflow menu category label for navigation operations (jump to top, pop out, clear overlay)."
+  },
+  "actionCategorySearch": "検索",
+  "@actionCategorySearch": {
+    "description": "Menu bar / overflow menu category label for search operations (find, command palette)."
+  },
+  "actionCategoryTools": "ツール",
+  "@actionCategoryTools": {
+    "description": "Menu bar / overflow menu category label for tool operations (settings, diagnostics, analysis)."
+  },
+  "actionCategoryHelp": "ヘルプ",
+  "@actionCategoryHelp": {
+    "description": "Menu bar / overflow menu category label for help operations (about, documentation, keyboard shortcuts)."
+  },
+  "actionOpenProject": "プロジェクトを開く…",
+  "@actionOpenProject": {
+    "description": "Command palette / menu label for opening a .netcrux project file."
+  },
+  "actionOpenSourceFiles": "ソースファイルを開く…",
+  "@actionOpenSourceFiles": {
+    "description": "Command palette / menu label for opening one or more Verilog/VHDL source files."
+  },
+  "actionOpenNetlistJson": "ネットリスト JSON を開く…",
+  "@actionOpenNetlistJson": {
+    "description": "Command palette / menu / toolbar label for opening a pre-built Yosys JSON netlist, which renders without elaboration. The only way to load a design in the web viewer."
+  },
+  "actionCloseProject": "プロジェクトを閉じる",
+  "@actionCloseProject": {
+    "description": "Command palette / menu label for closing the currently open project."
+  },
+  "actionCloseTab": "タブを閉じる",
+  "@actionCloseTab": {
+    "description": "Command palette / menu label for closing the active workspace tab (Cmd/Ctrl+W)."
+  },
+  "actionZoomIn": "拡大",
+  "@actionZoomIn": {
+    "description": "Command palette / menu label for zooming the schematic canvas in."
+  },
+  "actionZoomOut": "縮小",
+  "@actionZoomOut": {
+    "description": "Command palette / menu label for zooming the schematic canvas out."
+  },
+  "actionZoomFitAll": "全体表示",
+  "@actionZoomFitAll": {
+    "description": "Command palette / menu label for fitting the entire schematic in the viewport."
+  },
+  "actionToggleHierarchyTree": "階層ツリーの切り替え",
+  "@actionToggleHierarchyTree": {
+    "description": "Command palette / menu label for toggling the left hierarchy tree panel."
+  },
+  "actionToggleInspector": "インスペクターの切り替え",
+  "@actionToggleInspector": {
+    "description": "Command palette / menu label for toggling the right inspector panel."
+  },
+  "actionToggleDiagnosticsPanel": "タブ診断",
+  "@actionToggleDiagnosticsPanel": {
+    "description": "Command palette / menu label for toggling the bottom diagnostics panel."
+  },
+  "actionOpenSearch": "検索…",
+  "@actionOpenSearch": {
+    "description": "Command palette / menu label for opening the design search dialog."
+  },
+  "actionOpenCommandPalette": "コマンドパレット…",
+  "@actionOpenCommandPalette": {
+    "description": "Command palette / menu label for opening the command palette overlay."
+  },
+  "actionOpenSettings": "設定…",
+  "@actionOpenSettings": {
+    "description": "Command palette / menu label for opening the settings screen."
+  },
+  "actionOpenAbout": "NetCrux について",
+  "@actionOpenAbout": {
+    "description": "Command palette / menu label for opening the About box."
+  },
+  "actionJumpToTop": "最上位へ移動",
+  "@actionJumpToTop": {
+    "description": "Command palette / menu label for jumping to the top of the design hierarchy."
+  },
+  "actionQuit": "NetCrux を終了",
+  "@actionQuit": {
+    "description": "Command palette / menu label for quitting the application."
+  },
+  "commandPaletteSearchHint": "コマンドを検索…",
+  "@commandPaletteSearchHint": {
+    "description": "Placeholder hint text in the command palette search field"
+  },
+  "commandPaletteNoResults": "コマンドが見つかりません",
+  "@commandPaletteNoResults": {
+    "description": "Message displayed in the command palette when the search query matches no actions"
+  },
+  "filePickerProjectDialogTitle": "NetCrux プロジェクトを開く",
+  "@filePickerProjectDialogTitle": {
+    "description": "Title shown in the OS file picker when opening a .netcrux project file."
+  },
+  "filePickerSourcesDialogTitle": "Verilog / VHDL ソースファイルを開く",
+  "@filePickerSourcesDialogTitle": {
+    "description": "Title shown in the OS file picker when opening one or more HDL source files."
+  },
+  "filePickerNetlistDialogTitle": "Yosys JSON ネットリストを開く",
+  "@filePickerNetlistDialogTitle": {
+    "description": "Title shown in the file picker when opening a pre-built Yosys JSON netlist."
+  },
+  "hierarchyFilterHint": "スコープを絞り込む…",
+  "@hierarchyFilterHint": {
+    "description": "Placeholder text inside the hierarchy tree panel's substring filter field."
+  },
+  "hierarchyClearFilterTooltip": "フィルタをクリア",
+  "@hierarchyClearFilterTooltip": {
+    "description": "Tooltip on the X button that clears the hierarchy tree's filter text."
+  },
+  "hierarchyEmptyNoDesign": "設計を開いて階層を表示します。",
+  "@hierarchyEmptyNoDesign": {
+    "description": "Empty-state text shown in the hierarchy tree panel when no design is loaded."
+  },
+  "hierarchyEmptyNoTop": "エラボレートされた設計にトップモジュールがありません。",
+  "@hierarchyEmptyNoTop": {
+    "description": "Empty-state text shown in the hierarchy tree panel when the loaded design has no module marked top."
+  },
+  "hierarchyEmptyElaborationFailed": "エラボレーションに失敗しました: {message}",
+  "@hierarchyEmptyElaborationFailed": {
+    "description": "Empty-state text shown in the hierarchy tree panel when the loaded project failed to elaborate. The {message} placeholder is filled with the exception's user-facing message (e.g. 'Yosys is not available', 'Source file not found').",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "elaborationErrorTitle": "エラボレーションに失敗しました",
+  "@elaborationErrorTitle": {
+    "description": "Title of the schematic error view shown when elaborating the project failed. Acts as the envelope above the specific, localized reason."
+  },
+  "elaborationErrorYosysUnavailable": "Yosys が見つからないか実行できませんでした。Yosys をインストールするか、設定 > エンジン でパスを指定してください。",
+  "@elaborationErrorYosysUnavailable": {
+    "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
+  },
+  "elaborationErrorTimeout": "エラボレーションは {seconds} 秒でタイムアウトし、停止されました。設計が非常に大きいか、Yosys が停止している可能性があります。タイムアウトを延長するか、トップモジュールを簡略化してください。",
+  "@elaborationErrorTimeout": {
+    "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "elaborationErrorNonZeroExit": "Yosys がエラーで終了しました（終了コード {code}）。下の詳細または診断ドロワーを確認してください。",
+  "@elaborationErrorNonZeroExit": {
+    "description": "Schematic error-view body shown when Yosys ran but exited non-zero. {code} is the process exit code.",
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "elaborationErrorGeneric": "プロジェクトのエラボレーション中に問題が発生しました。下の詳細を確認してください。",
+  "@elaborationErrorGeneric": {
+    "description": "Schematic error-view body for an unclassified elaboration failure; the raw error text appears in the expandable details section."
+  },
+  "elaborationErrorDetailsLabel": "詳細",
+  "@elaborationErrorDetailsLabel": {
+    "description": "Expander label above the raw error detail (Yosys stderr, or an unclassified error's text) in the schematic error view."
+  },
+  "commonCancel": "キャンセル",
+  "@commonCancel": {
+    "description": "Generic Cancel button label used across dialogs."
+  },
+  "commonOk": "OK",
+  "@commonOk": {
+    "description": "Generic OK button label used across dialogs."
+  },
+  "schematicLayoutInProgress": "{count, plural, =0{回路図をレイアウト中…} =1{回路図をレイアウト中…（1 セル）} other{回路図をレイアウト中…（{count} セル）}}",
+  "@schematicLayoutInProgress": {
+    "description": "Progress message shown on the schematic canvas while the ELK layout for the selected scope runs on a background isolate. {count} is the number of cells in the scope; 0 means the count is not yet known (just show the base message).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "schematicLayoutElapsed": "経過時間 {seconds} 秒",
+  "@schematicLayoutElapsed": {
+    "description": "Secondary line under the schematic layout progress bar showing how long the (indeterminate) layout has been running. {seconds} is a one-decimal seconds string, e.g. '4.2'.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyFilterNoMatches": "フィルタに一致するスコープはありません。セルやネットを名前で探すには「検索…」（Ctrl+F、macOS では ⌘F）を使ってください。",
+  "@hierarchyFilterNoMatches": {
+    "description": "Shown in the hierarchy tree panel when the active filter substring matches no scope names."
+  },
+  "hierarchyCellCountLabel": "{count} セル",
+  "@hierarchyCellCountLabel": {
+    "description": "Compact suffix on each hierarchy row showing how many cell instances live inside that scope.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hierarchyModuleLabel": "({module})",
+  "@hierarchyModuleLabel": {
+    "description": "Compact suffix showing the module name of an instance in the hierarchy tree row (e.g. 'u_cpu (cpu)').",
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyExpandTooltip": "展開",
+  "@hierarchyExpandTooltip": {
+    "description": "Tooltip on the expand-row chevron in the hierarchy tree."
+  },
+  "hierarchyCollapseTooltip": "折りたたむ",
+  "@hierarchyCollapseTooltip": {
+    "description": "Tooltip on the collapse-row chevron in the hierarchy tree."
+  },
+  "actionPopOutScope": "スコープから抜ける",
+  "@actionPopOutScope": {
+    "description": "Command palette / menu label for popping out of the current scope to its parent."
+  },
+  "actionShowFanin": "ファンインを表示",
+  "@actionShowFanin": {
+    "description": "Command palette / menu label for the fanin (drivers) tracing overlay."
+  },
+  "actionShowFanout": "ファンアウトを表示",
+  "@actionShowFanout": {
+    "description": "Command palette / menu label for the fanout (loads) tracing overlay."
+  },
+  "actionClearOverlay": "選択/オーバーレイをクリア",
+  "@actionClearOverlay": {
+    "description": "Command palette / menu label for clearing the current selection and any fanin/fanout overlay."
+  },
+  "actionExportPng": "PNG をエクスポート…",
+  "@actionExportPng": {
+    "description": "Command palette / menu label for exporting the current schematic as a PNG image."
+  },
+  "actionExportSvg": "SVG をエクスポート…",
+  "@actionExportSvg": {
+    "description": "Command palette / menu label for exporting the current schematic as an SVG image."
+  },
+  "actionExportJson": "JSON をエクスポート…",
+  "@actionExportJson": {
+    "description": "Command palette / menu label for exporting the current scope's Yosys JSON subset."
+  },
+  "actionSaveSession": "セッションを名前を付けて保存…",
+  "@actionSaveSession": {
+    "description": "Command palette / menu label for saving the current session as a .netcrux file."
+  },
+  "actionOpenSession": "セッションを開く…",
+  "@actionOpenSession": {
+    "description": "Command palette / menu label for opening a .netcrux session file."
+  },
+  "breadcrumbTooltip": "セグメントをクリックしてそのスコープにジャンプ",
+  "@breadcrumbTooltip": {
+    "description": "Tooltip on the schematic breadcrumb bar explaining segment navigation."
+  },
+  "inspectorGoToSource": "ソースへ移動",
+  "@inspectorGoToSource": {
+    "description": "Button in the schematic Inspector panel that opens the RTL source for the selected element in the source pane. The same action the schematic context menu offers; duplicated because the Inspector is where a user reading an element's details asks 'where does this come from'."
+  },
+  "inspectorEmpty": "選択なし",
+  "@inspectorEmpty": {
+    "description": "Empty-state text shown in the inspector panel when nothing is selected on the canvas."
+  },
+  "inspectorCellHeader": "セル",
+  "@inspectorCellHeader": {
+    "description": "Section header in the inspector panel for a selected cell."
+  },
+  "inspectorPortHeader": "ポート",
+  "@inspectorPortHeader": {
+    "description": "Section header in the inspector panel for a selected port."
+  },
+  "inspectorWireHeader": "ワイヤー",
+  "@inspectorWireHeader": {
+    "description": "Section header in the inspector panel for a selected wire."
+  },
+  "inspectorFieldType": "種別",
+  "@inspectorFieldType": {
+    "description": "Inspector field label for the Yosys cell type."
+  },
+  "inspectorFieldInstance": "インスタンス",
+  "@inspectorFieldInstance": {
+    "description": "Inspector field label for the cell instance name."
+  },
+  "inspectorFieldKind": "カテゴリ",
+  "@inspectorFieldKind": {
+    "description": "Inspector field label for the cell kind (and/or/dff/mux/etc.)."
+  },
+  "inspectorFieldDirection": "方向",
+  "@inspectorFieldDirection": {
+    "description": "Inspector field label for the direction (input/output/inout) of a port."
+  },
+  "inspectorFieldWidth": "ビット幅",
+  "@inspectorFieldWidth": {
+    "description": "Inspector field label for the bit width of a port or wire."
+  },
+  "inspectorFieldNet": "ネット",
+  "@inspectorFieldNet": {
+    "description": "Inspector field label for the underlying net of a port or wire."
+  },
+  "inspectorFieldNetId": "ネット ID",
+  "@inspectorFieldNetId": {
+    "description": "Inspector field label for the numeric net identifier (Yosys uses integer net ids)."
+  },
+  "inspectorFieldDriver": "ドライバー",
+  "@inspectorFieldDriver": {
+    "description": "Inspector field label for the driving port of a wire."
+  },
+  "inspectorFieldSinks": "シンク",
+  "@inspectorFieldSinks": {
+    "description": "Inspector field label for the list of sink ports a wire drives into."
+  },
+  "inspectorParametersHeader": "パラメータ",
+  "@inspectorParametersHeader": {
+    "description": "Inspector section header above a cell's parameter list."
+  },
+  "inspectorPortsHeader": "ポート一覧",
+  "@inspectorPortsHeader": {
+    "description": "Inspector section header above a cell's port-binding list."
+  },
+  "searchDialogTitle": "設計を検索",
+  "@searchDialogTitle": {
+    "description": "Title bar of the design search dialog."
+  },
+  "searchDialogHint": "インスタンス、セル、ネットを検索…",
+  "@searchDialogHint": {
+    "description": "Placeholder text inside the search dialog's text field."
+  },
+  "searchNoResults": "結果がありません。",
+  "@searchNoResults": {
+    "description": "Shown in the search dialog when the query matches nothing in the design."
+  },
+  "searchModeSubstring": "部分一致",
+  "@searchModeSubstring": {
+    "description": "Search mode chip label: case-insensitive substring matching."
+  },
+  "searchModeGlob": "Glob",
+  "@searchModeGlob": {
+    "description": "Search mode chip label: glob pattern matching (* and ?)."
+  },
+  "searchModeRegex": "正規表現",
+  "@searchModeRegex": {
+    "description": "Search mode chip label: regular-expression matching."
+  },
+  "searchResultInstance": "インスタンス",
+  "@searchResultInstance": {
+    "description": "Kind chip on a search result row for an instance hit."
+  },
+  "searchResultCell": "セル",
+  "@searchResultCell": {
+    "description": "Kind chip on a search result row for a cell hit."
+  },
+  "searchResultNet": "ネット",
+  "@searchResultNet": {
+    "description": "Kind chip on a search result row for a net hit."
+  },
+  "exportDialogSaveTitle": "回路図画像を保存",
+  "@exportDialogSaveTitle": {
+    "description": "Title of the OS save-file dialog used by PNG/SVG export."
+  },
+  "exportDialogJsonTitle": "Yosys JSON を保存",
+  "@exportDialogJsonTitle": {
+    "description": "Title of the OS save-file dialog used by JSON export."
+  },
+  "exportSuccessMessage": "{path} に保存しました",
+  "@exportSuccessMessage": {
+    "description": "Snackbar shown after a successful export.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailureMessage": "エクスポートに失敗:{error}",
+  "@exportFailureMessage": {
+    "description": "Snackbar shown after a failed export.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionSaveDialogTitle": "NetCrux セッションを保存",
+  "@sessionSaveDialogTitle": {
+    "description": "Title of the OS save-file dialog used by Save Session."
+  },
+  "sessionOpenDialogTitle": "NetCrux セッションを開く",
+  "@sessionOpenDialogTitle": {
+    "description": "Title of the OS open-file dialog used by Open Session."
+  },
+  "sessionLoadUnknownVersion": "未知のセッションバージョン {version}",
+  "@sessionLoadUnknownVersion": {
+    "description": "Snackbar shown when loading a session file whose schema version we don't recognize.",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionLoadFailed": "セッションを読み込めません:{reason}",
+  "@sessionLoadFailed": {
+    "description": "Snackbar shown when a session file cannot be parsed or applied.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRestoreCorrupted": "以前のワークスペースを復元できなかったため、別に保存しました。新しいワークスペースで起動します。",
+  "@workspaceRestoreCorrupted": {
+    "description": "Snackbar/notice shown on launch when a corrupt workspace.json was quarantined (moved aside) and the app started with an empty workspace."
+  },
+  "settingsAutoReloadLabel": "ソース変更時に自動で再読み込み",
+  "@settingsAutoReloadLabel": {
+    "description": "Label for the auto-reload setting in Settings → General."
+  },
+  "settingsAutoReloadAuto": "自動で再読み込み",
+  "@settingsAutoReloadAuto": {
+    "description": "Auto-reload mode option: re-elaborate whenever the source file changes."
+  },
+  "settingsAutoReloadPrompt": "確認する",
+  "@settingsAutoReloadPrompt": {
+    "description": "Auto-reload mode option: show a snackbar when the source changes and let the user decide."
+  },
+  "settingsAutoReloadOff": "再読み込みしない",
+  "@settingsAutoReloadOff": {
+    "description": "Auto-reload mode option: ignore source-file changes."
+  },
+  "autoReloadPromptAction": "再読み込み",
+  "@autoReloadPromptAction": {
+    "description": "Snackbar action button label that triggers a reload."
+  },
+  "settingsTitle": "設定",
+  "@settingsTitle": {
+    "description": "Title bar of the settings screen."
+  },
+  "settingsGeneralSection": "一般",
+  "@settingsGeneralSection": {
+    "description": "Section header for the General settings group."
+  },
+  "settingsAppearanceSection": "外観",
+  "@settingsAppearanceSection": {
+    "description": "Section header for the Appearance settings group."
+  },
+  "settingsEnginesSection": "エンジン",
+  "@settingsEnginesSection": {
+    "description": "Section header for the Engines settings group (yosys path, etc.)."
+  },
+  "settingsYosysPathLabel": "Yosys バイナリパス",
+  "@settingsYosysPathLabel": {
+    "description": "Label for the yosys binary path override field in Settings → Engines."
+  },
+  "settingsClose": "閉じる",
+  "@settingsClose": {
+    "description": "Close button on the settings screen."
+  },
+  "breadcrumbRootTooltip": "設計階層のトップ",
+  "@breadcrumbRootTooltip": {
+    "description": "Tooltip on the first (top-module) breadcrumb segment."
+  },
+  "fileChangedSnackbar": "{count, plural, =1{1 個のソースファイルが変更されました。} other{{count} 個のソースファイルが変更されました。}}",
+  "@fileChangedSnackbar": {
+    "description": "Plural snackbar shown when file watcher detects changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contextMenuCopyPath": "パスをコピー",
+  "@contextMenuCopyPath": {
+    "description": "Right-click / long-press context-menu item that copies the canonical hierarchical path of the selected element to the clipboard."
+  },
+  "contextMenuTraceFanin": "ファンインをトレース",
+  "@contextMenuTraceFanin": {
+    "description": "Right-click / long-press context-menu item that runs the fanin trace on the selected element."
+  },
+  "contextMenuTraceFanout": "ファンアウトをトレース",
+  "@contextMenuTraceFanout": {
+    "description": "Right-click / long-press context-menu item that runs the fanout trace on the selected element."
+  },
+  "contextMenuFindInHierarchy": "階層内で検索",
+  "@contextMenuFindInHierarchy": {
+    "description": "Right-click / long-press context-menu item that selects the parent scope of the right-clicked element in the hierarchy tree."
+  },
+  "contextMenuOpenInInspector": "インスペクターで開く",
+  "@contextMenuOpenInInspector": {
+    "description": "Right-click / long-press context-menu item that promotes the right-clicked element to the inspector pane's primary view."
+  },
+  "contextMenuCopyPathSuccess": "パスをコピーしました:{path}",
+  "@contextMenuCopyPathSuccess": {
+    "description": "Snackbar confirming the canonical hierarchical path was copied.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "projectLoadUnknownVersion": "不明なプロジェクトバージョン {version}",
+  "@projectLoadUnknownVersion": {
+    "description": "Snackbar shown when a .netcrux-project file carries a version this build cannot read.",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "projectLoadFailed": "プロジェクトを読み込めませんでした:{reason}",
+  "@projectLoadFailed": {
+    "description": "Snackbar shown when a .netcrux-project file cannot be loaded (I/O error, malformed JSON, missing version, etc.).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectInvalid": "有効な .crux-project ファイルではありません: {reason}",
+  "@cruxProjectInvalid": {
+    "description": "Snackbar shown when a .crux-project suite manifest cannot be parsed. The reason is the parser's own detail (untranslated).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectNetlistMissing": "このプロジェクトが指定するネットリストが見つかりません: {path}",
+  "@cruxProjectNetlistMissing": {
+    "description": "Snackbar shown when a .crux-project manifest names an artifacts.netlist file that does not exist on disk.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectNothingToOpen": "{name} には RTL ソースもネットリストもまだ指定されていません。.crux-project ファイルに design.sources または artifacts.netlist を追加してください。",
+  "@cruxProjectNothingToOpen": {
+    "description": "Snackbar shown when a .crux-project manifest names neither RTL sources nor a netlist, so NetCrux has nothing to open. design.sources and artifacts.netlist are YAML keys and stay untranslated.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectLegacyFileName": "この .crux-project ファイルには名前がないため、ファイル選択ダイアログに表示されません。{suggestedName} に名前を変更してください。今後のリリースでは名前のないファイルは開けなくなります。",
+  "@cruxProjectLegacyFileName": {
+    "description": "Informational snackbar shown once after a design opens from a suite manifest still named with the legacy bare .crux-project file name, which native file pickers hide. suggestedName is the file name to rename it to, such as uart_tx.crux-project (a file name, untranslated).",
+    "placeholders": {
+      "suggestedName": {
+        "type": "String",
+        "example": "uart_tx.crux-project"
+      }
+    }
+  },
+  "cruxProjectAmbiguous": "{directory} に .crux-project ファイルが複数あります（{candidates}）。設計ディレクトリごとに 1 つだけにしてください。",
+  "@cruxProjectAmbiguous": {
+    "description": "Error snackbar shown when a design directory passed to NetCrux holds more than one .crux-project manifest, so NetCrux will not guess which one describes the design. directory is the path as given; candidates is a comma-separated list of the manifest file names (untranslated).",
+    "placeholders": {
+      "directory": {
+        "type": "String",
+        "example": "/work/uart_tx"
+      },
+      "candidates": {
+        "type": "String",
+        "example": ".crux-project, uart_tx.crux-project"
+      }
+    }
+  },
+  "cruxProjectNoneInDirectory": "{directory} に .crux-project ファイルがありません。{suggestedName} という名前で作成するか、設計のソースファイルを開いてください。",
+  "@cruxProjectNoneInDirectory": {
+    "description": "Error snackbar shown when a directory passed to NetCrux holds no .crux-project manifest. directory is the path as given; suggestedName is the manifest file name to create, such as uart_tx.crux-project (a file name, untranslated).",
+    "placeholders": {
+      "directory": {
+        "type": "String",
+        "example": "/work/uart_tx"
+      },
+      "suggestedName": {
+        "type": "String",
+        "example": "uart_tx.crux-project"
+      }
+    }
+  },
+  "webNetlistLoadFailed": "{url} からネットリストを読み込めませんでした。サーバーがこのページからのクロスオリジン要求を許可している必要があります。",
+  "@webNetlistLoadFailed": {
+    "description": "Snackbar on the web viewer when the netlist named by the ?json= URL parameter cannot be fetched. The most common cause is a server that does not send CORS headers.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "filePickerFailed": "ファイルピッカーを開けませんでした: {error}",
+  "@filePickerFailed": {
+    "description": "Snackbar shown when the file picker itself throws (e.g. macOS rejects an unknown extension or the OS file-selector plugin returns an error). Surfaces the underlying error so file-open failures are not silent.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "actionImportFilelist": "Vivado ファイルリストをインポート…",
+  "@actionImportFilelist": {
+    "description": "Command palette / menu label for importing a Vivado-style .f filelist into a new project."
+  },
+  "filePickerFilelistDialogTitle": "Vivado ファイルリストをインポート",
+  "@filePickerFilelistDialogTitle": {
+    "description": "Title for the file picker dialog when importing a .f filelist."
+  },
+  "yosysPathModeAuto": "自動検出",
+  "@yosysPathModeAuto": {
+    "description": "Segmented-button label for the Yosys path mode that uses PATH search."
+  },
+  "yosysPathModeBundled": "同梱版",
+  "@yosysPathModeBundled": {
+    "description": "Segmented-button label for the Yosys path mode reserved for a NetCrux-shipped binary. No Yosys binary ships with NetCrux today, so this mode resolves only when NETCRUX_BUNDLED_BIN_DIR is set and otherwise falls back to the PATH lookup."
+  },
+  "yosysPathModeCustom": "カスタム",
+  "@yosysPathModeCustom": {
+    "description": "Segmented-button label for the Yosys path mode that uses a user-supplied binary path."
+  },
+  "settingsYosysCustomPathLabel": "Yosys 実行ファイルのパス",
+  "@settingsYosysCustomPathLabel": {
+    "description": "TextField label for the custom Yosys binary path under Settings → Engines."
+  },
+  "settingsYosysCustomPathHint": "/usr/local/bin/yosys",
+  "@settingsYosysCustomPathHint": {
+    "description": "TextField placeholder showing an example absolute Yosys binary path."
+  },
+  "yosysCustomPathProbing": "確認中…",
+  "@yosysCustomPathProbing": {
+    "description": "Helper label shown beneath the Yosys path field while yosys -V is being run."
+  },
+  "yosysCustomPathDetected": "検出済み:{version}",
+  "@yosysCustomPathDetected": {
+    "description": "Helper label shown beneath the Yosys path field after a successful probe.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "yosysCustomPathInvalid": "そのパスで Yosys を実行できません。",
+  "@yosysCustomPathInvalid": {
+    "description": "Helper label shown beneath the Yosys path field when the probe fails."
+  },
+  "yosysReasonNotOnPath": "PATH に Yosys が見つかりません。Yosys をインストールするか、設定でカスタムパスを指定してください。",
+  "@yosysReasonNotOnPath": {
+    "description": "Shown when the Yosys probe found no yosys binary on PATH."
+  },
+  "yosysReasonExecFailed": "Yosys の実行ファイルは見つかりましたが、実行できませんでした。破損しているか、不完全であるか、セキュリティ設定によってブロックされている可能性があります。",
+  "@yosysReasonExecFailed": {
+    "description": "Shown when a Yosys binary was found but could not be executed."
+  },
+  "yosysReasonBannerUnparsed": "Yosys は実行されましたが、NetCrux が認識できないバージョンを報告しました。サポートされていないビルドの可能性があります。",
+  "@yosysReasonBannerUnparsed": {
+    "description": "Shown when Yosys ran but its version banner could not be parsed."
+  },
+  "yosysReasonProbeTimedOut": "Yosys が時間内に応答しませんでした。実行ファイルが応答しないネットワークドライブ上にあるか、入力を待機している可能性があります。",
+  "@yosysReasonProbeTimedOut": {
+    "description": "Shown when the Yosys version probe did not respond within its time budget."
+  },
+  "elaborationDiagnosticsEmpty": "現在の実行ではエラボレーション診断はありません。",
+  "@elaborationDiagnosticsEmpty": {
+    "description": "Placeholder shown when Yosys produced no warnings or errors on the current run."
+  },
+  "elaborationDiagnosticsFatal": "エラボレーションに失敗しました",
+  "@elaborationDiagnosticsFatal": {
+    "description": "Banner title shown at the top of the elaboration-diagnostics drawer when the elaboration pipeline failed before Yosys could produce diagnostics (e.g. Yosys is not installed, the source files do not exist)."
+  },
+  "elaborationDiagnosticsAllFiltered": "現在の重要度フィルターですべての診断が非表示です。",
+  "@elaborationDiagnosticsAllFiltered": {
+    "description": "Placeholder shown when at least one diagnostic exists but the active severity filter excludes them all."
+  },
+  "elaborationDiagnosticsCopyReport": "レポートをコピー",
+  "@elaborationDiagnosticsCopyReport": {
+    "description": "Button label that copies the elaboration-diagnostics list to the clipboard."
+  },
+  "elaborationDiagnosticsCopied": "診断をクリップボードにコピーしました。",
+  "@elaborationDiagnosticsCopied": {
+    "description": "Snackbar confirming the elaboration-diagnostics report was copied."
+  },
+  "elaborationDiagnosticsCopyEntry": "この項目をコピー",
+  "@elaborationDiagnosticsCopyEntry": {
+    "description": "Tooltip on the per-row copy button in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityError": "エラー",
+  "@diagnosticSeverityError": {
+    "description": "Filter chip label for the error severity in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityWarning": "警告",
+  "@diagnosticSeverityWarning": {
+    "description": "Filter chip label for the warning severity in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityInfo": "情報",
+  "@diagnosticSeverityInfo": {
+    "description": "Filter chip label for the info severity in the elaboration-diagnostics list."
+  },
+  "viewerTabBarCloseTabTooltip": "タブを閉じる",
+  "@viewerTabBarCloseTabTooltip": {
+    "description": "Tooltip on the per-chip close button in the workspace tab bar."
+  },
+  "viewerTabBarCloseTabTooltipFor": "{name} を閉じる",
+  "@viewerTabBarCloseTabTooltipFor": {
+    "description": "Tooltip and accessible name of the per-chip close button in the workspace tab bar; name is the tab's display name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerTabBarNewTabTooltip": "新しいタブ",
+  "@viewerTabBarNewTabTooltip": {
+    "description": "Tooltip on the trailing '+' button that opens an empty tab in the workspace tab bar."
+  },
+  "viewerTabBarNewTabDefaultDisplayName": "新しいタブ",
+  "@viewerTabBarNewTabDefaultDisplayName": {
+    "description": "Default display name used when the user opens an empty tab via the '+' button in the workspace tab bar."
+  },
+  "viewerTabBarUnnamedTabFallback": "(無名のタブ)",
+  "@viewerTabBarUnnamedTabFallback": {
+    "description": "Fallback rendered in place of a tab's display name when the underlying payload provides a blank string."
+  },
+  "viewerTabBarCloseTabMenuItem": "タブを閉じる",
+  "@viewerTabBarCloseTabMenuItem": {
+    "description": "Context-menu item that closes the right-clicked tab in the workspace tab bar."
+  },
+  "viewerTabBarCloseOtherTabsMenuItem": "他のタブを閉じる",
+  "@viewerTabBarCloseOtherTabsMenuItem": {
+    "description": "Context-menu item that closes every other tab in the host pane."
+  },
+  "viewerTabBarCloseTabsToTheRightMenuItem": "右側のタブを閉じる",
+  "@viewerTabBarCloseTabsToTheRightMenuItem": {
+    "description": "Context-menu item that closes tabs to the right of the right-clicked tab in its host pane."
+  },
+  "viewerTabBarMoveToNewWindowMenuItem": "新しいウィンドウに移動",
+  "@viewerTabBarMoveToNewWindowMenuItem": {
+    "description": "Context-menu item that detaches the tab into its own window — Pro feature, disabled until Flutter multi-window reaches stable."
+  },
+  "viewerTabBarMultiWindowUnavailableTooltip": "Flutter マルチウィンドウが安定版になったときに利用可能",
+  "@viewerTabBarMultiWindowUnavailableTooltip": {
+    "description": "Tooltip shown next to the disabled Move to New Window menu item when multi-window is unavailable."
+  },
+  "viewerTabBarActivePaneAccessibilityLabel": "アクティブなペイン",
+  "@viewerTabBarActivePaneAccessibilityLabel": {
+    "description": "Accessibility label announced on the active pane so screen readers signal focus changes."
+  },
+  "viewerTabBarDragToPaneAccessibilityHint": "ここにドロップしてタブをこのペインに移動",
+  "@viewerTabBarDragToPaneAccessibilityHint": {
+    "description": "Accessibility hint announced when a tab is being dragged toward another pane's tab bar."
+  },
+  "viewerTabBarReorderHandleTooltip": "ドラッグして並べ替え",
+  "@viewerTabBarReorderHandleTooltip": {
+    "description": "Tooltip on the leading drag handle of each tab chip in the workspace tab bar."
+  },
+  "viewerTabBarScrollTabsLeftTooltip": "タブを左にスクロール",
+  "@viewerTabBarScrollTabsLeftTooltip": {
+    "description": "Tooltip on the chevron that scrolls the workspace tab strip toward its start."
+  },
+  "viewerTabBarScrollTabsRightTooltip": "タブを右にスクロール",
+  "@viewerTabBarScrollTabsRightTooltip": {
+    "description": "Tooltip on the chevron that scrolls the workspace tab strip toward its end."
+  },
+  "emptyCanvasTitle": "NetCrux へようこそ",
+  "@emptyCanvasTitle": {
+    "description": "Headline rendered on the empty-canvas startup state when the workspace has zero tabs."
+  },
+  "emptyCanvasSubtitle": "設計を、ひと目で。",
+  "@emptyCanvasSubtitle": {
+    "description": "Subtitle rendered below the empty-canvas headline — the NetCrux tagline."
+  },
+  "emptyCanvasBrowserHint": "Web ビューアーは Yosys の write_json で出力した JSON ネットリストを開きます。Verilog や VHDL のエラボレーションにはデスクトップアプリが必要です。",
+  "@emptyCanvasBrowserHint": {
+    "description": "Hint on the web viewer's start screen explaining what it can open. write_json is a Yosys command name and stays untranslated."
+  },
+  "emptyCanvasVersion": "バージョン {version}",
+  "@emptyCanvasVersion": {
+    "description": "Muted version line under the empty-canvas (welcome) subtitle. The only always-visible version indicator on web, where there is no native menu bar to host an About entry point.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyCanvasSuiteFooter": "EDACrux 製品スイートの一員 — edacrux.app",
+  "@emptyCanvasSuiteFooter": {
+    "description": "Suite-membership line at the foot of the empty-canvas (welcome) screen. The whole line is a link to the EDACrux suite site. \"edacrux.app\" must appear verbatim — the widget splits the sentence around it to underline the domain — but a translation that drops it still renders and is still followable, just without an underlined segment. \"EDACrux\" is one word and is never translated."
+  },
+  "emptyCanvasPeersHeading": "EDACrux の他の製品",
+  "@emptyCanvasPeersHeading": {
+    "description": "Section header above the three sibling-product rows at the foot of the empty-canvas (welcome) screen. Rendered upper-case in English as a small letter-spaced label, matching the \"RECENT FILES\" headers above it; a locale whose script has no case simply reads as a label. \"EDACrux\" is one word and is never translated."
+  },
+  "emptyCanvasPeerWaveCrux": "追跡した信号を波形で確認。回路図から波形へ、そして戻る。",
+  "@emptyCanvasPeerWaveCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing WaveCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what WaveCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasPeerLintCrux": "閲覧中の RTL を評価。同じ Yosys エラボレーションを lint ・ CDC ルールで検査。",
+  "@emptyCanvasPeerLintCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing LintCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what LintCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasPeerSimCrux": "読んでいる設計を実際に動かす。リグレッションを実行し、失敗をここに戻す。",
+  "@emptyCanvasPeerSimCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasRecentProjects": "最近のプロジェクト",
+  "@emptyCanvasRecentProjects": {
+    "description": "Section header for the recent-projects list on the empty-canvas state."
+  },
+  "emptyCanvasRecentSources": "最近のソースファイル",
+  "@emptyCanvasRecentSources": {
+    "description": "Section header for the recent-source-files list on the empty-canvas state."
+  },
+  "emptyCanvasNoRecentProjects": "最近のプロジェクトはまだありません。",
+  "@emptyCanvasNoRecentProjects": {
+    "description": "Placeholder shown under the recent-projects header when the list is empty."
+  },
+  "emptyCanvasNoRecentSources": "最近のソースファイルはまだありません。",
+  "@emptyCanvasNoRecentSources": {
+    "description": "Placeholder shown under the recent-source-files header when the list is empty."
+  },
+  "emptyCanvasClearRecent": "最近の項目を消去",
+  "@emptyCanvasClearRecent": {
+    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
+  },
+  "actionSplitPaneRight": "ペインを右に分割",
+  "@actionSplitPaneRight": {
+    "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
+  },
+  "actionClosePane": "ペインを閉じる",
+  "@actionClosePane": {
+    "description": "Command palette / menu label for closing the active pane and merging its tabs into the surviving pane."
+  },
+  "actionFocusOtherPane": "他のペインにフォーカス",
+  "@actionFocusOtherPane": {
+    "description": "Command palette / menu label for toggling focus between the two panes when split."
+  },
+  "actionMoveTabToOtherPane": "タブを他のペインに移動",
+  "@actionMoveTabToOtherPane": {
+    "description": "Command palette label for moving the active tab to the non-active pane — gesture equivalent is drag-to-pane."
+  },
+  "workspaceOpenWorkspaceTitle": "ワークスペースを開く…",
+  "@workspaceOpenWorkspaceTitle": {
+    "description": "Button / menu label for opening a named .netcrux-workspace file."
+  },
+  "workspaceSaveWorkspaceAsTitle": "ワークスペースを名前を付けて保存…",
+  "@workspaceSaveWorkspaceAsTitle": {
+    "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
+  },
+  "workspaceResetWorkspaceTitle": "ワークスペースをリセット",
+  "@workspaceResetWorkspaceTitle": {
+    "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
+  },
+  "workspaceResetWorkspaceConfirm": "開いているすべてのタブを閉じて空のキャンバスに戻りますか？",
+  "@workspaceResetWorkspaceConfirm": {
+    "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
+  },
+  "workspaceLoadFromCliConfirm": "コマンドラインで指定されたワークスペースで現在のワークスペースを置き換えますか？",
+  "@workspaceLoadFromCliConfirm": {
+    "description": "Confirmation prompt shown before --workspace replaces the active workspace at launch."
+  },
+  "actionShowCrossProbePanel": "クロスプローブパネルを表示",
+  "@actionShowCrossProbePanel": {
+    "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
+  },
+  "crossProbePanelTitle": "クロスプローブピア",
+  "@crossProbePanelTitle": {
+    "description": "Title shown above the cross-probe panel."
+  },
+  "crossProbePanelPeersHeader": "ピア",
+  "@crossProbePanelPeersHeader": {
+    "description": "Section header above the list of connected peers."
+  },
+  "crossProbePanelNoPeers": "まだピアが接続されていません。",
+  "@crossProbePanelNoPeers": {
+    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
+  },
+  "crossProbePanelEventsHeader": "最近のイベント",
+  "@crossProbePanelEventsHeader": {
+    "description": "Section header above the rolling CXP event log."
+  },
+  "crossProbePanelNoEvents": "クロスプローブイベントはまだありません。",
+  "@crossProbePanelNoEvents": {
+    "description": "Placeholder shown when the event log is empty."
+  },
+  "crossProbeCloseTooltip": "クロスプローブパネルを閉じる",
+  "crossProbeServerOffline": "クロスプローブサーバーはオフラインです。",
+  "crossProbeSendTooltip": "選択項目をこのピアに送信",
+  "crossProbeUnreachableTitle": "到達できないピア",
+  "crossProbeClearEvents": "イベントをクリア",
+  "crossProbeSendFailed": "{peer} へのクロスプローブは完了しませんでした",
+  "crossProbeSendRefused": "{peer} へのクロスプローブ: {reason}",
+  "schematicHorizontalScrollbarLabel": "回路図の水平スクロールバー",
+  "@schematicHorizontalScrollbarLabel": {
+    "description": "Accessibility label for the horizontal scrollbar under the schematic canvas."
+  },
+  "schematicVerticalScrollbarLabel": "回路図の垂直スクロールバー",
+  "@schematicVerticalScrollbarLabel": {
+    "description": "Accessibility label for the vertical scrollbar beside the schematic canvas."
+  },
+  "settingsEditorsSection": "エディター",
+  "@settingsEditorsSection": {
+    "description": "Settings section header for external-editor integration."
+  },
+  "settingsCxpEnabledLabel": "CXP サーバーを有効化",
+  "@settingsCxpEnabledLabel": {
+    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
+  },
+  "settingsCxpPortLabel": "CXP ポート",
+  "@settingsCxpPortLabel": {
+    "description": "Text-field label for the CXP server's bind port."
+  },
+  "settingsCxpEnabledDescription": "NetCrux が他の Crux 対応ツールと選択イベントを共有できるようにする",
+  "@settingsCxpEnabledDescription": {
+    "description": "Subtitle explaining what enabling the CXP server does."
+  },
+  "settingsCxpPortDescription": "TCP ポート番号 (1–65535)",
+  "@settingsCxpPortDescription": {
+    "description": "Subtitle / helper for the CXP port input describing the valid range."
+  },
+  "settingsRequestAttentionOnCrossProbeLabel": "クロスプローブ時に注意を要求",
+  "@settingsRequestAttentionOnCrossProbeLabel": {
+    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
+  },
+  "settingsRequestAttentionOnCrossProbeDescription": "ピアがクロスプローブを送信したとき、Dockをバウンス（またはタスクバーを点滅）させます。フォーカスは奪いません。",
+  "@settingsRequestAttentionOnCrossProbeDescription": {
+    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
+  },
+  "settingsBroadcastSelectionOnCrossProbeLabel": "選択範囲を自動的にブロードキャスト",
+  "@settingsBroadcastSelectionOnCrossProbeLabel": {
+    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
+  },
+  "settingsBroadcastSelectionOnCrossProbeDescription": "選択したときに、接続中のピアへ選択範囲を通知します（ライブクロスプローブ）。オフの場合、明示的な送信のみが共有されます。",
+  "@settingsBroadcastSelectionOnCrossProbeDescription": {
+    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
+  },
+  "settingsCxpStatus": "CXP ステータス",
+  "@settingsCxpStatus": {
+    "description": "Label for the CXP server status display."
+  },
+  "settingsCxpStatusRunning": "ポート {port} で実行中",
+  "@settingsCxpStatusRunning": {
+    "description": "Indicates the CXP server is running on a specific port.",
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsCxpStatusStopped": "停止中",
+  "@settingsCxpStatusStopped": {
+    "description": "Indicates the CXP server is not running."
+  },
+  "settingsCxpPeersConnected": "{count} 件のピアが接続中",
+  "@settingsCxpPeersConnected": {
+    "description": "Shows how many peers are currently connected to the CXP server.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsCxpEditorCommandLabel": "エディターコマンド(ソースを開く)",
+  "@settingsCxpEditorCommandLabel": {
+    "description": "Text-field label for the editor invocation template used by request_open_source."
+  },
+  "tierBadgePro": "PRO",
+  "@tierBadgePro": {
+    "description": "Short tier badge chip text shown next to features that require a NetCrux Pro license."
+  },
+  "tierBadgeProSemantic": "Pro ティア機能",
+  "@tierBadgeProSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated PRO tier badge."
+  },
+  "tierBadgeEnterprise": "ENT",
+  "@tierBadgeEnterprise": {
+    "description": "Short tier badge chip text shown next to features that require a NetCrux Enterprise license."
+  },
+  "tierBadgeEnterpriseSemantic": "Enterprise ティア機能",
+  "@tierBadgeEnterpriseSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated ENT tier badge."
+  },
+  "editionMenuLine": "{edition} エディション — {identity}",
+  "editionMenuLineOrganization": "{edition} エディション — 組織によるライセンス",
+  "editionNameEducational": "教育",
+  "editionNamePro": "Pro",
+  "editionNameEnterprise": "Enterprise",
+  "editionBadgeEduSemantic": "教育版エディション",
+  "editionBadgeProSemantic": "Pro エディション",
+  "editionBadgeEnterpriseSemantic": "Enterprise エディション",
+  "tierBadgeEdu": "EDU",
+  "@tierBadgeEdu": {
+    "description": "Short tier badge chip text shown on the About box and Welcome screen indicating the user holds an Educational/non-commercial NetCrux license."
+  },
+  "tierBadgeEduSemantic": "教育用ライセンス",
+  "@tierBadgeEduSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated EDU edition badge."
+  },
+  "menuItemTierSuffix": " ({tier})",
+  "@menuItemTierSuffix": {
+    "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeDialogTitle": "アップグレードが必要です",
+  "@upgradeDialogTitle": {
+    "description": "Title of the upgrade-required dialog shown post-beta when the user activates a Pro/Enterprise action their license tier does not include."
+  },
+  "upgradeDialogMessage": "「{feature}」には{tierName}のライセンスが必要です。",
+  "@upgradeDialogMessage": {
+    "description": "Body of the upgrade dialog, and the sentence under the locked panel of a tier-gated Settings category. Names the feature the user reached for and the tier that unlocks it; both are required by the suite copy contract. {feature} is the label of what was activated, rendered in quotes because it is a UI label (the dialog drops a trailing ellipsis). {tierName} is the product-qualified tier, e.g. the upgradeDialogTierNamePro value.",
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "tierName": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeDialogTierNamePro": "NetCrux Pro",
+  "@upgradeDialogTierNamePro": {
+    "description": "Product-tier name interpolated into upgradeDialogMessage for Pro-gated features. Brand name — identical in every locale."
+  },
+  "upgradeDialogTierNameEnterprise": "NetCrux Enterprise",
+  "@upgradeDialogTierNameEnterprise": {
+    "description": "Product-tier name interpolated into upgradeDialogMessage for Enterprise-gated features. Brand name — identical in every locale."
+  },
+  "actionRequiresPro": "{action}には NetCrux Pro が必要です。",
+  "@actionRequiresPro": {
+    "description": "Snackbar shown when a Pro-tier action is invoked in an open-core build with no Pro overlay installed. The action placeholder is the action's own localized label. Matches SimCrux's and LintCrux's message.",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "actionShowConeOfInfluenceFanin": "影響範囲（ファンイン）を表示",
+  "@actionShowConeOfInfluenceFanin": {
+    "description": "Command palette / menu label for the Pro multi-step fanin cone-of-influence trace from the current selection."
+  },
+  "actionShowConeOfInfluenceFanout": "影響範囲（ファンアウト）を表示",
+  "@actionShowConeOfInfluenceFanout": {
+    "description": "Command palette / menu label for the Pro multi-step fanout cone-of-influence trace from the current selection."
+  },
+  "actionClearConeOfInfluence": "影響範囲をクリア",
+  "@actionClearConeOfInfluence": {
+    "description": "Command palette / menu label that clears any active cone-of-influence trace overlay."
+  },
+  "actionShowXTrace": "X トレースを表示",
+  "@actionShowXTrace": {
+    "description": "Command palette / menu label for the Pro X-trace causal chain that walks backward from the selected net at the current simulation time."
+  },
+  "actionShowXTracePanel": "X トレースパネルを表示",
+  "@actionShowXTracePanel": {
+    "description": "Command palette / menu label that opens or focuses the X-trace result panel."
+  },
+  "actionClearXTrace": "X トレースをクリア",
+  "@actionClearXTrace": {
+    "description": "Command palette / menu label that clears any active X-trace result."
+  },
+  "actionAddBookmark": "ブックマークを追加…",
+  "@actionAddBookmark": {
+    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
+  },
+  "actionShowBookmarksPanel": "ブックマークパネルを表示",
+  "@actionShowBookmarksPanel": {
+    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
+  },
+  "actionAddAnnotation": "注釈を追加…",
+  "@actionAddAnnotation": {
+    "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
+  },
+  "actionShowAnnotationsPanel": "注釈パネルを表示",
+  "@actionShowAnnotationsPanel": {
+    "description": "Command palette / menu label that opens or focuses the Annotations panel."
+  },
+  "actionShowSourcePane": "RTL ソース ペインを表示",
+  "@actionShowSourcePane": {
+    "description": "Command palette / menu label that opens or focuses the RTL source pane (Pro)."
+  },
+  "actionOpenSourceForElement": "この要素のソースを表示",
+  "@actionOpenSourceForElement": {
+    "description": "Command palette / context-menu label that opens the source file defining the currently selected schematic element (Pro)."
+  },
+  "actionCloseSourcePane": "RTL ソース ペインを閉じる",
+  "@actionCloseSourcePane": {
+    "description": "Command palette / menu label that closes the RTL source pane."
+  },
+  "sourcePaneEmptyTitle": "ソースが読み込まれていません",
+  "@sourcePaneEmptyTitle": {
+    "description": "Heading shown in the RTL source pane when no source file is loaded."
+  },
+  "sourcePaneEmptyHint": "回路図の要素を右クリックして「この要素のソースを表示」を選択すると、対応するファイルが読み込まれます。",
+  "@sourcePaneEmptyHint": {
+    "description": "Hint shown in the RTL source pane's empty state explaining how to populate it."
+  },
+  "sourcePaneErrorNotFound": "ソースファイルが見つかりません。",
+  "@sourcePaneErrorNotFound": {
+    "description": "Error message shown when the requested RTL source file does not exist."
+  },
+  "sourcePaneErrorAccessDenied": "アクセスが拒否されました:このソースファイルを読み取れません。",
+  "@sourcePaneErrorAccessDenied": {
+    "description": "Error message shown when the RTL source file exists but cannot be read."
+  },
+  "sourcePaneErrorEncoding": "このソースファイルをテキストとしてデコードできません。",
+  "@sourcePaneErrorEncoding": {
+    "description": "Error message shown when the RTL source file's bytes are not valid UTF-8."
+  },
+  "sourcePaneErrorOversized": "ソースファイルが大きすぎてプレビューできません。",
+  "@sourcePaneErrorOversized": {
+    "description": "Error message shown when the RTL source file exceeds the pane's size budget."
+  },
+  "sourcePaneErrorGeneric": "このソースファイルを読み込めませんでした。",
+  "@sourcePaneErrorGeneric": {
+    "description": "Generic error message shown when an RTL source file fails to load for an unspecified reason."
+  },
+  "actionShowDiffPane": "ネットリスト差分ビューを表示",
+  "@actionShowDiffPane": {
+    "description": "Command palette / menu label that opens or focuses the Netlist Diff View pane (Pro)."
+  },
+  "actionLoadComparisonNetlist": "比較ネットリストを読み込む…",
+  "@actionLoadComparisonNetlist": {
+    "description": "Command palette / menu label that opens the file picker to choose a comparison-side netlist (Pro)."
+  },
+  "actionClearComparisonNetlist": "比較ネットリストをクリア",
+  "@actionClearComparisonNetlist": {
+    "description": "Command palette / menu label that clears the active comparison (Pro)."
+  },
+  "actionNavigateNextDiff": "次の差分",
+  "@actionNavigateNextDiff": {
+    "description": "Command palette / menu label that selects the next change in the active diff (Pro)."
+  },
+  "actionNavigatePrevDiff": "前の差分",
+  "@actionNavigatePrevDiff": {
+    "description": "Command palette / menu label that selects the previous change in the active diff (Pro)."
+  },
+  "diffPaneEmptyTitle": "比較が読み込まれていません",
+  "@diffPaneEmptyTitle": {
+    "description": "Heading shown in the Netlist Diff View pane when no comparison is loaded."
+  },
+  "diffPaneEmptyHint": "比較用のネットリストを読み込んで、現在の設計との構造的差分を確認してください。",
+  "@diffPaneEmptyHint": {
+    "description": "Hint shown in the Netlist Diff View pane's empty state explaining how to populate it."
+  },
+  "diffPaneComputing": "比較中…",
+  "@diffPaneComputing": {
+    "description": "Status message shown in the Diff View pane while the comparison is being computed."
+  },
+  "diffPaneNoFilterMatches": "現在のフィルターに一致する変更はありません。",
+  "@diffPaneNoFilterMatches": {
+    "description": "Message shown in the Diff View pane when every element change is filtered out."
+  },
+  "diffPaneSummary": "追加 {added}、削除 {removed}、変更 {modified}、変更なし {unchanged}",
+  "@diffPaneSummary": {
+    "description": "Summary header line for the Diff View pane listing the four bucket counts.",
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      },
+      "modified": {
+        "type": "int"
+      },
+      "unchanged": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupAdded": "追加 ({count})",
+  "@diffPaneGroupAdded": {
+    "description": "Group header label for the Added section of the Diff View pane, with the count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupRemoved": "削除 ({count})",
+  "@diffPaneGroupRemoved": {
+    "description": "Group header label for the Removed section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupModified": "変更 ({count})",
+  "@diffPaneGroupModified": {
+    "description": "Group header label for the Modified section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupUnchanged": "変更なし ({count})",
+  "@diffPaneGroupUnchanged": {
+    "description": "Group header label for the Unchanged section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneShowInSchematic": "回路図で表示",
+  "@diffPaneShowInSchematic": {
+    "description": "Per-row action label that highlights the corresponding element in the schematic canvas."
+  },
+  "diffPaneElementKindInstance": "インスタンス",
+  "@diffPaneElementKindInstance": {
+    "description": "Label for NetlistDiffElementKind.instance in the Diff View pane."
+  },
+  "diffPaneElementKindNet": "ネット",
+  "@diffPaneElementKindNet": {
+    "description": "Label for NetlistDiffElementKind.net in the Diff View pane."
+  },
+  "diffPaneElementKindPort": "ポート",
+  "@diffPaneElementKindPort": {
+    "description": "Label for NetlistDiffElementKind.port in the Diff View pane."
+  },
+  "diffPaneElementKindModule": "モジュール",
+  "@diffPaneElementKindModule": {
+    "description": "Label for NetlistDiffElementKind.module in the Diff View pane."
+  },
+  "actionOpenSymbolManager": "カスタムセルシンボルマネージャを開く…",
+  "@actionOpenSymbolManager": {
+    "description": "Command palette / menu label that opens the Custom Cell Symbol Manager screen (Pro)."
+  },
+  "actionImportSymbolFromSvg": "SVG からシンボルをインポート…",
+  "@actionImportSymbolFromSvg": {
+    "description": "Command palette / menu label that opens a file picker to import an SVG into a new custom cell symbol (Pro)."
+  },
+  "actionEditSymbolForCurrentInstance": "このモジュールのシンボルを編集…",
+  "@actionEditSymbolForCurrentInstance": {
+    "description": "Command palette / menu / context-menu label that opens the Symbol Editor for the currently selected cell's module type (Pro)."
+  },
+  "actionRemoveSymbolForCurrentInstance": "このモジュールのカスタムシンボルを削除",
+  "@actionRemoveSymbolForCurrentInstance": {
+    "description": "Command palette / menu / context-menu label that removes the custom symbol binding for the currently selected cell's module type so it reverts to the built-in rectangular rendering (Pro)."
+  },
+  "actionShowFsmBubbleDiagram": "FSM バブル図を表示",
+  "@actionShowFsmBubbleDiagram": {
+    "description": "Command palette / menu label that opens / focuses the FSM bubble diagram pane (Pro)."
+  },
+  "actionDetectFsmForCurrentRegister": "このレジスタの FSM を検出",
+  "@actionDetectFsmForCurrentRegister": {
+    "description": "Command palette / menu / context-menu label that runs forced FSM detection on the currently selected register, skipping the structural-signature filter (Pro)."
+  },
+  "actionRunFsmDetectionAcrossDesign": "設計全体で FSM 検出を実行…",
+  "@actionRunFsmDetectionAcrossDesign": {
+    "description": "Command palette / menu label that runs full-design FSM detection and opens the detection-results dialog (Pro)."
+  },
+  "actionClearFsmSelection": "FSM の選択を解除",
+  "@actionClearFsmSelection": {
+    "description": "Command palette / menu label that dismisses the FSM bubble diagram pane (clears the focused FSM)."
+  },
+  "fsmBubbleDiagramEmptyTitle": "FSM が選択されていません",
+  "@fsmBubbleDiagramEmptyTitle": {
+    "description": "Open-core empty-state title for the FSM bubble diagram pane."
+  },
+  "fsmBubbleDiagramEmptyHint": "回路図上のレジスタを右クリックし、「FSM バブル図を表示」を選択するとステートマシンを可視化できます。",
+  "@fsmBubbleDiagramEmptyHint": {
+    "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
+  },
+  "fsmBubbleDiagramStatesSection": "状態",
+  "@fsmBubbleDiagramStatesSection": {
+    "description": "Section header above the list of FSM states in the open-core fallback bubble diagram view."
+  },
+  "fsmBubbleDiagramTransitionsSection": "遷移",
+  "@fsmBubbleDiagramTransitionsSection": {
+    "description": "Section header above the list of FSM transitions in the open-core fallback bubble diagram view."
+  },
+  "fsmBubbleDiagramHeader": "FSM: {registerName} — 状態 {stateCount}、遷移 {transitionCount}",
+  "@fsmBubbleDiagramHeader": {
+    "description": "Header line summarising the focused FSM in the open-core fallback bubble diagram view.",
+    "placeholders": {
+      "registerName": {
+        "type": "String"
+      },
+      "stateCount": {
+        "type": "int"
+      },
+      "transitionCount": {
+        "type": "int"
+      }
+    }
+  },
+  "fsmBubbleDiagramStateValue": "値: {value}",
+  "@fsmBubbleDiagramStateValue": {
+    "description": "Value sub-line on a state row in the open-core fallback view, e.g. \"value: 0x03\".",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramTransitionLine": "{from} から {to} へ  {condition}",
+  "@fsmBubbleDiagramTransitionLine": {
+    "description": "Per-transition row in the open-core fallback view. The condition placeholder is empty when no condition expression is available.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramHighlighted": "ハイライト: {stateName}",
+  "@fsmBubbleDiagramHighlighted": {
+    "description": "Footer in the open-core fallback view showing the currently-highlighted state name.",
+    "placeholders": {
+      "stateName": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramResetBadge": "リセット",
+  "@fsmBubbleDiagramResetBadge": {
+    "description": "Badge on the reset state in the open-core fallback view and in the Pro bubble diagram canvas."
+  },
+  "fsmBubbleDiagramUnreachableBadge": "到達不能",
+  "@fsmBubbleDiagramUnreachableBadge": {
+    "description": "Badge on states the detector flagged as unreachable from the reset state."
+  },
+  "fsmBubbleDiagramTerminalBadge": "終端",
+  "@fsmBubbleDiagramTerminalBadge": {
+    "description": "Badge on states that have no outgoing transitions."
+  },
+  "actionShowCdcAnalysisPane": "CDC 解析パネルを表示",
+  "@actionShowCdcAnalysisPane": {
+    "description": "Command palette / menu label that opens / focuses the CDC analysis pane (Pro)."
+  },
+  "actionRunCdcAnalysis": "設計全体で CDC 解析を実行…",
+  "@actionRunCdcAnalysis": {
+    "description": "Command palette / menu label that runs full-design CDC analysis and opens the results panel (Pro)."
+  },
+  "actionShowCdcCrossingForSelectedSignal": "この信号の CDC クロッシングを表示",
+  "@actionShowCdcCrossingForSelectedSignal": {
+    "description": "Command palette / menu / schematic context-menu label that scopes the CDC panel to crossings involving the right-clicked signal (Pro)."
+  },
+  "actionClearCdcAnalysisSelection": "CDC 解析の選択をクリア",
+  "@actionClearCdcAnalysisSelection": {
+    "description": "Command palette / menu label that clears the CDC pane's focused crossing + domain."
+  },
+  "cdcAnalysisPaneEmptyTitle": "CDC 解析未実行",
+  "@cdcAnalysisPaneEmptyTitle": {
+    "description": "Open-core CDC analysis pane empty-state title shown before analysis has been run."
+  },
+  "cdcAnalysisPaneEmptyHint": "CDC 解析を実行して、クロックドメインクロッシングの検出、同期回路の分類、メタステーブルリスクのある信号を表示します。",
+  "@cdcAnalysisPaneEmptyHint": {
+    "description": "Open-core CDC analysis pane empty-state hint that explains what CDC analysis does and how to trigger it."
+  },
+  "cdcAnalysisPaneDomainPairHeader": "{sourceDomain} から {destinationDomain} へ",
+  "@cdcAnalysisPaneDomainPairHeader": {
+    "description": "Group header for one source→destination clock-domain pair in the CDC analysis pane's crossings list.",
+    "placeholders": {
+      "sourceDomain": {
+        "type": "String"
+      },
+      "destinationDomain": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcAnalysisPaneCrossingSubtitle": "{kind} · {status} · {confidence}",
+  "@cdcAnalysisPaneCrossingSubtitle": {
+    "description": "Crossing-row subtitle in the CDC analysis pane composing the localized crossing kind, synchronizer status, and detector confidence labels.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "confidence": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcAnalysisPaneCrossingTooltip": "回路図で信号 {signalName} をハイライト",
+  "@cdcAnalysisPaneCrossingTooltip": {
+    "description": "Tooltip on a CDC crossing row; tapping highlights the crossing signal in the schematic.",
+    "placeholders": {
+      "signalName": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcCrossingKindSingleBit": "シングルビット",
+  "@cdcCrossingKindSingleBit": {
+    "description": "Label for CDC crossing kind: single-bit (control/status flag)."
+  },
+  "cdcCrossingKindMultiBit": "マルチビット",
+  "@cdcCrossingKindMultiBit": {
+    "description": "Label for CDC crossing kind: multi-bit data bus."
+  },
+  "cdcCrossingKindControl": "制御",
+  "@cdcCrossingKindControl": {
+    "description": "Label for CDC crossing kind: control signal paired with another (req/ack or valid/ready)."
+  },
+  "cdcCrossingKindHandshake": "ハンドシェイク",
+  "@cdcCrossingKindHandshake": {
+    "description": "Label for CDC crossing kind: half of an explicit req/ack handshake protocol."
+  },
+  "cdcSynchronizerStatusProperTwoFlop": "2 段フリップフロップ同期",
+  "@cdcSynchronizerStatusProperTwoFlop": {
+    "description": "Label for CDC synchronizer status: properly synchronized with two cascaded flip-flops on the destination side."
+  },
+  "cdcSynchronizerStatusProperThreeFlop": "3 段フリップフロップ同期",
+  "@cdcSynchronizerStatusProperThreeFlop": {
+    "description": "Label for CDC synchronizer status: paranoid synchronizer with three cascaded flip-flops on the destination side."
+  },
+  "cdcSynchronizerStatusAsyncFifo": "非同期 FIFO",
+  "@cdcSynchronizerStatusAsyncFifo": {
+    "description": "Label for CDC synchronizer status: source and destination connected through an async-FIFO instance."
+  },
+  "cdcSynchronizerStatusHandshake": "ハンドシェイクプロトコル",
+  "@cdcSynchronizerStatusHandshake": {
+    "description": "Label for CDC synchronizer status: paired req/ack or valid/ready handshake."
+  },
+  "cdcSynchronizerStatusCustom": "カスタム同期回路",
+  "@cdcSynchronizerStatusCustom": {
+    "description": "Label for CDC synchronizer status: user-asserted custom synchronizer module (matched a userSynchronizerPatterns entry)."
+  },
+  "cdcSynchronizerStatusMissing": "同期回路なし",
+  "@cdcSynchronizerStatusMissing": {
+    "description": "Label for CDC synchronizer status: no synchronizer at all on the destination side (critical metastability bug)."
+  },
+  "cdcSynchronizerStatusMetastable": "メタステーブルリスク",
+  "@cdcSynchronizerStatusMetastable": {
+    "description": "Label for CDC synchronizer status: synchronizer present but downstream logic branches before settling (metastability risk)."
+  },
+  "cdcConfidenceHigh": "高信頼",
+  "@cdcConfidenceHigh": {
+    "description": "Label for the detector's classification confidence: structurally unambiguous match."
+  },
+  "cdcConfidenceMedium": "中信頼",
+  "@cdcConfidenceMedium": {
+    "description": "Label for the detector's classification confidence: heuristic match — worth manual review."
+  },
+  "cdcConfidenceLow": "低信頼",
+  "@cdcConfidenceLow": {
+    "description": "Label for the detector's classification confidence: borderline or max-depth bail."
+  },
+  "actionShowResetDomainAnalysisPane": "リセットドメイン解析ペインを表示",
+  "@actionShowResetDomainAnalysisPane": {
+    "description": "Command palette / menu label that opens / focuses the reset domain analysis pane (Pro)."
+  },
+  "actionRunResetDomainAnalysis": "設計全体でリセットドメイン解析を実行…",
+  "@actionRunResetDomainAnalysis": {
+    "description": "Command palette / menu label that runs full-design reset domain analysis and opens the results panel (Pro)."
+  },
+  "actionShowResetCrossingForSelectedSignal": "この信号のリセットクロッシングを表示",
+  "@actionShowResetCrossingForSelectedSignal": {
+    "description": "Command palette / menu / schematic context-menu label that scopes the reset domain panel to crossings involving the right-clicked signal (Pro)."
+  },
+  "actionClearResetAnalysisSelection": "リセットドメイン解析の選択をクリア",
+  "@actionClearResetAnalysisSelection": {
+    "description": "Command palette / menu label that clears the reset domain pane's focused crossing + domain."
+  },
+  "resetDomainAnalysisPaneEmptyTitle": "リセットドメイン解析は未実行",
+  "@resetDomainAnalysisPaneEmptyTitle": {
+    "description": "Open-core reset domain analysis pane empty-state title shown before analysis has been run."
+  },
+  "resetDomainAnalysisPaneEmptyHint": "リセットドメイン解析を実行して、リセットドメインを検出し、同期回路と極性を分類し、リセット解除エッジでメタステーブル状態のリスクがあるレジスタを表示します。",
+  "@resetDomainAnalysisPaneEmptyHint": {
+    "description": "Open-core reset domain analysis pane empty-state hint that explains what reset domain analysis does and how to trigger it."
+  },
+  "resetDomainAnalysisPaneDomainPairHeader": "{sourceDomain} から {destinationDomain} へ",
+  "@resetDomainAnalysisPaneDomainPairHeader": {
+    "description": "Group header for one source→destination reset-domain pair in the Reset Domain analysis pane's crossings list.",
+    "placeholders": {
+      "sourceDomain": {
+        "type": "String"
+      },
+      "destinationDomain": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneCrossingSubtitle": "{kind} · {status} · {polarity} · {confidence}",
+  "@resetDomainAnalysisPaneCrossingSubtitle": {
+    "description": "Crossing-row subtitle in the Reset Domain analysis pane composing the localized crossing kind, synchronizer status, source polarity, and detector confidence labels.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "polarity": {
+        "type": "String"
+      },
+      "confidence": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneCrossingTooltip": "回路図で信号 {signalName} を強調表示",
+  "@resetDomainAnalysisPaneCrossingTooltip": {
+    "description": "Tooltip on a reset crossing row; tapping highlights the crossing signal in the schematic.",
+    "placeholders": {
+      "signalName": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneUnresetSectionHeader": "リセットなしレジスタ",
+  "resetDomainAnalysisPaneUnresetSubtitle": "レジスタがリセットされません — 電源投入時に X",
+  "resetDomainAnalysisPaneUnresetTooltip": "{registerName} にはリセットドライバがありません — 電源投入時の値は不定です",
+  "resetCrossingKindData": "データがリセット境界を越える",
+  "@resetCrossingKindData": {
+    "description": "Label for reset crossing kind: data signal driven by a register reset by one domain is consumed by a register reset by a different domain."
+  },
+  "resetCrossingKindDeassert": "リセット解除クロッシング",
+  "@resetCrossingKindDeassert": {
+    "description": "Label for reset crossing kind: the reset deassert edge of one domain reaches registers in another domain (canonical reset CDC bug class)."
+  },
+  "resetSynchronizerStatusProperAsyncSync": "非同期アサート + 同期解除",
+  "@resetSynchronizerStatusProperAsyncSync": {
+    "description": "Label for reset synchronizer status: classic async-assert + sync-deassert synchronizer (most common safe pattern)."
+  },
+  "resetSynchronizerStatusProperSyncSync": "同期アサート + 同期解除",
+  "@resetSynchronizerStatusProperSyncSync": {
+    "description": "Label for reset synchronizer status: fully synchronous reset synchronizer."
+  },
+  "resetSynchronizerStatusProperResetSynchronizer": "ベンダー製リセット同期回路",
+  "@resetSynchronizerStatusProperResetSynchronizer": {
+    "description": "Label for reset synchronizer status: vendor-specific reset synchronizer cell or library macro."
+  },
+  "resetSynchronizerStatusCustom": "カスタム同期回路",
+  "@resetSynchronizerStatusCustom": {
+    "description": "Label for reset synchronizer status: user-asserted custom synchronizer module (matched a userSynchronizerPatterns entry)."
+  },
+  "resetSynchronizerStatusMissing": "同期回路なし",
+  "@resetSynchronizerStatusMissing": {
+    "description": "Label for reset synchronizer status: no synchronizer at all on the destination side (critical metastability bug)."
+  },
+  "resetSynchronizerStatusGlitchProne": "グリッチ発生の可能性",
+  "@resetSynchronizerStatusGlitchProne": {
+    "description": "Label for reset synchronizer status: synchronizer structurally present but combinational logic in the deassertion path could cause glitches."
+  },
+  "resetPolarityActiveHigh": "アクティブハイ",
+  "@resetPolarityActiveHigh": {
+    "description": "Label for reset polarity: asserts on a logical high (1)."
+  },
+  "resetPolarityActiveLow": "アクティブロー",
+  "@resetPolarityActiveLow": {
+    "description": "Label for reset polarity: asserts on a logical low (0)."
+  },
+  "resetPolarityUnknown": "極性不明",
+  "@resetPolarityUnknown": {
+    "description": "Label for reset polarity: detector could not classify the polarity."
+  },
+  "resetConfidenceHigh": "高信頼",
+  "@resetConfidenceHigh": {
+    "description": "Label for the detector's classification confidence: structurally unambiguous match."
+  },
+  "resetConfidenceMedium": "中信頼",
+  "@resetConfidenceMedium": {
+    "description": "Label for the detector's classification confidence: heuristic match — worth manual review."
+  },
+  "resetConfidenceLow": "低信頼",
+  "@resetConfidenceLow": {
+    "description": "Label for the detector's classification confidence: borderline or max-depth bail."
+  },
+  "actionOpenWaveformFile": "波形ファイルを開く…",
+  "@actionOpenWaveformFile": {
+    "description": "Command palette / menu label for loading a VCD/FST/GHW waveform into the active source (Pro)."
+  },
+  "actionCloseWaveformFile": "波形ファイルを閉じる",
+  "@actionCloseWaveformFile": {
+    "description": "Command palette / menu label for unloading the currently-loaded waveform source (Pro)."
+  },
+  "actionShowActivityHeatmap": "スイッチング活動ヒートマップを表示",
+  "@actionShowActivityHeatmap": {
+    "description": "Command palette / menu label for showing the Switching Activity Heatmap pane (Pro)."
+  },
+  "actionRunActivityAnalysis": "スイッチング活動解析を実行",
+  "@actionRunActivityAnalysis": {
+    "description": "Command palette / menu label for running full-design switching activity analysis over the active tab's time range (Pro)."
+  },
+  "actionClearActivityColoring": "活動着色をクリア",
+  "@actionClearActivityColoring": {
+    "description": "Command palette / menu label for clearing the per-edge activity color override on the schematic (Open Core; never gated)."
+  },
+  "actionConfigureActivityScheme": "活動カラースキームを構成…",
+  "@actionConfigureActivityScheme": {
+    "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
+  },
+  "activityHeatmapPaneEmptyTitle": "スイッチング活動が読み込まれていません",
+  "@activityHeatmapPaneEmptyTitle": {
+    "description": "Open-core Switching Activity Heatmap pane empty-state title shown before a waveform is loaded or analysis is run."
+  },
+  "activityHeatmapPaneEmptyHint": "VCD または FST 波形を読み込み、スイッチング活動解析を実行して、ネット毎の活動強度で回路図を色分けします。",
+  "@activityHeatmapPaneEmptyHint": {
+    "description": "Open-core Switching Activity Heatmap pane empty-state hint explaining what the feature does and how to trigger it."
+  },
+  "activityHeatmapPaneHottestSection": "ホットネット",
+  "@activityHeatmapPaneHottestSection": {
+    "description": "Section header for the top-N hottest nets in the open-core Switching Activity Heatmap pane's fallback list."
+  },
+  "activityHeatmapPaneColdestSection": "コールドネット",
+  "@activityHeatmapPaneColdestSection": {
+    "description": "Section header for the bottom-N coldest nets in the open-core Switching Activity Heatmap pane's fallback list."
+  },
+  "activityHeatmapPaneHeader": "{netCount} ネット、{transitionCount} トランジション",
+  "@activityHeatmapPaneHeader": {
+    "description": "Header summary for the open-core Switching Activity Heatmap pane.",
+    "placeholders": {
+      "netCount": {
+        "type": "int"
+      },
+      "transitionCount": {
+        "type": "int"
+      }
+    }
+  },
+  "activityHeatmapPaneNetLine": "{netPath} — {transitionCount} トランジション、デューティ {dutyPercent}%",
+  "@activityHeatmapPaneNetLine": {
+    "description": "Open-core fallback list line for a single net's activity record.",
+    "placeholders": {
+      "netPath": {
+        "type": "String"
+      },
+      "transitionCount": {
+        "type": "int"
+      },
+      "dutyPercent": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarFile": "ファイル: {fileName}",
+  "@statusBarFile": {
+    "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarTopModule": "トップ: {moduleName}",
+  "@statusBarTopModule": {
+    "description": "Status bar segment showing the elaborated design's top module name.",
+    "placeholders": {
+      "moduleName": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarCellCount": "{count, plural, =1{1 セル} other{{count} セル}}",
+  "@statusBarCellCount": {
+    "description": "Status bar segment showing the design-wide cell count (summed across all elaborated modules).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusBarNoDesign": "設計未読み込み",
+  "@statusBarNoDesign": {
+    "description": "Status bar text shown for an open tab that has no source files / design loaded yet."
+  },
+  "aboutDialogTitle": "NetCrux について",
+  "@aboutDialogTitle": {
+    "description": "Title of the About box dialog / screen."
+  },
+  "aboutTagline": "ハードウェアエンジニアのためのモダンなネットリスト・回路図ビューアー",
+  "@aboutTagline": {
+    "description": "One-line product tagline shown under the app name in the About box header."
+  },
+  "aboutBetaChip": "パブリックベータ",
+  "@aboutBetaChip": {
+    "description": "Chip label shown in the About box header while the public-beta period is active."
+  },
+  "aboutEditionOpenCore": "オープンコア",
+  "@aboutEditionOpenCore": {
+    "description": "Edition label for the free open-core build; the edition chip is hidden for this value."
+  },
+  "aboutSectionVersion": "バージョン",
+  "@aboutSectionVersion": {
+    "description": "About box section header / row label for the application version."
+  },
+  "aboutBuildNumber": "ビルド",
+  "@aboutBuildNumber": {
+    "description": "About box row label for the platform build number."
+  },
+  "aboutGitSha": "コミット",
+  "@aboutGitSha": {
+    "description": "About box row label for the short git commit SHA."
+  },
+  "aboutSectionPlatform": "プラットフォーム",
+  "@aboutSectionPlatform": {
+    "description": "About box section header for the host platform details."
+  },
+  "aboutOperatingSystem": "OS",
+  "@aboutOperatingSystem": {
+    "description": "About box row label for the host operating system."
+  },
+  "aboutArchitecture": "アーキテクチャ",
+  "@aboutArchitecture": {
+    "description": "About box row label for the CPU architecture."
+  },
+  "aboutFlutterVersion": "Flutter",
+  "@aboutFlutterVersion": {
+    "description": "About box row label for the Flutter SDK version."
+  },
+  "aboutDartVersion": "Dart",
+  "@aboutDartVersion": {
+    "description": "About box row label for the Dart SDK version."
+  },
+  "aboutSectionElkjs": "elkjs",
+  "@aboutSectionElkjs": {
+    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  },
+  "aboutElkjsDescription": "NetCrux は自動回路図レイアウトに elkjs(Eclipse Layout Kernel の JavaScript 版)を使用しています。elkjs は EPL-2.0 ライセンスです。",
+  "@aboutElkjsDescription": {
+    "description": "Description text for the elkjs attribution section in the About dialog."
+  },
+  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkjsLicenseHeader": {
+    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  },
+  "aboutButtonVisitWebsite": "ウェブサイトを開く",
+  "@aboutButtonVisitWebsite": {
+    "description": "About box action button that opens the company website in the browser."
+  },
+  "aboutButtonDocs": "ドキュメント",
+  "@aboutButtonDocs": {
+    "description": "About box action button that opens the NetCrux documentation site in the browser."
+  },
+  "aboutButtonPrivacy": "プライバシーポリシー",
+  "@aboutButtonPrivacy": {
+    "description": "About box action button that opens the NetCrux privacy policy in the browser."
+  },
+  "aboutButtonTerms": "利用規約",
+  "@aboutButtonTerms": {
+    "description": "About box action button that opens the NetCrux terms of service in the browser."
+  },
+  "aboutButtonCopyVersionInfo": "バージョン情報をコピー",
+  "@aboutButtonCopyVersionInfo": {
+    "description": "About box action button that copies the structured version paragraph to the clipboard."
+  },
+  "aboutCopiedConfirmation": "バージョン情報をコピーしました",
+  "@aboutCopiedConfirmation": {
+    "description": "Snackbar confirmation shown after the Copy Version Info action copies to the clipboard."
+  },
+  "aboutCompanyName": "Ferrite Engineering",
+  "@aboutCompanyName": {
+    "description": "Company tagline shown on the first line of the About box branding banner."
+  },
+  "updateBannerMessage": "NetCrux {version} が利用可能です。",
+  "@updateBannerMessage": {
+    "description": "Update banner message announcing that a newer NetCrux release is available.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateViewChangesAction": "変更内容を表示",
+  "@updateViewChangesAction": {
+    "description": "Update banner button that opens the release changelog in the browser."
+  },
+  "updateNowAction": "今すぐ更新",
+  "@updateNowAction": {
+    "description": "Update banner button that opens the NetCrux download page in the browser."
+  },
+  "updateDismissLabel": "閉じる",
+  "@updateDismissLabel": {
+    "description": "Accessible name of the update banner's dismiss button."
+  },
+  "updateCheckInProgress": "更新を確認しています…",
+  "@updateCheckInProgress": {
+    "description": "Transient snackbar shown while a manual update check is in flight."
+  },
+  "updateCheckUpToDate": "最新バージョン（{version}）を使用しています。",
+  "@updateCheckUpToDate": {
+    "description": "Snackbar confirming a manual update check found no newer release; names the running version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckFailed": "更新を確認できませんでした。",
+  "@updateCheckFailed": {
+    "description": "Snackbar shown when a manual update check could not reach the version manifest."
+  },
+  "actionCheckForUpdates": "アップデートを確認",
+  "@actionCheckForUpdates": {
+    "description": "Action label for the manual Check for Updates command (Help menu, command palette, About box)."
+  },
+  "settingsAutoCheckUpdatesLabel": "更新を自動的に確認",
+  "@settingsAutoCheckUpdatesLabel": {
+    "description": "Settings General row label for the persisted automatic update-check toggle."
+  },
+  "settingsAutoCheckUpdatesDescription": "起動時および 1 日 1 回、新しいバージョンを確認します。送信されるのはアプリのバージョンと OS のみです。",
+  "@settingsAutoCheckUpdatesDescription": {
+    "description": "Settings General row description explaining what the automatic update check sends."
+  },
+  "settingsRestoreTabsOnLaunchLabel": "起動時にタブを復元",
+  "@settingsRestoreTabsOnLaunchLabel": {
+    "description": "Settings General row label for the toggle that controls whether the persisted workspace document is rehydrated at launch."
+  },
+  "settingsRestoreTabsOnLaunchDescription": "NetCrux の起動時に前回のセッションのタブを開き直します。オフにしても保存されたセッションはディスクに残るため、オンに戻せば復元されます。",
+  "@settingsRestoreTabsOnLaunchDescription": {
+    "description": "Settings General row description for the restore-tabs-on-launch toggle, stating that turning it off keeps the saved session on disk."
+  },
+  "actionSubmitIssue": "問題を報告…",
+  "@actionSubmitIssue": {
+    "description": "Action label for the beta issue reporter command (Help menu, command palette, About box)."
+  },
+  "issueReporterTitle": "問題を報告",
+  "@issueReporterTitle": {
+    "description": "Title of the beta issue reporter dialog, and the fallback GitHub issue title when the summary is blank."
+  },
+  "issueReporterTitleFieldLabel": "問題の概要",
+  "@issueReporterTitleFieldLabel": {
+    "description": "Label of the issue reporter's free-text summary field."
+  },
+  "issueReporterTitleFieldHint": "発生した問題を簡潔に説明してください",
+  "@issueReporterTitleFieldHint": {
+    "description": "Hint shown inside the issue reporter's empty summary field."
+  },
+  "issueReporterPrivacyNotice": "情報が多いほど問題の再現に役立ちます。共有したくない項目はオフにしてください。ファイルの内容やファイルパスが含まれることはありません。",
+  "@issueReporterPrivacyNotice": {
+    "description": "Privacy callout above the issue reporter's category tiles."
+  },
+  "issueReporterPreviewHeader": "Issue 本文をプレビュー",
+  "@issueReporterPreviewHeader": {
+    "description": "Header of the issue reporter's collapsible markdown preview disclosure."
+  },
+  "issueReporterCategoryAppEnv": "アプリと環境",
+  "@issueReporterCategoryAppEnv": {
+    "description": "Title of the always-on App and Environment category tile in the issue reporter."
+  },
+  "issueReporterCategoryAppEnvDescription": "バージョン、ビルド SHA、プラットフォーム、OS、画面 DPI、ロケール、SDK バージョン。",
+  "@issueReporterCategoryAppEnvDescription": {
+    "description": "Summary of what the App and Environment category contributes to the report."
+  },
+  "issueReporterCategorySession": "セッション状態",
+  "@issueReporterCategorySession": {
+    "description": "Title of the Session State category tile in the issue reporter."
+  },
+  "issueReporterCategorySessionDescription": "件数と形式名のみ — ファイルパスやファイルの内容は含まれません。",
+  "@issueReporterCategorySessionDescription": {
+    "description": "Summary of what the Session State category contributes to the report."
+  },
+  "issueReporterCategoryLog": "診断情報",
+  "@issueReporterCategoryLog": {
+    "description": "Title of the Diagnostics category tile in the issue reporter."
+  },
+  "issueReporterCategoryLogDescription": "このセッションで記録された最近の警告とエラー。",
+  "@issueReporterCategoryLogDescription": {
+    "description": "Summary of what the Diagnostics category contributes to the report."
+  },
+  "issueReporterCategoryScreenshot": "スクリーンショット",
+  "@issueReporterCategoryScreenshot": {
+    "description": "Title of the Screenshot category tile in the issue reporter (desktop only)."
+  },
+  "issueReporterCategoryScreenshotDescription": "添付できるように保存されたアプリウィンドウの画像。",
+  "@issueReporterCategoryScreenshotDescription": {
+    "description": "Summary of what the Screenshot category contributes to the report."
+  },
+  "issueReporterLockedCategorySemantics": "常に含まれます",
+  "@issueReporterLockedCategorySemantics": {
+    "description": "Screen-reader description of the lock icon on the always-on App and Environment tile."
+  },
+  "issueReporterSubmitButton": "送信",
+  "@issueReporterSubmitButton": {
+    "description": "Label of the issue reporter's submit action."
+  },
+  "issueReporterCancelButton": "キャンセル",
+  "@issueReporterCancelButton": {
+    "description": "Label of the issue reporter's cancel action."
+  },
+  "issueReporterOpenedToast": "GitHub の Issue を開きました — クリップボードから本文に貼り付け、スクリーンショットをドラッグしてください。",
+  "@issueReporterOpenedToast": {
+    "description": "Toast shown after submission when the report did not fit in the GitHub URL and must be pasted from the clipboard."
+  },
+  "issueReporterOpenedToastPrefilled": "レポートを事前入力した状態で GitHub の Issue を開きました — スクリーンショットがある場合はドラッグして添付してください。",
+  "@issueReporterOpenedToastPrefilled": {
+    "description": "Toast shown after submission when the report was pre-filled into the GitHub new-issue URL."
+  },
+  "issueReporterScreenshotSaved": "スクリーンショットを {path} に保存しました",
+  "@issueReporterScreenshotSaved": {
+    "description": "Confirmation appended to the submission toast naming where the screenshot PNG was written.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "issueReporterEmptyLogPlaceholder": "（ログエントリは記録されていません）",
+  "@issueReporterEmptyLogPlaceholder": {
+    "description": "Placeholder rendered in the Diagnostics category when the log ring buffer captured nothing."
+  },
+  "issueReporterEmptySessionLogPlaceholder": "（このセッションでエラーや警告は記録されていません）",
+  "@issueReporterEmptySessionLogPlaceholder": {
+    "description": "Placeholder rendered under the session-log heading when nothing was logged this session."
+  },
+  "betaExpiryBannerMessage": "{days, plural, =1{NetCrux ベータ版はあと 1 日で期限切れになります。最新ビルドをダウンロードしてください。} other{NetCrux ベータ版はあと {days} 日で期限切れになります。最新ビルドをダウンロードしてください。}}",
+  "@betaExpiryBannerMessage": {
+    "description": "Dismissible banner shown while the beta build is inside the warning window of its hard expiry date.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "betaExpiryBannerAction": "ダウンロード",
+  "@betaExpiryBannerAction": {
+    "description": "Inline action on the beta-expiry warning banner that opens the download page."
+  },
+  "betaExpiryDismissLabel": "閉じる",
+  "@betaExpiryDismissLabel": {
+    "description": "Accessible name of the beta-expiry warning banner's dismiss button."
+  },
+  "betaExpiryExpiredTitle": "ベータ版の有効期限が切れました",
+  "@betaExpiryExpiredTitle": {
+    "description": "Title of the blocking modal shown once the beta build has passed its hard expiry date."
+  },
+  "betaExpiryExpiredBody": "この NetCrux ベータ版は有効期限に達しました。NetCrux を引き続き使用するには、最新ビルドをダウンロードしてください。",
+  "@betaExpiryExpiredBody": {
+    "description": "Body of the blocking beta-expired modal explaining why the build stopped working."
+  },
+  "betaExpiryExpiredAction": "最新ビルドをダウンロード",
+  "@betaExpiryExpiredAction": {
+    "description": "Primary action of the blocking beta-expired modal; opens the download page."
+  },
+  "betaExpiryExpiredQuit": "NetCrux を終了",
+  "@betaExpiryExpiredQuit": {
+    "description": "Secondary action of the blocking beta-expired modal; terminates the application."
+  },
+  "coneOfInfluenceCellCount": "{count, plural, =1{影響範囲内に 1 セル} other{影響範囲内に {count} セル}}",
+  "actionCategoryFileMnemonic": "ファイル(&F)",
+  "actionCategoryEditMnemonic": "編集(&E)",
+  "actionCategoryViewMnemonic": "表示(&V)",
+  "actionCategoryNavigateMnemonic": "ナビゲーション(&N)",
+  "actionCategorySearchMnemonic": "検索(&S)",
+  "actionCategoryToolsMnemonic": "ツール(&T)",
+  "actionCategoryHelpMnemonic": "ヘルプ(&H)",
+  "actionCategoryEdit": "編集",
+  "menuWindow": "ウインドウ",
+  "actionExit": "終了",
+  "actionOpenDocumentation": "ドキュメント",
+  "actionNewWorkspace": "新規ワークスペース",
+  "actionOpenWorkspace": "ワークスペースを開く…",
+  "actionSaveWorkspaceAs": "ワークスペースを別名で保存…",
+  "actionResetWorkspace": "ワークスペースをリセット…",
+  "actionNextTab": "次のタブ",
+  "actionPreviousTab": "前のタブ",
+  "actionToggleTheme": "テーマを切り替え",
+  "accessibilitySchematicActive": "回路図: セル {cells} 個、ネット {nets} 本",
+  "@accessibilitySchematicActive": {
+    "description": "Screen-reader summary for the schematic canvas.",
+    "placeholders": {
+      "cells": {
+        "type": "int"
+      },
+      "nets": {
+        "type": "int"
+      }
+    }
+  },
+  "schematicKeyboardCell": "{name}、{type} セル",
+  "@schematicKeyboardCell": {
+    "description": "Screen-reader announcement when the keyboard selects a cell on the schematic canvas; name is the instance name, type the Yosys cell type.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardBoundaryPort": "ポート {name}",
+  "@schematicKeyboardBoundaryPort": {
+    "description": "Screen-reader announcement when the keyboard selects a module boundary port on the schematic canvas.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNet": "ネット {name}",
+  "@schematicKeyboardNet": {
+    "description": "Screen-reader announcement when the keyboard selects a net on the schematic canvas; name is the net name, or its numeric id when the net is unnamed.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNoConnections": "{name} にはピンもネットもありません",
+  "@schematicKeyboardNoConnections": {
+    "description": "Screen-reader announcement when the keyboard asks for the pins and nets of a cell or port that has none; name is the cell or port.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardPin": "{cell} のピン {pin}",
+  "@schematicKeyboardPin": {
+    "description": "Screen-reader announcement when the keyboard selects a pin on the schematic canvas; pin is the pin name, cell the instance it belongs to.",
+    "placeholders": {
+      "pin": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNothingSelected": "何も選択されていません",
+  "@schematicKeyboardNothingSelected": {
+    "description": "Screen-reader announcement when the context menu key is pressed on the schematic canvas with nothing selected."
+  },
+  "schematicKeyboardNoElements": "このスコープに選択できる要素はありません",
+  "@schematicKeyboardNoElements": {
+    "description": "Screen-reader announcement when the keyboard steps through the schematic canvas but the scope draws no cells or ports."
+  },
+  "accessibilityToolbarRegion": "ツールバー",
+  "toolbarOverflowActions": "アクション",
+  "toolbarToggleCrossProbe": "クロスプローブパネル",
+  "toolbarTraceCluster": "トレース",
+  "actionOpenTabDiagnostics": "タブ診断…",
+  "actionOpenAppDiagnostics": "アプリ診断…",
+  "diagnosticsAppDialogTitle": "アプリ診断",
+  "diagnosticsCopyFullReport": "フル診断レポートをコピー",
+  "diagnosticsCopiedToClipboard": "診断レポートをクリップボードへコピーしました。",
+  "statusBarBusyElaborating": "設計をエラボレート中",
+  "statusBarYosysUnavailable": "Yosys が見つかりません",
+  "dockTabInspector": "インスペクター",
+  "dockTabHierarchy": "階層",
+  "dockTabDiagnostics": "診断",
+  "dockTabCrossProbe": "クロスプローブ",
+  "dockTabCdc": "CDC",
+  "dockTabResetDomain": "リセットドメイン",
+  "dockTabFsm": "FSM",
+  "dockTabFsmResults": "FSM 結果",
+  "dockTabActivity": "アクティビティ",
+  "dockTabDiff": "差分",
+  "dockCollapseTooltip": "パネルを隠す",
+  "accessibilityRightDockRegion": "詳細ドック",
+  "accessibilityLeftDockRegion": "ブラウザードック",
+  "accessibilityBottomDockRegion": "パネルドック",
+  "settingsLanguageLabel": "言語",
+  "settingsLanguageDescription": "アプリケーションインターフェースに使用する言語",
+  "settingsCxpSectionTitle": "CXP クロスプローブ",
+  "settingsAutoReloadDescription": "読み込んだファイルがディスク上で変更されたときの NetCrux の動作",
+  "settingsCxpPortError": "1 から 65535 の範囲でポートを入力してください。",
+  "workspaceResetConfirmButton": "リセット",
+  "workspaceReplaceConfirmButton": "置き換える",
+  "tabContextMenuRevealInFinder": "Finder で表示",
+  "tabContextMenuRevealInExplorer": "エクスプローラーで表示",
+  "tabContextMenuRevealInFiles": "ファイルマネージャーで表示",
+  "helpLinkLearnMore": "詳細を見る",
+  "aboutButtonAcknowledgments": "謝辞",
+  "statsStripLabel": "統計",
+  "statsStripExpandTooltip": "ライブ統計を表示",
+  "statsStripCollapseTooltip": "ライブ統計を非表示",
+  "statisticsStripTitle": "統計",
+  "statsSegmentMemory": "メモリ",
+  "statsSegmentMemoryTooltip": "Yosys サブプロセスと elkjs ランタイムを含む NetCrux プロセスの常駐メモリ。",
+  "statsSegmentFps": "FPS",
+  "statsSegmentFpsTooltip": "直近 60 フレームの 1 秒あたりのフレーム数。",
+  "statsSegmentJank": "ドロップ",
+  "statsSegmentJankTooltip": "このセッションで 16.7 ms の予算を超えたフレーム数。平均 FPS はカクつきを隠しますが、この値は隠しません。",
+  "statsSegmentLayout": "レイアウト",
+  "statsSegmentLayoutTooltip": "直近の ELK レイアウト処理の所要時間 — エラボレーションに次いでパイプラインで最も遅い工程です。",
+  "statsSegmentPaint": "描画",
+  "statsSegmentPaintTooltip": "回路図キャンバスが直近のフレームを描画するのに要した時間。",
+  "statsSegmentViewport": "ビューポート",
+  "statsSegmentViewportTooltip": "ビューポートカリング後に直近のフレームで実際に描画されたセルとエッジの数。",
+  "statsSegmentElaboration": "エラボレーション",
+  "statsSegmentElaborationTooltip": "現在 Yosys サブプロセスが実行中かどうか。タブ診断ドロワーは前回の実行結果を表示します。",
+  "statsElaborationRunning": "実行中",
+  "statsElaborationIdle": "アイドル",
+  "diagnosticsAppDialogSubtitle": "プロセス全体の状態。この情報がマシンの外に出ることはありません。",
+  "diagnosticsCloseTooltip": "閉じる",
+  "diagnosticsSectionMemory": "メモリ",
+  "diagnosticsSectionPerTab": "タブ別設計規模",
+  "diagnosticsSectionFrameStats": "フレーム統計",
+  "diagnosticsSectionSession": "セッション",
+  "diagnosticsMetricRss": "プロセスメモリ (RSS)",
+  "diagnosticsMetricFps": "フレームレート",
+  "diagnosticsMetricJank": "バジェット超過フレーム",
+  "diagnosticsMetricLastFrame": "最終フレーム",
+  "diagnosticsMetricSampledFrames": "サンプリング済みフレーム",
+  "diagnosticsPerTabNote": "バイト数ではなく要素数です。エラボレート済み設計のメモリ使用量を Dart VM から取得することはできません。",
+  "diagnosticsColumnTab": "タブ",
+  "diagnosticsColumnModules": "モジュール",
+  "diagnosticsColumnCells": "セル",
+  "diagnosticsColumnNets": "ネット",
+  "diagnosticsNoTabs": "開いているタブがありません。",
+  "diagnosticsDisabledSnack": "診断画面は無効になっています。設定 > {section}で有効にしてください。",
+  "diagnosticsSettingsLabel": "診断画面を有効にする",
+  "diagnosticsSettingsDescription": "タブ診断ドロワー、アプリ診断ダイアログ、ペイン別レンダリング統計を表示します。デバッグビルドでは常に有効です。",
+  "paneRenderStatsTitle": "ペインレンダリング統計",
+  "paneRenderStatsTooltip": "このペインのレンダリング統計",
+  "paneRenderStatsCloseTooltip": "レンダリング統計を閉じる",
+  "paneRenderStatsPaint": "描画時間",
+  "paneRenderStatsLayout": "レイアウト時間",
+  "paneRenderStatsVisibleCells": "ビューポート内のセル",
+  "paneRenderStatsVisibleEdges": "ビューポート内のエッジ",
+  "paneRenderStatsFrames": "描画フレーム数",
+  "paneRenderStatsEmpty": "このペインはまだ回路図を描画していません。",
+  "telemetryConsentTitle": "NetCrux の改善にご協力ください",
+  "telemetryConsentBody": "匿名の利用回数とエラー回数は、次に何を作り、何を直すかを決める手がかりになります。ファイル、設計データ、個人を特定できる情報は一切収集しません。",
+  "telemetryConsentLearnMore": "収集する項目を詳しく見る",
+  "telemetryConsentToggleLabel": "匿名の使用統計を送信する",
+  "telemetryConsentContinue": "続ける",
+  "settingsPrivacySection": "プライバシー",
+  "settingsTelemetryLabel": "匿名の使用統計を送信する",
+  "settingsTelemetryDescription": "機能とエラーのカウンター、アプリと OS のバージョン、フォームファクター、言語、ライセンスティア。ファイル名、ネット名、エラーメッセージ、個人情報は含みません。",
+  "settingsTelemetryDocsLabel": "テレメトリードキュメント",
+  "settingsTelemetryDocsDescription": "送信されるフィールドの一覧、決して収集しない項目の一覧、そして送信元のソースコード。",
+  "upgradeDialogSeePricing": "価格を見る",
+  "settingsTelemetryInstallationIdLabel": "インストール ID",
+  "settingsTelemetryInstallationIdDescription": "収集されるデータに付与される唯一の識別子です。ランダムな値で、あなた個人とは結び付いていません。このインストールのデータ削除をご希望の場合は、サポートまでお送りください。",
+  "settingsTelemetryInstallationIdCopy": "コピー",
+  "settingsTelemetryInstallationIdCopied": "インストール ID をコピーしました。",
+  "xTracePanelTitle": "X トレース",
+  "xTracePanelEmpty": "アクティブな X トレースはありません。ネットを選択して「X トレースを表示」を実行してください。",
+  "xTracePanelClearButton": "クリア",
+  "xTracePanelTerminationFoundOrigin": "この経路の起点に到達",
+  "xTracePanelTerminationMaxDepth": "深さ上限に到達",
+  "xTracePanelTerminationBoundary": "境界に到達",
+  "xTracePanelTerminationNoVcd": "波形がロードされていません",
+  "xTracePanelTerminationCycle": "組合せループを検出",
+  "xTracePanelTerminationNothing": "追跡可能な選択がありません",
+  "xTracePanelStepLabel": "ステップ {depth}",
+  "xTracePanelStepCell": "セル {cell} 内",
+  "xTracePanelStepBoundary": "境界ポート {port}",
+  "xTracePanelStepValue": "= {value}",
+  "xTracePanelStepCount": "{count, plural, =1{1 ステップ} other{{count} ステップ}}"
+}

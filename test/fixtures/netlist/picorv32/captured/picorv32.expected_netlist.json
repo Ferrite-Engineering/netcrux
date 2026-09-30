@@ -1,0 +1,40 @@
+{
+  "source": "picorv32.v",
+  "topModule": "picorv32",
+  "moduleCount": 1,
+  "modules": [
+    {
+      "name": "picorv32",
+      "cellCount": 1599,
+      "portCount": 27,
+      "netCount": 3096,
+      "cellTypeHistogram": {
+        "$add": 25,
+        "$and": 7,
+        "$dff": 155,
+        "$eq": 381,
+        "$ge": 1,
+        "$logic_and": 121,
+        "$logic_not": 142,
+        "$logic_or": 51,
+        "$lt": 2,
+        "$memrd": 2,
+        "$memwr_v2": 1,
+        "$mux": 545,
+        "$ne": 1,
+        "$not": 9,
+        "$or": 4,
+        "$pmux": 108,
+        "$pos": 1,
+        "$reduce_and": 6,
+        "$reduce_bool": 12,
+        "$reduce_or": 17,
+        "$shl": 2,
+        "$sshr": 1,
+        "$sub": 4,
+        "$xor": 1
+      }
+    }
+  ],
+  "fingerprint": "fnv1a:1f732415"
+}

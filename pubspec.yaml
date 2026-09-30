@@ -1,0 +1,306 @@
+name: netcrux
+description: "NetCrux: open-core EDA tool (Ferrite Engineering). See the WaveCrux reference implementation for the canonical open-core + Pro/Enterprise overlay pattern."
+publish_to: 'none'
+version: 1.0.0+9
+license: Apache-2.0
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  # Cross-suite About dialog surface (CruxAboutDialog). One implementation
+  # rendered by every product in the suite; NetCrux supplies its branding,
+  # build info, edition label, localized chrome strings, app icon, and the
+  # two action buttons (Visit Website, Copy Version Info). Tier + beta chips
+  # are driven by crux_license providers inside the shared widget. See
+  # WaveCrux's WaveCruxAboutDialog for the canonical reference.
+  crux_about_dialog:
+    path: ./crux-shared/packages/crux_about_dialog
+  # Cross-suite About-box data shapes (ApplicationBranding / ApplicationBuildInfo
+  # / ApplicationEdition) consumed by crux_about_dialog. NetCrux's
+  # about_providers wire these onto package_info_plus + the active license tier.
+  crux_app_info:
+    path: ./crux-shared/packages/crux_app_info
+  # Cross-suite Debouncer: the one trailing debounce every product coalesces
+  # rapid input through (the Settings custom Yosys path probe).
+  crux_async:
+    path: ./crux-shared/packages/crux_async
+  # Cross-suite command palette widget (CommandPalette<T extends CruxAction>).
+  # NetCrux's CommandPaletteDialog is a thin Consumer wrapper that reads
+  # netcrux providers, applies netcrux-specific filtering, and delegates to
+  # this generic widget.
+  crux_command_palette:
+    path: ./crux-shared/packages/crux_command_palette
+  # Cross-suite v1 CXP (Crux eXchange Protocol) bindings — peer cross-probe
+  # protocol. NetCrux's NetCruxCxpServer wraps LocalCxpServer with a
+  # NetCruxNameResolver and wires notify_selection emitters into the
+  # selection providers, plus request_highlight / request_open_source
+  # handlers.
+  crux_cxp:
+    path: ./crux-shared/packages/crux_cxp
+  # Shared docked cross-probe panel widget + app-agnostic controller contract.
+  # NetCrux hosts it via NetCruxCrossProbePanel
+  # and its NetCruxCrossProbePanelController adapter.
+  crux_cxp_ui:
+    path: ./crux-shared/packages/crux_cxp_ui
+  # Cross-suite VSCode-style tabbed dock for CruxIdeLayout regions.
+  crux_dock:
+    path: ./crux-shared/packages/crux_dock
+  # Cross-suite first-launch EULA acceptance — the agreement text generated
+  # from the executed document, a store that records which VERSION was accepted
+  # (so a changed agreement re-prompts, per EULA 2.3), and the blocking gate.
+  # Mounted outside TelemetryConsentGate: the telemetry disclosure asks consent
+  # for a term the EULA defines, so it cannot come first. The agreement is not
+  # localized — it is executed in English.
+  crux_eula:
+    path: ./crux-shared/packages/crux_eula
+  # File-system watcher with debounced events. Cross-suite package lifted
+  # from WaveCrux open-core into crux-shared. Consumed via
+  # the git submodule at `./crux-shared/` to keep netcrux standalone-buildable.
+  crux_file_watcher:
+    path: ./crux-shared/packages/crux_file_watcher
+  # Cross-suite dockable IDE-layout shell (CruxIdeLayout). NetcruxIdeLayout is
+  # a thin adapter that projects NetCrux's PanelLayoutState onto the shared
+  # widget.
+  crux_ide_layout:
+    path: ./crux-shared/packages/crux_ide_layout
+  # Cross-suite path-identity primitives (canonicalizePath / canonicalPathKey
+  # / isSamePath) plus the crash-safe atomic-write helper. NetcruxWorkspaceCodec
+  # keys tab identity on canonicalPathKey so a relative CLI argument, a `..`
+  # segment, a trailing separator, a symlink, or a case difference all resolve
+  # to the tab the user already has open instead of a duplicate.
+  crux_io:
+    path: ./crux-shared/packages/crux_io
+  # Cross-suite beta issue reporter — diagnostic-log ring buffer, category
+  # collection, screenshot capture, markdown report builder, and the
+  # pre-filled GitHub new-issue dialog. NetCrux supplies its config
+  # (Ferrite-Engineering/netcrux), an ARB-backed strings adapter, and
+  # the privacy-scrubbed session contributor
+  # (`cruxIssueSessionContextProvider`).
+  crux_issue_reporter:
+    path: ./crux-shared/packages/crux_issue_reporter
+  # Cross-suite customizable keyboard-binding infrastructure: platform-neutral
+  # KeyBinding/KeymapCodec/KeyBindingsStore, conflict
+  # detection, and the KeyBindingsEditor widget — all generic over CruxAction.
+  # NetCrux supplies its own NetcruxAction enum + defaultBindings + labels.
+  crux_keybindings:
+    path: ./crux-shared/packages/crux_keybindings
+  # Cross-suite license tier vocabulary, beta-period gating, FeatureGate
+  # utility, licenseTierProvider, and TierBadge / EducationalBadge widgets.
+  # Open-core consumes the package via the NetcruxLicenseBadgeStrings
+  # adapter (lib/core/license/) which bridges the package widgets to
+  # AppLocalizations. The Pro overlay overrides
+  # licenseTierProvider in its proOverrides list to return the active
+  # license tier.
+  crux_license:
+    path: ./crux-shared/packages/crux_license
+  # AppImage first-run desktop self-integration (Linux/Wayland): writes the
+  # host-side .desktop + hicolor icons so GNOME/Ubuntu matches the running
+  # window's app_id to its dock icon. maybeIntegrateDesktopEntry is called in
+  # bootstrap(); it is inert off Linux and off AppImage.
+  crux_linux_integration:
+    path: ./crux-shared/packages/crux_linux_integration
+  # Cross-suite desktop menu bar: one declarative CruxMenuLayout rendered as
+  # the native macOS PlatformMenuBar or the in-window VS Code-style menu bar on
+  # Windows/Linux, with shared separator grouping, platform-idiomatic
+  # About/Settings/Quit placement, and the native key-equivalent guard.
+  crux_menu_bar:
+    path: ./crux-shared/packages/crux_menu_bar
+  # The shared elaborated-netlist model, lifted out of this repo so
+  # LintCrux's CDC engine works over the same structure the schematic is
+  # drawn from. Two copies would diverge on the first Yosys schema change.
+  crux_netlist:
+    path: ./crux-shared/packages/crux_netlist
+  crux_policy:
+    path: ./crux-shared/packages/crux_policy
+  # The `<design>.crux-project` suite design manifest — NetCrux reads the
+  # `netlist` artifact, falling back to `design.sources` so a manifest with RTL
+  # but no pre-built netlist still opens.
+  crux_project:
+    path: ./crux-shared/packages/crux_project
+  # Cross-suite settings infrastructure (CoreSettings + SettingsService<T>).
+  # NetCrux's AppSettings composes CoreSettings via has-a and adds its
+  # netcrux-specific fields; the SettingsService consumes the generic via
+  # a NetcruxSettingsCodec that delegates the shared portion to
+  # CoreSettingsCodec. Mirrors the WaveCrux composition pattern.
+  crux_settings:
+    path: ./crux-shared/packages/crux_settings
+  # Cross-suite Settings panel shell — master-detail layout + grouped-row
+  # widgets. NetCrux supplies its own category list + dialog/route chrome.
+  crux_settings_ui:
+    path: ./crux-shared/packages/crux_settings_ui
+  # Cross-suite action infrastructure (ActionCategory enum + CruxAction
+  # abstract interface). NetCrux's NetcruxAction enum implements CruxAction;
+  # labels, default bindings, dispatch Intent, and menu filters stay in
+  # netcrux because they're L10N- / dispatch-coupled.
+  crux_shortcut_action:
+    path: ./crux-shared/packages/crux_shortcut_action
+  # Cross-suite bottom status bar. NetcruxStatusBar is a thin adapter
+  # that feeds design-identity segments (file / top module / cell count) into
+  # the shared CruxStatusBar chrome so the bottom bar matches WaveCrux.
+  crux_stats_strip:
+    path: ./crux-shared/packages/crux_stats_strip
+  crux_status_bar:
+    path: ./crux-shared/packages/crux_status_bar
+  # Cross-suite anonymous usage-statistics pipeline: the event model, the
+  # capped on-disk queue, the coalescing batcher, the never-throwing ingest
+  # client, the kBetaPeriod x TELEMETRY_DEV x consent gate, and both consent
+  # surfaces. Extracted from the shipped WaveCrux implementation; NetCrux is
+  # its second consumer and wires it with a NetcruxTelemetryConfig, a
+  # SharedPreferences storage adapter, and a NetcruxTelemetryStrings adapter.
+  # What stays in this repo is the event catalog, the instrumentation call
+  # sites, and the layout-idiom -> form_factor derivation.
+  crux_telemetry:
+    path: ./crux-shared/packages/crux_telemetry
+  # Cross-suite named-token color theming (CruxColorTheme, builtin presets,
+  # cruxColorThemeProvider, ThemeAppearanceSection, applyChromeTokens +
+  # themeModeFromBrightness helpers). NetCrux follows the WaveCrux adoption
+  # pattern — registers the shared chromeTokens catalog at bootstrap and
+  # overrides cruxColorThemeProvider with a notifier that bridges between
+  # AppSettings.activeThemeName / themeOverrides and the in-memory theme.
+  crux_theme:
+    path: ./crux-shared/packages/crux_theme
+  # Cross-suite application toolbar: one geometry token set, one button, one
+  # divider, one overflow strategy, plus the split-button, morphing run/stop,
+  # and badge affordances every product shares.
+  crux_toolbar:
+    path: ./crux-shared/packages/crux_toolbar
+  # Cross-suite update-check mechanism — version-manifest model, semver
+  # comparison, HTTP manifest fetch, the launch/periodic/manual status
+  # notifier, and the update-available banner. NetCrux supplies its
+  # CruxUpdateConfig (updates.netcrux.app manifest), an ARB-backed strings
+  # adapter, the persisted auto-check setting, and the persisted
+  # observed-server-time store that hardens beta expiry against a
+  # device-clock rollback.
+  crux_updates:
+    path: ./crux-shared/packages/crux_updates
+  # Cross-suite VS Code-style frameless window chrome (custom title bar,
+  # left-aligned mnemonic menu bar, caption buttons) over window_manager on
+  # Windows/Linux; macOS keeps its native menu. NetCrux supplies its own logo
+  # and its DesktopMenuBar feeds the shared MnemonicMenuBar.
+  crux_window_chrome:
+    path: ./crux-shared/packages/crux_window_chrome
+  # Cross-suite workspace + multi-tab + split-pane infrastructure.
+  # Provides Workspace<P> / WorkspaceTab<P> / WorkspacePane value types,
+  # WorkspaceService<P> persistence, TabContainerManager + PaneContainerManager
+  # for per-tab and per-pane ProviderContainer lifecycle, the generic
+  # WorkspaceNotifier<P> AsyncNotifier base, plus the PaneHost<P> /
+  # ViewerTabBar<P> / EmptyCanvasState consumer widgets. NetCrux supplies
+  # NetcruxTabPayload + NetcruxWorkspaceCodec and binds the generics.
+  crux_workspace:
+    path: ./crux-shared/packages/crux_workspace
+  # Cross-suite Yosys subprocess infrastructure (YosysRunner, availability
+  # probe, stderr diagnostic parser, ProcessRunner seam, value types).
+  # Lifted from this repo's lib/services/yosys/. NetCrux
+  # keeps the JSON parser, NetlistModel, ElaborationCacheService, and the
+  # Riverpod providers that wire crux_yosys into the app's state surface.
+  crux_yosys:
+    path: ./crux-shared/packages/crux_yosys
+  # SHA-256 over a canonical structural summary of the elaborated netlist, so
+  # a collaborative session can tell a room that two people are looking at two
+  # different elaborations of the same design — the commonest way a schematic
+  # review goes quietly wrong. Only the digest crosses the wire, never the
+  # structure it summarizes.
+  #
+  # HASHING, NOT ENCRYPTION, and the distinction is load-bearing here:
+  # `test/static/no_bundled_encryption_test.dart` refuses a cipher in open
+  # core, and export-control classification treats hashing (`crypto`:
+  # SHA/HMAC) differently from encryption for exactly this reason. It was
+  # already resolved transitively; this makes a real consumer explicit.
+  crypto: ^3.0.7
+  # PINNED, not caret-ranged, and **do not migrate to 12.0.0** — it is broken on
+  # macOS. 12.0.0 split the plugin into federated platform packages and, in the
+  # split, lost the macOS Dart implementation: `file_picker_darwin` 1.0.0 has one
+  # Dart class serving two native handlers that speak different protocols. It
+  # sends the iOS method names (the *file type* — `custom`, `any`, `image`) while
+  # `MacOSFilePickerHandler.swift` switches on the *operation* (`pickFiles`,
+  # `saveFile`, `getDirectoryPath`), so every call raises
+  # MissingPluginException. Open, save and pick-directory are all dead on macOS;
+  # only `clear` survives. Linux, Windows and iOS are unaffected, which is why
+  # CI never saw it.
+  #
+  # A caret on a prerelease admits the stable, which is how 12.0.0 arrived
+  # uninvited in the first place. 12.0.0-beta.7 is the last working version —
+  # it carries a separate `lib/src/platform/macos/file_picker_macos.dart`.
+  # `test/static/file_picker_pin_test.dart` holds the line.
+  file_picker: 12.0.0-beta.7
+  flutter:
+    sdk: flutter
+  # In-process JavaScript runtime (QuickJS-backed). Hosts the elk.bundled.js
+  # bundle that drives the schematic layout pipeline; see
+  # lib/services/layout/elk_layout_service.dart and the vendored
+  # assets/elk/elk.bundled.js. Desktop-only by construction (matches
+  # netcrux's target platforms — see netcrux/CLAUDE.md §"Platform Targets").
+  flutter_js: ^0.8.7
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.3.2
+  go_router: ^17.3.0
+  # Log records: SEVERE and above are written to stderr alongside the issue
+  # reporter's in-memory buffer (lib/services/logging/).
+  logging: ^1.3.0
+  meta: ^1.18.0  # pinned to 1.18.0 by flutter_test (1.18.2 latest blocked by SDK)
+  # Version + build number for the About box (crux_about_dialog). file_picker
+  # 12 brings win32 ^6, which unblocks package_info_plus 10.x (matches the
+  # rest of the suite).
+  package_info_plus: ^10.1.0
+  path: ^1.9.0
+  path_provider: ^2.1.0
+  riverpod_annotation: ^4.0.3
+  shared_preferences: ^2.2.0
+  # Opens the "Visit Website" action from the About box in the system browser.
+  url_launcher: ^6.3.0
+  # Frameless custom title bar on Windows/Linux (VS Code-style chrome via
+  # crux_window_chrome); TitleBarStyle.hidden removes the OS decorations.
+  window_manager: ^0.5.0
+
+dev_dependencies:
+  # Resolved-AST source analysis for the static guards under `test/static/`
+  # (the per-tab provider scope-leak scanner). Pinned below 13.0.0: analyzer 13+
+  # requires Dart 3.13 and this package targets the 3.12 SDK.
+  analyzer: '>=12.1.0 <13.0.0'
+  build_runner: ^2.15.0
+  # The screen-reader test harness (`crux_a11y_testing.dart`: focus walk,
+  # transcript goldens, announcement recorder) used by
+  # `test/accessibility/`. Production code reaches the package transitively.
+  crux_a11y:
+    path: ./crux-shared/packages/crux_a11y
+  # The audit envelope, named directly by the emission tests' capturing sink.
+  # Test-only: production code reaches `AuditEvent` through crux_license's
+  # `CruxAuditRecorder`, so the runtime dependency stays where the binding is.
+  crux_audit:
+    path: ./crux-shared/packages/crux_audit
+  flutter_test:
+    sdk: flutter
+  # `MockClient` for the telemetry gating tests: the beta-inert guarantee is
+  # asserted against TRAFFIC (no request ever leaves the graph), not against a
+  # class name, so the tests need to stand a client in front of the pipeline.
+  # Test-only — `crux_telemetry` owns the runtime dependency.
+  http: ^1.2.0
+  integration_test:
+    sdk: flutter
+  mocktail: ^1.0.4
+  riverpod_generator: ^4.0.4
+  very_good_analysis: ^10.2.0
+
+flutter:
+  generate: true
+  uses-material-design: true
+  assets:
+    # Vendored elkjs bundle consumed by ElkLayoutService at runtime. Kept
+    # under assets/elk/ so it lives in the same place as any future layout-
+    # related assets (theme overlays, sample input graphs).
+    - assets/elk/elk.bundled.js
+    # EPL-2.0 license text for the elkjs bundle above. elkjs ships in every
+    # NetCrux build (desktop via flutter_js, web natively), and EPL-2.0
+    # §3.1(b) requires a copy of the Agreement to accompany the Program in
+    # object-code form. Bundling it as an asset makes the text travel with
+    # the binary, not just the source tree. See NOTICES §2.
+    - assets/elk/LICENSE.epl-2.0.txt
+    # Ferrite Engineering branding shown in the About box banner. Referenced
+    # by aboutBrandingProvider (lib/core/app_info/about_providers.dart).
+    - assets/branding/
+    # The NetCrux app icon (the VS Code-style title-bar logo via
+    # NetcruxIconImage). The master lives under macos/.../AppIcon; this is the
+    # Flutter-bundled copy.
+    - assets/images/

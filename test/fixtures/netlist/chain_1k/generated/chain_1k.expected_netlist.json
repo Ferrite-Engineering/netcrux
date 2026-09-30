@@ -1,0 +1,17 @@
+{
+  "source": "chain_1k.v",
+  "topModule": "chain_1k",
+  "moduleCount": 1,
+  "modules": [
+    {
+      "name": "chain_1k",
+      "cellCount": 1000,
+      "portCount": 3,
+      "netCount": 1002,
+      "cellTypeHistogram": {
+        "$_DFF_P_": 1000
+      }
+    }
+  ],
+  "fingerprint": "fnv1a:efe6581a"
+}

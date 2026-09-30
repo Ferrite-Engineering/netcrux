@@ -1,0 +1,18 @@
+[package]
+name = "elk_ffi"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "C ABI over the vendored elkrs port of the Eclipse Layout Kernel: ELK JSON in, laid-out JSON out"
+
+[lib]
+# cdylib → .so / .dylib / .dll for Linux, macOS, Windows.
+crate-type = ["cdylib"]
+
+[dependencies]
+elkrs = { path = "../vendor/elkrs" }
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
+
+[profile.release]
+lto = true
+codegen-units = 1

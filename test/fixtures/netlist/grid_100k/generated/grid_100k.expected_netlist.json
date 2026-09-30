@@ -1,0 +1,17 @@
+{
+  "source": "grid_100k.v",
+  "topModule": "grid_100k",
+  "moduleCount": 1,
+  "modules": [
+    {
+      "name": "grid_100k",
+      "cellCount": 100000,
+      "portCount": 201,
+      "netCount": 100101,
+      "cellTypeHistogram": {
+        "$_DFF_P_": 100000
+      }
+    }
+  ],
+  "fingerprint": "fnv1a:a5d255cd"
+}

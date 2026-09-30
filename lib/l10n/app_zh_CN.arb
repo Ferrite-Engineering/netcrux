@@ -1,0 +1,2326 @@
+{
+  "@@locale": "zh_CN",
+  "settingsShortcutsSection": "键盘快捷键",
+  "@settingsShortcutsSection": {
+    "description": "Settings category title for the keyboard shortcuts editor"
+  },
+  "settingsShortcutsDescription": "点击铅笔图标可更改快捷键，然后按下新的按键。使用“导出”和“导入”可与他人共享您的快捷键配置。",
+  "@settingsShortcutsDescription": {
+    "description": "Intro note above the editable shortcuts list"
+  },
+  "settingsShortcutNotBound": "—",
+  "@settingsShortcutNotBound": {
+    "description": "Placeholder shown when an action has no key binding"
+  },
+  "settingsShortcutsKeyboardHint": "使用上下方向键在快捷键之间移动。按 Enter 更改所选快捷键，按 Delete 移除，按 Shift+Delete 恢复默认值。",
+  "@settingsShortcutsKeyboardHint": {
+    "description": "Keyboard instructions for the shortcut list in Settings > Keyboard Shortcuts. Shown under the description and spoken once by a screen reader when focus enters the list."
+  },
+  "settingsShortcutNotBoundSpoken": "无快捷键",
+  "@settingsShortcutNotBoundSpoken": {
+    "description": "What a screen reader says for an action with no key binding. The visual placeholder is a dash, which is not spoken."
+  },
+  "settingsShortcutsImport": "导入…",
+  "@settingsShortcutsImport": {
+    "description": "Button that imports a shared .crux-keymap shortcut file"
+  },
+  "settingsShortcutsExport": "导出…",
+  "@settingsShortcutsExport": {
+    "description": "Button that exports shortcut customizations to a .crux-keymap file"
+  },
+  "settingsShortcutsResetAll": "全部重置",
+  "@settingsShortcutsResetAll": {
+    "description": "Button/confirm action restoring every shortcut to its default"
+  },
+  "settingsShortcutEditTooltip": "更改快捷键",
+  "@settingsShortcutEditTooltip": {
+    "description": "Tooltip for the per-action capture button"
+  },
+  "settingsShortcutUnbindTooltip": "移除快捷键",
+  "@settingsShortcutUnbindTooltip": {
+    "description": "Tooltip for the per-action unbind button"
+  },
+  "settingsShortcutResetTooltip": "恢复默认",
+  "@settingsShortcutResetTooltip": {
+    "description": "Tooltip for the per-action reset button"
+  },
+  "settingsShortcutCapturePrompt": "按下新的快捷键…（按 Esc 取消）",
+  "@settingsShortcutCapturePrompt": {
+    "description": "Prompt shown while capturing a new chord"
+  },
+  "settingsShortcutConflict": "同时被 {actions} 使用",
+  "@settingsShortcutConflict": {
+    "description": "Warning under an action whose chord collides with others",
+    "placeholders": {
+      "actions": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictWins": "优先于 {others}",
+  "@settingsShortcutConflictWins": {
+    "description": "Conflict warning on the row whose shortcut fires; lists the shadowed actions sharing the chord",
+    "placeholders": {
+      "others": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictShadowed": "不会触发 —— 被 {winner} 屏蔽",
+  "@settingsShortcutConflictShadowed": {
+    "description": "Conflict warning on a shadowed row whose shortcut will not fire; names the winning action",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictSummary": "{count, plural, =1{有 1 个快捷键冲突需要处理} other{有 {count} 个快捷键冲突需要处理}}",
+  "@settingsShortcutConflictSummary": {
+    "description": "Summary banner above the shortcut list showing how many chords are in conflict",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutResetAllTitle": "重置所有快捷键？",
+  "@settingsShortcutResetAllTitle": {
+    "description": "Title of the reset-all confirmation dialog"
+  },
+  "settingsShortcutResetAllBody": "所有键盘快捷键都将恢复为默认值，您的自定义设置将被移除。",
+  "@settingsShortcutResetAllBody": {
+    "description": "Body of the reset-all confirmation dialog"
+  },
+  "settingsShortcutResetAllCancel": "取消",
+  "@settingsShortcutResetAllCancel": {
+    "description": "Cancel button in the reset-all confirmation dialog"
+  },
+  "settingsShortcutExportSuccess": "键盘快捷键已导出。",
+  "@settingsShortcutExportSuccess": {
+    "description": "Snackbar after a successful keymap export"
+  },
+  "settingsShortcutExportFailure": "无法导出快捷键：{error}",
+  "@settingsShortcutExportFailure": {
+    "description": "Snackbar when keymap export fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutImportEmpty": "该文件不包含任何快捷键自定义设置。",
+  "@settingsShortcutImportEmpty": {
+    "description": "Snackbar when an imported keymap has no customizations"
+  },
+  "settingsShortcutImportSuccess": "{count, plural, =0{未导入任何快捷键自定义设置。} =1{已导入 1 个自定义快捷键。} other{已导入 {count} 个自定义快捷键。}}",
+  "@settingsShortcutImportSuccess": {
+    "description": "Snackbar after a successful keymap import",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutImportFailure": "无法导入快捷键：{error}",
+  "@settingsShortcutImportFailure": {
+    "description": "Snackbar when keymap import fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutImportNewerVersion": "该快捷键配置由更新版本的 NetCrux 保存（格式 {version}）。请更新 NetCrux 后再导入。",
+  "@settingsShortcutImportNewerVersion": {
+    "description": "Snackbar when an imported keymap declares a schema version newer than this build supports",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutsPresetLabel": "预设",
+  "@settingsShortcutsPresetLabel": {
+    "description": "Label for the keymap preset chooser above the editable shortcut list"
+  },
+  "settingsShortcutsPresetDescription": "加载一整套按键绑定。之后您仍可自定义单个快捷键。",
+  "@settingsShortcutsPresetDescription": {
+    "description": "Description under the keymap preset chooser"
+  },
+  "settingsShortcutsPresetNetCrux": "NetCrux（默认）",
+  "@settingsShortcutsPresetNetCrux": {
+    "description": "Name of the default NetCrux keymap preset in the preset chooser"
+  },
+  "settingsShortcutsPresetCustom": "自定义",
+  "@settingsShortcutsPresetCustom": {
+    "description": "Shown in the preset chooser when the user's bindings match no built-in preset"
+  },
+  "appTitle": "NetCrux",
+  "@appTitle": {
+    "description": "Application title shown in the window title bar and About box."
+  },
+  "actionCategoryApp": "NetCrux",
+  "@actionCategoryApp": {
+    "description": "Menu bar / overflow menu category label for the host application menu (macOS application menu, the first menu)."
+  },
+  "actionCategoryFile": "文件",
+  "@actionCategoryFile": {
+    "description": "Menu bar / overflow menu category label for file operations (open, save, export, recent files)."
+  },
+  "actionCategoryView": "视图",
+  "@actionCategoryView": {
+    "description": "Menu bar / overflow menu category label for view operations (panel toggles, layout, zoom)."
+  },
+  "actionCategoryNavigate": "导航",
+  "@actionCategoryNavigate": {
+    "description": "Menu bar / overflow menu category label for navigation operations (jump to top, pop out, clear overlay)."
+  },
+  "actionCategorySearch": "搜索",
+  "@actionCategorySearch": {
+    "description": "Menu bar / overflow menu category label for search operations (find, command palette)."
+  },
+  "actionCategoryTools": "工具",
+  "@actionCategoryTools": {
+    "description": "Menu bar / overflow menu category label for tool operations (settings, diagnostics, analysis)."
+  },
+  "actionCategoryHelp": "帮助",
+  "@actionCategoryHelp": {
+    "description": "Menu bar / overflow menu category label for help operations (about, documentation, keyboard shortcuts)."
+  },
+  "actionOpenProject": "打开项目…",
+  "@actionOpenProject": {
+    "description": "Command palette / menu label for opening a .netcrux project file."
+  },
+  "actionOpenSourceFiles": "打开源文件…",
+  "@actionOpenSourceFiles": {
+    "description": "Command palette / menu label for opening one or more Verilog/VHDL source files."
+  },
+  "actionOpenNetlistJson": "打开网表 JSON…",
+  "@actionOpenNetlistJson": {
+    "description": "Command palette / menu / toolbar label for opening a pre-built Yosys JSON netlist, which renders without elaboration. The only way to load a design in the web viewer."
+  },
+  "actionCloseProject": "关闭项目",
+  "@actionCloseProject": {
+    "description": "Command palette / menu label for closing the currently open project."
+  },
+  "actionCloseTab": "关闭标签页",
+  "@actionCloseTab": {
+    "description": "Command palette / menu label for closing the active workspace tab (Cmd/Ctrl+W)."
+  },
+  "actionZoomIn": "放大",
+  "@actionZoomIn": {
+    "description": "Command palette / menu label for zooming the schematic canvas in."
+  },
+  "actionZoomOut": "缩小",
+  "@actionZoomOut": {
+    "description": "Command palette / menu label for zooming the schematic canvas out."
+  },
+  "actionZoomFitAll": "适应窗口",
+  "@actionZoomFitAll": {
+    "description": "Command palette / menu label for fitting the entire schematic in the viewport."
+  },
+  "actionToggleHierarchyTree": "切换层次结构树",
+  "@actionToggleHierarchyTree": {
+    "description": "Command palette / menu label for toggling the left hierarchy tree panel."
+  },
+  "actionToggleInspector": "切换检视器",
+  "@actionToggleInspector": {
+    "description": "Command palette / menu label for toggling the right inspector panel."
+  },
+  "actionToggleDiagnosticsPanel": "标签页诊断",
+  "@actionToggleDiagnosticsPanel": {
+    "description": "Command palette / menu label for toggling the bottom diagnostics panel."
+  },
+  "actionOpenSearch": "搜索…",
+  "@actionOpenSearch": {
+    "description": "Command palette / menu label for opening the design search dialog."
+  },
+  "actionOpenCommandPalette": "命令面板…",
+  "@actionOpenCommandPalette": {
+    "description": "Command palette / menu label for opening the command palette overlay."
+  },
+  "actionOpenSettings": "设置…",
+  "@actionOpenSettings": {
+    "description": "Command palette / menu label for opening the settings screen."
+  },
+  "actionOpenAbout": "关于 NetCrux",
+  "@actionOpenAbout": {
+    "description": "Command palette / menu label for opening the About box."
+  },
+  "actionJumpToTop": "跳到顶层",
+  "@actionJumpToTop": {
+    "description": "Command palette / menu label for jumping to the top of the design hierarchy."
+  },
+  "actionQuit": "退出 NetCrux",
+  "@actionQuit": {
+    "description": "Command palette / menu label for quitting the application."
+  },
+  "commandPaletteSearchHint": "搜索命令…",
+  "@commandPaletteSearchHint": {
+    "description": "Placeholder hint text in the command palette search field"
+  },
+  "commandPaletteNoResults": "未找到命令",
+  "@commandPaletteNoResults": {
+    "description": "Message displayed in the command palette when the search query matches no actions"
+  },
+  "filePickerProjectDialogTitle": "打开 NetCrux 项目",
+  "@filePickerProjectDialogTitle": {
+    "description": "Title shown in the OS file picker when opening a .netcrux project file."
+  },
+  "filePickerSourcesDialogTitle": "打开 Verilog / VHDL 源文件",
+  "@filePickerSourcesDialogTitle": {
+    "description": "Title shown in the OS file picker when opening one or more HDL source files."
+  },
+  "filePickerNetlistDialogTitle": "打开 Yosys JSON 网表",
+  "@filePickerNetlistDialogTitle": {
+    "description": "Title shown in the file picker when opening a pre-built Yosys JSON netlist."
+  },
+  "hierarchyFilterHint": "筛选作用域…",
+  "@hierarchyFilterHint": {
+    "description": "Placeholder text inside the hierarchy tree panel's substring filter field."
+  },
+  "hierarchyClearFilterTooltip": "清除筛选",
+  "@hierarchyClearFilterTooltip": {
+    "description": "Tooltip on the X button that clears the hierarchy tree's filter text."
+  },
+  "hierarchyEmptyNoDesign": "打开一个设计以浏览其层次结构。",
+  "@hierarchyEmptyNoDesign": {
+    "description": "Empty-state text shown in the hierarchy tree panel when no design is loaded."
+  },
+  "hierarchyEmptyNoTop": "展开后的设计没有顶层模块。",
+  "@hierarchyEmptyNoTop": {
+    "description": "Empty-state text shown in the hierarchy tree panel when the loaded design has no module marked top."
+  },
+  "hierarchyEmptyElaborationFailed": "详尽展开失败：{message}",
+  "@hierarchyEmptyElaborationFailed": {
+    "description": "Empty-state text shown in the hierarchy tree panel when the loaded project failed to elaborate. The {message} placeholder is filled with the exception's user-facing message (e.g. 'Yosys is not available', 'Source file not found').",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "elaborationErrorTitle": "详尽展开失败",
+  "@elaborationErrorTitle": {
+    "description": "Title of the schematic error view shown when elaborating the project failed. Acts as the envelope above the specific, localized reason."
+  },
+  "elaborationErrorYosysUnavailable": "找不到或无法运行 Yosys。请安装 Yosys，或在“设置 > 引擎”中设置其路径。",
+  "@elaborationErrorYosysUnavailable": {
+    "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
+  },
+  "elaborationErrorTimeout": "详尽展开在 {seconds} 秒后超时并已停止。设计可能非常庞大，或 Yosys 可能已卡住——请调高超时时间或简化顶层模块。",
+  "@elaborationErrorTimeout": {
+    "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "elaborationErrorNonZeroExit": "Yosys 因错误而退出（退出码 {code}）。请查看下方详情或诊断抽屉。",
+  "@elaborationErrorNonZeroExit": {
+    "description": "Schematic error-view body shown when Yosys ran but exited non-zero. {code} is the process exit code.",
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "elaborationErrorGeneric": "详尽展开项目时出现问题。请查看下方详情。",
+  "@elaborationErrorGeneric": {
+    "description": "Schematic error-view body for an unclassified elaboration failure; the raw error text appears in the expandable details section."
+  },
+  "elaborationErrorDetailsLabel": "详情",
+  "@elaborationErrorDetailsLabel": {
+    "description": "Expander label above the raw error detail (Yosys stderr, or an unclassified error's text) in the schematic error view."
+  },
+  "commonCancel": "取消",
+  "@commonCancel": {
+    "description": "Generic Cancel button label used across dialogs."
+  },
+  "commonOk": "确定",
+  "@commonOk": {
+    "description": "Generic OK button label used across dialogs."
+  },
+  "schematicLayoutInProgress": "{count, plural, =0{正在布局原理图…} =1{正在布局原理图…（1 个单元）} other{正在布局原理图…（{count} 个单元）}}",
+  "@schematicLayoutInProgress": {
+    "description": "Progress message shown on the schematic canvas while the ELK layout for the selected scope runs on a background isolate. {count} is the number of cells in the scope; 0 means the count is not yet known (just show the base message).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "schematicLayoutElapsed": "已用时 {seconds} 秒",
+  "@schematicLayoutElapsed": {
+    "description": "Secondary line under the schematic layout progress bar showing how long the (indeterminate) layout has been running. {seconds} is a one-decimal seconds string, e.g. '4.2'.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyFilterNoMatches": "没有作用域与筛选匹配。要按名称查找单元或线网，请使用「搜索…」（Ctrl+F，macOS 上为 ⌘F）。",
+  "@hierarchyFilterNoMatches": {
+    "description": "Shown in the hierarchy tree panel when the active filter substring matches no scope names."
+  },
+  "hierarchyCellCountLabel": "{count} 个单元",
+  "@hierarchyCellCountLabel": {
+    "description": "Compact suffix on each hierarchy row showing how many cell instances live inside that scope.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hierarchyModuleLabel": "({module})",
+  "@hierarchyModuleLabel": {
+    "description": "Compact suffix showing the module name of an instance in the hierarchy tree row (e.g. 'u_cpu (cpu)').",
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyExpandTooltip": "展开",
+  "@hierarchyExpandTooltip": {
+    "description": "Tooltip on the expand-row chevron in the hierarchy tree."
+  },
+  "hierarchyCollapseTooltip": "折叠",
+  "@hierarchyCollapseTooltip": {
+    "description": "Tooltip on the collapse-row chevron in the hierarchy tree."
+  },
+  "actionPopOutScope": "退出作用域",
+  "@actionPopOutScope": {
+    "description": "Command palette / menu label for popping out of the current scope to its parent."
+  },
+  "actionShowFanin": "显示扇入",
+  "@actionShowFanin": {
+    "description": "Command palette / menu label for the fanin (drivers) tracing overlay."
+  },
+  "actionShowFanout": "显示扇出",
+  "@actionShowFanout": {
+    "description": "Command palette / menu label for the fanout (loads) tracing overlay."
+  },
+  "actionClearOverlay": "清除选择 / 覆盖",
+  "@actionClearOverlay": {
+    "description": "Command palette / menu label for clearing the current selection and any fanin/fanout overlay."
+  },
+  "actionExportPng": "导出 PNG…",
+  "@actionExportPng": {
+    "description": "Command palette / menu label for exporting the current schematic as a PNG image."
+  },
+  "actionExportSvg": "导出 SVG…",
+  "@actionExportSvg": {
+    "description": "Command palette / menu label for exporting the current schematic as an SVG image."
+  },
+  "actionExportJson": "导出 JSON…",
+  "@actionExportJson": {
+    "description": "Command palette / menu label for exporting the current scope's Yosys JSON subset."
+  },
+  "actionSaveSession": "另存会话…",
+  "@actionSaveSession": {
+    "description": "Command palette / menu label for saving the current session as a .netcrux file."
+  },
+  "actionOpenSession": "打开会话…",
+  "@actionOpenSession": {
+    "description": "Command palette / menu label for opening a .netcrux session file."
+  },
+  "breadcrumbTooltip": "单击片段以跳转到该作用域",
+  "@breadcrumbTooltip": {
+    "description": "Tooltip on the schematic breadcrumb bar explaining segment navigation."
+  },
+  "inspectorGoToSource": "转到源代码",
+  "@inspectorGoToSource": {
+    "description": "Button in the schematic Inspector panel that opens the RTL source for the selected element in the source pane. The same action the schematic context menu offers; duplicated because the Inspector is where a user reading an element's details asks 'where does this come from'."
+  },
+  "inspectorEmpty": "未选择任何项",
+  "@inspectorEmpty": {
+    "description": "Empty-state text shown in the inspector panel when nothing is selected on the canvas."
+  },
+  "inspectorCellHeader": "单元",
+  "@inspectorCellHeader": {
+    "description": "Section header in the inspector panel for a selected cell."
+  },
+  "inspectorPortHeader": "端口",
+  "@inspectorPortHeader": {
+    "description": "Section header in the inspector panel for a selected port."
+  },
+  "inspectorWireHeader": "连线",
+  "@inspectorWireHeader": {
+    "description": "Section header in the inspector panel for a selected wire."
+  },
+  "inspectorFieldType": "类型",
+  "@inspectorFieldType": {
+    "description": "Inspector field label for the Yosys cell type."
+  },
+  "inspectorFieldInstance": "实例",
+  "@inspectorFieldInstance": {
+    "description": "Inspector field label for the cell instance name."
+  },
+  "inspectorFieldKind": "种类",
+  "@inspectorFieldKind": {
+    "description": "Inspector field label for the cell kind (and/or/dff/mux/etc.)."
+  },
+  "inspectorFieldDirection": "方向",
+  "@inspectorFieldDirection": {
+    "description": "Inspector field label for the direction (input/output/inout) of a port."
+  },
+  "inspectorFieldWidth": "位宽",
+  "@inspectorFieldWidth": {
+    "description": "Inspector field label for the bit width of a port or wire."
+  },
+  "inspectorFieldNet": "线网",
+  "@inspectorFieldNet": {
+    "description": "Inspector field label for the underlying net of a port or wire."
+  },
+  "inspectorFieldNetId": "线网 ID",
+  "@inspectorFieldNetId": {
+    "description": "Inspector field label for the numeric net identifier (Yosys uses integer net ids)."
+  },
+  "inspectorFieldDriver": "驱动源",
+  "@inspectorFieldDriver": {
+    "description": "Inspector field label for the driving port of a wire."
+  },
+  "inspectorFieldSinks": "接收端",
+  "@inspectorFieldSinks": {
+    "description": "Inspector field label for the list of sink ports a wire drives into."
+  },
+  "inspectorParametersHeader": "参数",
+  "@inspectorParametersHeader": {
+    "description": "Inspector section header above a cell's parameter list."
+  },
+  "inspectorPortsHeader": "端口列表",
+  "@inspectorPortsHeader": {
+    "description": "Inspector section header above a cell's port-binding list."
+  },
+  "searchDialogTitle": "搜索设计",
+  "@searchDialogTitle": {
+    "description": "Title bar of the design search dialog."
+  },
+  "searchDialogHint": "搜索实例、单元和线网…",
+  "@searchDialogHint": {
+    "description": "Placeholder text inside the search dialog's text field."
+  },
+  "searchNoResults": "无结果。",
+  "@searchNoResults": {
+    "description": "Shown in the search dialog when the query matches nothing in the design."
+  },
+  "searchModeSubstring": "子字符串",
+  "@searchModeSubstring": {
+    "description": "Search mode chip label: case-insensitive substring matching."
+  },
+  "searchModeGlob": "通配符",
+  "@searchModeGlob": {
+    "description": "Search mode chip label: glob pattern matching (* and ?)."
+  },
+  "searchModeRegex": "正则",
+  "@searchModeRegex": {
+    "description": "Search mode chip label: regular-expression matching."
+  },
+  "searchResultInstance": "实例",
+  "@searchResultInstance": {
+    "description": "Kind chip on a search result row for an instance hit."
+  },
+  "searchResultCell": "单元",
+  "@searchResultCell": {
+    "description": "Kind chip on a search result row for a cell hit."
+  },
+  "searchResultNet": "线网",
+  "@searchResultNet": {
+    "description": "Kind chip on a search result row for a net hit."
+  },
+  "exportDialogSaveTitle": "保存原理图图像",
+  "@exportDialogSaveTitle": {
+    "description": "Title of the OS save-file dialog used by PNG/SVG export."
+  },
+  "exportDialogJsonTitle": "保存 Yosys JSON",
+  "@exportDialogJsonTitle": {
+    "description": "Title of the OS save-file dialog used by JSON export."
+  },
+  "exportSuccessMessage": "已保存到 {path}",
+  "@exportSuccessMessage": {
+    "description": "Snackbar shown after a successful export.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailureMessage": "导出失败：{error}",
+  "@exportFailureMessage": {
+    "description": "Snackbar shown after a failed export.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionSaveDialogTitle": "保存 NetCrux 会话",
+  "@sessionSaveDialogTitle": {
+    "description": "Title of the OS save-file dialog used by Save Session."
+  },
+  "sessionOpenDialogTitle": "打开 NetCrux 会话",
+  "@sessionOpenDialogTitle": {
+    "description": "Title of the OS open-file dialog used by Open Session."
+  },
+  "sessionLoadUnknownVersion": "未知的会话版本 {version}",
+  "@sessionLoadUnknownVersion": {
+    "description": "Snackbar shown when loading a session file whose schema version we don't recognize.",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionLoadFailed": "无法加载会话：{reason}",
+  "@sessionLoadFailed": {
+    "description": "Snackbar shown when a session file cannot be parsed or applied.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRestoreCorrupted": "无法恢复您之前的工作区，已将其保留备份。正在以全新的工作区启动。",
+  "@workspaceRestoreCorrupted": {
+    "description": "Snackbar/notice shown on launch when a corrupt workspace.json was quarantined (moved aside) and the app started with an empty workspace."
+  },
+  "settingsAutoReloadLabel": "源文件更改时自动重新加载",
+  "@settingsAutoReloadLabel": {
+    "description": "Label for the auto-reload setting in Settings → General."
+  },
+  "settingsAutoReloadAuto": "自动重新加载",
+  "@settingsAutoReloadAuto": {
+    "description": "Auto-reload mode option: re-elaborate whenever the source file changes."
+  },
+  "settingsAutoReloadPrompt": "提示我",
+  "@settingsAutoReloadPrompt": {
+    "description": "Auto-reload mode option: show a snackbar when the source changes and let the user decide."
+  },
+  "settingsAutoReloadOff": "不重新加载",
+  "@settingsAutoReloadOff": {
+    "description": "Auto-reload mode option: ignore source-file changes."
+  },
+  "autoReloadPromptAction": "重新加载",
+  "@autoReloadPromptAction": {
+    "description": "Snackbar action button label that triggers a reload."
+  },
+  "settingsTitle": "设置",
+  "@settingsTitle": {
+    "description": "Title bar of the settings screen."
+  },
+  "settingsGeneralSection": "通用",
+  "@settingsGeneralSection": {
+    "description": "Section header for the General settings group."
+  },
+  "settingsAppearanceSection": "外观",
+  "@settingsAppearanceSection": {
+    "description": "Section header for the Appearance settings group."
+  },
+  "settingsEnginesSection": "引擎",
+  "@settingsEnginesSection": {
+    "description": "Section header for the Engines settings group (yosys path, etc.)."
+  },
+  "settingsYosysPathLabel": "Yosys 二进制路径",
+  "@settingsYosysPathLabel": {
+    "description": "Label for the yosys binary path override field in Settings → Engines."
+  },
+  "settingsClose": "关闭",
+  "@settingsClose": {
+    "description": "Close button on the settings screen."
+  },
+  "breadcrumbRootTooltip": "设计层次结构顶部",
+  "@breadcrumbRootTooltip": {
+    "description": "Tooltip on the first (top-module) breadcrumb segment."
+  },
+  "fileChangedSnackbar": "{count, plural, =1{1 个源文件已更改。} other{{count} 个源文件已更改。}}",
+  "@fileChangedSnackbar": {
+    "description": "Plural snackbar shown when file watcher detects changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contextMenuCopyPath": "复制路径",
+  "@contextMenuCopyPath": {
+    "description": "Right-click / long-press context-menu item that copies the canonical hierarchical path of the selected element to the clipboard."
+  },
+  "contextMenuTraceFanin": "追踪扇入",
+  "@contextMenuTraceFanin": {
+    "description": "Right-click / long-press context-menu item that runs the fanin trace on the selected element."
+  },
+  "contextMenuTraceFanout": "追踪扇出",
+  "@contextMenuTraceFanout": {
+    "description": "Right-click / long-press context-menu item that runs the fanout trace on the selected element."
+  },
+  "contextMenuFindInHierarchy": "在层次结构中查找",
+  "@contextMenuFindInHierarchy": {
+    "description": "Right-click / long-press context-menu item that selects the parent scope of the right-clicked element in the hierarchy tree."
+  },
+  "contextMenuOpenInInspector": "在检视器中打开",
+  "@contextMenuOpenInInspector": {
+    "description": "Right-click / long-press context-menu item that promotes the right-clicked element to the inspector pane's primary view."
+  },
+  "contextMenuCopyPathSuccess": "已复制路径：{path}",
+  "@contextMenuCopyPathSuccess": {
+    "description": "Snackbar confirming the canonical hierarchical path was copied.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "projectLoadUnknownVersion": "未知的项目版本 {version}",
+  "@projectLoadUnknownVersion": {
+    "description": "Snackbar shown when a .netcrux-project file carries a version this build cannot read.",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "projectLoadFailed": "无法加载项目：{reason}",
+  "@projectLoadFailed": {
+    "description": "Snackbar shown when a .netcrux-project file cannot be loaded (I/O error, malformed JSON, missing version, etc.).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectInvalid": "不是有效的 .crux-project 文件：{reason}",
+  "@cruxProjectInvalid": {
+    "description": "Snackbar shown when a .crux-project suite manifest cannot be parsed. The reason is the parser's own detail (untranslated).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectNetlistMissing": "此项目指定的网表不存在：{path}",
+  "@cruxProjectNetlistMissing": {
+    "description": "Snackbar shown when a .crux-project manifest names an artifacts.netlist file that does not exist on disk.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectNothingToOpen": "{name} 尚未指定 RTL 源文件或网表。请在其 .crux-project 文件中添加 design.sources 或 artifacts.netlist 条目。",
+  "@cruxProjectNothingToOpen": {
+    "description": "Snackbar shown when a .crux-project manifest names neither RTL sources nor a netlist, so NetCrux has nothing to open. design.sources and artifacts.netlist are YAML keys and stay untranslated.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectLegacyFileName": "此 .crux-project 文件没有名称，因此文件选择器会将其隐藏。请将其重命名为 {suggestedName}；后续版本将不再打开没有名称的文件。",
+  "@cruxProjectLegacyFileName": {
+    "description": "Informational snackbar shown once after a design opens from a suite manifest still named with the legacy bare .crux-project file name, which native file pickers hide. suggestedName is the file name to rename it to, such as uart_tx.crux-project (a file name, untranslated).",
+    "placeholders": {
+      "suggestedName": {
+        "type": "String",
+        "example": "uart_tx.crux-project"
+      }
+    }
+  },
+  "cruxProjectAmbiguous": "{directory} 包含多个 .crux-project 文件（{candidates}）。每个设计目录只能保留一个。",
+  "@cruxProjectAmbiguous": {
+    "description": "Error snackbar shown when a design directory passed to NetCrux holds more than one .crux-project manifest, so NetCrux will not guess which one describes the design. directory is the path as given; candidates is a comma-separated list of the manifest file names (untranslated).",
+    "placeholders": {
+      "directory": {
+        "type": "String",
+        "example": "/work/uart_tx"
+      },
+      "candidates": {
+        "type": "String",
+        "example": ".crux-project, uart_tx.crux-project"
+      }
+    }
+  },
+  "cruxProjectNoneInDirectory": "{directory} 中没有 .crux-project 文件。请创建名为 {suggestedName} 的文件，或打开该设计的源文件。",
+  "@cruxProjectNoneInDirectory": {
+    "description": "Error snackbar shown when a directory passed to NetCrux holds no .crux-project manifest. directory is the path as given; suggestedName is the manifest file name to create, such as uart_tx.crux-project (a file name, untranslated).",
+    "placeholders": {
+      "directory": {
+        "type": "String",
+        "example": "/work/uart_tx"
+      },
+      "suggestedName": {
+        "type": "String",
+        "example": "uart_tx.crux-project"
+      }
+    }
+  },
+  "webNetlistLoadFailed": "无法从 {url} 加载网表。服务器必须允许来自此页面的跨域请求。",
+  "@webNetlistLoadFailed": {
+    "description": "Snackbar on the web viewer when the netlist named by the ?json= URL parameter cannot be fetched. The most common cause is a server that does not send CORS headers.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "filePickerFailed": "无法打开文件选择器：{error}",
+  "@filePickerFailed": {
+    "description": "Snackbar shown when the file picker itself throws (e.g. macOS rejects an unknown extension or the OS file-selector plugin returns an error). Surfaces the underlying error so file-open failures are not silent.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "actionImportFilelist": "导入 Vivado 文件列表…",
+  "@actionImportFilelist": {
+    "description": "Command palette / menu label for importing a Vivado-style .f filelist into a new project."
+  },
+  "filePickerFilelistDialogTitle": "导入 Vivado 文件列表",
+  "@filePickerFilelistDialogTitle": {
+    "description": "Title for the file picker dialog when importing a .f filelist."
+  },
+  "yosysPathModeAuto": "自动检测",
+  "@yosysPathModeAuto": {
+    "description": "Segmented-button label for the Yosys path mode that uses PATH search."
+  },
+  "yosysPathModeBundled": "随附版本",
+  "@yosysPathModeBundled": {
+    "description": "Segmented-button label for the Yosys path mode reserved for a NetCrux-shipped binary. No Yosys binary ships with NetCrux today, so this mode resolves only when NETCRUX_BUNDLED_BIN_DIR is set and otherwise falls back to the PATH lookup."
+  },
+  "yosysPathModeCustom": "自定义",
+  "@yosysPathModeCustom": {
+    "description": "Segmented-button label for the Yosys path mode that uses a user-supplied binary path."
+  },
+  "settingsYosysCustomPathLabel": "Yosys 可执行文件路径",
+  "@settingsYosysCustomPathLabel": {
+    "description": "TextField label for the custom Yosys binary path under Settings → Engines."
+  },
+  "settingsYosysCustomPathHint": "/usr/local/bin/yosys",
+  "@settingsYosysCustomPathHint": {
+    "description": "TextField placeholder showing an example absolute Yosys binary path."
+  },
+  "yosysCustomPathProbing": "正在探测…",
+  "@yosysCustomPathProbing": {
+    "description": "Helper label shown beneath the Yosys path field while yosys -V is being run."
+  },
+  "yosysCustomPathDetected": "已检测：{version}",
+  "@yosysCustomPathDetected": {
+    "description": "Helper label shown beneath the Yosys path field after a successful probe.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "yosysCustomPathInvalid": "无法在该路径运行 Yosys。",
+  "@yosysCustomPathInvalid": {
+    "description": "Helper label shown beneath the Yosys path field when the probe fails."
+  },
+  "yosysReasonNotOnPath": "未在 PATH 中找到 Yosys。请安装 Yosys，或在设置中指定自定义路径。",
+  "@yosysReasonNotOnPath": {
+    "description": "Shown when the Yosys probe found no yosys binary on PATH."
+  },
+  "yosysReasonExecFailed": "找到了 Yosys 可执行文件，但无法运行。它可能已损坏、不完整，或被安全设置阻止。",
+  "@yosysReasonExecFailed": {
+    "description": "Shown when a Yosys binary was found but could not be executed."
+  },
+  "yosysReasonBannerUnparsed": "Yosys 已运行，但报告的版本 NetCrux 无法识别。它可能是不受支持的构建版本。",
+  "@yosysReasonBannerUnparsed": {
+    "description": "Shown when Yosys ran but its version banner could not be parsed."
+  },
+  "yosysReasonProbeTimedOut": "Yosys 未在规定时间内响应。该可执行文件可能位于无响应的网络驱动器上，或正在等待输入。",
+  "@yosysReasonProbeTimedOut": {
+    "description": "Shown when the Yosys version probe did not respond within its time budget."
+  },
+  "elaborationDiagnosticsEmpty": "本次运行未产生详尽展开诊断。",
+  "@elaborationDiagnosticsEmpty": {
+    "description": "Placeholder shown when Yosys produced no warnings or errors on the current run."
+  },
+  "elaborationDiagnosticsFatal": "详尽展开失败",
+  "@elaborationDiagnosticsFatal": {
+    "description": "Banner title shown at the top of the elaboration-diagnostics drawer when the elaboration pipeline failed before Yosys could produce diagnostics (e.g. Yosys is not installed, the source files do not exist)."
+  },
+  "elaborationDiagnosticsAllFiltered": "当前严重性过滤器隐藏了所有诊断。",
+  "@elaborationDiagnosticsAllFiltered": {
+    "description": "Placeholder shown when at least one diagnostic exists but the active severity filter excludes them all."
+  },
+  "elaborationDiagnosticsCopyReport": "复制报告",
+  "@elaborationDiagnosticsCopyReport": {
+    "description": "Button label that copies the elaboration-diagnostics list to the clipboard."
+  },
+  "elaborationDiagnosticsCopied": "诊断已复制到剪贴板。",
+  "@elaborationDiagnosticsCopied": {
+    "description": "Snackbar confirming the elaboration-diagnostics report was copied."
+  },
+  "elaborationDiagnosticsCopyEntry": "复制此条目",
+  "@elaborationDiagnosticsCopyEntry": {
+    "description": "Tooltip on the per-row copy button in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityError": "错误",
+  "@diagnosticSeverityError": {
+    "description": "Filter chip label for the error severity in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityWarning": "警告",
+  "@diagnosticSeverityWarning": {
+    "description": "Filter chip label for the warning severity in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityInfo": "信息",
+  "@diagnosticSeverityInfo": {
+    "description": "Filter chip label for the info severity in the elaboration-diagnostics list."
+  },
+  "viewerTabBarCloseTabTooltip": "关闭标签页",
+  "@viewerTabBarCloseTabTooltip": {
+    "description": "Tooltip on the per-chip close button in the workspace tab bar."
+  },
+  "viewerTabBarCloseTabTooltipFor": "关闭 {name}",
+  "@viewerTabBarCloseTabTooltipFor": {
+    "description": "Tooltip and accessible name of the per-chip close button in the workspace tab bar; name is the tab's display name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerTabBarNewTabTooltip": "新建标签页",
+  "@viewerTabBarNewTabTooltip": {
+    "description": "Tooltip on the trailing '+' button that opens an empty tab in the workspace tab bar."
+  },
+  "viewerTabBarNewTabDefaultDisplayName": "新建标签页",
+  "@viewerTabBarNewTabDefaultDisplayName": {
+    "description": "Default display name used when the user opens an empty tab via the '+' button in the workspace tab bar."
+  },
+  "viewerTabBarUnnamedTabFallback": "(未命名标签页)",
+  "@viewerTabBarUnnamedTabFallback": {
+    "description": "Fallback rendered in place of a tab's display name when the underlying payload provides a blank string."
+  },
+  "viewerTabBarCloseTabMenuItem": "关闭标签页",
+  "@viewerTabBarCloseTabMenuItem": {
+    "description": "Context-menu item that closes the right-clicked tab in the workspace tab bar."
+  },
+  "viewerTabBarCloseOtherTabsMenuItem": "关闭其他标签页",
+  "@viewerTabBarCloseOtherTabsMenuItem": {
+    "description": "Context-menu item that closes every other tab in the host pane."
+  },
+  "viewerTabBarCloseTabsToTheRightMenuItem": "关闭右侧标签页",
+  "@viewerTabBarCloseTabsToTheRightMenuItem": {
+    "description": "Context-menu item that closes tabs to the right of the right-clicked tab in its host pane."
+  },
+  "viewerTabBarMoveToNewWindowMenuItem": "移至新窗口",
+  "@viewerTabBarMoveToNewWindowMenuItem": {
+    "description": "Context-menu item that detaches the tab into its own window — Pro feature, disabled until Flutter multi-window reaches stable."
+  },
+  "viewerTabBarMultiWindowUnavailableTooltip": "Flutter 多窗口稳定后可用",
+  "@viewerTabBarMultiWindowUnavailableTooltip": {
+    "description": "Tooltip shown next to the disabled Move to New Window menu item when multi-window is unavailable."
+  },
+  "viewerTabBarActivePaneAccessibilityLabel": "活动窗格",
+  "@viewerTabBarActivePaneAccessibilityLabel": {
+    "description": "Accessibility label announced on the active pane so screen readers signal focus changes."
+  },
+  "viewerTabBarDragToPaneAccessibilityHint": "拖放此处以将标签页移入该窗格",
+  "@viewerTabBarDragToPaneAccessibilityHint": {
+    "description": "Accessibility hint announced when a tab is being dragged toward another pane's tab bar."
+  },
+  "viewerTabBarReorderHandleTooltip": "拖动以重新排序",
+  "@viewerTabBarReorderHandleTooltip": {
+    "description": "Tooltip on the leading drag handle of each tab chip in the workspace tab bar."
+  },
+  "viewerTabBarScrollTabsLeftTooltip": "向左滚动标签页",
+  "@viewerTabBarScrollTabsLeftTooltip": {
+    "description": "Tooltip on the chevron that scrolls the workspace tab strip toward its start."
+  },
+  "viewerTabBarScrollTabsRightTooltip": "向右滚动标签页",
+  "@viewerTabBarScrollTabsRightTooltip": {
+    "description": "Tooltip on the chevron that scrolls the workspace tab strip toward its end."
+  },
+  "emptyCanvasTitle": "欢迎使用 NetCrux",
+  "@emptyCanvasTitle": {
+    "description": "Headline rendered on the empty-canvas startup state when the workspace has zero tabs."
+  },
+  "emptyCanvasSubtitle": "看清你的设计。",
+  "@emptyCanvasSubtitle": {
+    "description": "Subtitle rendered below the empty-canvas headline — the NetCrux tagline."
+  },
+  "emptyCanvasBrowserHint": "网页查看器可打开由 Yosys write_json 生成的 JSON 网表。详尽展开 Verilog 或 VHDL 需要使用桌面应用。",
+  "@emptyCanvasBrowserHint": {
+    "description": "Hint on the web viewer's start screen explaining what it can open. write_json is a Yosys command name and stays untranslated."
+  },
+  "emptyCanvasVersion": "版本 {version}",
+  "@emptyCanvasVersion": {
+    "description": "Muted version line under the empty-canvas (welcome) subtitle. The only always-visible version indicator on web, where there is no native menu bar to host an About entry point.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyCanvasSuiteFooter": "EDACrux 产品套件成员之一 — edacrux.app",
+  "@emptyCanvasSuiteFooter": {
+    "description": "Suite-membership line at the foot of the empty-canvas (welcome) screen. The whole line is a link to the EDACrux suite site. \"edacrux.app\" must appear verbatim — the widget splits the sentence around it to underline the domain — but a translation that drops it still renders and is still followable, just without an underlined segment. \"EDACrux\" is one word and is never translated."
+  },
+  "emptyCanvasPeersHeading": "EDACrux 的其他产品",
+  "@emptyCanvasPeersHeading": {
+    "description": "Section header above the three sibling-product rows at the foot of the empty-canvas (welcome) screen. Rendered upper-case in English as a small letter-spaced label, matching the \"RECENT FILES\" headers above it; a locale whose script has no case simply reads as a label. \"EDACrux\" is one word and is never translated."
+  },
+  "emptyCanvasPeerWaveCrux": "查看刚追踪的信号波形。从原理图交叉探查到波形，再返回。",
+  "@emptyCanvasPeerWaveCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing WaveCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what WaveCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasPeerLintCrux": "评估正在浏览的 RTL。同一份 Yosys 展开结果，按 lint 和 CDC 规则审查。",
+  "@emptyCanvasPeerLintCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing LintCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what LintCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasPeerSimCrux": "让正在阅读的设计真正跑起来。运行回归，并把失败带回这里。",
+  "@emptyCanvasPeerSimCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasRecentProjects": "最近的项目",
+  "@emptyCanvasRecentProjects": {
+    "description": "Section header for the recent-projects list on the empty-canvas state."
+  },
+  "emptyCanvasRecentSources": "最近的源文件",
+  "@emptyCanvasRecentSources": {
+    "description": "Section header for the recent-source-files list on the empty-canvas state."
+  },
+  "emptyCanvasNoRecentProjects": "暂无最近的项目。",
+  "@emptyCanvasNoRecentProjects": {
+    "description": "Placeholder shown under the recent-projects header when the list is empty."
+  },
+  "emptyCanvasNoRecentSources": "暂无最近的源文件。",
+  "@emptyCanvasNoRecentSources": {
+    "description": "Placeholder shown under the recent-source-files header when the list is empty."
+  },
+  "emptyCanvasClearRecent": "清除最近记录",
+  "@emptyCanvasClearRecent": {
+    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
+  },
+  "actionSplitPaneRight": "向右拆分窗格",
+  "@actionSplitPaneRight": {
+    "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
+  },
+  "actionClosePane": "关闭窗格",
+  "@actionClosePane": {
+    "description": "Command palette / menu label for closing the active pane and merging its tabs into the surviving pane."
+  },
+  "actionFocusOtherPane": "聚焦其他窗格",
+  "@actionFocusOtherPane": {
+    "description": "Command palette / menu label for toggling focus between the two panes when split."
+  },
+  "actionMoveTabToOtherPane": "将标签页移至其他窗格",
+  "@actionMoveTabToOtherPane": {
+    "description": "Command palette label for moving the active tab to the non-active pane — gesture equivalent is drag-to-pane."
+  },
+  "workspaceOpenWorkspaceTitle": "打开工作区…",
+  "@workspaceOpenWorkspaceTitle": {
+    "description": "Button / menu label for opening a named .netcrux-workspace file."
+  },
+  "workspaceSaveWorkspaceAsTitle": "工作区另存为…",
+  "@workspaceSaveWorkspaceAsTitle": {
+    "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
+  },
+  "workspaceResetWorkspaceTitle": "重置工作区",
+  "@workspaceResetWorkspaceTitle": {
+    "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
+  },
+  "workspaceResetWorkspaceConfirm": "关闭所有已打开的标签页并返回空画布状态？",
+  "@workspaceResetWorkspaceConfirm": {
+    "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
+  },
+  "workspaceLoadFromCliConfirm": "用命令行中指定的工作区替换当前工作区？",
+  "@workspaceLoadFromCliConfirm": {
+    "description": "Confirmation prompt shown before --workspace replaces the active workspace at launch."
+  },
+  "actionShowCrossProbePanel": "显示交叉探测面板",
+  "@actionShowCrossProbePanel": {
+    "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
+  },
+  "crossProbePanelTitle": "交叉探测对等节点",
+  "@crossProbePanelTitle": {
+    "description": "Title shown above the cross-probe panel."
+  },
+  "crossProbePanelPeersHeader": "对等节点",
+  "@crossProbePanelPeersHeader": {
+    "description": "Section header above the list of connected peers."
+  },
+  "crossProbePanelNoPeers": "尚未连接任何对等节点。",
+  "@crossProbePanelNoPeers": {
+    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
+  },
+  "crossProbePanelEventsHeader": "最近事件",
+  "@crossProbePanelEventsHeader": {
+    "description": "Section header above the rolling CXP event log."
+  },
+  "crossProbePanelNoEvents": "尚无交叉探测事件。",
+  "@crossProbePanelNoEvents": {
+    "description": "Placeholder shown when the event log is empty."
+  },
+  "crossProbeCloseTooltip": "关闭交叉探测面板",
+  "crossProbeServerOffline": "交叉探测服务器已离线。",
+  "crossProbeSendTooltip": "将选择发送到此对等节点",
+  "crossProbeUnreachableTitle": "无法连接的对等节点",
+  "crossProbeClearEvents": "清除事件",
+  "crossProbeSendFailed": "发送到 {peer} 的交叉探测未能完成",
+  "crossProbeSendRefused": "发送到 {peer} 的交叉探测：{reason}",
+  "schematicHorizontalScrollbarLabel": "原理图水平滚动条",
+  "@schematicHorizontalScrollbarLabel": {
+    "description": "Accessibility label for the horizontal scrollbar under the schematic canvas."
+  },
+  "schematicVerticalScrollbarLabel": "原理图垂直滚动条",
+  "@schematicVerticalScrollbarLabel": {
+    "description": "Accessibility label for the vertical scrollbar beside the schematic canvas."
+  },
+  "settingsEditorsSection": "编辑器",
+  "@settingsEditorsSection": {
+    "description": "Settings section header for external-editor integration."
+  },
+  "settingsCxpEnabledLabel": "启用 CXP 服务器",
+  "@settingsCxpEnabledLabel": {
+    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
+  },
+  "settingsCxpPortLabel": "CXP 端口",
+  "@settingsCxpPortLabel": {
+    "description": "Text-field label for the CXP server's bind port."
+  },
+  "settingsCxpEnabledDescription": "让 NetCrux 与其他兼容 Crux 的工具共享选择事件",
+  "@settingsCxpEnabledDescription": {
+    "description": "Subtitle explaining what enabling the CXP server does."
+  },
+  "settingsCxpPortDescription": "TCP 端口号 (1–65535)",
+  "@settingsCxpPortDescription": {
+    "description": "Subtitle / helper for the CXP port input describing the valid range."
+  },
+  "settingsRequestAttentionOnCrossProbeLabel": "交叉探测时请求注意",
+  "@settingsRequestAttentionOnCrossProbeLabel": {
+    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
+  },
+  "settingsRequestAttentionOnCrossProbeDescription": "当对等端发送交叉探测时，弹跳程序坞图标（或闪烁任务栏）。绝不抢占焦点。",
+  "@settingsRequestAttentionOnCrossProbeDescription": {
+    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
+  },
+  "settingsBroadcastSelectionOnCrossProbeLabel": "自动广播选择",
+  "@settingsBroadcastSelectionOnCrossProbeLabel": {
+    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
+  },
+  "settingsBroadcastSelectionOnCrossProbeDescription": "在您选择时向已连接的对等端通告您的选择（实时交叉探测）。关闭时，仅共享显式发送的内容。",
+  "@settingsBroadcastSelectionOnCrossProbeDescription": {
+    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
+  },
+  "settingsCxpStatus": "CXP 状态",
+  "@settingsCxpStatus": {
+    "description": "Label for the CXP server status display."
+  },
+  "settingsCxpStatusRunning": "正在端口 {port} 上运行",
+  "@settingsCxpStatusRunning": {
+    "description": "Indicates the CXP server is running on a specific port.",
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsCxpStatusStopped": "已停止",
+  "@settingsCxpStatusStopped": {
+    "description": "Indicates the CXP server is not running."
+  },
+  "settingsCxpPeersConnected": "已连接 {count} 个对等端",
+  "@settingsCxpPeersConnected": {
+    "description": "Shows how many peers are currently connected to the CXP server.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsCxpEditorCommandLabel": "编辑器命令(打开源代码)",
+  "@settingsCxpEditorCommandLabel": {
+    "description": "Text-field label for the editor invocation template used by request_open_source."
+  },
+  "tierBadgePro": "PRO",
+  "@tierBadgePro": {
+    "description": "Short tier badge chip text shown next to features that require a NetCrux Pro license."
+  },
+  "tierBadgeProSemantic": "Pro 等级功能",
+  "@tierBadgeProSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated PRO tier badge."
+  },
+  "tierBadgeEnterprise": "ENT",
+  "@tierBadgeEnterprise": {
+    "description": "Short tier badge chip text shown next to features that require a NetCrux Enterprise license."
+  },
+  "tierBadgeEnterpriseSemantic": "Enterprise 等级功能",
+  "@tierBadgeEnterpriseSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated ENT tier badge."
+  },
+  "editionMenuLine": "{edition} 版 — {identity}",
+  "editionMenuLineOrganization": "{edition} 版 — 由您的组织授权",
+  "editionNameEducational": "教育",
+  "editionNamePro": "Pro",
+  "editionNameEnterprise": "Enterprise",
+  "editionBadgeEduSemantic": "教育版",
+  "editionBadgeProSemantic": "专业版",
+  "editionBadgeEnterpriseSemantic": "企业版",
+  "tierBadgeEdu": "EDU",
+  "@tierBadgeEdu": {
+    "description": "Short tier badge chip text shown on the About box and Welcome screen indicating the user holds an Educational/non-commercial NetCrux license."
+  },
+  "tierBadgeEduSemantic": "教育版许可",
+  "@tierBadgeEduSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated EDU edition badge."
+  },
+  "menuItemTierSuffix": " ({tier})",
+  "@menuItemTierSuffix": {
+    "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeDialogTitle": "需要升级",
+  "@upgradeDialogTitle": {
+    "description": "Title of the upgrade-required dialog shown post-beta when the user activates a Pro/Enterprise action their license tier does not include."
+  },
+  "upgradeDialogMessage": "“{feature}”需要 {tierName} 许可证。",
+  "@upgradeDialogMessage": {
+    "description": "Body of the upgrade dialog, and the sentence under the locked panel of a tier-gated Settings category. Names the feature the user reached for and the tier that unlocks it; both are required by the suite copy contract. {feature} is the label of what was activated, rendered in quotes because it is a UI label (the dialog drops a trailing ellipsis). {tierName} is the product-qualified tier, e.g. the upgradeDialogTierNamePro value.",
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "tierName": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeDialogTierNamePro": "NetCrux Pro",
+  "@upgradeDialogTierNamePro": {
+    "description": "Product-tier name interpolated into upgradeDialogMessage for Pro-gated features. Brand name — identical in every locale."
+  },
+  "upgradeDialogTierNameEnterprise": "NetCrux Enterprise",
+  "@upgradeDialogTierNameEnterprise": {
+    "description": "Product-tier name interpolated into upgradeDialogMessage for Enterprise-gated features. Brand name — identical in every locale."
+  },
+  "actionRequiresPro": "{action}需要 NetCrux Pro。",
+  "@actionRequiresPro": {
+    "description": "Snackbar shown when a Pro-tier action is invoked in an open-core build with no Pro overlay installed. The action placeholder is the action's own localized label. Matches SimCrux's and LintCrux's message.",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "actionShowConeOfInfluenceFanin": "显示影响锥（扇入）",
+  "@actionShowConeOfInfluenceFanin": {
+    "description": "Command palette / menu label for the Pro multi-step fanin cone-of-influence trace from the current selection."
+  },
+  "actionShowConeOfInfluenceFanout": "显示影响锥（扇出）",
+  "@actionShowConeOfInfluenceFanout": {
+    "description": "Command palette / menu label for the Pro multi-step fanout cone-of-influence trace from the current selection."
+  },
+  "actionClearConeOfInfluence": "清除影响锥",
+  "@actionClearConeOfInfluence": {
+    "description": "Command palette / menu label that clears any active cone-of-influence trace overlay."
+  },
+  "actionShowXTrace": "显示 X 追溯",
+  "@actionShowXTrace": {
+    "description": "Command palette / menu label for the Pro X-trace causal chain that walks backward from the selected net at the current simulation time."
+  },
+  "actionShowXTracePanel": "显示 X 追溯面板",
+  "@actionShowXTracePanel": {
+    "description": "Command palette / menu label that opens or focuses the X-trace result panel."
+  },
+  "actionClearXTrace": "清除 X 追溯",
+  "@actionClearXTrace": {
+    "description": "Command palette / menu label that clears any active X-trace result."
+  },
+  "actionAddBookmark": "添加书签…",
+  "@actionAddBookmark": {
+    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
+  },
+  "actionShowBookmarksPanel": "显示书签面板",
+  "@actionShowBookmarksPanel": {
+    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
+  },
+  "actionAddAnnotation": "添加注释…",
+  "@actionAddAnnotation": {
+    "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
+  },
+  "actionShowAnnotationsPanel": "显示注释面板",
+  "@actionShowAnnotationsPanel": {
+    "description": "Command palette / menu label that opens or focuses the Annotations panel."
+  },
+  "actionShowSourcePane": "显示 RTL 源代码面板",
+  "@actionShowSourcePane": {
+    "description": "Command palette / menu label that opens or focuses the RTL source pane (Pro)."
+  },
+  "actionOpenSourceForElement": "显示该元素的源代码",
+  "@actionOpenSourceForElement": {
+    "description": "Command palette / context-menu label that opens the source file defining the currently selected schematic element (Pro)."
+  },
+  "actionCloseSourcePane": "关闭 RTL 源代码面板",
+  "@actionCloseSourcePane": {
+    "description": "Command palette / menu label that closes the RTL source pane."
+  },
+  "sourcePaneEmptyTitle": "未加载源代码",
+  "@sourcePaneEmptyTitle": {
+    "description": "Heading shown in the RTL source pane when no source file is loaded."
+  },
+  "sourcePaneEmptyHint": "右键单击原理图中的元素并选择 “显示该元素的源代码” 以加载对应文件。",
+  "@sourcePaneEmptyHint": {
+    "description": "Hint shown in the RTL source pane's empty state explaining how to populate it."
+  },
+  "sourcePaneErrorNotFound": "找不到源文件。",
+  "@sourcePaneErrorNotFound": {
+    "description": "Error message shown when the requested RTL source file does not exist."
+  },
+  "sourcePaneErrorAccessDenied": "访问被拒绝：无法读取该源文件。",
+  "@sourcePaneErrorAccessDenied": {
+    "description": "Error message shown when the RTL source file exists but cannot be read."
+  },
+  "sourcePaneErrorEncoding": "无法将该源文件解码为文本。",
+  "@sourcePaneErrorEncoding": {
+    "description": "Error message shown when the RTL source file's bytes are not valid UTF-8."
+  },
+  "sourcePaneErrorOversized": "源文件过大，无法预览。",
+  "@sourcePaneErrorOversized": {
+    "description": "Error message shown when the RTL source file exceeds the pane's size budget."
+  },
+  "sourcePaneErrorGeneric": "无法加载该源文件。",
+  "@sourcePaneErrorGeneric": {
+    "description": "Generic error message shown when an RTL source file fails to load for an unspecified reason."
+  },
+  "actionShowDiffPane": "显示网表差异视图",
+  "@actionShowDiffPane": {
+    "description": "Command palette / menu label that opens or focuses the Netlist Diff View pane (Pro)."
+  },
+  "actionLoadComparisonNetlist": "加载比较网表…",
+  "@actionLoadComparisonNetlist": {
+    "description": "Command palette / menu label that opens the file picker to choose a comparison-side netlist (Pro)."
+  },
+  "actionClearComparisonNetlist": "清除比较网表",
+  "@actionClearComparisonNetlist": {
+    "description": "Command palette / menu label that clears the active comparison (Pro)."
+  },
+  "actionNavigateNextDiff": "下一处差异",
+  "@actionNavigateNextDiff": {
+    "description": "Command palette / menu label that selects the next change in the active diff (Pro)."
+  },
+  "actionNavigatePrevDiff": "上一处差异",
+  "@actionNavigatePrevDiff": {
+    "description": "Command palette / menu label that selects the previous change in the active diff (Pro)."
+  },
+  "diffPaneEmptyTitle": "未加载比较",
+  "@diffPaneEmptyTitle": {
+    "description": "Heading shown in the Netlist Diff View pane when no comparison is loaded."
+  },
+  "diffPaneEmptyHint": "加载比较网表以查看与当前设计的结构差异。",
+  "@diffPaneEmptyHint": {
+    "description": "Hint shown in the Netlist Diff View pane's empty state explaining how to populate it."
+  },
+  "diffPaneComputing": "正在比较…",
+  "@diffPaneComputing": {
+    "description": "Status message shown in the Diff View pane while the comparison is being computed."
+  },
+  "diffPaneNoFilterMatches": "没有变更与当前过滤器匹配。",
+  "@diffPaneNoFilterMatches": {
+    "description": "Message shown in the Diff View pane when every element change is filtered out."
+  },
+  "diffPaneSummary": "{added} 已添加，{removed} 已删除，{modified} 已修改，{unchanged} 未变更",
+  "@diffPaneSummary": {
+    "description": "Summary header line for the Diff View pane listing the four bucket counts.",
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      },
+      "modified": {
+        "type": "int"
+      },
+      "unchanged": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupAdded": "已添加 ({count})",
+  "@diffPaneGroupAdded": {
+    "description": "Group header label for the Added section of the Diff View pane, with the count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupRemoved": "已删除 ({count})",
+  "@diffPaneGroupRemoved": {
+    "description": "Group header label for the Removed section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupModified": "已修改 ({count})",
+  "@diffPaneGroupModified": {
+    "description": "Group header label for the Modified section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupUnchanged": "未变更 ({count})",
+  "@diffPaneGroupUnchanged": {
+    "description": "Group header label for the Unchanged section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneShowInSchematic": "在原理图中显示",
+  "@diffPaneShowInSchematic": {
+    "description": "Per-row action label that highlights the corresponding element in the schematic canvas."
+  },
+  "diffPaneElementKindInstance": "实例",
+  "@diffPaneElementKindInstance": {
+    "description": "Label for NetlistDiffElementKind.instance in the Diff View pane."
+  },
+  "diffPaneElementKindNet": "线网",
+  "@diffPaneElementKindNet": {
+    "description": "Label for NetlistDiffElementKind.net in the Diff View pane."
+  },
+  "diffPaneElementKindPort": "端口",
+  "@diffPaneElementKindPort": {
+    "description": "Label for NetlistDiffElementKind.port in the Diff View pane."
+  },
+  "diffPaneElementKindModule": "模块",
+  "@diffPaneElementKindModule": {
+    "description": "Label for NetlistDiffElementKind.module in the Diff View pane."
+  },
+  "actionOpenSymbolManager": "打开自定义单元符号管理器…",
+  "@actionOpenSymbolManager": {
+    "description": "Command palette / menu label that opens the Custom Cell Symbol Manager screen (Pro)."
+  },
+  "actionImportSymbolFromSvg": "从 SVG 导入符号…",
+  "@actionImportSymbolFromSvg": {
+    "description": "Command palette / menu label that opens a file picker to import an SVG into a new custom cell symbol (Pro)."
+  },
+  "actionEditSymbolForCurrentInstance": "编辑此模块的符号…",
+  "@actionEditSymbolForCurrentInstance": {
+    "description": "Command palette / menu / context-menu label that opens the Symbol Editor for the currently selected cell's module type (Pro)."
+  },
+  "actionRemoveSymbolForCurrentInstance": "移除此模块的自定义符号",
+  "@actionRemoveSymbolForCurrentInstance": {
+    "description": "Command palette / menu / context-menu label that removes the custom symbol binding for the currently selected cell's module type so it reverts to the built-in rectangular rendering (Pro)."
+  },
+  "actionShowFsmBubbleDiagram": "显示 FSM 气泡图",
+  "@actionShowFsmBubbleDiagram": {
+    "description": "Command palette / menu label that opens / focuses the FSM bubble diagram pane (Pro)."
+  },
+  "actionDetectFsmForCurrentRegister": "为此寄存器检测 FSM",
+  "@actionDetectFsmForCurrentRegister": {
+    "description": "Command palette / menu / context-menu label that runs forced FSM detection on the currently selected register, skipping the structural-signature filter (Pro)."
+  },
+  "actionRunFsmDetectionAcrossDesign": "在整个设计中运行 FSM 检测…",
+  "@actionRunFsmDetectionAcrossDesign": {
+    "description": "Command palette / menu label that runs full-design FSM detection and opens the detection-results dialog (Pro)."
+  },
+  "actionClearFsmSelection": "清除 FSM 选择",
+  "@actionClearFsmSelection": {
+    "description": "Command palette / menu label that dismisses the FSM bubble diagram pane (clears the focused FSM)."
+  },
+  "fsmBubbleDiagramEmptyTitle": "未选择 FSM",
+  "@fsmBubbleDiagramEmptyTitle": {
+    "description": "Open-core empty-state title for the FSM bubble diagram pane."
+  },
+  "fsmBubbleDiagramEmptyHint": "在原理图中右键单击某个寄存器，然后选择“显示 FSM 气泡图”以可视化其状态机。",
+  "@fsmBubbleDiagramEmptyHint": {
+    "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
+  },
+  "fsmBubbleDiagramStatesSection": "状态",
+  "@fsmBubbleDiagramStatesSection": {
+    "description": "Section header above the list of FSM states in the open-core fallback bubble diagram view."
+  },
+  "fsmBubbleDiagramTransitionsSection": "状态转移",
+  "@fsmBubbleDiagramTransitionsSection": {
+    "description": "Section header above the list of FSM transitions in the open-core fallback bubble diagram view."
+  },
+  "fsmBubbleDiagramHeader": "FSM：{registerName} — {stateCount} 个状态，{transitionCount} 个状态转移",
+  "@fsmBubbleDiagramHeader": {
+    "description": "Header line summarising the focused FSM in the open-core fallback bubble diagram view.",
+    "placeholders": {
+      "registerName": {
+        "type": "String"
+      },
+      "stateCount": {
+        "type": "int"
+      },
+      "transitionCount": {
+        "type": "int"
+      }
+    }
+  },
+  "fsmBubbleDiagramStateValue": "值：{value}",
+  "@fsmBubbleDiagramStateValue": {
+    "description": "Value sub-line on a state row in the open-core fallback view, e.g. \"value: 0x03\".",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramTransitionLine": "从 {from} 到 {to}  {condition}",
+  "@fsmBubbleDiagramTransitionLine": {
+    "description": "Per-transition row in the open-core fallback view. The condition placeholder is empty when no condition expression is available.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramHighlighted": "已突出显示：{stateName}",
+  "@fsmBubbleDiagramHighlighted": {
+    "description": "Footer in the open-core fallback view showing the currently-highlighted state name.",
+    "placeholders": {
+      "stateName": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramResetBadge": "复位",
+  "@fsmBubbleDiagramResetBadge": {
+    "description": "Badge on the reset state in the open-core fallback view and in the Pro bubble diagram canvas."
+  },
+  "fsmBubbleDiagramUnreachableBadge": "不可达",
+  "@fsmBubbleDiagramUnreachableBadge": {
+    "description": "Badge on states the detector flagged as unreachable from the reset state."
+  },
+  "fsmBubbleDiagramTerminalBadge": "终止",
+  "@fsmBubbleDiagramTerminalBadge": {
+    "description": "Badge on states that have no outgoing transitions."
+  },
+  "actionShowCdcAnalysisPane": "显示 CDC 分析面板",
+  "@actionShowCdcAnalysisPane": {
+    "description": "Command palette / menu label that opens / focuses the CDC analysis pane (Pro)."
+  },
+  "actionRunCdcAnalysis": "在设计中运行 CDC 分析…",
+  "@actionRunCdcAnalysis": {
+    "description": "Command palette / menu label that runs full-design CDC analysis and opens the results panel (Pro)."
+  },
+  "actionShowCdcCrossingForSelectedSignal": "显示此信号的 CDC 跨越",
+  "@actionShowCdcCrossingForSelectedSignal": {
+    "description": "Command palette / menu / schematic context-menu label that scopes the CDC panel to crossings involving the right-clicked signal (Pro)."
+  },
+  "actionClearCdcAnalysisSelection": "清除 CDC 分析选择",
+  "@actionClearCdcAnalysisSelection": {
+    "description": "Command palette / menu label that clears the CDC pane's focused crossing + domain."
+  },
+  "cdcAnalysisPaneEmptyTitle": "尚未运行 CDC 分析",
+  "@cdcAnalysisPaneEmptyTitle": {
+    "description": "Open-core CDC analysis pane empty-state title shown before analysis has been run."
+  },
+  "cdcAnalysisPaneEmptyHint": "运行 CDC 分析以检测时钟域跨越、分类同步器，并提示存在亚稳态风险的信号。",
+  "@cdcAnalysisPaneEmptyHint": {
+    "description": "Open-core CDC analysis pane empty-state hint that explains what CDC analysis does and how to trigger it."
+  },
+  "cdcAnalysisPaneDomainPairHeader": "从 {sourceDomain} 到 {destinationDomain}",
+  "@cdcAnalysisPaneDomainPairHeader": {
+    "description": "Group header for one source→destination clock-domain pair in the CDC analysis pane's crossings list.",
+    "placeholders": {
+      "sourceDomain": {
+        "type": "String"
+      },
+      "destinationDomain": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcAnalysisPaneCrossingSubtitle": "{kind} · {status} · {confidence}",
+  "@cdcAnalysisPaneCrossingSubtitle": {
+    "description": "Crossing-row subtitle in the CDC analysis pane composing the localized crossing kind, synchronizer status, and detector confidence labels.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "confidence": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcAnalysisPaneCrossingTooltip": "在原理图中高亮信号 {signalName}",
+  "@cdcAnalysisPaneCrossingTooltip": {
+    "description": "Tooltip on a CDC crossing row; tapping highlights the crossing signal in the schematic.",
+    "placeholders": {
+      "signalName": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcCrossingKindSingleBit": "单比特",
+  "@cdcCrossingKindSingleBit": {
+    "description": "Label for CDC crossing kind: single-bit (control/status flag)."
+  },
+  "cdcCrossingKindMultiBit": "多位",
+  "@cdcCrossingKindMultiBit": {
+    "description": "Label for CDC crossing kind: multi-bit data bus."
+  },
+  "cdcCrossingKindControl": "控制",
+  "@cdcCrossingKindControl": {
+    "description": "Label for CDC crossing kind: control signal paired with another (req/ack or valid/ready)."
+  },
+  "cdcCrossingKindHandshake": "握手",
+  "@cdcCrossingKindHandshake": {
+    "description": "Label for CDC crossing kind: half of an explicit req/ack handshake protocol."
+  },
+  "cdcSynchronizerStatusProperTwoFlop": "二级触发器同步",
+  "@cdcSynchronizerStatusProperTwoFlop": {
+    "description": "Label for CDC synchronizer status: properly synchronized with two cascaded flip-flops on the destination side."
+  },
+  "cdcSynchronizerStatusProperThreeFlop": "三级触发器同步",
+  "@cdcSynchronizerStatusProperThreeFlop": {
+    "description": "Label for CDC synchronizer status: paranoid synchronizer with three cascaded flip-flops on the destination side."
+  },
+  "cdcSynchronizerStatusAsyncFifo": "异步 FIFO",
+  "@cdcSynchronizerStatusAsyncFifo": {
+    "description": "Label for CDC synchronizer status: source and destination connected through an async-FIFO instance."
+  },
+  "cdcSynchronizerStatusHandshake": "握手协议",
+  "@cdcSynchronizerStatusHandshake": {
+    "description": "Label for CDC synchronizer status: paired req/ack or valid/ready handshake."
+  },
+  "cdcSynchronizerStatusCustom": "自定义同步器",
+  "@cdcSynchronizerStatusCustom": {
+    "description": "Label for CDC synchronizer status: user-asserted custom synchronizer module (matched a userSynchronizerPatterns entry)."
+  },
+  "cdcSynchronizerStatusMissing": "缺少同步器",
+  "@cdcSynchronizerStatusMissing": {
+    "description": "Label for CDC synchronizer status: no synchronizer at all on the destination side (critical metastability bug)."
+  },
+  "cdcSynchronizerStatusMetastable": "亚稳态风险",
+  "@cdcSynchronizerStatusMetastable": {
+    "description": "Label for CDC synchronizer status: synchronizer present but downstream logic branches before settling (metastability risk)."
+  },
+  "cdcConfidenceHigh": "高置信度",
+  "@cdcConfidenceHigh": {
+    "description": "Label for the detector's classification confidence: structurally unambiguous match."
+  },
+  "cdcConfidenceMedium": "中置信度",
+  "@cdcConfidenceMedium": {
+    "description": "Label for the detector's classification confidence: heuristic match — worth manual review."
+  },
+  "cdcConfidenceLow": "低置信度",
+  "@cdcConfidenceLow": {
+    "description": "Label for the detector's classification confidence: borderline or max-depth bail."
+  },
+  "actionShowResetDomainAnalysisPane": "显示复位域分析面板",
+  "@actionShowResetDomainAnalysisPane": {
+    "description": "Command palette / menu label that opens / focuses the reset domain analysis pane (Pro)."
+  },
+  "actionRunResetDomainAnalysis": "对整个设计运行复位域分析…",
+  "@actionRunResetDomainAnalysis": {
+    "description": "Command palette / menu label that runs full-design reset domain analysis and opens the results panel (Pro)."
+  },
+  "actionShowResetCrossingForSelectedSignal": "显示该信号的复位域跨越",
+  "@actionShowResetCrossingForSelectedSignal": {
+    "description": "Command palette / menu / schematic context-menu label that scopes the reset domain panel to crossings involving the right-clicked signal (Pro)."
+  },
+  "actionClearResetAnalysisSelection": "清除复位域分析选择",
+  "@actionClearResetAnalysisSelection": {
+    "description": "Command palette / menu label that clears the reset domain pane's focused crossing + domain."
+  },
+  "resetDomainAnalysisPaneEmptyTitle": "尚未运行复位域分析",
+  "@resetDomainAnalysisPaneEmptyTitle": {
+    "description": "Open-core reset domain analysis pane empty-state title shown before analysis has been run."
+  },
+  "resetDomainAnalysisPaneEmptyHint": "运行复位域分析以检测复位域、对其同步器和极性进行分类，并标出在复位释放沿上有亚稳态风险的寄存器。",
+  "@resetDomainAnalysisPaneEmptyHint": {
+    "description": "Open-core reset domain analysis pane empty-state hint that explains what reset domain analysis does and how to trigger it."
+  },
+  "resetDomainAnalysisPaneDomainPairHeader": "从 {sourceDomain} 到 {destinationDomain}",
+  "@resetDomainAnalysisPaneDomainPairHeader": {
+    "description": "Group header for one source→destination reset-domain pair in the Reset Domain analysis pane's crossings list.",
+    "placeholders": {
+      "sourceDomain": {
+        "type": "String"
+      },
+      "destinationDomain": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneCrossingSubtitle": "{kind} · {status} · {polarity} · {confidence}",
+  "@resetDomainAnalysisPaneCrossingSubtitle": {
+    "description": "Crossing-row subtitle in the Reset Domain analysis pane composing the localized crossing kind, synchronizer status, source polarity, and detector confidence labels.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "polarity": {
+        "type": "String"
+      },
+      "confidence": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneCrossingTooltip": "在原理图中突出显示信号 {signalName}",
+  "@resetDomainAnalysisPaneCrossingTooltip": {
+    "description": "Tooltip on a reset crossing row; tapping highlights the crossing signal in the schematic.",
+    "placeholders": {
+      "signalName": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneUnresetSectionHeader": "无复位寄存器",
+  "resetDomainAnalysisPaneUnresetSubtitle": "寄存器从不复位 — 上电时为 X",
+  "resetDomainAnalysisPaneUnresetTooltip": "{registerName} 没有复位驱动 — 上电时其值未定义",
+  "resetCrossingKindData": "数据跨越复位边界",
+  "@resetCrossingKindData": {
+    "description": "Label for reset crossing kind: data signal driven by a register reset by one domain is consumed by a register reset by a different domain."
+  },
+  "resetCrossingKindDeassert": "复位释放跨越",
+  "@resetCrossingKindDeassert": {
+    "description": "Label for reset crossing kind: the reset deassert edge of one domain reaches registers in another domain (canonical reset CDC bug class)."
+  },
+  "resetSynchronizerStatusProperAsyncSync": "异步置位 + 同步释放",
+  "@resetSynchronizerStatusProperAsyncSync": {
+    "description": "Label for reset synchronizer status: classic async-assert + sync-deassert synchronizer (most common safe pattern)."
+  },
+  "resetSynchronizerStatusProperSyncSync": "同步置位 + 同步释放",
+  "@resetSynchronizerStatusProperSyncSync": {
+    "description": "Label for reset synchronizer status: fully synchronous reset synchronizer."
+  },
+  "resetSynchronizerStatusProperResetSynchronizer": "厂商复位同步器",
+  "@resetSynchronizerStatusProperResetSynchronizer": {
+    "description": "Label for reset synchronizer status: vendor-specific reset synchronizer cell or library macro."
+  },
+  "resetSynchronizerStatusCustom": "自定义同步器",
+  "@resetSynchronizerStatusCustom": {
+    "description": "Label for reset synchronizer status: user-asserted custom synchronizer module (matched a userSynchronizerPatterns entry)."
+  },
+  "resetSynchronizerStatusMissing": "缺少同步器",
+  "@resetSynchronizerStatusMissing": {
+    "description": "Label for reset synchronizer status: no synchronizer at all on the destination side (critical metastability bug)."
+  },
+  "resetSynchronizerStatusGlitchProne": "易产生毛刺",
+  "@resetSynchronizerStatusGlitchProne": {
+    "description": "Label for reset synchronizer status: synchronizer structurally present but combinational logic in the deassertion path could cause glitches."
+  },
+  "resetPolarityActiveHigh": "高电平有效",
+  "@resetPolarityActiveHigh": {
+    "description": "Label for reset polarity: asserts on a logical high (1)."
+  },
+  "resetPolarityActiveLow": "低电平有效",
+  "@resetPolarityActiveLow": {
+    "description": "Label for reset polarity: asserts on a logical low (0)."
+  },
+  "resetPolarityUnknown": "极性未知",
+  "@resetPolarityUnknown": {
+    "description": "Label for reset polarity: detector could not classify the polarity."
+  },
+  "resetConfidenceHigh": "高置信度",
+  "@resetConfidenceHigh": {
+    "description": "Label for the detector's classification confidence: structurally unambiguous match."
+  },
+  "resetConfidenceMedium": "中置信度",
+  "@resetConfidenceMedium": {
+    "description": "Label for the detector's classification confidence: heuristic match — worth manual review."
+  },
+  "resetConfidenceLow": "低置信度",
+  "@resetConfidenceLow": {
+    "description": "Label for the detector's classification confidence: borderline or max-depth bail."
+  },
+  "actionOpenWaveformFile": "打开波形文件…",
+  "@actionOpenWaveformFile": {
+    "description": "Command palette / menu label for loading a VCD/FST/GHW waveform into the active source (Pro)."
+  },
+  "actionCloseWaveformFile": "关闭波形文件",
+  "@actionCloseWaveformFile": {
+    "description": "Command palette / menu label for unloading the currently-loaded waveform source (Pro)."
+  },
+  "actionShowActivityHeatmap": "显示开关活动热图",
+  "@actionShowActivityHeatmap": {
+    "description": "Command palette / menu label for showing the Switching Activity Heatmap pane (Pro)."
+  },
+  "actionRunActivityAnalysis": "运行开关活动分析",
+  "@actionRunActivityAnalysis": {
+    "description": "Command palette / menu label for running full-design switching activity analysis over the active tab's time range (Pro)."
+  },
+  "actionClearActivityColoring": "清除活动着色",
+  "@actionClearActivityColoring": {
+    "description": "Command palette / menu label for clearing the per-edge activity color override on the schematic (Open Core; never gated)."
+  },
+  "actionConfigureActivityScheme": "配置活动色彩方案…",
+  "@actionConfigureActivityScheme": {
+    "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
+  },
+  "activityHeatmapPaneEmptyTitle": "尚未加载开关活动",
+  "@activityHeatmapPaneEmptyTitle": {
+    "description": "Open-core Switching Activity Heatmap pane empty-state title shown before a waveform is loaded or analysis is run."
+  },
+  "activityHeatmapPaneEmptyHint": "加载 VCD 或 FST 波形并运行开关活动分析，按每个线网的活动强度为原理图着色。",
+  "@activityHeatmapPaneEmptyHint": {
+    "description": "Open-core Switching Activity Heatmap pane empty-state hint explaining what the feature does and how to trigger it."
+  },
+  "activityHeatmapPaneHottestSection": "热点线网",
+  "@activityHeatmapPaneHottestSection": {
+    "description": "Section header for the top-N hottest nets in the open-core Switching Activity Heatmap pane's fallback list."
+  },
+  "activityHeatmapPaneColdestSection": "冷线网",
+  "@activityHeatmapPaneColdestSection": {
+    "description": "Section header for the bottom-N coldest nets in the open-core Switching Activity Heatmap pane's fallback list."
+  },
+  "activityHeatmapPaneHeader": "{netCount} 个线网，{transitionCount} 次跳变",
+  "@activityHeatmapPaneHeader": {
+    "description": "Header summary for the open-core Switching Activity Heatmap pane.",
+    "placeholders": {
+      "netCount": {
+        "type": "int"
+      },
+      "transitionCount": {
+        "type": "int"
+      }
+    }
+  },
+  "activityHeatmapPaneNetLine": "{netPath} — {transitionCount} 次跳变，占空比 {dutyPercent}%",
+  "@activityHeatmapPaneNetLine": {
+    "description": "Open-core fallback list line for a single net's activity record.",
+    "placeholders": {
+      "netPath": {
+        "type": "String"
+      },
+      "transitionCount": {
+        "type": "int"
+      },
+      "dutyPercent": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarFile": "文件：{fileName}",
+  "@statusBarFile": {
+    "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarTopModule": "顶层模块：{moduleName}",
+  "@statusBarTopModule": {
+    "description": "Status bar segment showing the elaborated design's top module name.",
+    "placeholders": {
+      "moduleName": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarCellCount": "{count, plural, =1{1 个单元} other{{count} 个单元}}",
+  "@statusBarCellCount": {
+    "description": "Status bar segment showing the design-wide cell count (summed across all elaborated modules).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusBarNoDesign": "未加载设计",
+  "@statusBarNoDesign": {
+    "description": "Status bar text shown for an open tab that has no source files / design loaded yet."
+  },
+  "aboutDialogTitle": "关于 NetCrux",
+  "@aboutDialogTitle": {
+    "description": "Title of the About box dialog / screen."
+  },
+  "aboutTagline": "面向硬件工程师的现代网表与原理图查看器",
+  "@aboutTagline": {
+    "description": "One-line product tagline shown under the app name in the About box header."
+  },
+  "aboutBetaChip": "公开测试版",
+  "@aboutBetaChip": {
+    "description": "Chip label shown in the About box header while the public-beta period is active."
+  },
+  "aboutEditionOpenCore": "开放核心版",
+  "@aboutEditionOpenCore": {
+    "description": "Edition label for the free open-core build; the edition chip is hidden for this value."
+  },
+  "aboutSectionVersion": "版本",
+  "@aboutSectionVersion": {
+    "description": "About box section header / row label for the application version."
+  },
+  "aboutBuildNumber": "构建号",
+  "@aboutBuildNumber": {
+    "description": "About box row label for the platform build number."
+  },
+  "aboutGitSha": "提交",
+  "@aboutGitSha": {
+    "description": "About box row label for the short git commit SHA."
+  },
+  "aboutSectionPlatform": "平台",
+  "@aboutSectionPlatform": {
+    "description": "About box section header for the host platform details."
+  },
+  "aboutOperatingSystem": "操作系统",
+  "@aboutOperatingSystem": {
+    "description": "About box row label for the host operating system."
+  },
+  "aboutArchitecture": "架构",
+  "@aboutArchitecture": {
+    "description": "About box row label for the CPU architecture."
+  },
+  "aboutFlutterVersion": "Flutter",
+  "@aboutFlutterVersion": {
+    "description": "About box row label for the Flutter SDK version."
+  },
+  "aboutDartVersion": "Dart",
+  "@aboutDartVersion": {
+    "description": "About box row label for the Dart SDK version."
+  },
+  "aboutSectionElkjs": "elkjs",
+  "@aboutSectionElkjs": {
+    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  },
+  "aboutElkjsDescription": "NetCrux 使用 elkjs(Eclipse Layout Kernel 的 JavaScript 版本)进行原理图自动布局。elkjs 采用 EPL-2.0 许可证。",
+  "@aboutElkjsDescription": {
+    "description": "Description text for the elkjs attribution section in the About dialog."
+  },
+  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkjsLicenseHeader": {
+    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  },
+  "aboutButtonVisitWebsite": "访问网站",
+  "@aboutButtonVisitWebsite": {
+    "description": "About box action button that opens the company website in the browser."
+  },
+  "aboutButtonDocs": "文档",
+  "@aboutButtonDocs": {
+    "description": "About box action button that opens the NetCrux documentation site in the browser."
+  },
+  "aboutButtonPrivacy": "隐私政策",
+  "@aboutButtonPrivacy": {
+    "description": "About box action button that opens the NetCrux privacy policy in the browser."
+  },
+  "aboutButtonTerms": "服务条款",
+  "@aboutButtonTerms": {
+    "description": "About box action button that opens the NetCrux terms of service in the browser."
+  },
+  "aboutButtonCopyVersionInfo": "复制版本信息",
+  "@aboutButtonCopyVersionInfo": {
+    "description": "About box action button that copies the structured version paragraph to the clipboard."
+  },
+  "aboutCopiedConfirmation": "版本信息已复制",
+  "@aboutCopiedConfirmation": {
+    "description": "Snackbar confirmation shown after the Copy Version Info action copies to the clipboard."
+  },
+  "aboutCompanyName": "Ferrite Engineering",
+  "@aboutCompanyName": {
+    "description": "Company tagline shown on the first line of the About box branding banner."
+  },
+  "updateBannerMessage": "NetCrux {version} 现已发布。",
+  "@updateBannerMessage": {
+    "description": "Update banner message announcing that a newer NetCrux release is available.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateViewChangesAction": "查看更新内容",
+  "@updateViewChangesAction": {
+    "description": "Update banner button that opens the release changelog in the browser."
+  },
+  "updateNowAction": "立即更新",
+  "@updateNowAction": {
+    "description": "Update banner button that opens the NetCrux download page in the browser."
+  },
+  "updateDismissLabel": "关闭",
+  "@updateDismissLabel": {
+    "description": "Accessible name of the update banner's dismiss button."
+  },
+  "updateCheckInProgress": "正在检查更新…",
+  "@updateCheckInProgress": {
+    "description": "Transient snackbar shown while a manual update check is in flight."
+  },
+  "updateCheckUpToDate": "您使用的已是最新版本（{version}）。",
+  "@updateCheckUpToDate": {
+    "description": "Snackbar confirming a manual update check found no newer release; names the running version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckFailed": "无法检查更新。",
+  "@updateCheckFailed": {
+    "description": "Snackbar shown when a manual update check could not reach the version manifest."
+  },
+  "actionCheckForUpdates": "检查更新",
+  "@actionCheckForUpdates": {
+    "description": "Action label for the manual Check for Updates command (Help menu, command palette, About box)."
+  },
+  "settingsAutoCheckUpdatesLabel": "自动检查更新",
+  "@settingsAutoCheckUpdatesLabel": {
+    "description": "Settings General row label for the persisted automatic update-check toggle."
+  },
+  "settingsAutoCheckUpdatesDescription": "在启动时以及每天检查一次新版本。仅发送您的应用版本和操作系统。",
+  "@settingsAutoCheckUpdatesDescription": {
+    "description": "Settings General row description explaining what the automatic update check sends."
+  },
+  "settingsRestoreTabsOnLaunchLabel": "启动时恢复标签页",
+  "@settingsRestoreTabsOnLaunchLabel": {
+    "description": "Settings General row label for the toggle that controls whether the persisted workspace document is rehydrated at launch."
+  },
+  "settingsRestoreTabsOnLaunchDescription": "NetCrux 启动时重新打开上次会话的标签页。关闭后，已保存的会话仍保留在磁盘上，重新开启即可恢复。",
+  "@settingsRestoreTabsOnLaunchDescription": {
+    "description": "Settings General row description for the restore-tabs-on-launch toggle, stating that turning it off keeps the saved session on disk."
+  },
+  "actionSubmitIssue": "提交问题…",
+  "@actionSubmitIssue": {
+    "description": "Action label for the beta issue reporter command (Help menu, command palette, About box)."
+  },
+  "issueReporterTitle": "提交问题",
+  "@issueReporterTitle": {
+    "description": "Title of the beta issue reporter dialog, and the fallback GitHub issue title when the summary is blank."
+  },
+  "issueReporterTitleFieldLabel": "问题摘要",
+  "@issueReporterTitleFieldLabel": {
+    "description": "Label of the issue reporter's free-text summary field."
+  },
+  "issueReporterTitleFieldHint": "简要描述出现的问题",
+  "@issueReporterTitleFieldHint": {
+    "description": "Hint shown inside the issue reporter's empty summary field."
+  },
+  "issueReporterPrivacyNotice": "更多上下文有助于复现问题。请查看并关闭任何您不愿分享的内容。报告中绝不包含文件内容或文件路径。",
+  "@issueReporterPrivacyNotice": {
+    "description": "Privacy callout above the issue reporter's category tiles."
+  },
+  "issueReporterPreviewHeader": "预览问题正文",
+  "@issueReporterPreviewHeader": {
+    "description": "Header of the issue reporter's collapsible markdown preview disclosure."
+  },
+  "issueReporterCategoryAppEnv": "应用与环境",
+  "@issueReporterCategoryAppEnv": {
+    "description": "Title of the always-on App and Environment category tile in the issue reporter."
+  },
+  "issueReporterCategoryAppEnvDescription": "版本、构建 SHA、平台、操作系统、屏幕 DPI、语言区域、SDK 版本。",
+  "@issueReporterCategoryAppEnvDescription": {
+    "description": "Summary of what the App and Environment category contributes to the report."
+  },
+  "issueReporterCategorySession": "会话状态",
+  "@issueReporterCategorySession": {
+    "description": "Title of the Session State category tile in the issue reporter."
+  },
+  "issueReporterCategorySessionDescription": "仅包含数量和格式名称 — 绝不包含文件路径或文件内容。",
+  "@issueReporterCategorySessionDescription": {
+    "description": "Summary of what the Session State category contributes to the report."
+  },
+  "issueReporterCategoryLog": "诊断信息",
+  "@issueReporterCategoryLog": {
+    "description": "Title of the Diagnostics category tile in the issue reporter."
+  },
+  "issueReporterCategoryLogDescription": "本次会话中捕获的最近警告和错误。",
+  "@issueReporterCategoryLogDescription": {
+    "description": "Summary of what the Diagnostics category contributes to the report."
+  },
+  "issueReporterCategoryScreenshot": "屏幕截图",
+  "@issueReporterCategoryScreenshot": {
+    "description": "Title of the Screenshot category tile in the issue reporter (desktop only)."
+  },
+  "issueReporterCategoryScreenshotDescription": "应用窗口的截图，已保存以便您附加。",
+  "@issueReporterCategoryScreenshotDescription": {
+    "description": "Summary of what the Screenshot category contributes to the report."
+  },
+  "issueReporterLockedCategorySemantics": "始终包含",
+  "@issueReporterLockedCategorySemantics": {
+    "description": "Screen-reader description of the lock icon on the always-on App and Environment tile."
+  },
+  "issueReporterSubmitButton": "提交",
+  "@issueReporterSubmitButton": {
+    "description": "Label of the issue reporter's submit action."
+  },
+  "issueReporterCancelButton": "取消",
+  "@issueReporterCancelButton": {
+    "description": "Label of the issue reporter's cancel action."
+  },
+  "issueReporterOpenedToast": "已打开 GitHub 问题页 — 请从剪贴板粘贴到正文，然后拖入屏幕截图。",
+  "@issueReporterOpenedToast": {
+    "description": "Toast shown after submission when the report did not fit in the GitHub URL and must be pasted from the clipboard."
+  },
+  "issueReporterOpenedToastPrefilled": "已打开 GitHub 问题页并预填报告内容 — 如已截图，请拖入屏幕截图。",
+  "@issueReporterOpenedToastPrefilled": {
+    "description": "Toast shown after submission when the report was pre-filled into the GitHub new-issue URL."
+  },
+  "issueReporterScreenshotSaved": "屏幕截图已保存到 {path}",
+  "@issueReporterScreenshotSaved": {
+    "description": "Confirmation appended to the submission toast naming where the screenshot PNG was written.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "issueReporterEmptyLogPlaceholder": "（未捕获日志条目）",
+  "@issueReporterEmptyLogPlaceholder": {
+    "description": "Placeholder rendered in the Diagnostics category when the log ring buffer captured nothing."
+  },
+  "issueReporterEmptySessionLogPlaceholder": "（本次会话未记录错误或警告）",
+  "@issueReporterEmptySessionLogPlaceholder": {
+    "description": "Placeholder rendered under the session-log heading when nothing was logged this session."
+  },
+  "betaExpiryBannerMessage": "{days, plural, =1{NetCrux Beta 版将在 1 天后过期。请下载最新版本。} other{NetCrux Beta 版将在 {days} 天后过期。请下载最新版本。}}",
+  "@betaExpiryBannerMessage": {
+    "description": "Dismissible banner shown while the beta build is inside the warning window of its hard expiry date.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "betaExpiryBannerAction": "下载",
+  "@betaExpiryBannerAction": {
+    "description": "Inline action on the beta-expiry warning banner that opens the download page."
+  },
+  "betaExpiryDismissLabel": "关闭",
+  "@betaExpiryDismissLabel": {
+    "description": "Accessible name of the beta-expiry warning banner's dismiss button."
+  },
+  "betaExpiryExpiredTitle": "Beta 版已过期",
+  "@betaExpiryExpiredTitle": {
+    "description": "Title of the blocking modal shown once the beta build has passed its hard expiry date."
+  },
+  "betaExpiryExpiredBody": "此 NetCrux Beta 版已到达过期日期。请下载最新版本以继续使用 NetCrux。",
+  "@betaExpiryExpiredBody": {
+    "description": "Body of the blocking beta-expired modal explaining why the build stopped working."
+  },
+  "betaExpiryExpiredAction": "下载最新版本",
+  "@betaExpiryExpiredAction": {
+    "description": "Primary action of the blocking beta-expired modal; opens the download page."
+  },
+  "betaExpiryExpiredQuit": "退出 NetCrux",
+  "@betaExpiryExpiredQuit": {
+    "description": "Secondary action of the blocking beta-expired modal; terminates the application."
+  },
+  "coneOfInfluenceCellCount": "{count, plural, =1{影响锥中有 1 个单元} other{影响锥中有 {count} 个单元}}",
+  "actionCategoryFileMnemonic": "文件(&F)",
+  "actionCategoryEditMnemonic": "编辑(&E)",
+  "actionCategoryViewMnemonic": "视图(&V)",
+  "actionCategoryNavigateMnemonic": "导航(&N)",
+  "actionCategorySearchMnemonic": "搜索(&S)",
+  "actionCategoryToolsMnemonic": "工具(&T)",
+  "actionCategoryHelpMnemonic": "帮助(&H)",
+  "actionCategoryEdit": "编辑",
+  "menuWindow": "窗口",
+  "actionExit": "退出",
+  "actionOpenDocumentation": "文档",
+  "actionNewWorkspace": "新建工作区",
+  "actionOpenWorkspace": "打开工作区…",
+  "actionSaveWorkspaceAs": "工作区另存为…",
+  "actionResetWorkspace": "重置工作区…",
+  "actionNextTab": "下一个标签页",
+  "actionPreviousTab": "上一个标签页",
+  "actionToggleTheme": "切换主题",
+  "accessibilitySchematicActive": "原理图：{cells} 个单元，{nets} 条线网",
+  "@accessibilitySchematicActive": {
+    "description": "Screen-reader summary for the schematic canvas.",
+    "placeholders": {
+      "cells": {
+        "type": "int"
+      },
+      "nets": {
+        "type": "int"
+      }
+    }
+  },
+  "schematicKeyboardCell": "{name}，{type} 单元",
+  "@schematicKeyboardCell": {
+    "description": "Screen-reader announcement when the keyboard selects a cell on the schematic canvas; name is the instance name, type the Yosys cell type.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardBoundaryPort": "端口 {name}",
+  "@schematicKeyboardBoundaryPort": {
+    "description": "Screen-reader announcement when the keyboard selects a module boundary port on the schematic canvas.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNet": "线网 {name}",
+  "@schematicKeyboardNet": {
+    "description": "Screen-reader announcement when the keyboard selects a net on the schematic canvas; name is the net name, or its numeric id when the net is unnamed.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNoConnections": "{name} 没有引脚或线网",
+  "@schematicKeyboardNoConnections": {
+    "description": "Screen-reader announcement when the keyboard asks for the pins and nets of a cell or port that has none; name is the cell or port.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardPin": "{cell} 的引脚 {pin}",
+  "@schematicKeyboardPin": {
+    "description": "Screen-reader announcement when the keyboard selects a pin on the schematic canvas; pin is the pin name, cell the instance it belongs to.",
+    "placeholders": {
+      "pin": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNothingSelected": "未选择任何内容",
+  "@schematicKeyboardNothingSelected": {
+    "description": "Screen-reader announcement when the context menu key is pressed on the schematic canvas with nothing selected."
+  },
+  "schematicKeyboardNoElements": "此作用域中没有可选择的元素",
+  "@schematicKeyboardNoElements": {
+    "description": "Screen-reader announcement when the keyboard steps through the schematic canvas but the scope draws no cells or ports."
+  },
+  "accessibilityToolbarRegion": "工具栏",
+  "toolbarOverflowActions": "操作",
+  "toolbarToggleCrossProbe": "交叉探测面板",
+  "toolbarTraceCluster": "追踪",
+  "actionOpenTabDiagnostics": "标签页诊断…",
+  "actionOpenAppDiagnostics": "应用诊断…",
+  "diagnosticsAppDialogTitle": "应用诊断",
+  "diagnosticsCopyFullReport": "复制完整诊断报告",
+  "diagnosticsCopiedToClipboard": "诊断报告已复制到剪贴板。",
+  "statusBarBusyElaborating": "正在细化设计",
+  "statusBarYosysUnavailable": "未找到 Yosys",
+  "dockTabInspector": "检视器",
+  "dockTabHierarchy": "层次结构",
+  "dockTabDiagnostics": "诊断",
+  "dockTabCrossProbe": "交叉探测",
+  "dockTabCdc": "CDC",
+  "dockTabResetDomain": "复位域",
+  "dockTabFsm": "FSM",
+  "dockTabFsmResults": "FSM 结果",
+  "dockTabActivity": "活动",
+  "dockTabDiff": "差异",
+  "dockCollapseTooltip": "隐藏面板",
+  "accessibilityRightDockRegion": "详情停靠区",
+  "accessibilityLeftDockRegion": "浏览器停靠区",
+  "accessibilityBottomDockRegion": "面板停靠区",
+  "settingsLanguageLabel": "语言",
+  "settingsLanguageDescription": "应用界面使用的语言",
+  "settingsCxpSectionTitle": "CXP 交叉探测",
+  "settingsAutoReloadDescription": "已加载文件在磁盘上更改时 NetCrux 的响应方式",
+  "settingsCxpPortError": "请输入 1 到 65535 之间的端口。",
+  "workspaceResetConfirmButton": "重置",
+  "workspaceReplaceConfirmButton": "替换",
+  "tabContextMenuRevealInFinder": "在 Finder 中显示",
+  "tabContextMenuRevealInExplorer": "在 Explorer 中显示",
+  "tabContextMenuRevealInFiles": "在文件管理器中显示",
+  "helpLinkLearnMore": "了解更多",
+  "aboutButtonAcknowledgments": "致谢",
+  "statsStripLabel": "统计",
+  "statsStripExpandTooltip": "显示实时统计",
+  "statsStripCollapseTooltip": "隐藏实时统计",
+  "statisticsStripTitle": "统计",
+  "statsSegmentMemory": "内存",
+  "statsSegmentMemoryTooltip": "NetCrux 进程的常驻内存，包括 Yosys 子进程和 elkjs 运行时。",
+  "statsSegmentFps": "帧率",
+  "statsSegmentFpsTooltip": "最近 60 帧的每秒帧数。",
+  "statsSegmentJank": "丢帧",
+  "statsSegmentJankTooltip": "本次会话中超出 16.7 毫秒预算的帧数。平均帧率会掩盖卡顿，此项不会。",
+  "statsSegmentLayout": "布局",
+  "statsSegmentLayoutTooltip": "最近一次 ELK 布局的耗时 — 这是继详细化之后流水线中最慢的步骤。",
+  "statsSegmentPaint": "绘制",
+  "statsSegmentPaintTooltip": "原理图画布绘制最近一帧所用的时间。",
+  "statsSegmentViewport": "视口",
+  "statsSegmentViewportTooltip": "经视口剔除后上一帧实际绘制的单元和连线数量。",
+  "statsSegmentElaboration": "详细化",
+  "statsSegmentElaborationTooltip": "当前是否有 Yosys 子进程正在运行。标签诊断抽屉显示上一次运行的结果。",
+  "statsElaborationRunning": "运行中",
+  "statsElaborationIdle": "空闲",
+  "diagnosticsAppDialogSubtitle": "进程级状态。这些信息不会离开你的机器。",
+  "diagnosticsCloseTooltip": "关闭",
+  "diagnosticsSectionMemory": "内存",
+  "diagnosticsSectionPerTab": "各标签设计规模",
+  "diagnosticsSectionFrameStats": "帧统计",
+  "diagnosticsSectionSession": "会话",
+  "diagnosticsMetricRss": "进程内存 (RSS)",
+  "diagnosticsMetricFps": "每秒帧数",
+  "diagnosticsMetricJank": "超出预算的帧",
+  "diagnosticsMetricLastFrame": "最近一帧",
+  "diagnosticsMetricSampledFrames": "已采样帧数",
+  "diagnosticsPerTabNote": "这里是元素个数而非字节数——Dart VM 无法报告已展开设计占用的内存。",
+  "diagnosticsColumnTab": "标签",
+  "diagnosticsColumnModules": "模块",
+  "diagnosticsColumnCells": "单元",
+  "diagnosticsColumnNets": "线网",
+  "diagnosticsNoTabs": "没有打开的标签。",
+  "diagnosticsDisabledSnack": "诊断界面已关闭。可在设置 > {section}中启用。",
+  "diagnosticsSettingsLabel": "启用诊断界面",
+  "diagnosticsSettingsDescription": "显示标签诊断抽屉、应用诊断对话框和各窗格渲染统计。调试版本中始终启用。",
+  "paneRenderStatsTitle": "窗格渲染统计",
+  "paneRenderStatsTooltip": "此窗格的渲染统计",
+  "paneRenderStatsCloseTooltip": "关闭渲染统计",
+  "paneRenderStatsPaint": "绘制时间",
+  "paneRenderStatsLayout": "布局时间",
+  "paneRenderStatsVisibleCells": "视口内单元",
+  "paneRenderStatsVisibleEdges": "视口内连线",
+  "paneRenderStatsFrames": "已绘制帧数",
+  "paneRenderStatsEmpty": "此窗格尚未绘制原理图。",
+  "telemetryConsentTitle": "帮助改进 NetCrux",
+  "telemetryConsentBody": "匿名使用次数与错误次数统计帮助我们决定下一步开发什么、修复什么。绝不收集你的文件、设计数据或任何能识别你身份的信息。",
+  "telemetryConsentLearnMore": "查看具体收集哪些内容",
+  "telemetryConsentToggleLabel": "发送匿名使用统计信息",
+  "telemetryConsentContinue": "继续",
+  "settingsPrivacySection": "隐私",
+  "settingsTelemetryLabel": "发送匿名使用统计信息",
+  "settingsTelemetryDescription": "功能与错误计数、应用与操作系统版本、设备形态、语言和许可证层级。绝不包含文件名、线网名、错误消息或个人信息。",
+  "settingsTelemetryDocsLabel": "遥测说明文档",
+  "settingsTelemetryDocsDescription": "完整的字段列表、绝不收集列表，以及负责发送的源代码。",
+  "upgradeDialogSeePricing": "查看价格",
+  "settingsTelemetryInstallationIdLabel": "安装 ID",
+  "settingsTelemetryInstallationIdDescription": "这是与所收集数据关联的唯一标识符。它是随机生成的，与您本人无关。如需删除本次安装的数据，请将其发送给支持人员。",
+  "settingsTelemetryInstallationIdCopy": "复制",
+  "settingsTelemetryInstallationIdCopied": "已复制安装 ID。",
+  "xTracePanelTitle": "X 追溯",
+  "xTracePanelEmpty": "暂无 X 追溯。请选择一个线网并运行“显示 X 追溯”。",
+  "xTracePanelClearButton": "清除",
+  "xTracePanelTerminationFoundOrigin": "找到此路径的源头",
+  "xTracePanelTerminationMaxDepth": "达到深度上限",
+  "xTracePanelTerminationBoundary": "到达边界",
+  "xTracePanelTerminationNoVcd": "未加载波形",
+  "xTracePanelTerminationCycle": "检测到组合环",
+  "xTracePanelTerminationNothing": "无可追溯的选择",
+  "xTracePanelStepLabel": "步骤 {depth}",
+  "xTracePanelStepCell": "位于 {cell}",
+  "xTracePanelStepBoundary": "边界端口 {port}",
+  "xTracePanelStepValue": "= {value}",
+  "xTracePanelStepCount": "{count, plural, =1{1 个步骤} other{{count} 个步骤}}"
+}

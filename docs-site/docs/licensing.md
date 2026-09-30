@@ -1,0 +1,14 @@
+# Tiers & licensing
+
+Licensing terms are the same for all four EDACrux products, so they live in one place on the suite site: **[edacrux.app/licensing](https://edacrux.app/licensing)**. It maps every feature to its tier and describes how the Education tier and license keys work.
+
+What is specific to NetCrux:
+
+- **Open Core** is the free, open-source schematic browser: elaboration, navigation, search, one-step tracing, sessions, projects, workspaces, export and cross-probe.
+- **Pro** <span class="tier tier-pro">Pro</span> adds the Cone of Influence, X-Trace, netlist diff, custom cell symbols, bookmarks and annotations, the RTL source pane, CDC, reset-domain and FSM analysis, the switching-activity heatmap, and cross-probing from the schematic context menu.
+- **Enterprise** <span class="tier tier-enterprise">Enterprise</span> adds collaborative schematic sessions, org-wide symbol libraries, org-wide policy and the audit log. See [Administration](administration.md).
+- **Education** <span class="tier tier-edu">EDU</span> grants the Pro feature set to verified students and educators for non-commercial use.
+
+In the downloaded app, the license lives in `Settings → License`: paste a license key or the contents of a license file, or request an educational license. In the 0.8.x public beta builds every tier is unlocked and no keys are issued, so there is nothing to enter. From 1.0 that panel is where a Pro, Enterprise or Education key goes; Open Core stays free and never asks for one.
+
+Pro commands appear in the Open Core app's menus and command palette too, marked with a Pro badge. Open Core does not contain their implementation, so choosing one there shows a message that it requires NetCrux Pro. The web viewer, which is Open Core only, does not list them.

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    "../../test/fixtures/verilog/adder4.v"
+  ],
+  "topModule": "adder4",
+  "defines": {},
+  "includePaths": [],
+  "extraYosysCommands": [],
+  "lowerToStructural": false
+}

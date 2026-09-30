@@ -1,0 +1,9 @@
+{
+  "design": "mesh_1m",
+  "rows": 1000,
+  "cols": 1000,
+  "cellCount": 1000000,
+  "cellType": "$_DFF_P_",
+  "committed": false,
+  "build": "dart run tool/generate_netlist_fixtures.dart --design mesh_1m --out build/perf/mesh_1m.json"
+}

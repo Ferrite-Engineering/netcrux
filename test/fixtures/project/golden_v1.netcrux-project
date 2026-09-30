@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    "cpu.v",
+    "alu.v"
+  ],
+  "topModule": "cpu",
+  "defines": {
+    "WIDTH": "32",
+    "DEBUG": ""
+  },
+  "includePaths": [
+    "inc"
+  ],
+  "extraYosysCommands": [
+    "proc",
+    "opt"
+  ],
+  "lowerToStructural": true
+}

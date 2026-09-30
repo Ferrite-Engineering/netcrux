@@ -1,0 +1,152 @@
+/* NetCrux brand layer for MkDocs Material.
+ *
+ * The accent is the website's schematic amber (--color-accent: #FFB454 in
+ * the marketing site's tokens), with the cross-probe blue (#4DA3FF) as the
+ * Enterprise badge colour, exactly as the website pairs them. Amber is too
+ * light to carry white header text or to read as a link colour on white,
+ * so the header text is the site's near-black and light-mode links use a
+ * darkened amber.
+ */
+
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #ffb454;
+  --md-primary-fg-color--light: #ffcb85;
+  --md-primary-fg-color--dark: #d98a1f;
+  --md-primary-bg-color: #0a0e13;
+  --md-primary-bg-color--light: rgba(10, 14, 19, 0.7);
+  --md-accent-fg-color: #d98a1f;
+  --md-accent-fg-color--transparent: rgba(217, 138, 31, 0.1);
+  --md-typeset-a-color: #9a5b00;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #ffb454;
+  --md-primary-fg-color--light: #ffcb85;
+  --md-primary-fg-color--dark: #d98a1f;
+  --md-primary-bg-color: #0a0e13;
+  --md-primary-bg-color--light: rgba(10, 14, 19, 0.7);
+  --md-accent-fg-color: #ffcb85;
+  --md-accent-fg-color--transparent: rgba(255, 180, 84, 0.1);
+  --md-typeset-a-color: #ffb454;
+  --md-default-bg-color: #0a0e13;
+}
+
+/* Tier badges: <span class="tier tier-pro">Pro</span> and friends. */
+.md-typeset .tier {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.05em 0.5em;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--md-code-font-family);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.md-typeset h1 .tier,
+.md-typeset h2 .tier,
+.md-typeset h3 .tier {
+  font-size: 0.55em;
+  position: relative;
+  top: -0.1em;
+}
+
+/* Light scheme: dark text on a tinted fill, for contrast on white. */
+.md-typeset .tier-pro {
+  color: #7a4700;
+  background-color: rgba(255, 180, 84, 0.22);
+  border-color: rgba(217, 138, 31, 0.6);
+}
+
+.md-typeset .tier-enterprise {
+  color: #0b4f96;
+  background-color: rgba(77, 163, 255, 0.16);
+  border-color: rgba(77, 163, 255, 0.6);
+}
+
+.md-typeset .tier-edu {
+  color: #0f6b47;
+  background-color: rgba(46, 232, 156, 0.16);
+  border-color: rgba(28, 160, 106, 0.6);
+}
+
+/* Slate scheme: bright text on a faint fill, as on the website. */
+[data-md-color-scheme="slate"] .md-typeset .tier-pro {
+  color: #ffb454;
+  background-color: rgba(255, 180, 84, 0.12);
+  border-color: rgba(255, 180, 84, 0.45);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .tier-enterprise {
+  color: #4da3ff;
+  background-color: rgba(77, 163, 255, 0.12);
+  border-color: rgba(77, 163, 255, 0.45);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .tier-edu {
+  color: #2ee89c;
+  background-color: rgba(46, 232, 156, 0.12);
+  border-color: rgba(46, 232, 156, 0.45);
+}
+
+/* Match the marketing site: dark by default (mkdocs.yml lists slate
+ * first), the site's palette from css/tokens.css (--color-bg, --color-surface,
+ * --color-border, --color-text, --color-text-dim), its schematic amber accent,
+ * and its system font stack. Appended last so it wins over the rules above. */
+
+:root {
+  --md-text-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --md-code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #0a0e13;
+  --md-default-fg-color: #e6eaf0;
+  --md-default-fg-color--light: #8a94a6;
+  --md-default-fg-color--lighter: rgba(138, 148, 166, 0.6);
+  --md-default-fg-color--lightest: rgba(42, 51, 64, 0.9);
+  --md-typeset-color: #e6eaf0;
+  --md-code-bg-color: #141a22;
+  --md-code-fg-color: #e6eaf0;
+
+  /* Header and tabs: the site header's near-black, not a coloured bar. */
+  --md-primary-fg-color: #0a0e13;
+  --md-primary-fg-color--light: #141a22;
+  --md-primary-fg-color--dark: #0a0e13;
+  --md-primary-bg-color: #e6eaf0;
+  --md-primary-bg-color--light: #8a94a6;
+
+  --md-accent-fg-color: #ffb454;
+  --md-accent-fg-color--transparent: rgba(255, 180, 84, 0.1);
+  --md-typeset-a-color: #ffb454;
+
+  --md-footer-bg-color: #0a0e13;
+  --md-footer-bg-color--dark: #0a0e13;
+  --md-footer-fg-color: #e6eaf0;
+  --md-footer-fg-color--light: #8a94a6;
+  --md-footer-fg-color--lighter: rgba(138, 148, 166, 0.6);
+}
+
+[data-md-color-scheme="slate"] .md-header,
+[data-md-color-scheme="slate"] .md-tabs {
+  border-bottom: 1px solid #2a3340;
+}
+
+[data-md-color-scheme="slate"] .md-footer {
+  border-top: 1px solid #2a3340;
+}
+
+[data-md-color-scheme="slate"] .md-search__form {
+  background-color: #141a22;
+}
+
+/* Page titles in the site's full-strength text colour, as its headings are. */
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: #e6eaf0;
+}

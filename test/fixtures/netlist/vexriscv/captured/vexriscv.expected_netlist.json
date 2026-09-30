@@ -1,0 +1,80 @@
+{
+  "source": "vexriscv.v",
+  "topModule": "VexRiscv",
+  "moduleCount": 3,
+  "modules": [
+    {
+      "name": "DataCache",
+      "cellCount": 404,
+      "portCount": 64,
+      "netCount": 1063,
+      "cellTypeHistogram": {
+        "$add": 2,
+        "$and": 5,
+        "$dff": 63,
+        "$eq": 8,
+        "$logic_and": 43,
+        "$logic_not": 49,
+        "$logic_or": 11,
+        "$memrd": 5,
+        "$memwr_v2": 5,
+        "$mux": 205,
+        "$not": 1,
+        "$or": 1,
+        "$pmux": 1,
+        "$reduce_bool": 4,
+        "$sshl": 1
+      }
+    },
+    {
+      "name": "InstructionCache",
+      "cellCount": 115,
+      "portCount": 40,
+      "netCount": 292,
+      "cellTypeHistogram": {
+        "$add": 2,
+        "$dff": 28,
+        "$eq": 2,
+        "$logic_and": 7,
+        "$logic_not": 17,
+        "$logic_or": 7,
+        "$memrd": 2,
+        "$memwr_v2": 2,
+        "$mux": 48
+      }
+    },
+    {
+      "name": "VexRiscv",
+      "cellCount": 1463,
+      "portCount": 28,
+      "netCount": 3914,
+      "cellTypeHistogram": {
+        "$add": 20,
+        "$and": 5,
+        "$dff": 177,
+        "$eq": 177,
+        "$le": 1,
+        "$logic_and": 118,
+        "$logic_not": 202,
+        "$logic_or": 40,
+        "$lt": 2,
+        "$memrd": 2,
+        "$memwr_v2": 1,
+        "$mul": 4,
+        "$mux": 627,
+        "$ne": 2,
+        "$not": 9,
+        "$or": 24,
+        "$pmux": 13,
+        "$reduce_bool": 10,
+        "$reduce_or": 20,
+        "$sshr": 1,
+        "$sub": 3,
+        "$xor": 3,
+        "DataCache": 1,
+        "InstructionCache": 1
+      }
+    }
+  ],
+  "fingerprint": "fnv1a:87bc145a"
+}

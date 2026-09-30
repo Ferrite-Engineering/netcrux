@@ -1,0 +1,2326 @@
+{
+  "@@locale": "ko",
+  "settingsShortcutsSection": "키보드 단축키",
+  "@settingsShortcutsSection": {
+    "description": "Settings category title for the keyboard shortcuts editor"
+  },
+  "settingsShortcutsDescription": "연필 아이콘을 눌러 단축키를 변경한 다음 새 키를 누르세요. 내보내기와 가져오기로 키 설정을 다른 사용자와 공유할 수 있습니다.",
+  "@settingsShortcutsDescription": {
+    "description": "Intro note above the editable shortcuts list"
+  },
+  "settingsShortcutNotBound": "—",
+  "@settingsShortcutNotBound": {
+    "description": "Placeholder shown when an action has no key binding"
+  },
+  "settingsShortcutsKeyboardHint": "위아래 화살표 키로 단축키 사이를 이동합니다. Enter는 변경, Delete는 제거, Shift+Delete는 기본값으로 복원합니다.",
+  "@settingsShortcutsKeyboardHint": {
+    "description": "Keyboard instructions for the shortcut list in Settings > Keyboard Shortcuts. Shown under the description and spoken once by a screen reader when focus enters the list."
+  },
+  "settingsShortcutNotBoundSpoken": "단축키 없음",
+  "@settingsShortcutNotBoundSpoken": {
+    "description": "What a screen reader says for an action with no key binding. The visual placeholder is a dash, which is not spoken."
+  },
+  "settingsShortcutsImport": "가져오기…",
+  "@settingsShortcutsImport": {
+    "description": "Button that imports a shared .crux-keymap shortcut file"
+  },
+  "settingsShortcutsExport": "내보내기…",
+  "@settingsShortcutsExport": {
+    "description": "Button that exports shortcut customizations to a .crux-keymap file"
+  },
+  "settingsShortcutsResetAll": "모두 재설정",
+  "@settingsShortcutsResetAll": {
+    "description": "Button/confirm action restoring every shortcut to its default"
+  },
+  "settingsShortcutEditTooltip": "단축키 변경",
+  "@settingsShortcutEditTooltip": {
+    "description": "Tooltip for the per-action capture button"
+  },
+  "settingsShortcutUnbindTooltip": "단축키 제거",
+  "@settingsShortcutUnbindTooltip": {
+    "description": "Tooltip for the per-action unbind button"
+  },
+  "settingsShortcutResetTooltip": "기본값으로 재설정",
+  "@settingsShortcutResetTooltip": {
+    "description": "Tooltip for the per-action reset button"
+  },
+  "settingsShortcutCapturePrompt": "새 단축키를 누르세요… (Esc로 취소)",
+  "@settingsShortcutCapturePrompt": {
+    "description": "Prompt shown while capturing a new chord"
+  },
+  "settingsShortcutConflict": "{actions}에서도 사용 중",
+  "@settingsShortcutConflict": {
+    "description": "Warning under an action whose chord collides with others",
+    "placeholders": {
+      "actions": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictWins": "{others}보다 우선합니다",
+  "@settingsShortcutConflictWins": {
+    "description": "Conflict warning on the row whose shortcut fires; lists the shadowed actions sharing the chord",
+    "placeholders": {
+      "others": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictShadowed": "{winner}에 가려져 실행되지 않습니다",
+  "@settingsShortcutConflictShadowed": {
+    "description": "Conflict warning on a shadowed row whose shortcut will not fire; names the winning action",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutConflictSummary": "{count, plural, =1{단축키 충돌 1건이 있습니다} other{단축키 충돌 {count}건이 있습니다}}",
+  "@settingsShortcutConflictSummary": {
+    "description": "Summary banner above the shortcut list showing how many chords are in conflict",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutResetAllTitle": "모든 단축키를 재설정하시겠습니까?",
+  "@settingsShortcutResetAllTitle": {
+    "description": "Title of the reset-all confirmation dialog"
+  },
+  "settingsShortcutResetAllBody": "모든 키보드 단축키가 기본값으로 돌아가고 사용자 정의가 제거됩니다.",
+  "@settingsShortcutResetAllBody": {
+    "description": "Body of the reset-all confirmation dialog"
+  },
+  "settingsShortcutResetAllCancel": "취소",
+  "@settingsShortcutResetAllCancel": {
+    "description": "Cancel button in the reset-all confirmation dialog"
+  },
+  "settingsShortcutExportSuccess": "키보드 단축키를 내보냈습니다.",
+  "@settingsShortcutExportSuccess": {
+    "description": "Snackbar after a successful keymap export"
+  },
+  "settingsShortcutExportFailure": "단축키를 내보내지 못했습니다: {error}",
+  "@settingsShortcutExportFailure": {
+    "description": "Snackbar when keymap export fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutImportEmpty": "해당 파일에는 단축키 사용자 정의가 없습니다.",
+  "@settingsShortcutImportEmpty": {
+    "description": "Snackbar when an imported keymap has no customizations"
+  },
+  "settingsShortcutImportSuccess": "{count, plural, =0{가져온 단축키 사용자 정의가 없습니다.} =1{사용자 정의 단축키 1개를 가져왔습니다.} other{사용자 정의 단축키 {count}개를 가져왔습니다.}}",
+  "@settingsShortcutImportSuccess": {
+    "description": "Snackbar after a successful keymap import",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutImportFailure": "단축키를 가져오지 못했습니다: {error}",
+  "@settingsShortcutImportFailure": {
+    "description": "Snackbar when keymap import fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsShortcutImportNewerVersion": "해당 키맵은 최신 버전의 NetCrux에서 저장되었습니다(형식 {version}). 가져오려면 NetCrux를 업데이트하세요.",
+  "@settingsShortcutImportNewerVersion": {
+    "description": "Snackbar when an imported keymap declares a schema version newer than this build supports",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutsPresetLabel": "프리셋",
+  "@settingsShortcutsPresetLabel": {
+    "description": "Label for the keymap preset chooser above the editable shortcut list"
+  },
+  "settingsShortcutsPresetDescription": "전체 키 바인딩 세트를 불러옵니다. 불러온 후에도 개별 단축키를 사용자 정의할 수 있습니다.",
+  "@settingsShortcutsPresetDescription": {
+    "description": "Description under the keymap preset chooser"
+  },
+  "settingsShortcutsPresetNetCrux": "NetCrux(기본값)",
+  "@settingsShortcutsPresetNetCrux": {
+    "description": "Name of the default NetCrux keymap preset in the preset chooser"
+  },
+  "settingsShortcutsPresetCustom": "사용자 정의",
+  "@settingsShortcutsPresetCustom": {
+    "description": "Shown in the preset chooser when the user's bindings match no built-in preset"
+  },
+  "appTitle": "NetCrux",
+  "@appTitle": {
+    "description": "Application title shown in the window title bar and About box."
+  },
+  "actionCategoryApp": "NetCrux",
+  "@actionCategoryApp": {
+    "description": "Menu bar / overflow menu category label for the host application menu (macOS application menu, the first menu)."
+  },
+  "actionCategoryFile": "파일",
+  "@actionCategoryFile": {
+    "description": "Menu bar / overflow menu category label for file operations (open, save, export, recent files)."
+  },
+  "actionCategoryView": "보기",
+  "@actionCategoryView": {
+    "description": "Menu bar / overflow menu category label for view operations (panel toggles, layout, zoom)."
+  },
+  "actionCategoryNavigate": "탐색",
+  "@actionCategoryNavigate": {
+    "description": "Menu bar / overflow menu category label for navigation operations (jump to top, pop out, clear overlay)."
+  },
+  "actionCategorySearch": "검색",
+  "@actionCategorySearch": {
+    "description": "Menu bar / overflow menu category label for search operations (find, command palette)."
+  },
+  "actionCategoryTools": "도구",
+  "@actionCategoryTools": {
+    "description": "Menu bar / overflow menu category label for tool operations (settings, diagnostics, analysis)."
+  },
+  "actionCategoryHelp": "도움말",
+  "@actionCategoryHelp": {
+    "description": "Menu bar / overflow menu category label for help operations (about, documentation, keyboard shortcuts)."
+  },
+  "actionOpenProject": "프로젝트 열기…",
+  "@actionOpenProject": {
+    "description": "Command palette / menu label for opening a .netcrux project file."
+  },
+  "actionOpenSourceFiles": "소스 파일 열기…",
+  "@actionOpenSourceFiles": {
+    "description": "Command palette / menu label for opening one or more Verilog/VHDL source files."
+  },
+  "actionOpenNetlistJson": "넷리스트 JSON 열기…",
+  "@actionOpenNetlistJson": {
+    "description": "Command palette / menu / toolbar label for opening a pre-built Yosys JSON netlist, which renders without elaboration. The only way to load a design in the web viewer."
+  },
+  "actionCloseProject": "프로젝트 닫기",
+  "@actionCloseProject": {
+    "description": "Command palette / menu label for closing the currently open project."
+  },
+  "actionCloseTab": "탭 닫기",
+  "@actionCloseTab": {
+    "description": "Command palette / menu label for closing the active workspace tab (Cmd/Ctrl+W)."
+  },
+  "actionZoomIn": "확대",
+  "@actionZoomIn": {
+    "description": "Command palette / menu label for zooming the schematic canvas in."
+  },
+  "actionZoomOut": "축소",
+  "@actionZoomOut": {
+    "description": "Command palette / menu label for zooming the schematic canvas out."
+  },
+  "actionZoomFitAll": "전체 보기",
+  "@actionZoomFitAll": {
+    "description": "Command palette / menu label for fitting the entire schematic in the viewport."
+  },
+  "actionToggleHierarchyTree": "계층 트리 토글",
+  "@actionToggleHierarchyTree": {
+    "description": "Command palette / menu label for toggling the left hierarchy tree panel."
+  },
+  "actionToggleInspector": "인스펙터 토글",
+  "@actionToggleInspector": {
+    "description": "Command palette / menu label for toggling the right inspector panel."
+  },
+  "actionToggleDiagnosticsPanel": "탭 진단",
+  "@actionToggleDiagnosticsPanel": {
+    "description": "Command palette / menu label for toggling the bottom diagnostics panel."
+  },
+  "actionOpenSearch": "검색…",
+  "@actionOpenSearch": {
+    "description": "Command palette / menu label for opening the design search dialog."
+  },
+  "actionOpenCommandPalette": "명령 팔레트…",
+  "@actionOpenCommandPalette": {
+    "description": "Command palette / menu label for opening the command palette overlay."
+  },
+  "actionOpenSettings": "설정…",
+  "@actionOpenSettings": {
+    "description": "Command palette / menu label for opening the settings screen."
+  },
+  "actionOpenAbout": "NetCrux 정보",
+  "@actionOpenAbout": {
+    "description": "Command palette / menu label for opening the About box."
+  },
+  "actionJumpToTop": "최상위로 이동",
+  "@actionJumpToTop": {
+    "description": "Command palette / menu label for jumping to the top of the design hierarchy."
+  },
+  "actionQuit": "NetCrux 종료",
+  "@actionQuit": {
+    "description": "Command palette / menu label for quitting the application."
+  },
+  "commandPaletteSearchHint": "명령 검색…",
+  "@commandPaletteSearchHint": {
+    "description": "Placeholder hint text in the command palette search field"
+  },
+  "commandPaletteNoResults": "명령을 찾을 수 없음",
+  "@commandPaletteNoResults": {
+    "description": "Message displayed in the command palette when the search query matches no actions"
+  },
+  "filePickerProjectDialogTitle": "NetCrux 프로젝트 열기",
+  "@filePickerProjectDialogTitle": {
+    "description": "Title shown in the OS file picker when opening a .netcrux project file."
+  },
+  "filePickerSourcesDialogTitle": "Verilog / VHDL 소스 파일 열기",
+  "@filePickerSourcesDialogTitle": {
+    "description": "Title shown in the OS file picker when opening one or more HDL source files."
+  },
+  "filePickerNetlistDialogTitle": "Yosys JSON 넷리스트 열기",
+  "@filePickerNetlistDialogTitle": {
+    "description": "Title shown in the file picker when opening a pre-built Yosys JSON netlist."
+  },
+  "hierarchyFilterHint": "스코프 필터링…",
+  "@hierarchyFilterHint": {
+    "description": "Placeholder text inside the hierarchy tree panel's substring filter field."
+  },
+  "hierarchyClearFilterTooltip": "필터 지우기",
+  "@hierarchyClearFilterTooltip": {
+    "description": "Tooltip on the X button that clears the hierarchy tree's filter text."
+  },
+  "hierarchyEmptyNoDesign": "설계를 열어 계층을 탐색하세요.",
+  "@hierarchyEmptyNoDesign": {
+    "description": "Empty-state text shown in the hierarchy tree panel when no design is loaded."
+  },
+  "hierarchyEmptyNoTop": "엘라보레이션된 설계에 최상위 모듈이 없습니다.",
+  "@hierarchyEmptyNoTop": {
+    "description": "Empty-state text shown in the hierarchy tree panel when the loaded design has no module marked top."
+  },
+  "hierarchyEmptyElaborationFailed": "엘라보레이션 실패: {message}",
+  "@hierarchyEmptyElaborationFailed": {
+    "description": "Empty-state text shown in the hierarchy tree panel when the loaded project failed to elaborate. The {message} placeholder is filled with the exception's user-facing message (e.g. 'Yosys is not available', 'Source file not found').",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "elaborationErrorTitle": "엘라보레이션 실패",
+  "@elaborationErrorTitle": {
+    "description": "Title of the schematic error view shown when elaborating the project failed. Acts as the envelope above the specific, localized reason."
+  },
+  "elaborationErrorYosysUnavailable": "Yosys를 찾을 수 없거나 실행할 수 없습니다. Yosys를 설치하거나 설정 > 엔진에서 경로를 지정하세요.",
+  "@elaborationErrorYosysUnavailable": {
+    "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
+  },
+  "elaborationErrorTimeout": "엘라보레이션이 {seconds}초 후 시간 초과되어 중지되었습니다. 설계가 매우 크거나 Yosys가 멈췄을 수 있습니다. 시간 제한을 늘리거나 최상위 모듈을 단순화하세요.",
+  "@elaborationErrorTimeout": {
+    "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "elaborationErrorNonZeroExit": "Yosys가 오류로 종료되었습니다(종료 코드 {code}). 아래 세부 정보나 진단 드로어를 확인하세요.",
+  "@elaborationErrorNonZeroExit": {
+    "description": "Schematic error-view body shown when Yosys ran but exited non-zero. {code} is the process exit code.",
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "elaborationErrorGeneric": "프로젝트를 엘라보레이션하는 중 문제가 발생했습니다. 아래 세부 정보를 확인하세요.",
+  "@elaborationErrorGeneric": {
+    "description": "Schematic error-view body for an unclassified elaboration failure; the raw error text appears in the expandable details section."
+  },
+  "elaborationErrorDetailsLabel": "세부 정보",
+  "@elaborationErrorDetailsLabel": {
+    "description": "Expander label above the raw error detail (Yosys stderr, or an unclassified error's text) in the schematic error view."
+  },
+  "commonCancel": "취소",
+  "@commonCancel": {
+    "description": "Generic Cancel button label used across dialogs."
+  },
+  "commonOk": "확인",
+  "@commonOk": {
+    "description": "Generic OK button label used across dialogs."
+  },
+  "schematicLayoutInProgress": "{count, plural, =0{회로도 배치 중…} =1{회로도 배치 중…（셀 1개）} other{회로도 배치 중…（셀 {count}개）}}",
+  "@schematicLayoutInProgress": {
+    "description": "Progress message shown on the schematic canvas while the ELK layout for the selected scope runs on a background isolate. {count} is the number of cells in the scope; 0 means the count is not yet known (just show the base message).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "schematicLayoutElapsed": "{seconds}초 경과",
+  "@schematicLayoutElapsed": {
+    "description": "Secondary line under the schematic layout progress bar showing how long the (indeterminate) layout has been running. {seconds} is a one-decimal seconds string, e.g. '4.2'.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyFilterNoMatches": "필터와 일치하는 스코프가 없습니다. 셀이나 넷을 이름으로 찾으려면 검색…(Ctrl+F, macOS에서는 ⌘F)을 사용하세요.",
+  "@hierarchyFilterNoMatches": {
+    "description": "Shown in the hierarchy tree panel when the active filter substring matches no scope names."
+  },
+  "hierarchyCellCountLabel": "셀 {count}개",
+  "@hierarchyCellCountLabel": {
+    "description": "Compact suffix on each hierarchy row showing how many cell instances live inside that scope.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hierarchyModuleLabel": "({module})",
+  "@hierarchyModuleLabel": {
+    "description": "Compact suffix showing the module name of an instance in the hierarchy tree row (e.g. 'u_cpu (cpu)').",
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyExpandTooltip": "확장",
+  "@hierarchyExpandTooltip": {
+    "description": "Tooltip on the expand-row chevron in the hierarchy tree."
+  },
+  "hierarchyCollapseTooltip": "축소",
+  "@hierarchyCollapseTooltip": {
+    "description": "Tooltip on the collapse-row chevron in the hierarchy tree."
+  },
+  "actionPopOutScope": "스코프 빠져나가기",
+  "@actionPopOutScope": {
+    "description": "Command palette / menu label for popping out of the current scope to its parent."
+  },
+  "actionShowFanin": "팬인 표시",
+  "@actionShowFanin": {
+    "description": "Command palette / menu label for the fanin (drivers) tracing overlay."
+  },
+  "actionShowFanout": "팬아웃 표시",
+  "@actionShowFanout": {
+    "description": "Command palette / menu label for the fanout (loads) tracing overlay."
+  },
+  "actionClearOverlay": "선택 / 오버레이 지우기",
+  "@actionClearOverlay": {
+    "description": "Command palette / menu label for clearing the current selection and any fanin/fanout overlay."
+  },
+  "actionExportPng": "PNG로 내보내기…",
+  "@actionExportPng": {
+    "description": "Command palette / menu label for exporting the current schematic as a PNG image."
+  },
+  "actionExportSvg": "SVG로 내보내기…",
+  "@actionExportSvg": {
+    "description": "Command palette / menu label for exporting the current schematic as an SVG image."
+  },
+  "actionExportJson": "JSON으로 내보내기…",
+  "@actionExportJson": {
+    "description": "Command palette / menu label for exporting the current scope's Yosys JSON subset."
+  },
+  "actionSaveSession": "세션 다른 이름으로 저장…",
+  "@actionSaveSession": {
+    "description": "Command palette / menu label for saving the current session as a .netcrux file."
+  },
+  "actionOpenSession": "세션 열기…",
+  "@actionOpenSession": {
+    "description": "Command palette / menu label for opening a .netcrux session file."
+  },
+  "breadcrumbTooltip": "세그먼트를 클릭하여 해당 스코프로 이동",
+  "@breadcrumbTooltip": {
+    "description": "Tooltip on the schematic breadcrumb bar explaining segment navigation."
+  },
+  "inspectorGoToSource": "소스로 이동",
+  "@inspectorGoToSource": {
+    "description": "Button in the schematic Inspector panel that opens the RTL source for the selected element in the source pane. The same action the schematic context menu offers; duplicated because the Inspector is where a user reading an element's details asks 'where does this come from'."
+  },
+  "inspectorEmpty": "선택 없음",
+  "@inspectorEmpty": {
+    "description": "Empty-state text shown in the inspector panel when nothing is selected on the canvas."
+  },
+  "inspectorCellHeader": "셀",
+  "@inspectorCellHeader": {
+    "description": "Section header in the inspector panel for a selected cell."
+  },
+  "inspectorPortHeader": "포트",
+  "@inspectorPortHeader": {
+    "description": "Section header in the inspector panel for a selected port."
+  },
+  "inspectorWireHeader": "와이어",
+  "@inspectorWireHeader": {
+    "description": "Section header in the inspector panel for a selected wire."
+  },
+  "inspectorFieldType": "타입",
+  "@inspectorFieldType": {
+    "description": "Inspector field label for the Yosys cell type."
+  },
+  "inspectorFieldInstance": "인스턴스",
+  "@inspectorFieldInstance": {
+    "description": "Inspector field label for the cell instance name."
+  },
+  "inspectorFieldKind": "종류",
+  "@inspectorFieldKind": {
+    "description": "Inspector field label for the cell kind (and/or/dff/mux/etc.)."
+  },
+  "inspectorFieldDirection": "방향",
+  "@inspectorFieldDirection": {
+    "description": "Inspector field label for the direction (input/output/inout) of a port."
+  },
+  "inspectorFieldWidth": "비트 폭",
+  "@inspectorFieldWidth": {
+    "description": "Inspector field label for the bit width of a port or wire."
+  },
+  "inspectorFieldNet": "넷",
+  "@inspectorFieldNet": {
+    "description": "Inspector field label for the underlying net of a port or wire."
+  },
+  "inspectorFieldNetId": "넷 ID",
+  "@inspectorFieldNetId": {
+    "description": "Inspector field label for the numeric net identifier (Yosys uses integer net ids)."
+  },
+  "inspectorFieldDriver": "드라이버",
+  "@inspectorFieldDriver": {
+    "description": "Inspector field label for the driving port of a wire."
+  },
+  "inspectorFieldSinks": "싱크",
+  "@inspectorFieldSinks": {
+    "description": "Inspector field label for the list of sink ports a wire drives into."
+  },
+  "inspectorParametersHeader": "매개변수",
+  "@inspectorParametersHeader": {
+    "description": "Inspector section header above a cell's parameter list."
+  },
+  "inspectorPortsHeader": "포트 목록",
+  "@inspectorPortsHeader": {
+    "description": "Inspector section header above a cell's port-binding list."
+  },
+  "searchDialogTitle": "설계 검색",
+  "@searchDialogTitle": {
+    "description": "Title bar of the design search dialog."
+  },
+  "searchDialogHint": "인스턴스, 셀, 넷 검색…",
+  "@searchDialogHint": {
+    "description": "Placeholder text inside the search dialog's text field."
+  },
+  "searchNoResults": "결과가 없습니다.",
+  "@searchNoResults": {
+    "description": "Shown in the search dialog when the query matches nothing in the design."
+  },
+  "searchModeSubstring": "부분 문자열",
+  "@searchModeSubstring": {
+    "description": "Search mode chip label: case-insensitive substring matching."
+  },
+  "searchModeGlob": "글롭",
+  "@searchModeGlob": {
+    "description": "Search mode chip label: glob pattern matching (* and ?)."
+  },
+  "searchModeRegex": "정규식",
+  "@searchModeRegex": {
+    "description": "Search mode chip label: regular-expression matching."
+  },
+  "searchResultInstance": "인스턴스",
+  "@searchResultInstance": {
+    "description": "Kind chip on a search result row for an instance hit."
+  },
+  "searchResultCell": "셀",
+  "@searchResultCell": {
+    "description": "Kind chip on a search result row for a cell hit."
+  },
+  "searchResultNet": "넷",
+  "@searchResultNet": {
+    "description": "Kind chip on a search result row for a net hit."
+  },
+  "exportDialogSaveTitle": "회로도 이미지 저장",
+  "@exportDialogSaveTitle": {
+    "description": "Title of the OS save-file dialog used by PNG/SVG export."
+  },
+  "exportDialogJsonTitle": "Yosys JSON 저장",
+  "@exportDialogJsonTitle": {
+    "description": "Title of the OS save-file dialog used by JSON export."
+  },
+  "exportSuccessMessage": "{path}에 저장됨",
+  "@exportSuccessMessage": {
+    "description": "Snackbar shown after a successful export.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailureMessage": "내보내기 실패: {error}",
+  "@exportFailureMessage": {
+    "description": "Snackbar shown after a failed export.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionSaveDialogTitle": "NetCrux 세션 저장",
+  "@sessionSaveDialogTitle": {
+    "description": "Title of the OS save-file dialog used by Save Session."
+  },
+  "sessionOpenDialogTitle": "NetCrux 세션 열기",
+  "@sessionOpenDialogTitle": {
+    "description": "Title of the OS open-file dialog used by Open Session."
+  },
+  "sessionLoadUnknownVersion": "알 수 없는 세션 버전 {version}",
+  "@sessionLoadUnknownVersion": {
+    "description": "Snackbar shown when loading a session file whose schema version we don't recognize.",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionLoadFailed": "세션을 로드할 수 없음: {reason}",
+  "@sessionLoadFailed": {
+    "description": "Snackbar shown when a session file cannot be parsed or applied.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceRestoreCorrupted": "이전 워크스페이스를 복원할 수 없어 따로 보관했습니다. 새 워크스페이스로 시작합니다.",
+  "@workspaceRestoreCorrupted": {
+    "description": "Snackbar/notice shown on launch when a corrupt workspace.json was quarantined (moved aside) and the app started with an empty workspace."
+  },
+  "settingsAutoReloadLabel": "소스 변경 시 자동 재로드",
+  "@settingsAutoReloadLabel": {
+    "description": "Label for the auto-reload setting in Settings → General."
+  },
+  "settingsAutoReloadAuto": "자동으로 재로드",
+  "@settingsAutoReloadAuto": {
+    "description": "Auto-reload mode option: re-elaborate whenever the source file changes."
+  },
+  "settingsAutoReloadPrompt": "확인 후 재로드",
+  "@settingsAutoReloadPrompt": {
+    "description": "Auto-reload mode option: show a snackbar when the source changes and let the user decide."
+  },
+  "settingsAutoReloadOff": "재로드하지 않음",
+  "@settingsAutoReloadOff": {
+    "description": "Auto-reload mode option: ignore source-file changes."
+  },
+  "autoReloadPromptAction": "재로드",
+  "@autoReloadPromptAction": {
+    "description": "Snackbar action button label that triggers a reload."
+  },
+  "settingsTitle": "설정",
+  "@settingsTitle": {
+    "description": "Title bar of the settings screen."
+  },
+  "settingsGeneralSection": "일반",
+  "@settingsGeneralSection": {
+    "description": "Section header for the General settings group."
+  },
+  "settingsAppearanceSection": "외관",
+  "@settingsAppearanceSection": {
+    "description": "Section header for the Appearance settings group."
+  },
+  "settingsEnginesSection": "엔진",
+  "@settingsEnginesSection": {
+    "description": "Section header for the Engines settings group (yosys path, etc.)."
+  },
+  "settingsYosysPathLabel": "Yosys 바이너리 경로",
+  "@settingsYosysPathLabel": {
+    "description": "Label for the yosys binary path override field in Settings → Engines."
+  },
+  "settingsClose": "닫기",
+  "@settingsClose": {
+    "description": "Close button on the settings screen."
+  },
+  "breadcrumbRootTooltip": "설계 계층의 최상단",
+  "@breadcrumbRootTooltip": {
+    "description": "Tooltip on the first (top-module) breadcrumb segment."
+  },
+  "fileChangedSnackbar": "{count, plural, =1{소스 파일 1개가 변경되었습니다.} other{소스 파일 {count}개가 변경되었습니다.}}",
+  "@fileChangedSnackbar": {
+    "description": "Plural snackbar shown when file watcher detects changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contextMenuCopyPath": "경로 복사",
+  "@contextMenuCopyPath": {
+    "description": "Right-click / long-press context-menu item that copies the canonical hierarchical path of the selected element to the clipboard."
+  },
+  "contextMenuTraceFanin": "팬인 추적",
+  "@contextMenuTraceFanin": {
+    "description": "Right-click / long-press context-menu item that runs the fanin trace on the selected element."
+  },
+  "contextMenuTraceFanout": "팬아웃 추적",
+  "@contextMenuTraceFanout": {
+    "description": "Right-click / long-press context-menu item that runs the fanout trace on the selected element."
+  },
+  "contextMenuFindInHierarchy": "계층 구조에서 찾기",
+  "@contextMenuFindInHierarchy": {
+    "description": "Right-click / long-press context-menu item that selects the parent scope of the right-clicked element in the hierarchy tree."
+  },
+  "contextMenuOpenInInspector": "인스펙터에서 열기",
+  "@contextMenuOpenInInspector": {
+    "description": "Right-click / long-press context-menu item that promotes the right-clicked element to the inspector pane's primary view."
+  },
+  "contextMenuCopyPathSuccess": "경로 복사됨: {path}",
+  "@contextMenuCopyPathSuccess": {
+    "description": "Snackbar confirming the canonical hierarchical path was copied.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "projectLoadUnknownVersion": "알 수 없는 프로젝트 버전 {version}",
+  "@projectLoadUnknownVersion": {
+    "description": "Snackbar shown when a .netcrux-project file carries a version this build cannot read.",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "projectLoadFailed": "프로젝트를 불러올 수 없습니다: {reason}",
+  "@projectLoadFailed": {
+    "description": "Snackbar shown when a .netcrux-project file cannot be loaded (I/O error, malformed JSON, missing version, etc.).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectInvalid": "유효한 .crux-project 파일이 아닙니다: {reason}",
+  "@cruxProjectInvalid": {
+    "description": "Snackbar shown when a .crux-project suite manifest cannot be parsed. The reason is the parser's own detail (untranslated).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectNetlistMissing": "이 프로젝트가 지정한 넷리스트가 없습니다: {path}",
+  "@cruxProjectNetlistMissing": {
+    "description": "Snackbar shown when a .crux-project manifest names an artifacts.netlist file that does not exist on disk.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectNothingToOpen": "{name}에 아직 RTL 소스나 넷리스트가 지정되지 않았습니다. .crux-project 파일에 design.sources 또는 artifacts.netlist 항목을 추가하세요.",
+  "@cruxProjectNothingToOpen": {
+    "description": "Snackbar shown when a .crux-project manifest names neither RTL sources nor a netlist, so NetCrux has nothing to open. design.sources and artifacts.netlist are YAML keys and stay untranslated.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cruxProjectLegacyFileName": "이 .crux-project 파일에는 이름이 없어 파일 선택기에 표시되지 않습니다. 파일 이름을 {suggestedName}(으)로 바꾸세요. 이후 릴리스에서는 이름 없는 파일을 열 수 없습니다.",
+  "@cruxProjectLegacyFileName": {
+    "description": "Informational snackbar shown once after a design opens from a suite manifest still named with the legacy bare .crux-project file name, which native file pickers hide. suggestedName is the file name to rename it to, such as uart_tx.crux-project (a file name, untranslated).",
+    "placeholders": {
+      "suggestedName": {
+        "type": "String",
+        "example": "uart_tx.crux-project"
+      }
+    }
+  },
+  "cruxProjectAmbiguous": "{directory}에 .crux-project 파일이 여러 개 있습니다({candidates}). 설계 디렉터리마다 하나만 두세요.",
+  "@cruxProjectAmbiguous": {
+    "description": "Error snackbar shown when a design directory passed to NetCrux holds more than one .crux-project manifest, so NetCrux will not guess which one describes the design. directory is the path as given; candidates is a comma-separated list of the manifest file names (untranslated).",
+    "placeholders": {
+      "directory": {
+        "type": "String",
+        "example": "/work/uart_tx"
+      },
+      "candidates": {
+        "type": "String",
+        "example": ".crux-project, uart_tx.crux-project"
+      }
+    }
+  },
+  "cruxProjectNoneInDirectory": "{directory}에 .crux-project 파일이 없습니다. {suggestedName} 이름으로 파일을 만들거나 설계의 소스 파일을 여세요.",
+  "@cruxProjectNoneInDirectory": {
+    "description": "Error snackbar shown when a directory passed to NetCrux holds no .crux-project manifest. directory is the path as given; suggestedName is the manifest file name to create, such as uart_tx.crux-project (a file name, untranslated).",
+    "placeholders": {
+      "directory": {
+        "type": "String",
+        "example": "/work/uart_tx"
+      },
+      "suggestedName": {
+        "type": "String",
+        "example": "uart_tx.crux-project"
+      }
+    }
+  },
+  "webNetlistLoadFailed": "{url}에서 넷리스트를 불러올 수 없습니다. 서버가 이 페이지의 교차 출처 요청을 허용해야 합니다.",
+  "@webNetlistLoadFailed": {
+    "description": "Snackbar on the web viewer when the netlist named by the ?json= URL parameter cannot be fetched. The most common cause is a server that does not send CORS headers.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "filePickerFailed": "파일 선택기를 열 수 없습니다: {error}",
+  "@filePickerFailed": {
+    "description": "Snackbar shown when the file picker itself throws (e.g. macOS rejects an unknown extension or the OS file-selector plugin returns an error). Surfaces the underlying error so file-open failures are not silent.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "actionImportFilelist": "Vivado 파일 목록 가져오기…",
+  "@actionImportFilelist": {
+    "description": "Command palette / menu label for importing a Vivado-style .f filelist into a new project."
+  },
+  "filePickerFilelistDialogTitle": "Vivado 파일 목록 가져오기",
+  "@filePickerFilelistDialogTitle": {
+    "description": "Title for the file picker dialog when importing a .f filelist."
+  },
+  "yosysPathModeAuto": "자동 감지",
+  "@yosysPathModeAuto": {
+    "description": "Segmented-button label for the Yosys path mode that uses PATH search."
+  },
+  "yosysPathModeBundled": "번들된 버전",
+  "@yosysPathModeBundled": {
+    "description": "Segmented-button label for the Yosys path mode reserved for a NetCrux-shipped binary. No Yosys binary ships with NetCrux today, so this mode resolves only when NETCRUX_BUNDLED_BIN_DIR is set and otherwise falls back to the PATH lookup."
+  },
+  "yosysPathModeCustom": "사용자 정의",
+  "@yosysPathModeCustom": {
+    "description": "Segmented-button label for the Yosys path mode that uses a user-supplied binary path."
+  },
+  "settingsYosysCustomPathLabel": "Yosys 실행 파일 경로",
+  "@settingsYosysCustomPathLabel": {
+    "description": "TextField label for the custom Yosys binary path under Settings → Engines."
+  },
+  "settingsYosysCustomPathHint": "/usr/local/bin/yosys",
+  "@settingsYosysCustomPathHint": {
+    "description": "TextField placeholder showing an example absolute Yosys binary path."
+  },
+  "yosysCustomPathProbing": "감지 중…",
+  "@yosysCustomPathProbing": {
+    "description": "Helper label shown beneath the Yosys path field while yosys -V is being run."
+  },
+  "yosysCustomPathDetected": "감지됨: {version}",
+  "@yosysCustomPathDetected": {
+    "description": "Helper label shown beneath the Yosys path field after a successful probe.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "yosysCustomPathInvalid": "해당 경로에서 Yosys를 실행할 수 없습니다.",
+  "@yosysCustomPathInvalid": {
+    "description": "Helper label shown beneath the Yosys path field when the probe fails."
+  },
+  "yosysReasonNotOnPath": "PATH에서 Yosys를 찾을 수 없습니다. Yosys를 설치하거나 설정에서 사용자 지정 경로를 지정하세요.",
+  "@yosysReasonNotOnPath": {
+    "description": "Shown when the Yosys probe found no yosys binary on PATH."
+  },
+  "yosysReasonExecFailed": "Yosys 실행 파일을 찾았지만 실행할 수 없습니다. 손상되었거나 불완전하거나 보안 설정에 의해 차단되었을 수 있습니다.",
+  "@yosysReasonExecFailed": {
+    "description": "Shown when a Yosys binary was found but could not be executed."
+  },
+  "yosysReasonBannerUnparsed": "Yosys가 실행되었지만 NetCrux가 인식할 수 없는 버전을 보고했습니다. 지원되지 않는 빌드일 수 있습니다.",
+  "@yosysReasonBannerUnparsed": {
+    "description": "Shown when Yosys ran but its version banner could not be parsed."
+  },
+  "yosysReasonProbeTimedOut": "Yosys가 제한 시간 내에 응답하지 않았습니다. 실행 파일이 응답하지 않는 네트워크 드라이브에 있거나 입력을 기다리고 있을 수 있습니다.",
+  "@yosysReasonProbeTimedOut": {
+    "description": "Shown when the Yosys version probe did not respond within its time budget."
+  },
+  "elaborationDiagnosticsEmpty": "현재 실행에 대한 엘라보레이션 진단이 없습니다.",
+  "@elaborationDiagnosticsEmpty": {
+    "description": "Placeholder shown when Yosys produced no warnings or errors on the current run."
+  },
+  "elaborationDiagnosticsFatal": "엘라보레이션 실패",
+  "@elaborationDiagnosticsFatal": {
+    "description": "Banner title shown at the top of the elaboration-diagnostics drawer when the elaboration pipeline failed before Yosys could produce diagnostics (e.g. Yosys is not installed, the source files do not exist)."
+  },
+  "elaborationDiagnosticsAllFiltered": "현재 심각도 필터로 모든 진단이 숨겨졌습니다.",
+  "@elaborationDiagnosticsAllFiltered": {
+    "description": "Placeholder shown when at least one diagnostic exists but the active severity filter excludes them all."
+  },
+  "elaborationDiagnosticsCopyReport": "보고서 복사",
+  "@elaborationDiagnosticsCopyReport": {
+    "description": "Button label that copies the elaboration-diagnostics list to the clipboard."
+  },
+  "elaborationDiagnosticsCopied": "진단을 클립보드에 복사했습니다.",
+  "@elaborationDiagnosticsCopied": {
+    "description": "Snackbar confirming the elaboration-diagnostics report was copied."
+  },
+  "elaborationDiagnosticsCopyEntry": "이 항목 복사",
+  "@elaborationDiagnosticsCopyEntry": {
+    "description": "Tooltip on the per-row copy button in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityError": "오류",
+  "@diagnosticSeverityError": {
+    "description": "Filter chip label for the error severity in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityWarning": "경고",
+  "@diagnosticSeverityWarning": {
+    "description": "Filter chip label for the warning severity in the elaboration-diagnostics list."
+  },
+  "diagnosticSeverityInfo": "정보",
+  "@diagnosticSeverityInfo": {
+    "description": "Filter chip label for the info severity in the elaboration-diagnostics list."
+  },
+  "viewerTabBarCloseTabTooltip": "탭 닫기",
+  "@viewerTabBarCloseTabTooltip": {
+    "description": "Tooltip on the per-chip close button in the workspace tab bar."
+  },
+  "viewerTabBarCloseTabTooltipFor": "{name} 닫기",
+  "@viewerTabBarCloseTabTooltipFor": {
+    "description": "Tooltip and accessible name of the per-chip close button in the workspace tab bar; name is the tab's display name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerTabBarNewTabTooltip": "새 탭",
+  "@viewerTabBarNewTabTooltip": {
+    "description": "Tooltip on the trailing '+' button that opens an empty tab in the workspace tab bar."
+  },
+  "viewerTabBarNewTabDefaultDisplayName": "새 탭",
+  "@viewerTabBarNewTabDefaultDisplayName": {
+    "description": "Default display name used when the user opens an empty tab via the '+' button in the workspace tab bar."
+  },
+  "viewerTabBarUnnamedTabFallback": "(이름 없는 탭)",
+  "@viewerTabBarUnnamedTabFallback": {
+    "description": "Fallback rendered in place of a tab's display name when the underlying payload provides a blank string."
+  },
+  "viewerTabBarCloseTabMenuItem": "탭 닫기",
+  "@viewerTabBarCloseTabMenuItem": {
+    "description": "Context-menu item that closes the right-clicked tab in the workspace tab bar."
+  },
+  "viewerTabBarCloseOtherTabsMenuItem": "다른 탭 닫기",
+  "@viewerTabBarCloseOtherTabsMenuItem": {
+    "description": "Context-menu item that closes every other tab in the host pane."
+  },
+  "viewerTabBarCloseTabsToTheRightMenuItem": "오른쪽 탭 닫기",
+  "@viewerTabBarCloseTabsToTheRightMenuItem": {
+    "description": "Context-menu item that closes tabs to the right of the right-clicked tab in its host pane."
+  },
+  "viewerTabBarMoveToNewWindowMenuItem": "새 창으로 이동",
+  "@viewerTabBarMoveToNewWindowMenuItem": {
+    "description": "Context-menu item that detaches the tab into its own window — Pro feature, disabled until Flutter multi-window reaches stable."
+  },
+  "viewerTabBarMultiWindowUnavailableTooltip": "Flutter 다중 창이 안정화되면 사용 가능",
+  "@viewerTabBarMultiWindowUnavailableTooltip": {
+    "description": "Tooltip shown next to the disabled Move to New Window menu item when multi-window is unavailable."
+  },
+  "viewerTabBarActivePaneAccessibilityLabel": "활성 창",
+  "@viewerTabBarActivePaneAccessibilityLabel": {
+    "description": "Accessibility label announced on the active pane so screen readers signal focus changes."
+  },
+  "viewerTabBarDragToPaneAccessibilityHint": "여기에 놓아 탭을 이 창으로 이동",
+  "@viewerTabBarDragToPaneAccessibilityHint": {
+    "description": "Accessibility hint announced when a tab is being dragged toward another pane's tab bar."
+  },
+  "viewerTabBarReorderHandleTooltip": "끌어서 순서 변경",
+  "@viewerTabBarReorderHandleTooltip": {
+    "description": "Tooltip on the leading drag handle of each tab chip in the workspace tab bar."
+  },
+  "viewerTabBarScrollTabsLeftTooltip": "탭을 왼쪽으로 스크롤",
+  "@viewerTabBarScrollTabsLeftTooltip": {
+    "description": "Tooltip on the chevron that scrolls the workspace tab strip toward its start."
+  },
+  "viewerTabBarScrollTabsRightTooltip": "탭을 오른쪽으로 스크롤",
+  "@viewerTabBarScrollTabsRightTooltip": {
+    "description": "Tooltip on the chevron that scrolls the workspace tab strip toward its end."
+  },
+  "emptyCanvasTitle": "NetCrux에 오신 것을 환영합니다",
+  "@emptyCanvasTitle": {
+    "description": "Headline rendered on the empty-canvas startup state when the workspace has zero tabs."
+  },
+  "emptyCanvasSubtitle": "설계를 한눈에.",
+  "@emptyCanvasSubtitle": {
+    "description": "Subtitle rendered below the empty-canvas headline — the NetCrux tagline."
+  },
+  "emptyCanvasBrowserHint": "웹 뷰어는 Yosys write_json으로 생성한 JSON 넷리스트를 엽니다. Verilog 또는 VHDL 엘라보레이션에는 데스크톱 앱이 필요합니다.",
+  "@emptyCanvasBrowserHint": {
+    "description": "Hint on the web viewer's start screen explaining what it can open. write_json is a Yosys command name and stays untranslated."
+  },
+  "emptyCanvasVersion": "버전 {version}",
+  "@emptyCanvasVersion": {
+    "description": "Muted version line under the empty-canvas (welcome) subtitle. The only always-visible version indicator on web, where there is no native menu bar to host an About entry point.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyCanvasSuiteFooter": "EDACrux 제품군의 일원 — edacrux.app",
+  "@emptyCanvasSuiteFooter": {
+    "description": "Suite-membership line at the foot of the empty-canvas (welcome) screen. The whole line is a link to the EDACrux suite site. \"edacrux.app\" must appear verbatim — the widget splits the sentence around it to underline the domain — but a translation that drops it still renders and is still followable, just without an underlined segment. \"EDACrux\" is one word and is never translated."
+  },
+  "emptyCanvasPeersHeading": "EDACrux의 다른 제품",
+  "@emptyCanvasPeersHeading": {
+    "description": "Section header above the three sibling-product rows at the foot of the empty-canvas (welcome) screen. Rendered upper-case in English as a small letter-spaced label, matching the \"RECENT FILES\" headers above it; a locale whose script has no case simply reads as a label. \"EDACrux\" is one word and is never translated."
+  },
+  "emptyCanvasPeerWaveCrux": "방금 추적한 신호를 파형으로 보세요. 회로도에서 파형으로, 다시 되돌아옵니다.",
+  "@emptyCanvasPeerWaveCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing WaveCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what WaveCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasPeerLintCrux": "보고 있는 RTL을 평가하세요. 같은 Yosys 엘라보레이션을 lint·CDC 규칙으로 읽습니다.",
+  "@emptyCanvasPeerLintCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing LintCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what LintCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasPeerSimCrux": "읽고 있는 설계를 실제로 돌려보세요. 회귀을 실행하고 실패를 여기로 가져옵니다.",
+  "@emptyCanvasPeerSimCrux": {
+    "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
+  },
+  "emptyCanvasRecentProjects": "최근 프로젝트",
+  "@emptyCanvasRecentProjects": {
+    "description": "Section header for the recent-projects list on the empty-canvas state."
+  },
+  "emptyCanvasRecentSources": "최근 소스 파일",
+  "@emptyCanvasRecentSources": {
+    "description": "Section header for the recent-source-files list on the empty-canvas state."
+  },
+  "emptyCanvasNoRecentProjects": "최근 프로젝트가 없습니다.",
+  "@emptyCanvasNoRecentProjects": {
+    "description": "Placeholder shown under the recent-projects header when the list is empty."
+  },
+  "emptyCanvasNoRecentSources": "최근 소스 파일이 없습니다.",
+  "@emptyCanvasNoRecentSources": {
+    "description": "Placeholder shown under the recent-source-files header when the list is empty."
+  },
+  "emptyCanvasClearRecent": "최근 항목 지우기",
+  "@emptyCanvasClearRecent": {
+    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
+  },
+  "actionSplitPaneRight": "창을 오른쪽으로 분할",
+  "@actionSplitPaneRight": {
+    "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
+  },
+  "actionClosePane": "창 닫기",
+  "@actionClosePane": {
+    "description": "Command palette / menu label for closing the active pane and merging its tabs into the surviving pane."
+  },
+  "actionFocusOtherPane": "다른 창으로 포커스",
+  "@actionFocusOtherPane": {
+    "description": "Command palette / menu label for toggling focus between the two panes when split."
+  },
+  "actionMoveTabToOtherPane": "탭을 다른 창으로 이동",
+  "@actionMoveTabToOtherPane": {
+    "description": "Command palette label for moving the active tab to the non-active pane — gesture equivalent is drag-to-pane."
+  },
+  "workspaceOpenWorkspaceTitle": "워크스페이스 열기…",
+  "@workspaceOpenWorkspaceTitle": {
+    "description": "Button / menu label for opening a named .netcrux-workspace file."
+  },
+  "workspaceSaveWorkspaceAsTitle": "워크스페이스를 다른 이름으로 저장…",
+  "@workspaceSaveWorkspaceAsTitle": {
+    "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
+  },
+  "workspaceResetWorkspaceTitle": "워크스페이스 재설정",
+  "@workspaceResetWorkspaceTitle": {
+    "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
+  },
+  "workspaceResetWorkspaceConfirm": "열려 있는 모든 탭을 닫고 빈 캔버스로 돌아가시겠습니까?",
+  "@workspaceResetWorkspaceConfirm": {
+    "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
+  },
+  "workspaceLoadFromCliConfirm": "명령줄에서 지정한 워크스페이스로 현재 워크스페이스를 바꾸시겠습니까?",
+  "@workspaceLoadFromCliConfirm": {
+    "description": "Confirmation prompt shown before --workspace replaces the active workspace at launch."
+  },
+  "actionShowCrossProbePanel": "교차 프로브 패널 표시",
+  "@actionShowCrossProbePanel": {
+    "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
+  },
+  "crossProbePanelTitle": "교차 프로브 피어",
+  "@crossProbePanelTitle": {
+    "description": "Title shown above the cross-probe panel."
+  },
+  "crossProbePanelPeersHeader": "피어",
+  "@crossProbePanelPeersHeader": {
+    "description": "Section header above the list of connected peers."
+  },
+  "crossProbePanelNoPeers": "아직 연결된 피어가 없습니다.",
+  "@crossProbePanelNoPeers": {
+    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
+  },
+  "crossProbePanelEventsHeader": "최근 이벤트",
+  "@crossProbePanelEventsHeader": {
+    "description": "Section header above the rolling CXP event log."
+  },
+  "crossProbePanelNoEvents": "교차 프로브 이벤트가 아직 없습니다.",
+  "@crossProbePanelNoEvents": {
+    "description": "Placeholder shown when the event log is empty."
+  },
+  "crossProbeCloseTooltip": "교차 프로브 패널 닫기",
+  "crossProbeServerOffline": "교차 프로브 서버가 오프라인입니다.",
+  "crossProbeSendTooltip": "이 피어로 선택 항목 전송",
+  "crossProbeUnreachableTitle": "연결할 수 없는 피어",
+  "crossProbeClearEvents": "이벤트 지우기",
+  "crossProbeSendFailed": "{peer}에 보낸 교차 프로브가 완료되지 않았습니다",
+  "crossProbeSendRefused": "{peer}에 보낸 교차 프로브: {reason}",
+  "schematicHorizontalScrollbarLabel": "회로도 가로 스크롤바",
+  "@schematicHorizontalScrollbarLabel": {
+    "description": "Accessibility label for the horizontal scrollbar under the schematic canvas."
+  },
+  "schematicVerticalScrollbarLabel": "회로도 세로 스크롤바",
+  "@schematicVerticalScrollbarLabel": {
+    "description": "Accessibility label for the vertical scrollbar beside the schematic canvas."
+  },
+  "settingsEditorsSection": "에디터",
+  "@settingsEditorsSection": {
+    "description": "Settings section header for external-editor integration."
+  },
+  "settingsCxpEnabledLabel": "CXP 서버 활성화",
+  "@settingsCxpEnabledLabel": {
+    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
+  },
+  "settingsCxpPortLabel": "CXP 포트",
+  "@settingsCxpPortLabel": {
+    "description": "Text-field label for the CXP server's bind port."
+  },
+  "settingsCxpEnabledDescription": "NetCrux가 다른 Crux 호환 도구와 선택 이벤트를 공유할 수 있게 합니다",
+  "@settingsCxpEnabledDescription": {
+    "description": "Subtitle explaining what enabling the CXP server does."
+  },
+  "settingsCxpPortDescription": "TCP 포트 번호 (1–65535)",
+  "@settingsCxpPortDescription": {
+    "description": "Subtitle / helper for the CXP port input describing the valid range."
+  },
+  "settingsRequestAttentionOnCrossProbeLabel": "크로스 프로브 시 주의 요청",
+  "@settingsRequestAttentionOnCrossProbeLabel": {
+    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
+  },
+  "settingsRequestAttentionOnCrossProbeDescription": "피어가 크로스 프로브를 보낼 때 Dock을 튕기거나 작업 표시줄을 깜박입니다. 포커스를 빼앗지 않습니다.",
+  "@settingsRequestAttentionOnCrossProbeDescription": {
+    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
+  },
+  "settingsBroadcastSelectionOnCrossProbeLabel": "선택 항목 자동 브로드캐스트",
+  "@settingsBroadcastSelectionOnCrossProbeLabel": {
+    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
+  },
+  "settingsBroadcastSelectionOnCrossProbeDescription": "선택할 때 연결된 피어에게 선택 항목을 알립니다(실시간 크로스 프로브). 끄면 명시적으로 보낸 항목만 공유됩니다.",
+  "@settingsBroadcastSelectionOnCrossProbeDescription": {
+    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
+  },
+  "settingsCxpStatus": "CXP 상태",
+  "@settingsCxpStatus": {
+    "description": "Label for the CXP server status display."
+  },
+  "settingsCxpStatusRunning": "포트 {port}에서 실행 중",
+  "@settingsCxpStatusRunning": {
+    "description": "Indicates the CXP server is running on a specific port.",
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsCxpStatusStopped": "중지됨",
+  "@settingsCxpStatusStopped": {
+    "description": "Indicates the CXP server is not running."
+  },
+  "settingsCxpPeersConnected": "피어 {count}개 연결됨",
+  "@settingsCxpPeersConnected": {
+    "description": "Shows how many peers are currently connected to the CXP server.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsCxpEditorCommandLabel": "에디터 명령(소스 열기)",
+  "@settingsCxpEditorCommandLabel": {
+    "description": "Text-field label for the editor invocation template used by request_open_source."
+  },
+  "tierBadgePro": "PRO",
+  "@tierBadgePro": {
+    "description": "Short tier badge chip text shown next to features that require a NetCrux Pro license."
+  },
+  "tierBadgeProSemantic": "Pro 등급 기능",
+  "@tierBadgeProSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated PRO tier badge."
+  },
+  "tierBadgeEnterprise": "ENT",
+  "@tierBadgeEnterprise": {
+    "description": "Short tier badge chip text shown next to features that require a NetCrux Enterprise license."
+  },
+  "tierBadgeEnterpriseSemantic": "Enterprise 등급 기능",
+  "@tierBadgeEnterpriseSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated ENT tier badge."
+  },
+  "editionMenuLine": "{edition} 에디션 — {identity}",
+  "editionMenuLineOrganization": "{edition} 에디션 — 조직에서 라이선스를 부여함",
+  "editionNameEducational": "교육용",
+  "editionNamePro": "Pro",
+  "editionNameEnterprise": "Enterprise",
+  "editionBadgeEduSemantic": "교육용 에디션",
+  "editionBadgeProSemantic": "Pro 에디션",
+  "editionBadgeEnterpriseSemantic": "Enterprise 에디션",
+  "tierBadgeEdu": "EDU",
+  "@tierBadgeEdu": {
+    "description": "Short tier badge chip text shown on the About box and Welcome screen indicating the user holds an Educational/non-commercial NetCrux license."
+  },
+  "tierBadgeEduSemantic": "교육용 라이선스",
+  "@tierBadgeEduSemantic": {
+    "description": "Accessibility / screen reader label expanding the abbreviated EDU edition badge."
+  },
+  "menuItemTierSuffix": " ({tier})",
+  "@menuItemTierSuffix": {
+    "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeDialogTitle": "업그레이드 필요",
+  "@upgradeDialogTitle": {
+    "description": "Title of the upgrade-required dialog shown post-beta when the user activates a Pro/Enterprise action their license tier does not include."
+  },
+  "upgradeDialogMessage": "“{feature}”에는 {tierName} 라이선스가 필요합니다.",
+  "@upgradeDialogMessage": {
+    "description": "Body of the upgrade dialog, and the sentence under the locked panel of a tier-gated Settings category. Names the feature the user reached for and the tier that unlocks it; both are required by the suite copy contract. {feature} is the label of what was activated, rendered in quotes because it is a UI label (the dialog drops a trailing ellipsis). {tierName} is the product-qualified tier, e.g. the upgradeDialogTierNamePro value.",
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "tierName": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeDialogTierNamePro": "NetCrux Pro",
+  "@upgradeDialogTierNamePro": {
+    "description": "Product-tier name interpolated into upgradeDialogMessage for Pro-gated features. Brand name — identical in every locale."
+  },
+  "upgradeDialogTierNameEnterprise": "NetCrux Enterprise",
+  "@upgradeDialogTierNameEnterprise": {
+    "description": "Product-tier name interpolated into upgradeDialogMessage for Enterprise-gated features. Brand name — identical in every locale."
+  },
+  "actionRequiresPro": "{action}은(는) NetCrux Pro가 필요합니다.",
+  "@actionRequiresPro": {
+    "description": "Snackbar shown when a Pro-tier action is invoked in an open-core build with no Pro overlay installed. The action placeholder is the action's own localized label. Matches SimCrux's and LintCrux's message.",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "actionShowConeOfInfluenceFanin": "영향 콘 표시 (팬인)",
+  "@actionShowConeOfInfluenceFanin": {
+    "description": "Command palette / menu label for the Pro multi-step fanin cone-of-influence trace from the current selection."
+  },
+  "actionShowConeOfInfluenceFanout": "영향 콘 표시 (팬아웃)",
+  "@actionShowConeOfInfluenceFanout": {
+    "description": "Command palette / menu label for the Pro multi-step fanout cone-of-influence trace from the current selection."
+  },
+  "actionClearConeOfInfluence": "영향 콘 지우기",
+  "@actionClearConeOfInfluence": {
+    "description": "Command palette / menu label that clears any active cone-of-influence trace overlay."
+  },
+  "actionShowXTrace": "X 추적 표시",
+  "@actionShowXTrace": {
+    "description": "Command palette / menu label for the Pro X-trace causal chain that walks backward from the selected net at the current simulation time."
+  },
+  "actionShowXTracePanel": "X 추적 패널 표시",
+  "@actionShowXTracePanel": {
+    "description": "Command palette / menu label that opens or focuses the X-trace result panel."
+  },
+  "actionClearXTrace": "X 추적 지우기",
+  "@actionClearXTrace": {
+    "description": "Command palette / menu label that clears any active X-trace result."
+  },
+  "actionAddBookmark": "북마크 추가…",
+  "@actionAddBookmark": {
+    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
+  },
+  "actionShowBookmarksPanel": "북마크 패널 표시",
+  "@actionShowBookmarksPanel": {
+    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
+  },
+  "actionAddAnnotation": "주석 추가…",
+  "@actionAddAnnotation": {
+    "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
+  },
+  "actionShowAnnotationsPanel": "주석 패널 표시",
+  "@actionShowAnnotationsPanel": {
+    "description": "Command palette / menu label that opens or focuses the Annotations panel."
+  },
+  "actionShowSourcePane": "RTL 소스 패널 표시",
+  "@actionShowSourcePane": {
+    "description": "Command palette / menu label that opens or focuses the RTL source pane (Pro)."
+  },
+  "actionOpenSourceForElement": "이 요소의 소스 표시",
+  "@actionOpenSourceForElement": {
+    "description": "Command palette / context-menu label that opens the source file defining the currently selected schematic element (Pro)."
+  },
+  "actionCloseSourcePane": "RTL 소스 패널 닫기",
+  "@actionCloseSourcePane": {
+    "description": "Command palette / menu label that closes the RTL source pane."
+  },
+  "sourcePaneEmptyTitle": "소스가 로드되지 않았습니다",
+  "@sourcePaneEmptyTitle": {
+    "description": "Heading shown in the RTL source pane when no source file is loaded."
+  },
+  "sourcePaneEmptyHint": "회로도의 요소를 마우스 오른쪽 버튼으로 클릭한 다음 \"이 요소의 소스 표시\"를 선택하여 해당 파일을 로드하세요.",
+  "@sourcePaneEmptyHint": {
+    "description": "Hint shown in the RTL source pane's empty state explaining how to populate it."
+  },
+  "sourcePaneErrorNotFound": "소스 파일을 찾을 수 없습니다.",
+  "@sourcePaneErrorNotFound": {
+    "description": "Error message shown when the requested RTL source file does not exist."
+  },
+  "sourcePaneErrorAccessDenied": "액세스가 거부되었습니다: 이 소스 파일을 읽을 수 없습니다.",
+  "@sourcePaneErrorAccessDenied": {
+    "description": "Error message shown when the RTL source file exists but cannot be read."
+  },
+  "sourcePaneErrorEncoding": "이 소스 파일을 텍스트로 디코딩할 수 없습니다.",
+  "@sourcePaneErrorEncoding": {
+    "description": "Error message shown when the RTL source file's bytes are not valid UTF-8."
+  },
+  "sourcePaneErrorOversized": "소스 파일이 너무 커서 미리 볼 수 없습니다.",
+  "@sourcePaneErrorOversized": {
+    "description": "Error message shown when the RTL source file exceeds the pane's size budget."
+  },
+  "sourcePaneErrorGeneric": "이 소스 파일을 로드할 수 없습니다.",
+  "@sourcePaneErrorGeneric": {
+    "description": "Generic error message shown when an RTL source file fails to load for an unspecified reason."
+  },
+  "actionShowDiffPane": "넷리스트 차이 보기 표시",
+  "@actionShowDiffPane": {
+    "description": "Command palette / menu label that opens or focuses the Netlist Diff View pane (Pro)."
+  },
+  "actionLoadComparisonNetlist": "비교 넷리스트 로드…",
+  "@actionLoadComparisonNetlist": {
+    "description": "Command palette / menu label that opens the file picker to choose a comparison-side netlist (Pro)."
+  },
+  "actionClearComparisonNetlist": "비교 넷리스트 지우기",
+  "@actionClearComparisonNetlist": {
+    "description": "Command palette / menu label that clears the active comparison (Pro)."
+  },
+  "actionNavigateNextDiff": "다음 변경",
+  "@actionNavigateNextDiff": {
+    "description": "Command palette / menu label that selects the next change in the active diff (Pro)."
+  },
+  "actionNavigatePrevDiff": "이전 변경",
+  "@actionNavigatePrevDiff": {
+    "description": "Command palette / menu label that selects the previous change in the active diff (Pro)."
+  },
+  "diffPaneEmptyTitle": "비교가 로드되지 않음",
+  "@diffPaneEmptyTitle": {
+    "description": "Heading shown in the Netlist Diff View pane when no comparison is loaded."
+  },
+  "diffPaneEmptyHint": "비교 넷리스트를 로드하여 현재 설계와의 구조적 차이를 확인하세요.",
+  "@diffPaneEmptyHint": {
+    "description": "Hint shown in the Netlist Diff View pane's empty state explaining how to populate it."
+  },
+  "diffPaneComputing": "비교 중…",
+  "@diffPaneComputing": {
+    "description": "Status message shown in the Diff View pane while the comparison is being computed."
+  },
+  "diffPaneNoFilterMatches": "현재 필터와 일치하는 변경 사항이 없습니다.",
+  "@diffPaneNoFilterMatches": {
+    "description": "Message shown in the Diff View pane when every element change is filtered out."
+  },
+  "diffPaneSummary": "추가됨 {added}, 제거됨 {removed}, 수정됨 {modified}, 변경 없음 {unchanged}",
+  "@diffPaneSummary": {
+    "description": "Summary header line for the Diff View pane listing the four bucket counts.",
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      },
+      "modified": {
+        "type": "int"
+      },
+      "unchanged": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupAdded": "추가됨 ({count})",
+  "@diffPaneGroupAdded": {
+    "description": "Group header label for the Added section of the Diff View pane, with the count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupRemoved": "제거됨 ({count})",
+  "@diffPaneGroupRemoved": {
+    "description": "Group header label for the Removed section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupModified": "수정됨 ({count})",
+  "@diffPaneGroupModified": {
+    "description": "Group header label for the Modified section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneGroupUnchanged": "변경 없음 ({count})",
+  "@diffPaneGroupUnchanged": {
+    "description": "Group header label for the Unchanged section of the Diff View pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diffPaneShowInSchematic": "회로도에서 표시",
+  "@diffPaneShowInSchematic": {
+    "description": "Per-row action label that highlights the corresponding element in the schematic canvas."
+  },
+  "diffPaneElementKindInstance": "인스턴스",
+  "@diffPaneElementKindInstance": {
+    "description": "Label for NetlistDiffElementKind.instance in the Diff View pane."
+  },
+  "diffPaneElementKindNet": "넷",
+  "@diffPaneElementKindNet": {
+    "description": "Label for NetlistDiffElementKind.net in the Diff View pane."
+  },
+  "diffPaneElementKindPort": "포트",
+  "@diffPaneElementKindPort": {
+    "description": "Label for NetlistDiffElementKind.port in the Diff View pane."
+  },
+  "diffPaneElementKindModule": "모듈",
+  "@diffPaneElementKindModule": {
+    "description": "Label for NetlistDiffElementKind.module in the Diff View pane."
+  },
+  "actionOpenSymbolManager": "사용자 정의 셀 기호 관리자 열기…",
+  "@actionOpenSymbolManager": {
+    "description": "Command palette / menu label that opens the Custom Cell Symbol Manager screen (Pro)."
+  },
+  "actionImportSymbolFromSvg": "SVG에서 기호 가져오기…",
+  "@actionImportSymbolFromSvg": {
+    "description": "Command palette / menu label that opens a file picker to import an SVG into a new custom cell symbol (Pro)."
+  },
+  "actionEditSymbolForCurrentInstance": "이 모듈의 기호 편집…",
+  "@actionEditSymbolForCurrentInstance": {
+    "description": "Command palette / menu / context-menu label that opens the Symbol Editor for the currently selected cell's module type (Pro)."
+  },
+  "actionRemoveSymbolForCurrentInstance": "이 모듈의 사용자 정의 기호 제거",
+  "@actionRemoveSymbolForCurrentInstance": {
+    "description": "Command palette / menu / context-menu label that removes the custom symbol binding for the currently selected cell's module type so it reverts to the built-in rectangular rendering (Pro)."
+  },
+  "actionShowFsmBubbleDiagram": "FSM 버블 다이어그램 표시",
+  "@actionShowFsmBubbleDiagram": {
+    "description": "Command palette / menu label that opens / focuses the FSM bubble diagram pane (Pro)."
+  },
+  "actionDetectFsmForCurrentRegister": "이 레지스터에 대한 FSM 감지",
+  "@actionDetectFsmForCurrentRegister": {
+    "description": "Command palette / menu / context-menu label that runs forced FSM detection on the currently selected register, skipping the structural-signature filter (Pro)."
+  },
+  "actionRunFsmDetectionAcrossDesign": "전체 설계에서 FSM 감지 실행…",
+  "@actionRunFsmDetectionAcrossDesign": {
+    "description": "Command palette / menu label that runs full-design FSM detection and opens the detection-results dialog (Pro)."
+  },
+  "actionClearFsmSelection": "FSM 선택 지우기",
+  "@actionClearFsmSelection": {
+    "description": "Command palette / menu label that dismisses the FSM bubble diagram pane (clears the focused FSM)."
+  },
+  "fsmBubbleDiagramEmptyTitle": "선택된 FSM 없음",
+  "@fsmBubbleDiagramEmptyTitle": {
+    "description": "Open-core empty-state title for the FSM bubble diagram pane."
+  },
+  "fsmBubbleDiagramEmptyHint": "회로도에서 레지스터를 마우스 오른쪽 버튼으로 클릭하고 \"FSM 버블 다이어그램 표시\"를 선택하여 상태 머신을 시각화하세요.",
+  "@fsmBubbleDiagramEmptyHint": {
+    "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
+  },
+  "fsmBubbleDiagramStatesSection": "상태",
+  "@fsmBubbleDiagramStatesSection": {
+    "description": "Section header above the list of FSM states in the open-core fallback bubble diagram view."
+  },
+  "fsmBubbleDiagramTransitionsSection": "전이",
+  "@fsmBubbleDiagramTransitionsSection": {
+    "description": "Section header above the list of FSM transitions in the open-core fallback bubble diagram view."
+  },
+  "fsmBubbleDiagramHeader": "FSM: {registerName} — 상태 {stateCount}개, 전이 {transitionCount}개",
+  "@fsmBubbleDiagramHeader": {
+    "description": "Header line summarising the focused FSM in the open-core fallback bubble diagram view.",
+    "placeholders": {
+      "registerName": {
+        "type": "String"
+      },
+      "stateCount": {
+        "type": "int"
+      },
+      "transitionCount": {
+        "type": "int"
+      }
+    }
+  },
+  "fsmBubbleDiagramStateValue": "값: {value}",
+  "@fsmBubbleDiagramStateValue": {
+    "description": "Value sub-line on a state row in the open-core fallback view, e.g. \"value: 0x03\".",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramTransitionLine": "{from}에서 {to}(으)로  {condition}",
+  "@fsmBubbleDiagramTransitionLine": {
+    "description": "Per-transition row in the open-core fallback view. The condition placeholder is empty when no condition expression is available.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramHighlighted": "강조 표시: {stateName}",
+  "@fsmBubbleDiagramHighlighted": {
+    "description": "Footer in the open-core fallback view showing the currently-highlighted state name.",
+    "placeholders": {
+      "stateName": {
+        "type": "String"
+      }
+    }
+  },
+  "fsmBubbleDiagramResetBadge": "리셋",
+  "@fsmBubbleDiagramResetBadge": {
+    "description": "Badge on the reset state in the open-core fallback view and in the Pro bubble diagram canvas."
+  },
+  "fsmBubbleDiagramUnreachableBadge": "도달 불가",
+  "@fsmBubbleDiagramUnreachableBadge": {
+    "description": "Badge on states the detector flagged as unreachable from the reset state."
+  },
+  "fsmBubbleDiagramTerminalBadge": "종단",
+  "@fsmBubbleDiagramTerminalBadge": {
+    "description": "Badge on states that have no outgoing transitions."
+  },
+  "actionShowCdcAnalysisPane": "CDC 분석 패널 표시",
+  "@actionShowCdcAnalysisPane": {
+    "description": "Command palette / menu label that opens / focuses the CDC analysis pane (Pro)."
+  },
+  "actionRunCdcAnalysis": "설계 전반에서 CDC 분석 실행…",
+  "@actionRunCdcAnalysis": {
+    "description": "Command palette / menu label that runs full-design CDC analysis and opens the results panel (Pro)."
+  },
+  "actionShowCdcCrossingForSelectedSignal": "이 신호의 CDC 교차 표시",
+  "@actionShowCdcCrossingForSelectedSignal": {
+    "description": "Command palette / menu / schematic context-menu label that scopes the CDC panel to crossings involving the right-clicked signal (Pro)."
+  },
+  "actionClearCdcAnalysisSelection": "CDC 분석 선택 지우기",
+  "@actionClearCdcAnalysisSelection": {
+    "description": "Command palette / menu label that clears the CDC pane's focused crossing + domain."
+  },
+  "cdcAnalysisPaneEmptyTitle": "CDC 분석이 실행되지 않음",
+  "@cdcAnalysisPaneEmptyTitle": {
+    "description": "Open-core CDC analysis pane empty-state title shown before analysis has been run."
+  },
+  "cdcAnalysisPaneEmptyHint": "CDC 분석을 실행하여 클럭 도메인 교차를 감지하고, 동기화 회로를 분류하며, 준안정 위험이 있는 신호를 표시합니다.",
+  "@cdcAnalysisPaneEmptyHint": {
+    "description": "Open-core CDC analysis pane empty-state hint that explains what CDC analysis does and how to trigger it."
+  },
+  "cdcAnalysisPaneDomainPairHeader": "{sourceDomain}에서 {destinationDomain}(으)로",
+  "@cdcAnalysisPaneDomainPairHeader": {
+    "description": "Group header for one source→destination clock-domain pair in the CDC analysis pane's crossings list.",
+    "placeholders": {
+      "sourceDomain": {
+        "type": "String"
+      },
+      "destinationDomain": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcAnalysisPaneCrossingSubtitle": "{kind} · {status} · {confidence}",
+  "@cdcAnalysisPaneCrossingSubtitle": {
+    "description": "Crossing-row subtitle in the CDC analysis pane composing the localized crossing kind, synchronizer status, and detector confidence labels.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "confidence": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcAnalysisPaneCrossingTooltip": "회로도에서 신호 {signalName} 강조 표시",
+  "@cdcAnalysisPaneCrossingTooltip": {
+    "description": "Tooltip on a CDC crossing row; tapping highlights the crossing signal in the schematic.",
+    "placeholders": {
+      "signalName": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcCrossingKindSingleBit": "단일 비트",
+  "@cdcCrossingKindSingleBit": {
+    "description": "Label for CDC crossing kind: single-bit (control/status flag)."
+  },
+  "cdcCrossingKindMultiBit": "다중 비트",
+  "@cdcCrossingKindMultiBit": {
+    "description": "Label for CDC crossing kind: multi-bit data bus."
+  },
+  "cdcCrossingKindControl": "제어",
+  "@cdcCrossingKindControl": {
+    "description": "Label for CDC crossing kind: control signal paired with another (req/ack or valid/ready)."
+  },
+  "cdcCrossingKindHandshake": "핸드셰이크",
+  "@cdcCrossingKindHandshake": {
+    "description": "Label for CDC crossing kind: half of an explicit req/ack handshake protocol."
+  },
+  "cdcSynchronizerStatusProperTwoFlop": "2단 플립플롭 동기화",
+  "@cdcSynchronizerStatusProperTwoFlop": {
+    "description": "Label for CDC synchronizer status: properly synchronized with two cascaded flip-flops on the destination side."
+  },
+  "cdcSynchronizerStatusProperThreeFlop": "3단 플립플롭 동기화",
+  "@cdcSynchronizerStatusProperThreeFlop": {
+    "description": "Label for CDC synchronizer status: paranoid synchronizer with three cascaded flip-flops on the destination side."
+  },
+  "cdcSynchronizerStatusAsyncFifo": "비동기 FIFO",
+  "@cdcSynchronizerStatusAsyncFifo": {
+    "description": "Label for CDC synchronizer status: source and destination connected through an async-FIFO instance."
+  },
+  "cdcSynchronizerStatusHandshake": "핸드셰이크 프로토콜",
+  "@cdcSynchronizerStatusHandshake": {
+    "description": "Label for CDC synchronizer status: paired req/ack or valid/ready handshake."
+  },
+  "cdcSynchronizerStatusCustom": "사용자 정의 동기화 회로",
+  "@cdcSynchronizerStatusCustom": {
+    "description": "Label for CDC synchronizer status: user-asserted custom synchronizer module (matched a userSynchronizerPatterns entry)."
+  },
+  "cdcSynchronizerStatusMissing": "동기화 회로 없음",
+  "@cdcSynchronizerStatusMissing": {
+    "description": "Label for CDC synchronizer status: no synchronizer at all on the destination side (critical metastability bug)."
+  },
+  "cdcSynchronizerStatusMetastable": "준안정 위험",
+  "@cdcSynchronizerStatusMetastable": {
+    "description": "Label for CDC synchronizer status: synchronizer present but downstream logic branches before settling (metastability risk)."
+  },
+  "cdcConfidenceHigh": "높은 신뢰도",
+  "@cdcConfidenceHigh": {
+    "description": "Label for the detector's classification confidence: structurally unambiguous match."
+  },
+  "cdcConfidenceMedium": "중간 신뢰도",
+  "@cdcConfidenceMedium": {
+    "description": "Label for the detector's classification confidence: heuristic match — worth manual review."
+  },
+  "cdcConfidenceLow": "낮은 신뢰도",
+  "@cdcConfidenceLow": {
+    "description": "Label for the detector's classification confidence: borderline or max-depth bail."
+  },
+  "actionShowResetDomainAnalysisPane": "리셋 도메인 분석 패널 표시",
+  "@actionShowResetDomainAnalysisPane": {
+    "description": "Command palette / menu label that opens / focuses the reset domain analysis pane (Pro)."
+  },
+  "actionRunResetDomainAnalysis": "전체 설계에 리셋 도메인 분석 실행…",
+  "@actionRunResetDomainAnalysis": {
+    "description": "Command palette / menu label that runs full-design reset domain analysis and opens the results panel (Pro)."
+  },
+  "actionShowResetCrossingForSelectedSignal": "이 신호의 리셋 교차 표시",
+  "@actionShowResetCrossingForSelectedSignal": {
+    "description": "Command palette / menu / schematic context-menu label that scopes the reset domain panel to crossings involving the right-clicked signal (Pro)."
+  },
+  "actionClearResetAnalysisSelection": "리셋 도메인 분석 선택 지우기",
+  "@actionClearResetAnalysisSelection": {
+    "description": "Command palette / menu label that clears the reset domain pane's focused crossing + domain."
+  },
+  "resetDomainAnalysisPaneEmptyTitle": "리셋 도메인 분석이 실행되지 않음",
+  "@resetDomainAnalysisPaneEmptyTitle": {
+    "description": "Open-core reset domain analysis pane empty-state title shown before analysis has been run."
+  },
+  "resetDomainAnalysisPaneEmptyHint": "리셋 도메인 분석을 실행하여 리셋 도메인을 감지하고 동기화 회로 및 극성을 분류하며 리셋 해제 에지에서 준안정 위험이 있는 레지스터를 표시합니다.",
+  "@resetDomainAnalysisPaneEmptyHint": {
+    "description": "Open-core reset domain analysis pane empty-state hint that explains what reset domain analysis does and how to trigger it."
+  },
+  "resetDomainAnalysisPaneDomainPairHeader": "{sourceDomain}에서 {destinationDomain}(으)로",
+  "@resetDomainAnalysisPaneDomainPairHeader": {
+    "description": "Group header for one source→destination reset-domain pair in the Reset Domain analysis pane's crossings list.",
+    "placeholders": {
+      "sourceDomain": {
+        "type": "String"
+      },
+      "destinationDomain": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneCrossingSubtitle": "{kind} · {status} · {polarity} · {confidence}",
+  "@resetDomainAnalysisPaneCrossingSubtitle": {
+    "description": "Crossing-row subtitle in the Reset Domain analysis pane composing the localized crossing kind, synchronizer status, source polarity, and detector confidence labels.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "polarity": {
+        "type": "String"
+      },
+      "confidence": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneCrossingTooltip": "회로도에서 신호 {signalName} 강조",
+  "@resetDomainAnalysisPaneCrossingTooltip": {
+    "description": "Tooltip on a reset crossing row; tapping highlights the crossing signal in the schematic.",
+    "placeholders": {
+      "signalName": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDomainAnalysisPaneUnresetSectionHeader": "리셋 없는 레지스터",
+  "resetDomainAnalysisPaneUnresetSubtitle": "레지스터가 리셋되지 않음 — 전원 인가 시 X",
+  "resetDomainAnalysisPaneUnresetTooltip": "{registerName}에 리셋 드라이버가 없습니다 — 전원 인가 시 값이 정의되지 않음",
+  "resetCrossingKindData": "데이터가 리셋 경계를 넘음",
+  "@resetCrossingKindData": {
+    "description": "Label for reset crossing kind: data signal driven by a register reset by one domain is consumed by a register reset by a different domain."
+  },
+  "resetCrossingKindDeassert": "리셋 해제 교차",
+  "@resetCrossingKindDeassert": {
+    "description": "Label for reset crossing kind: the reset deassert edge of one domain reaches registers in another domain (canonical reset CDC bug class)."
+  },
+  "resetSynchronizerStatusProperAsyncSync": "비동기 어서트 + 동기 해제",
+  "@resetSynchronizerStatusProperAsyncSync": {
+    "description": "Label for reset synchronizer status: classic async-assert + sync-deassert synchronizer (most common safe pattern)."
+  },
+  "resetSynchronizerStatusProperSyncSync": "동기 어서트 + 동기 해제",
+  "@resetSynchronizerStatusProperSyncSync": {
+    "description": "Label for reset synchronizer status: fully synchronous reset synchronizer."
+  },
+  "resetSynchronizerStatusProperResetSynchronizer": "벤더 리셋 동기화 회로",
+  "@resetSynchronizerStatusProperResetSynchronizer": {
+    "description": "Label for reset synchronizer status: vendor-specific reset synchronizer cell or library macro."
+  },
+  "resetSynchronizerStatusCustom": "사용자 정의 동기화 회로",
+  "@resetSynchronizerStatusCustom": {
+    "description": "Label for reset synchronizer status: user-asserted custom synchronizer module (matched a userSynchronizerPatterns entry)."
+  },
+  "resetSynchronizerStatusMissing": "동기화 회로 없음",
+  "@resetSynchronizerStatusMissing": {
+    "description": "Label for reset synchronizer status: no synchronizer at all on the destination side (critical metastability bug)."
+  },
+  "resetSynchronizerStatusGlitchProne": "글리치 발생 가능",
+  "@resetSynchronizerStatusGlitchProne": {
+    "description": "Label for reset synchronizer status: synchronizer structurally present but combinational logic in the deassertion path could cause glitches."
+  },
+  "resetPolarityActiveHigh": "액티브 하이",
+  "@resetPolarityActiveHigh": {
+    "description": "Label for reset polarity: asserts on a logical high (1)."
+  },
+  "resetPolarityActiveLow": "액티브 로우",
+  "@resetPolarityActiveLow": {
+    "description": "Label for reset polarity: asserts on a logical low (0)."
+  },
+  "resetPolarityUnknown": "극성 알 수 없음",
+  "@resetPolarityUnknown": {
+    "description": "Label for reset polarity: detector could not classify the polarity."
+  },
+  "resetConfidenceHigh": "높은 신뢰도",
+  "@resetConfidenceHigh": {
+    "description": "Label for the detector's classification confidence: structurally unambiguous match."
+  },
+  "resetConfidenceMedium": "중간 신뢰도",
+  "@resetConfidenceMedium": {
+    "description": "Label for the detector's classification confidence: heuristic match — worth manual review."
+  },
+  "resetConfidenceLow": "낮은 신뢰도",
+  "@resetConfidenceLow": {
+    "description": "Label for the detector's classification confidence: borderline or max-depth bail."
+  },
+  "actionOpenWaveformFile": "파형 파일 열기…",
+  "@actionOpenWaveformFile": {
+    "description": "Command palette / menu label for loading a VCD/FST/GHW waveform into the active source (Pro)."
+  },
+  "actionCloseWaveformFile": "파형 파일 닫기",
+  "@actionCloseWaveformFile": {
+    "description": "Command palette / menu label for unloading the currently-loaded waveform source (Pro)."
+  },
+  "actionShowActivityHeatmap": "스위칭 활동 히트맵 표시",
+  "@actionShowActivityHeatmap": {
+    "description": "Command palette / menu label for showing the Switching Activity Heatmap pane (Pro)."
+  },
+  "actionRunActivityAnalysis": "스위칭 활동 분석 실행",
+  "@actionRunActivityAnalysis": {
+    "description": "Command palette / menu label for running full-design switching activity analysis over the active tab's time range (Pro)."
+  },
+  "actionClearActivityColoring": "활동 색상 지우기",
+  "@actionClearActivityColoring": {
+    "description": "Command palette / menu label for clearing the per-edge activity color override on the schematic (Open Core; never gated)."
+  },
+  "actionConfigureActivityScheme": "활동 색상 구성표 구성…",
+  "@actionConfigureActivityScheme": {
+    "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
+  },
+  "activityHeatmapPaneEmptyTitle": "스위칭 활동이 로드되지 않음",
+  "@activityHeatmapPaneEmptyTitle": {
+    "description": "Open-core Switching Activity Heatmap pane empty-state title shown before a waveform is loaded or analysis is run."
+  },
+  "activityHeatmapPaneEmptyHint": "VCD 또는 FST 파형을 로드하고 스위칭 활동 분석을 실행하여 넷별 활동 강도로 회로도에 색을 입힙니다.",
+  "@activityHeatmapPaneEmptyHint": {
+    "description": "Open-core Switching Activity Heatmap pane empty-state hint explaining what the feature does and how to trigger it."
+  },
+  "activityHeatmapPaneHottestSection": "핫 넷",
+  "@activityHeatmapPaneHottestSection": {
+    "description": "Section header for the top-N hottest nets in the open-core Switching Activity Heatmap pane's fallback list."
+  },
+  "activityHeatmapPaneColdestSection": "콜드 넷",
+  "@activityHeatmapPaneColdestSection": {
+    "description": "Section header for the bottom-N coldest nets in the open-core Switching Activity Heatmap pane's fallback list."
+  },
+  "activityHeatmapPaneHeader": "넷 {netCount}개, 트랜지션 {transitionCount}개",
+  "@activityHeatmapPaneHeader": {
+    "description": "Header summary for the open-core Switching Activity Heatmap pane.",
+    "placeholders": {
+      "netCount": {
+        "type": "int"
+      },
+      "transitionCount": {
+        "type": "int"
+      }
+    }
+  },
+  "activityHeatmapPaneNetLine": "{netPath} — 트랜지션 {transitionCount}개, 듀티 {dutyPercent}%",
+  "@activityHeatmapPaneNetLine": {
+    "description": "Open-core fallback list line for a single net's activity record.",
+    "placeholders": {
+      "netPath": {
+        "type": "String"
+      },
+      "transitionCount": {
+        "type": "int"
+      },
+      "dutyPercent": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarFile": "파일: {fileName}",
+  "@statusBarFile": {
+    "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarTopModule": "최상위: {moduleName}",
+  "@statusBarTopModule": {
+    "description": "Status bar segment showing the elaborated design's top module name.",
+    "placeholders": {
+      "moduleName": {
+        "type": "String"
+      }
+    }
+  },
+  "statusBarCellCount": "{count, plural, =1{셀 1개} other{셀 {count}개}}",
+  "@statusBarCellCount": {
+    "description": "Status bar segment showing the design-wide cell count (summed across all elaborated modules).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusBarNoDesign": "로드된 설계 없음",
+  "@statusBarNoDesign": {
+    "description": "Status bar text shown for an open tab that has no source files / design loaded yet."
+  },
+  "aboutDialogTitle": "NetCrux 정보",
+  "@aboutDialogTitle": {
+    "description": "Title of the About box dialog / screen."
+  },
+  "aboutTagline": "하드웨어 엔지니어를 위한 현대적인 넷리스트 및 회로도 뷰어",
+  "@aboutTagline": {
+    "description": "One-line product tagline shown under the app name in the About box header."
+  },
+  "aboutBetaChip": "공개 베타",
+  "@aboutBetaChip": {
+    "description": "Chip label shown in the About box header while the public-beta period is active."
+  },
+  "aboutEditionOpenCore": "오픈 코어",
+  "@aboutEditionOpenCore": {
+    "description": "Edition label for the free open-core build; the edition chip is hidden for this value."
+  },
+  "aboutSectionVersion": "버전",
+  "@aboutSectionVersion": {
+    "description": "About box section header / row label for the application version."
+  },
+  "aboutBuildNumber": "빌드",
+  "@aboutBuildNumber": {
+    "description": "About box row label for the platform build number."
+  },
+  "aboutGitSha": "커밋",
+  "@aboutGitSha": {
+    "description": "About box row label for the short git commit SHA."
+  },
+  "aboutSectionPlatform": "플랫폼",
+  "@aboutSectionPlatform": {
+    "description": "About box section header for the host platform details."
+  },
+  "aboutOperatingSystem": "운영체제",
+  "@aboutOperatingSystem": {
+    "description": "About box row label for the host operating system."
+  },
+  "aboutArchitecture": "아키텍처",
+  "@aboutArchitecture": {
+    "description": "About box row label for the CPU architecture."
+  },
+  "aboutFlutterVersion": "Flutter",
+  "@aboutFlutterVersion": {
+    "description": "About box row label for the Flutter SDK version."
+  },
+  "aboutDartVersion": "Dart",
+  "@aboutDartVersion": {
+    "description": "About box row label for the Dart SDK version."
+  },
+  "aboutSectionElkjs": "elkjs",
+  "@aboutSectionElkjs": {
+    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  },
+  "aboutElkjsDescription": "NetCrux는 회로도 자동 배치에 elkjs(Eclipse Layout Kernel의 JavaScript 버전)를 사용합니다. elkjs는 EPL-2.0 라이선스입니다.",
+  "@aboutElkjsDescription": {
+    "description": "Description text for the elkjs attribution section in the About dialog."
+  },
+  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkjsLicenseHeader": {
+    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  },
+  "aboutButtonVisitWebsite": "웹사이트 방문",
+  "@aboutButtonVisitWebsite": {
+    "description": "About box action button that opens the company website in the browser."
+  },
+  "aboutButtonDocs": "문서",
+  "@aboutButtonDocs": {
+    "description": "About box action button that opens the NetCrux documentation site in the browser."
+  },
+  "aboutButtonPrivacy": "개인정보 처리방침",
+  "@aboutButtonPrivacy": {
+    "description": "About box action button that opens the NetCrux privacy policy in the browser."
+  },
+  "aboutButtonTerms": "서비스 약관",
+  "@aboutButtonTerms": {
+    "description": "About box action button that opens the NetCrux terms of service in the browser."
+  },
+  "aboutButtonCopyVersionInfo": "버전 정보 복사",
+  "@aboutButtonCopyVersionInfo": {
+    "description": "About box action button that copies the structured version paragraph to the clipboard."
+  },
+  "aboutCopiedConfirmation": "버전 정보가 복사되었습니다",
+  "@aboutCopiedConfirmation": {
+    "description": "Snackbar confirmation shown after the Copy Version Info action copies to the clipboard."
+  },
+  "aboutCompanyName": "Ferrite Engineering",
+  "@aboutCompanyName": {
+    "description": "Company tagline shown on the first line of the About box branding banner."
+  },
+  "updateBannerMessage": "NetCrux {version} 업데이트를 사용할 수 있습니다.",
+  "@updateBannerMessage": {
+    "description": "Update banner message announcing that a newer NetCrux release is available.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateViewChangesAction": "변경 사항 보기",
+  "@updateViewChangesAction": {
+    "description": "Update banner button that opens the release changelog in the browser."
+  },
+  "updateNowAction": "지금 업데이트",
+  "@updateNowAction": {
+    "description": "Update banner button that opens the NetCrux download page in the browser."
+  },
+  "updateDismissLabel": "닫기",
+  "@updateDismissLabel": {
+    "description": "Accessible name of the update banner's dismiss button."
+  },
+  "updateCheckInProgress": "업데이트를 확인하는 중…",
+  "@updateCheckInProgress": {
+    "description": "Transient snackbar shown while a manual update check is in flight."
+  },
+  "updateCheckUpToDate": "최신 버전({version})을 사용하고 있습니다.",
+  "@updateCheckUpToDate": {
+    "description": "Snackbar confirming a manual update check found no newer release; names the running version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckFailed": "업데이트를 확인할 수 없습니다.",
+  "@updateCheckFailed": {
+    "description": "Snackbar shown when a manual update check could not reach the version manifest."
+  },
+  "actionCheckForUpdates": "업데이트 확인",
+  "@actionCheckForUpdates": {
+    "description": "Action label for the manual Check for Updates command (Help menu, command palette, About box)."
+  },
+  "settingsAutoCheckUpdatesLabel": "업데이트 자동 확인",
+  "@settingsAutoCheckUpdatesLabel": {
+    "description": "Settings General row label for the persisted automatic update-check toggle."
+  },
+  "settingsAutoCheckUpdatesDescription": "시작 시 및 하루에 한 번 새 버전을 확인합니다. 앱 버전과 운영 체제만 전송됩니다.",
+  "@settingsAutoCheckUpdatesDescription": {
+    "description": "Settings General row description explaining what the automatic update check sends."
+  },
+  "settingsRestoreTabsOnLaunchLabel": "시작 시 탭 복원",
+  "@settingsRestoreTabsOnLaunchLabel": {
+    "description": "Settings General row label for the toggle that controls whether the persisted workspace document is rehydrated at launch."
+  },
+  "settingsRestoreTabsOnLaunchDescription": "NetCrux를 시작할 때 이전 세션의 탭을 다시 엽니다. 끄더라도 저장된 세션은 디스크에 남아 있으므로 다시 켜면 복원됩니다.",
+  "@settingsRestoreTabsOnLaunchDescription": {
+    "description": "Settings General row description for the restore-tabs-on-launch toggle, stating that turning it off keeps the saved session on disk."
+  },
+  "actionSubmitIssue": "이슈 제출…",
+  "@actionSubmitIssue": {
+    "description": "Action label for the beta issue reporter command (Help menu, command palette, About box)."
+  },
+  "issueReporterTitle": "문제 보고",
+  "@issueReporterTitle": {
+    "description": "Title of the beta issue reporter dialog, and the fallback GitHub issue title when the summary is blank."
+  },
+  "issueReporterTitleFieldLabel": "문제 요약",
+  "@issueReporterTitleFieldLabel": {
+    "description": "Label of the issue reporter's free-text summary field."
+  },
+  "issueReporterTitleFieldHint": "무엇이 잘못되었는지 간단히 설명하세요",
+  "@issueReporterTitleFieldHint": {
+    "description": "Hint shown inside the issue reporter's empty summary field."
+  },
+  "issueReporterPrivacyNotice": "정보가 많을수록 문제 재현에 도움이 됩니다. 공유하고 싶지 않은 항목은 끄세요. 파일 내용이나 파일 경로는 절대 포함되지 않습니다.",
+  "@issueReporterPrivacyNotice": {
+    "description": "Privacy callout above the issue reporter's category tiles."
+  },
+  "issueReporterPreviewHeader": "이슈 본문 미리보기",
+  "@issueReporterPreviewHeader": {
+    "description": "Header of the issue reporter's collapsible markdown preview disclosure."
+  },
+  "issueReporterCategoryAppEnv": "앱 및 환경",
+  "@issueReporterCategoryAppEnv": {
+    "description": "Title of the always-on App and Environment category tile in the issue reporter."
+  },
+  "issueReporterCategoryAppEnvDescription": "버전, 빌드 SHA, 플랫폼, 운영 체제, 화면 DPI, 로캘, SDK 버전.",
+  "@issueReporterCategoryAppEnvDescription": {
+    "description": "Summary of what the App and Environment category contributes to the report."
+  },
+  "issueReporterCategorySession": "세션 상태",
+  "@issueReporterCategorySession": {
+    "description": "Title of the Session State category tile in the issue reporter."
+  },
+  "issueReporterCategorySessionDescription": "개수와 형식 이름만 — 파일 경로나 파일 내용은 포함되지 않습니다.",
+  "@issueReporterCategorySessionDescription": {
+    "description": "Summary of what the Session State category contributes to the report."
+  },
+  "issueReporterCategoryLog": "진단 정보",
+  "@issueReporterCategoryLog": {
+    "description": "Title of the Diagnostics category tile in the issue reporter."
+  },
+  "issueReporterCategoryLogDescription": "이번 세션에서 기록된 최근 경고와 오류.",
+  "@issueReporterCategoryLogDescription": {
+    "description": "Summary of what the Diagnostics category contributes to the report."
+  },
+  "issueReporterCategoryScreenshot": "스크린샷",
+  "@issueReporterCategoryScreenshot": {
+    "description": "Title of the Screenshot category tile in the issue reporter (desktop only)."
+  },
+  "issueReporterCategoryScreenshotDescription": "첨부할 수 있도록 저장된 앱 창 이미지.",
+  "@issueReporterCategoryScreenshotDescription": {
+    "description": "Summary of what the Screenshot category contributes to the report."
+  },
+  "issueReporterLockedCategorySemantics": "항상 포함됨",
+  "@issueReporterLockedCategorySemantics": {
+    "description": "Screen-reader description of the lock icon on the always-on App and Environment tile."
+  },
+  "issueReporterSubmitButton": "제출",
+  "@issueReporterSubmitButton": {
+    "description": "Label of the issue reporter's submit action."
+  },
+  "issueReporterCancelButton": "취소",
+  "@issueReporterCancelButton": {
+    "description": "Label of the issue reporter's cancel action."
+  },
+  "issueReporterOpenedToast": "GitHub 이슈가 열렸습니다 — 클립보드에서 본문에 붙여넣은 다음 스크린샷을 끌어다 놓으세요.",
+  "@issueReporterOpenedToast": {
+    "description": "Toast shown after submission when the report did not fit in the GitHub URL and must be pasted from the clipboard."
+  },
+  "issueReporterOpenedToastPrefilled": "보고서가 미리 입력된 상태로 GitHub 이슈가 열렸습니다 — 캡처한 스크린샷이 있으면 끌어다 놓으세요.",
+  "@issueReporterOpenedToastPrefilled": {
+    "description": "Toast shown after submission when the report was pre-filled into the GitHub new-issue URL."
+  },
+  "issueReporterScreenshotSaved": "스크린샷을 {path}에 저장했습니다",
+  "@issueReporterScreenshotSaved": {
+    "description": "Confirmation appended to the submission toast naming where the screenshot PNG was written.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "issueReporterEmptyLogPlaceholder": "(기록된 로그 항목 없음)",
+  "@issueReporterEmptyLogPlaceholder": {
+    "description": "Placeholder rendered in the Diagnostics category when the log ring buffer captured nothing."
+  },
+  "issueReporterEmptySessionLogPlaceholder": "(이번 세션에 기록된 오류나 경고 없음)",
+  "@issueReporterEmptySessionLogPlaceholder": {
+    "description": "Placeholder rendered under the session-log heading when nothing was logged this session."
+  },
+  "betaExpiryBannerMessage": "{days, plural, =1{NetCrux 베타가 1일 후 만료됩니다. 최신 빌드를 다운로드하세요.} other{NetCrux 베타가 {days}일 후 만료됩니다. 최신 빌드를 다운로드하세요.}}",
+  "@betaExpiryBannerMessage": {
+    "description": "Dismissible banner shown while the beta build is inside the warning window of its hard expiry date.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "betaExpiryBannerAction": "다운로드",
+  "@betaExpiryBannerAction": {
+    "description": "Inline action on the beta-expiry warning banner that opens the download page."
+  },
+  "betaExpiryDismissLabel": "닫기",
+  "@betaExpiryDismissLabel": {
+    "description": "Accessible name of the beta-expiry warning banner's dismiss button."
+  },
+  "betaExpiryExpiredTitle": "베타 빌드가 만료되었습니다",
+  "@betaExpiryExpiredTitle": {
+    "description": "Title of the blocking modal shown once the beta build has passed its hard expiry date."
+  },
+  "betaExpiryExpiredBody": "이 NetCrux 베타 빌드는 만료일에 도달했습니다. NetCrux를 계속 사용하려면 최신 빌드를 다운로드하세요.",
+  "@betaExpiryExpiredBody": {
+    "description": "Body of the blocking beta-expired modal explaining why the build stopped working."
+  },
+  "betaExpiryExpiredAction": "최신 빌드 다운로드",
+  "@betaExpiryExpiredAction": {
+    "description": "Primary action of the blocking beta-expired modal; opens the download page."
+  },
+  "betaExpiryExpiredQuit": "NetCrux 종료",
+  "@betaExpiryExpiredQuit": {
+    "description": "Secondary action of the blocking beta-expired modal; terminates the application."
+  },
+  "coneOfInfluenceCellCount": "{count, plural, =1{콘에 셀 1개} other{콘에 셀 {count}개}}",
+  "actionCategoryFileMnemonic": "파일(&F)",
+  "actionCategoryEditMnemonic": "편집(&E)",
+  "actionCategoryViewMnemonic": "보기(&V)",
+  "actionCategoryNavigateMnemonic": "탐색(&N)",
+  "actionCategorySearchMnemonic": "검색(&S)",
+  "actionCategoryToolsMnemonic": "도구(&T)",
+  "actionCategoryHelpMnemonic": "도움말(&H)",
+  "actionCategoryEdit": "편집",
+  "menuWindow": "윈도우",
+  "actionExit": "종료",
+  "actionOpenDocumentation": "문서",
+  "actionNewWorkspace": "새 워크스페이스",
+  "actionOpenWorkspace": "워크스페이스 열기…",
+  "actionSaveWorkspaceAs": "워크스페이스 다른 이름으로 저장…",
+  "actionResetWorkspace": "워크스페이스 재설정…",
+  "actionNextTab": "다음 탭",
+  "actionPreviousTab": "이전 탭",
+  "actionToggleTheme": "테마 전환",
+  "accessibilitySchematicActive": "회로도: 셀 {cells}개, 넷 {nets}개",
+  "@accessibilitySchematicActive": {
+    "description": "Screen-reader summary for the schematic canvas.",
+    "placeholders": {
+      "cells": {
+        "type": "int"
+      },
+      "nets": {
+        "type": "int"
+      }
+    }
+  },
+  "schematicKeyboardCell": "{name}, {type} 셀",
+  "@schematicKeyboardCell": {
+    "description": "Screen-reader announcement when the keyboard selects a cell on the schematic canvas; name is the instance name, type the Yosys cell type.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardBoundaryPort": "포트 {name}",
+  "@schematicKeyboardBoundaryPort": {
+    "description": "Screen-reader announcement when the keyboard selects a module boundary port on the schematic canvas.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNet": "넷 {name}",
+  "@schematicKeyboardNet": {
+    "description": "Screen-reader announcement when the keyboard selects a net on the schematic canvas; name is the net name, or its numeric id when the net is unnamed.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNoConnections": "{name}에는 핀도 넷도 없습니다",
+  "@schematicKeyboardNoConnections": {
+    "description": "Screen-reader announcement when the keyboard asks for the pins and nets of a cell or port that has none; name is the cell or port.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardPin": "{cell}의 핀 {pin}",
+  "@schematicKeyboardPin": {
+    "description": "Screen-reader announcement when the keyboard selects a pin on the schematic canvas; pin is the pin name, cell the instance it belongs to.",
+    "placeholders": {
+      "pin": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicKeyboardNothingSelected": "선택된 항목이 없습니다",
+  "@schematicKeyboardNothingSelected": {
+    "description": "Screen-reader announcement when the context menu key is pressed on the schematic canvas with nothing selected."
+  },
+  "schematicKeyboardNoElements": "이 스코프에는 선택할 항목이 없습니다",
+  "@schematicKeyboardNoElements": {
+    "description": "Screen-reader announcement when the keyboard steps through the schematic canvas but the scope draws no cells or ports."
+  },
+  "accessibilityToolbarRegion": "도구 모음",
+  "toolbarOverflowActions": "동작",
+  "toolbarToggleCrossProbe": "크로스프로브 패널",
+  "toolbarTraceCluster": "추적",
+  "actionOpenTabDiagnostics": "탭 진단…",
+  "actionOpenAppDiagnostics": "앱 진단…",
+  "diagnosticsAppDialogTitle": "앱 진단",
+  "diagnosticsCopyFullReport": "전체 진단 보고서 복사",
+  "diagnosticsCopiedToClipboard": "진단 보고서를 클립보드에 복사했습니다.",
+  "statusBarBusyElaborating": "설계 엘라보레이션 중",
+  "statusBarYosysUnavailable": "Yosys를 찾을 수 없음",
+  "dockTabInspector": "인스펙터",
+  "dockTabHierarchy": "계층 구조",
+  "dockTabDiagnostics": "진단",
+  "dockTabCrossProbe": "크로스 프로브",
+  "dockTabCdc": "CDC",
+  "dockTabResetDomain": "리셋 도메인",
+  "dockTabFsm": "FSM",
+  "dockTabFsmResults": "FSM 결과",
+  "dockTabActivity": "활동",
+  "dockTabDiff": "차이",
+  "dockCollapseTooltip": "패널 숨기기",
+  "accessibilityRightDockRegion": "세부 정보 독",
+  "accessibilityLeftDockRegion": "브라우저 독",
+  "accessibilityBottomDockRegion": "패널 독",
+  "settingsLanguageLabel": "언어",
+  "settingsLanguageDescription": "애플리케이션 인터페이스에 사용할 언어",
+  "settingsCxpSectionTitle": "CXP 교차 프로브",
+  "settingsAutoReloadDescription": "불러온 파일이 디스크에서 변경될 때 NetCrux의 응답 방식",
+  "settingsCxpPortError": "1부터 65535 사이의 포트를 입력하세요.",
+  "workspaceResetConfirmButton": "재설정",
+  "workspaceReplaceConfirmButton": "바꾸기",
+  "tabContextMenuRevealInFinder": "Finder에서 표시",
+  "tabContextMenuRevealInExplorer": "Explorer에서 표시",
+  "tabContextMenuRevealInFiles": "파일 관리자에서 표시",
+  "helpLinkLearnMore": "자세히 알아보기",
+  "aboutButtonAcknowledgments": "오픈 소스 라이선스",
+  "statsStripLabel": "통계",
+  "statsStripExpandTooltip": "라이브 통계 표시",
+  "statsStripCollapseTooltip": "라이브 통계 숨기기",
+  "statisticsStripTitle": "통계",
+  "statsSegmentMemory": "메모리",
+  "statsSegmentMemoryTooltip": "Yosys 하위 프로세스와 elkjs 런타임을 포함한 NetCrux 프로세스의 상주 메모리입니다.",
+  "statsSegmentFps": "FPS",
+  "statsSegmentFpsTooltip": "최근 60개 프레임의 초당 프레임 수입니다.",
+  "statsSegmentJank": "드롭",
+  "statsSegmentJankTooltip": "이번 세션에서 16.7ms 예산을 초과한 프레임 수입니다. 평균 FPS는 끊김을 감추지만 이 값은 감추지 않습니다.",
+  "statsSegmentLayout": "레이아웃",
+  "statsSegmentLayoutTooltip": "가장 최근 ELK 레이아웃 처리 시간입니다. 엘라보레이션 다음으로 파이프라인에서 가장 느린 단계입니다.",
+  "statsSegmentPaint": "페인트",
+  "statsSegmentPaintTooltip": "회로도 캔버스가 최근 프레임을 그리는 데 걸린 시간입니다.",
+  "statsSegmentViewport": "뷰포트",
+  "statsSegmentViewportTooltip": "뷰포트 컬링 후 마지막 프레임에서 실제로 그려진 셀과 엣지 수입니다.",
+  "statsSegmentElaboration": "엘라보레이션",
+  "statsSegmentElaborationTooltip": "현재 Yosys 하위 프로세스가 실행 중인지 여부입니다. 탭 진단 서랍은 마지막 실행 결과를 보여줍니다.",
+  "statsElaborationRunning": "실행 중",
+  "statsElaborationIdle": "유휴",
+  "diagnosticsAppDialogSubtitle": "프로세스 전체 상태입니다. 이 정보는 기기 밖으로 나가지 않습니다.",
+  "diagnosticsCloseTooltip": "닫기",
+  "diagnosticsSectionMemory": "메모리",
+  "diagnosticsSectionPerTab": "탭별 설계 규모",
+  "diagnosticsSectionFrameStats": "프레임 통계",
+  "diagnosticsSectionSession": "세션",
+  "diagnosticsMetricRss": "프로세스 메모리 (RSS)",
+  "diagnosticsMetricFps": "초당 프레임",
+  "diagnosticsMetricJank": "예산 초과 프레임",
+  "diagnosticsMetricLastFrame": "마지막 프레임",
+  "diagnosticsMetricSampledFrames": "샘플링된 프레임",
+  "diagnosticsPerTabNote": "바이트가 아닌 개수입니다. Dart VM은 엘라보레이션된 설계의 메모리 사용량을 알려주지 않습니다.",
+  "diagnosticsColumnTab": "탭",
+  "diagnosticsColumnModules": "모듈",
+  "diagnosticsColumnCells": "셀",
+  "diagnosticsColumnNets": "넷",
+  "diagnosticsNoTabs": "열려 있는 탭이 없습니다.",
+  "diagnosticsDisabledSnack": "진단 화면이 꺼져 있습니다. 설정 > {section}에서 켜세요.",
+  "diagnosticsSettingsLabel": "진단 화면 사용",
+  "diagnosticsSettingsDescription": "탭 진단 서랍, 앱 진단 대화 상자, 창별 렌더링 통계를 표시합니다. 디버그 빌드에서는 항상 켜져 있습니다.",
+  "paneRenderStatsTitle": "창 렌더링 통계",
+  "paneRenderStatsTooltip": "이 창의 렌더링 통계",
+  "paneRenderStatsCloseTooltip": "렌더링 통계 닫기",
+  "paneRenderStatsPaint": "그리기 시간",
+  "paneRenderStatsLayout": "레이아웃 시간",
+  "paneRenderStatsVisibleCells": "뷰포트 내 셀",
+  "paneRenderStatsVisibleEdges": "뷰포트 내 에지",
+  "paneRenderStatsFrames": "그린 프레임 수",
+  "paneRenderStatsEmpty": "이 창은 아직 회로도를 그리지 않았습니다.",
+  "telemetryConsentTitle": "NetCrux 개선에 참여하기",
+  "telemetryConsentBody": "익명 사용 횟수와 오류 횟수는 다음에 무엇을 만들고 무엇을 고칠지 정하는 데 도움이 됩니다. 파일, 설계 데이터, 사용자를 식별할 수 있는 정보는 수집하지 않습니다.",
+  "telemetryConsentLearnMore": "수집 항목 자세히 보기",
+  "telemetryConsentToggleLabel": "익명 사용 통계 보내기",
+  "telemetryConsentContinue": "계속",
+  "settingsPrivacySection": "개인정보",
+  "settingsTelemetryLabel": "익명 사용 통계 보내기",
+  "settingsTelemetryDescription": "기능 및 오류 카운터, 앱과 OS 버전, 폼 팩터, 언어, 라이선스 등급. 파일 이름, 넷 이름, 오류 메시지, 개인정보는 포함하지 않습니다.",
+  "settingsTelemetryDocsLabel": "텔레메트리 문서",
+  "settingsTelemetryDocsDescription": "전송되는 필드 목록, 절대 수집하지 않는 항목 목록, 그리고 전송을 수행하는 소스 코드.",
+  "upgradeDialogSeePricing": "가격 보기",
+  "settingsTelemetryInstallationIdLabel": "설치 ID",
+  "settingsTelemetryInstallationIdDescription": "수집되는 데이터에 연결된 유일한 식별자입니다. 무작위 값이며 사용자와 연결되지 않습니다. 이 설치의 데이터 삭제를 원하시면 지원팀으로 보내주세요.",
+  "settingsTelemetryInstallationIdCopy": "복사",
+  "settingsTelemetryInstallationIdCopied": "설치 ID가 복사되었습니다.",
+  "xTracePanelTitle": "X 추적",
+  "xTracePanelEmpty": "활성 X 추적이 없습니다. 넷을 선택하고 \"X 추적 표시\"를 실행하세요.",
+  "xTracePanelClearButton": "지우기",
+  "xTracePanelTerminationFoundOrigin": "이 경로의 원점 도달",
+  "xTracePanelTerminationMaxDepth": "최대 깊이 도달",
+  "xTracePanelTerminationBoundary": "경계 도달",
+  "xTracePanelTerminationNoVcd": "파형이 로드되지 않음",
+  "xTracePanelTerminationCycle": "조합 루프 감지됨",
+  "xTracePanelTerminationNothing": "추적할 선택 없음",
+  "xTracePanelStepLabel": "단계 {depth}",
+  "xTracePanelStepCell": "{cell} 내부",
+  "xTracePanelStepBoundary": "경계 포트 {port}",
+  "xTracePanelStepValue": "= {value}",
+  "xTracePanelStepCount": "{count, plural, =1{1단계} other{{count}단계}}"
+}

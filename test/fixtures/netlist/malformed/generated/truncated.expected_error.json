@@ -1,0 +1,5 @@
+{
+  "expectException": "YosysJsonParseException",
+  "invariant": "#5",
+  "note": "cut mid-token"
+}

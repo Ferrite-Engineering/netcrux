@@ -1,0 +1,87 @@
+{
+  "version": "1.0",
+  "description": "Terminology mapping for NetCrux localization. Auto-generated from .claude/instructions.md (NetCrux-adapted copy of the canonical suite house style in wavecrux/.claude/instructions.md). suite_wide_terms apply to every Crux app (2026-07-18 rulings).",
+  "terms": {
+    "net": { "en": "net", "zh": "线网", "ja": "ネット", "ko": "넷", "never": { "zh": ["网络", "网线"], "ko": ["네트"] } },
+    "netlist": { "en": "netlist", "zh": "网表", "ja": "ネットリスト", "ko": "넷리스트" },
+    "design_hdl": { "en": "design (HDL design)", "zh": "设计", "ja": "設計", "ko": "설계", "never": { "ja": ["デザイン"], "ko": ["디자인"] } },
+    "schematic": { "en": "schematic", "zh": "原理图", "ja": "回路図", "ko": "회로도" },
+    "hierarchy": { "en": "hierarchy (structure)", "zh": "层次结构", "ja": "階層", "ko": "계층" },
+    "cell": { "en": "cell", "zh": "单元", "ja": "セル", "ko": "셀" },
+    "instance": { "en": "instance", "zh": "实例", "ja": "インスタンス", "ko": "인스턴스" },
+    "module": { "en": "module", "zh": "模块", "ja": "モジュール", "ko": "모듈" },
+    "top_module": { "en": "top module", "zh": "顶层模块", "ja": "トップモジュール", "ko": "최상위 모듈" },
+    "port": { "en": "port", "zh": "端口", "ja": "ポート", "ko": "포트" },
+    "register": { "en": "register", "zh": "寄存器", "ja": "レジスタ", "ko": "레지스터" },
+    "elaboration": { "en": "elaboration", "zh": "详尽展开", "ja": "エラボレーション", "ko": "엘라보레이션" },
+    "inspector": { "en": "inspector", "zh": "检视器", "ja": "インスペクター", "ko": "인스펙터", "never": { "zh": ["检查器"] } },
+    "driver": { "en": "driver (net driver)", "zh": "驱动源", "ja": "ドライバー", "ko": "드라이버" },
+    "sinks": { "en": "sinks", "zh": "接收端", "ja": "シンク", "ko": "싱크" },
+    "clock_domain": { "en": "clock domain", "zh": "时钟域", "ja": "クロックドメイン", "ko": "클럭 도메인" },
+    "reset_domain": { "en": "reset domain", "zh": "复位域", "ja": "リセットドメイン", "ko": "리셋 도메인" },
+    "crossing": { "en": "crossing (CDC + reset)", "zh": "跨越", "ja": "クロッシング", "ko": "교차" },
+    "synchronizer": { "en": "synchronizer", "zh": "同步器", "ja": "同期回路", "ko": "동기화 회로" },
+    "metastability": { "en": "metastability / metastable", "zh": "亚稳态", "ja": "メタステーブル", "ko": "준안정" },
+    "analysis": { "en": "analysis", "zh": "分析", "ja": "解析", "ko": "분석" },
+    "fsm": { "en": "FSM", "zh": "FSM", "ja": "FSM", "ko": "FSM" },
+    "fsm_bubble_diagram": { "en": "FSM bubble diagram", "zh": "FSM 气泡图", "ja": "FSM バブル図", "ko": "FSM 버블 다이어그램" },
+    "fsm_state": { "en": "FSM state", "zh": "状态", "ja": "状態", "ko": "상태" },
+    "fsm_transition": { "en": "FSM state transition", "zh": "状态转移", "ja": "遷移", "ko": "전이" },
+    "transition_edge": { "en": "transition (switching activity / signal edge)", "zh": "跳变", "ja": "トランジション", "ko": "트랜지션" },
+    "switching_activity": { "en": "switching activity", "zh": "开关活动", "ja": "スイッチング活動", "ko": "스위칭 활동" },
+    "heatmap": { "en": "heatmap", "zh": "热图", "ja": "ヒートマップ", "ko": "히트맵" },
+    "x_trace": { "en": "X-trace", "zh": "X 追溯", "ja": "X トレース", "ko": "X 추적" },
+    "custom_cell_symbol": { "en": "custom cell symbol", "zh": "自定义单元符号", "ja": "カスタムセルシンボル", "ko": "사용자 정의 셀 기호" },
+    "bookmark": { "en": "bookmark", "zh": "书签", "ja": "ブックマーク", "ko": "북마크" },
+    "annotation": { "en": "annotation / comment", "zh": "注释", "ja": "コメント", "ko": "주석" },
+    "diagnostics_drawer": { "en": "diagnostics drawer", "zh": "诊断抽屉", "ja": "診断ドロワー", "ko": "진단 드로어" },
+    "force_directed_layout": { "en": "force-directed layout", "zh": "力导向布局", "ja": "力学配置", "ko": "힘 기반 레이아웃" },
+    "mouse_button": { "en": "button (mouse button)", "zh": "按钮", "ja": "ボタン", "ko": "버튼" }
+  },
+  "never_exceptions": {
+    "description": "Words that contain a never-listed rendering but mean something else. 网络 and 네트워크 are \"network\" (a network drive, the local network), not a net. The house-style guard removes these before it looks for never-listed renderings.",
+    "zh": ["网络驱动器", "本网络", "你的网络"],
+    "ko": ["네트워크"]
+  },
+  "suite_wide_terms": {
+    "description": "Identical renderings required in every Crux app (core + Pro overlays). App-local glossaries may add terms but never override these.",
+    "cross_probe": { "en": "cross-probe", "zh": "交叉探测", "ja": "クロスプローブ", "ko": "교차 프로브" },
+    "remote_control": { "en": "Remote Control", "zh": "远程控制", "ja": "リモートコントロール", "ko": "원격 제어" },
+    "waiver": { "en": "waiver", "zh": "豁免", "ja": "ウェイバー", "ko": "면제" },
+    "workspace": { "en": "workspace", "zh": "工作区", "ja": "ワークスペース", "ko": "워크스페이스" },
+    "preset": { "en": "preset", "zh": "预设", "ja": "プリセット", "ko": "프리셋" },
+    "editor": { "en": "editor", "zh": "编辑器", "ja": "エディター", "ko": "에디터" },
+    "viewer": { "en": "viewer", "zh": "查看器", "ja": "ビューアー", "ko": "뷰어" },
+    "open_core_edition": { "en": "open-core", "zh": "开放核心版", "ja": "オープンコア", "ko": "오픈 코어" },
+    "command_palette": { "en": "command palette", "zh": "命令面板", "ja": "コマンドパレット", "ko": "명령 팔레트" },
+    "panel": { "en": "panel", "zh": "面板", "ja": "パネル", "ko": "패널" },
+    "pane": { "en": "pane", "zh": "窗格", "ja": "ペイン", "ko": "창" }
+  },
+  "acronyms": {
+    "description": "Never translate these values",
+    "list": [
+      "VCD", "FST", "GHW", "LXT", "LXT2", "FSDB", "PCAP", "CSV", "JSON",
+      "XML", "YAML", "HTML", "SVG", "PNG", "RGB", "LED", "LCD", "OLED",
+      "FSM", "RTL", "API", "SDK", "ABI", "CLI", "GUI", "WASM", "TCP", "UDP",
+      "HTTP", "JSON-RPC", "CXP", "WCP", "CDC", "HDL", "VHDL", "SPI", "I2C",
+      "I²C", "UART", "AXI", "AXI4", "AXI4-Lite", "APB", "AHB", "AHB-Lite",
+      "Wishbone", "JTAG", "MDIO", "CAN", "CAN-FD", "USB", "PCIe", "Ethernet",
+      "MII", "RMII", "GMII", "RGMII", "AXIS", "RISC-V", "RV32", "RV64",
+      "Cocotb", "GTKWave", "Synopsys"
+    ]
+  },
+  "brands": {
+    "description": "Product / brand names — never translate, always Latin script (2026-07-18 ruling; 'Stage' never becomes 舞台 / ステージ / 스테이지)",
+    "list": [
+      "WaveCrux", "NetCrux", "LintCrux", "SimCrux", "EDACrux",
+      "Ferrite Engineering", "Stage", "Stage Pro", "Rive",
+      "Yosys", "Verible", "Verilator", "svlint", "GHDL", "Icarus Verilog",
+      "FuseSoC", "Vivado", "Quartus"
+    ]
+  },
+  "pluralization_rules": {
+    "zh": { "singular": "=1{1个%s}", "plural": "other{{count}个%s}" },
+    "ja": { "singular": "=1{1%s}", "plural": "other{{count}%s}" },
+    "ko": { "singular": "=1{1개 %s}", "plural": "other{{count}개 %s}" }
+  }
+}

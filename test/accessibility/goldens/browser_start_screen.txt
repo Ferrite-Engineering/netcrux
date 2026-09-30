@@ -1,0 +1,8 @@
+# Tab walk: 7 stops, cycles
+1. WaveCrux Watch the signal you just traced. Cross-probe from the schematic into a waveform, and back. link
+2. LintCrux Grade the RTL you are browsing. The same Yosys elaboration, read against lint and CDC rules. link
+3. SimCrux Exercise the design you are reading. Run its regression and bring the failures back here. link
+4. A member of the EDACrux suite of products — edacrux.app link
+5. [Toolbar grouping] Settings… (Ctrl+,) button
+6. Open Netlist JSON… button
+7. [Welcome to NetCrux grouping] Open Netlist JSON… button

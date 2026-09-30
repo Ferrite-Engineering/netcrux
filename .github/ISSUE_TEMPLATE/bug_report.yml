@@ -1,0 +1,100 @@
+name: 🐞 Bug report
+description: Something in NetCrux is broken or behaves incorrectly.
+title: "[Bug]: "
+labels: ["bug", "user-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve NetCrux!
+
+        **Tip:** the easiest way to file a bug is from inside the app —
+        **Help → Submit Issue** — which fills in your version, platform, and an
+        optional diagnostics snapshot for you. Use this form if you'd rather
+        report by hand.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Opened my_soc.v and let it elaborate
+        2. Pushed into u_cpu/u_alu and selected the `result` net
+        3. Ran fanin — expected the two operand registers; NetCrux showed only the mux
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A numbered list we can follow exactly.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of NetCrux?
+      options:
+        - Elaboration (Yosys / GHDL)
+        - Schematic canvas — layout or rendering
+        - Schematic canvas — navigation (push-in / pop-out / breadcrumb / zoom)
+        - Hierarchy tree
+        - Inspector / selection
+        - Design search
+        - Tracing (fanin / fanout / cone of influence / X-trace)
+        - CDC or reset-domain analysis
+        - FSM detection
+        - Netlist diff
+        - Switching-activity heatmap
+        - Project files, filelists, sessions, or workspaces
+        - Export (PNG / SVG / JSON)
+        - Cross-probing (CXP)
+        - Settings, theming, or shortcuts
+        - Web schematic viewer
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Web (read-only schematic viewer)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: NetCrux version / build SHA
+      description: From **Help → About NetCrux** → **Copy Version Info** (the in-app reporter fills this in automatically).
+      placeholder: "e.g. 1.0.0 (94822a6)"
+    validations:
+      required: true
+  - type: input
+    id: yosys
+    attributes:
+      label: Yosys version
+      description: Output of `yosys -V`. Leave blank only if the bug has nothing to do with elaboration.
+      placeholder: "e.g. Yosys 0.47 (git sha1 8e7c1c7)"
+    validations:
+      required: false
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics (optional)
+      description: |
+        Paste the diagnostics report from **Help → Submit Issue** if you have it.
+        Do **not** paste proprietary RTL or design names.
+      render: text
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        **Got a design that reproduces this?** RTL that breaks elaboration,
+        layout, or tracing is the most valuable thing you can attach — use the
+        [fixture submission form](https://github.com/Ferrite-Engineering/netcrux/issues/new?template=fixture_submission.yml).
+        Please only attach files you can share under a permissive license.
