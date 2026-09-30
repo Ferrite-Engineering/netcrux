@@ -64,7 +64,9 @@ void main() {
 
       final container = netcruxContainer();
       // Before the store has read the persisted answer, events wait rather
-      // than go anywhere; once it has, "never asked" is not consent.
+      // than go anywhere; once it has, "never asked" is not consent — but it
+      // is not a refusal either. The disclosure is on screen, so the launch's
+      // events keep waiting for its answer, and still nothing transmits.
       expect(
         container.read(telemetryServiceProvider),
         isA<PendingTelemetryService>(),
@@ -73,7 +75,12 @@ void main() {
       expect(container.read(telemetryEnabledProvider), isFalse);
       expect(
         container.read(telemetryServiceProvider),
-        isA<NoopTelemetryService>(),
+        isA<PendingTelemetryService>(),
+      );
+      expect(
+        container.read(telemetryGateProvider),
+        TelemetryGate.closed,
+        reason: 'waiting for the answer is not consent',
       );
     },
   );
@@ -190,8 +197,17 @@ void main() {
           final expected = dev
               ? consent != TelemetryConsentState.disabled
               : !beta && consent == TelemetryConsentState.enabled;
+          // Post-beta and unanswered is the disclosure on screen: the launch's
+          // events wait for its answer rather than being discarded, and still
+          // nothing transmits. Every other closed cell is a real no.
+          final waits = !beta && !dev && consent == TelemetryConsentState.unset;
           test(
-            'beta=$beta dev=$dev consent=${consent.name} → $expected',
+            'beta=$beta dev=$dev consent=${consent.name} → '
+            '${expected
+                ? 'live'
+                : waits
+                ? 'pending'
+                : 'no-op'}',
             () async {
               final container = netcruxContainer(
                 extra: [
@@ -214,6 +230,8 @@ void main() {
                 container.read(telemetryServiceProvider),
                 expected
                     ? isA<LiveTelemetryService>()
+                    : waits
+                    ? isA<PendingTelemetryService>()
                     : isA<NoopTelemetryService>(),
               );
             },
