@@ -6,9 +6,9 @@ Org-wide symbol libraries, the security model behind collaborative schematic ses
 
     One `.crux-policy.json` configures all four EDACrux products. Where it goes on each platform, how you sign it, discovery order, precedence and the full key table live in [the policy file reference](https://edacrux.app/policy-reference); the rollout procedure is [Deployment](https://edacrux.app/deployment). This page covers only what NetCrux's own keys do.
 
-!!! note "Licensing, and when this page starts to bite"
+!!! note "Licensing"
 
-    In the 0.8.x public beta builds every tier is unlocked and no licenses are issued, so the keys below are in force for whoever runs the build and there is no license to deploy alongside the policy file. From 1.0 that changes: Open Core stays free, and the Enterprise capabilities this page configures require an Enterprise license. The file itself parses, lints and signs either way, so you can write and validate one before you need it.
+    The Enterprise capabilities this page configures require an Enterprise license; Open Core stays free. The policy file parses, lints and signs at every tier, so you can write and validate one before you deploy it.
 
 ## NetCrux's policy keys {#keys}
 
@@ -160,10 +160,6 @@ This file is read by whoever runs your log shipper, which is usually not the tea
 ## Managed installs and updates {#packaging}
 
 **A managed install does not update itself.** An application installed by MSI, `.deb` or `.rpm` makes no update check at all, so it will not offer an in-app update and will not nag — the version is your deployment tooling's business, which is the point of packaging it that way. That behaviour outranks every policy key, including `suite.updateChannel`, because it describes how the application was installed rather than what you configured.
-
-!!! note "Not yet published"
-
-    No release has yet been published as MSI, `.deb` or `.rpm` packages — the [download page](https://netcrux.app/download) lists what actually exists today: the macOS disk image, the Linux AppImage and `.tar.gz`, and the Windows installer and `.zip`. Until those packages appear there, deploy the existing artifacts with your own tooling.
 
 For installs that do update themselves, pinning, channel selection and an on-prem manifest mirror are suite-wide keys — [the reference](https://edacrux.app/policy-reference#suite-keys) has them, and [Deployment](https://edacrux.app/deployment#updates) has the behaviours worth knowing before you write one.
 

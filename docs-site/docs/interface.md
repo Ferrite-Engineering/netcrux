@@ -54,7 +54,7 @@ The **status bar** along the bottom of each tab shows the first source file, the
 
 - **General** — **Auto-reload on source change** (**Prompt me** / **Reload automatically** / **Don't reload**), **Restore tabs on launch**, **Automatically check for updates**, and, in release builds, **Enable diagnostics surfaces**.
 - **Appearance** — the **Language** picker (English, 中文, 日本語, 한국어), color presets, per-token color overrides and theme packs. See [Appearance & themes](appearance-and-themes.md).
-- **Privacy** — **Send anonymous usage statistics**. The category appears only in a build where usage statistics are live: the 0.8.x public beta builds collect nothing and do not show it, and from 1.0 it is there. See [Updates, issues & privacy](user-guide/updates-and-feedback.md#usage-statistics).
+- **Privacy** — **Send anonymous usage statistics**. See [Updates, issues & privacy](user-guide/updates-and-feedback.md#usage-statistics).
 - **Engines** — the Yosys binary path.
 - **Editors** — **Editor command (open source)**, the command NetCrux runs when a cross-probe peer asks it to open a source location.
 - **CXP Cross-Probe** — the cross-probe server. See [Cross-probe & the suite](integrations.md#cxp-settings).
@@ -62,7 +62,7 @@ The **status bar** along the bottom of each tab shows the first source file, the
 
 The downloaded app adds **License** and **Collaboration** <span class="tier tier-enterprise">Enterprise</span>.
 
-The **About box** (++f1++) shows the name and tagline, version, build and commit, platform details, the edition, a **Public Beta** chip, Ferrite Engineering branding, and the elkjs (EPL-2.0) attribution, plus **Visit Website**, **Documentation**, **Submit Issue…**, **Check for Updates**, **Privacy Policy**, **Terms of Service**, **Acknowledgments** (the full open-source license list) and **Copy Version Info** actions.
+The **About box** (++f1++) shows the name and tagline, version, build and commit, platform details, the edition, Ferrite Engineering branding, and the elkjs (EPL-2.0) attribution, plus **Visit Website**, **Documentation**, **Submit Issue…**, **Check for Updates**, **Privacy Policy**, **Terms of Service**, **Acknowledgments** (the full open-source license list) and **Copy Version Info** actions.
 
 !!! note "Next steps"
 

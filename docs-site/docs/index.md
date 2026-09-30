@@ -31,9 +31,9 @@ NetCrux ships as a single application. The free **Open Core** browser is complet
 
 The NetCrux download includes the Pro and Enterprise features; a build of the open-source `netcrux` repository contains Open Core only.
 
-!!! note "What the badges mean today"
+!!! note "What the badges mean"
 
-    In the 0.8.x public beta builds every tier is unlocked for everyone and nothing is gated: the badges throughout the app and these docs tell you which tier a feature belongs to, not what you are allowed to use. From 1.0 the gating is real — Open Core stays free and complete, and the Pro, Enterprise and Education features require a license. See [Tiers & licensing](licensing.md) for the full picture, including how the Education tier and license keys work.
+    The badges throughout the app and these docs tell you which tier a feature belongs to. Open Core is free and complete, and the Pro, Enterprise and Education features require a license. See [Tiers & licensing](licensing.md) for the full picture, including how the Education tier and license keys work.
 
 ## How this guide is organized {#map}
 

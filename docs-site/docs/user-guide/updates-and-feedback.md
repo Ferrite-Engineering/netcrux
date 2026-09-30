@@ -8,7 +8,7 @@ NetCrux checks a release manifest and tells you when a newer version is out. It 
 
 **What happens.** On launch, once every 24 hours while the app is running, and when the app returns to the foreground, NetCrux fetches `https://updates.netcrux.app/manifest.json` (10-second timeout). If the latest version is newer than the running build, a strip appears above the app content:
 
-> **NetCrux 0.9.0 is available.** &nbsp; [View Changes] &nbsp; [Update Now] &nbsp; ✕
+> **NetCrux 1.0.1 is available.** &nbsp; [View Changes] &nbsp; [Update Now] &nbsp; ✕
 
 - **View Changes** opens the release changelog. It appears only when the manifest carries a changelog URL.
 - **Update Now** opens `https://netcrux.app/download` in your browser. There is no in-app download and no self-update.
@@ -57,8 +57,7 @@ Everything except **App & Environment** is a toggle, and nothing leaves your mac
 
 NetCrux can send anonymous usage statistics — feature and error counters, app and OS version, form factor, language and license tier — to help decide what to build and fix next. An error it did not handle is counted by its kind alone (for example, a state error in the widgets library), never with its message or stack trace. It never sends file names, net names, design data, or anything that identifies you.
 
-- **In the 0.8.x public beta builds, usage statistics are off.** Nothing is collected, you are not asked, and the `Settings → Privacy` category does not appear. That is a property of the build rather than a setting you could change: collection is inert in a beta build by construction.
-- **From 1.0 they are on by default**, and the first launch asks you with a **Help make NetCrux better** screen whose **Send anonymous usage statistics** switch you can turn off before you continue. In the EEA, the United Kingdom, Switzerland and South Korea the switch starts **off**, and nothing is sent unless you turn it on.
+- **Usage statistics are on by default**, and the first launch asks you with a **Help make NetCrux better** screen whose **Send anonymous usage statistics** switch you can turn off before you continue. In the EEA, the United Kingdom, Switzerland and South Korea the switch starts **off**, and nothing is sent unless you turn it on.
 - **You can change your answer at any time** in `Settings → Privacy → Send anonymous usage statistics`. The same category shows your random **Installation ID** — the only identifier attached to what is collected, and not linked to you; send it to [support@ferriteengineering.com](mailto:support@ferriteengineering.com) if you want this installation's data deleted — and links to the telemetry documentation.
 - An organization can switch collection off for a whole fleet with its [signed policy file](https://edacrux.app/policy-reference); that also suppresses the first-launch question.
 
