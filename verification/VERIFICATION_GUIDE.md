@@ -1025,6 +1025,21 @@ Before this indicator, `CxpPeerConnector.dialFailures` was consumed nowhere: an 
 
 **Automation status.** `[Coverage: UNIT_TEST]` — `test/features/remote/providers/cxp_dial_failures_provider_test.dart` drives the provider through the empty-server path, the discovery-degraded (no stream) path, a dial failure producing a snapshot, and a fresh re-read after recovery (proving the provider re-reads the map rather than accumulating). `test/features/remote/widgets/cross_probe_panel_test.dart` asserts the warning row + icon render on a dial failure and are absent when the failure list is empty. `test/services/remote/cxp/netcrux_cxp_server_test.dart` pins the server getters (null/empty before start, live after, back to null on stop). Steps 1–3 against a real lingering manifest and a live recovery stay `[Coverage: MANUAL]`.
 
+### 6.5.3 Cross-probe panel: the send button's PRO badge
+
+**What it does.** Each peer row's **Send selection to this peer** button carries the suite's feature-tier chip (`NetCruxFeatureTierBadge`, reading **PRO**) on its leading side, so the tier is visible before the press, as on every other gated control (crux-shared#8). The chip comes from the shared panel's optional `sendBadgeBuilder` seam (`crux_cxp_ui`), which `NetCruxCrossProbePanel` fills with `kCrossProbeOriginateRequiredTier`, the same constant `crossProbeOriginateGateProvider` enforces. The chip names what the feature needs, not what the seat holds, so it shows at every tier and during the beta. It labels the button and does not gate it: the gate still runs on the press.
+
+**Setup.** Launch NetCrux with `cxpServerEnabled = true`, open a design, and start a peer (e.g. WaveCrux) so one peer row is listed.
+
+**Steps.**
+
+1. Open the Cross-Probe panel at Open Core (a release build with no licence, or `--dart-define=LICENSE_TIER=openCore`). Expected: the peer row shows a **PRO** chip immediately left of the send icon, before anything is pressed.
+2. Press the send button. Expected: the upgrade dialog opens naming Pro; the peer receives nothing.
+3. Relaunch with `--dart-define=LICENSE_TIER=pro` and open the panel. Expected: the **PRO** chip is still shown, and a press with a cell selected reaches the peer.
+4. Switch the app to light and dark themes, and to each of the five locales. Expected: the chip stays legible and its label is the locale's `tierBadgePro` string; a screen reader announces the chip's Pro semantic label beside the button's tooltip.
+
+**Automation status.** `[Coverage: UNIT_TEST]`: `test/features/remote/widgets/cross_probe_panel_test.dart` asserts the chip renders before any press at post-beta Open Core with the gate's required tier and leads the button, and still renders at Pro and during the beta. `crux-shared/packages/crux_cxp_ui/test/cross_probe_panel_test.dart` pins the seam itself (no badge without a builder, a null per-row answer leaves that row bare, the badge never blocks the send). Step 4 stays `[Coverage: MANUAL]`.
+
 ### 6.6 Locale sweep
 
 The cross-probe panel and the Settings → CXP Cross-Probe section render in all five locales (en, zh_CN, zh, ja, ko). Automated via the locale-sweep test in `test/features/remote/widgets/cross_probe_panel_test.dart`.

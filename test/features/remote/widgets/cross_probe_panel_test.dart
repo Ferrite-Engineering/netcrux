@@ -428,6 +428,52 @@ void main() {
         expect(asked, 1);
         expect(wire.sent, isEmpty);
       });
+
+      // Badge before the click (crux-shared#8): the gate above only speaks
+      // once the button is pressed, and every other gated control in the
+      // suite is labelled before that.
+      Finder sendBadge() => find.descendant(
+        of: find.byKey(const Key('cross_probe_send_badge_wavecrux-panel-peer')),
+        matching: find.byType(FeatureTierBadge),
+      );
+
+      testWidgets('post-beta at Open Core: the send button wears its PRO '
+          'badge before it is pressed', (tester) async {
+        final container = gated(beta: false, tier: LicenseTier.openCore);
+        await tester.pumpWidget(_wrap(container));
+        await tester.pump();
+
+        expect(wire.sent, isEmpty, reason: 'nothing has been pressed');
+        expect(sendBadge(), findsOneWidget);
+        final badge = tester.widget<FeatureTierBadge>(sendBadge());
+        expect(badge.requiredTier, kCrossProbeOriginateRequiredTier);
+        final l10n = await L10N.delegate.load(const Locale('en'));
+        expect(
+          find.descendant(
+            of: sendBadge(),
+            matching: find.text(l10n.tierBadgePro),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester.getCenter(sendBadge()).dx,
+          lessThan(tester.getCenter(find.byKey(_sendKey)).dx),
+          reason: 'the badge leads the button it labels',
+        );
+      });
+
+      testWidgets('the badge names the feature, not the seat: it shows at '
+          'Pro and during the beta too', (tester) async {
+        for (final (beta, tier) in <(bool, LicenseTier)>[
+          (false, LicenseTier.pro),
+          (true, LicenseTier.openCore),
+        ]) {
+          final container = gated(beta: beta, tier: tier);
+          await tester.pumpWidget(_wrap(container));
+          await tester.pump();
+          expect(sendBadge(), findsOneWidget, reason: 'beta=$beta tier=$tier');
+        }
+      });
     });
 
     testWidgets('a rejected send (honored:false ack) raises a panel toast', (

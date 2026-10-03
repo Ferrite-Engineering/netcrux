@@ -19,6 +19,13 @@ import 'package:netcrux/shared/widgets/netcrux_upgrade_dialog.dart';
 /// button; the one answer that is never acceptable is nothing.
 typedef CrossProbeOriginateGate = bool Function(BuildContext context);
 
+/// The tier that originating a cross-probe requires once the beta ends.
+///
+/// One constant for the two places that state it: the gate below, which
+/// enforces it, and the cross-probe panel's send-button badge, which labels it
+/// before the click. Two literals could drift apart; one cannot.
+const LicenseTier kCrossProbeOriginateRequiredTier = LicenseTier.pro;
+
 /// The gate the cross-probe panel's per-peer send button consults.
 ///
 /// ### Why the panel needs a gate of its own
@@ -60,7 +67,7 @@ final Provider<CrossProbeOriginateGate> crossProbeOriginateGateProvider =
         final unlocked =
             ref.read(betaPeriodProvider) ||
             FeatureGate.satisfiesTier(
-              LicenseTier.pro,
+              kCrossProbeOriginateRequiredTier,
               ref.read(licenseTierProvider),
             );
         if (unlocked) return true;
@@ -74,13 +81,13 @@ final Provider<CrossProbeOriginateGate> crossProbeOriginateGateProvider =
           NetcruxUpgradeDialog.show(
             context,
             featureLabel: L10N.of(context).crossProbeSendTooltip,
-            requiredTier: LicenseTier.pro,
+            requiredTier: kCrossProbeOriginateRequiredTier,
             onOpened: () => telemetry.record(
               TelemetryEvent(
                 'tier.gate_hit',
                 properties: <String, Object?>{
                   'feature': telemetryEnumToken(NetcruxGatedFeature.crossProbe),
-                  'required': LicenseTier.pro.name,
+                  'required': kCrossProbeOriginateRequiredTier.name,
                 },
               ),
             ),

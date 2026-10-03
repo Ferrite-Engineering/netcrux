@@ -30,7 +30,7 @@ Then press ++bracket-left++ in NetCrux to walk back to the driver — see [Trace
 
 Click a cell, port or net in NetCrux. With `Settings → CXP Cross-Probe → Broadcast selection automatically` on (the default), NetCrux broadcasts a `notify_selection` carrying the canonical element path and the scope path in `metadata`. Peers decide what to do with it.
 
-You can also target one peer explicitly: in the Cross-Probe panel, press **Send selection to this peer** on that peer's row. That sends a `request_highlight` and waits for the peer's ack. Nothing is shown when the peer honours it; if the peer went away or did not answer you get a notice that it could not act on the cross-probe, and a refusal shows the peer's reason. With nothing selected, or with the server off, the button does nothing.
+You can also target one peer explicitly: in the Cross-Probe panel, press **Send selection to this peer** on that peer's row. The **PRO** badge beside the button marks this as a Pro <span class="tier tier-pro">Pro</span> feature; in Open Core the press opens the upgrade dialog instead. That sends a `request_highlight` and waits for the peer's ack. Nothing is shown when the peer honours it; if the peer went away or did not answer you get a notice that it could not act on the cross-probe, and a refusal shows the peer's reason. With nothing selected, or with the server off, the button does nothing.
 
 With Pro <span class="tier tier-pro">Pro</span>, right-click the element and choose **Cross-probe → wavecrux** instead, or use **Open in WaveCrux** on an analysis panel's header.
 

@@ -30,6 +30,8 @@ Every edition can **receive** cross-probes. When another suite tool asks NetCrux
 
 Every edition can send, too. With **Broadcast selection automatically** on, each selection change is announced to connected peers. The **Cross-Probe** panel (`View → Show Cross-Probe Panel`, ++cmd+shift+x++ / ++ctrl+shift+x++, or the toolbar button) lists the discovered peers — each with a **Send selection to this peer** button that asks that peer to highlight what you have selected — plus unreachable peers and a log of recent events.
 
+The send button carries a **PRO** badge on its left, because sending to one chosen peer from the panel is a Pro <span class="tier tier-pro">Pro</span> feature. The badge is there in every edition, so you can see the tier before you press it. In Open Core, pressing it sends nothing and opens the upgrade dialog instead; the panel's peer list, unreachable-peer warnings and event log stay available in every edition, as does the automatic broadcast.
+
 Pro <span class="tier tier-pro">Pro</span> adds cross-probing from the schematic itself: right-click an element and choose **Cross-probe → *peer*** for any connected peer (the entry reads **Cross-probe → (no peers)** when none are connected). The Pro analysis panels also carry an **Open in WaveCrux** button on their headers, so you can send the selected crossing or element straight to a waveform.
 
 !!! note "Source locations over CXP"

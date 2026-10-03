@@ -22,6 +22,7 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/remote/cxp/cxp_selection_resolver.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
+import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
 /// NetCrux's docked cross-probe panel.
 ///
@@ -69,6 +70,14 @@ class _NetCruxCrossProbePanelState
       // label and the ×, so the panel's own header would duplicate all
       // three directly underneath.
       showHeader: false,
+      // Badge before the click: the send button reaches a Pro capability,
+      // so it wears the suite's feature-tier chip like every other gated
+      // control. The chip names what the FEATURE needs, not what the seat
+      // holds, so it shows at every tier and during the beta; the gate in
+      // the controller's send decides, and explains a denial.
+      sendBadgeBuilder: (_, _) => const NetCruxFeatureTierBadge(
+        requiredTier: kCrossProbeOriginateRequiredTier,
+      ),
       strings: cxp_ui.CrossProbePanelStrings(
         title: l10n.crossProbePanelTitle,
         closeTooltip: l10n.crossProbeCloseTooltip,
