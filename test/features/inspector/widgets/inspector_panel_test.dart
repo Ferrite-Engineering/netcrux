@@ -11,8 +11,10 @@ import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
+import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/inspector/widgets/inspector_panel.dart';
@@ -39,6 +41,58 @@ const _graph = LaidOutGraph(
         kind: CellKind.generic,
         type: 'alu',
         ports: [],
+      ),
+    ],
+    boundaryPorts: <SchematicBoundaryPort>[],
+    edges: <SchematicEdge>[],
+  ),
+  layout: NetlistLayout(
+    nodes: <NodePosition>[],
+    edges: <EdgeRoute>[],
+    bounds: BoundingBox(x: 0, y: 0, width: 0, height: 0),
+  ),
+);
+
+/// A multiplier with one input on an undriven net, one tied to 0, one tied
+/// to x and one the netlist left unconnected.
+const _tiedGraph = LaidOutGraph(
+  graph: SchematicGraph(
+    moduleName: 'top',
+    cells: <SchematicCell>[
+      SchematicCell(
+        id: 'u_mul',
+        kind: CellKind.generic,
+        type: r'$mul',
+        ports: <SchematicPort>[
+          SchematicPort(
+            id: 'u_mul:A',
+            name: 'A',
+            direction: PortDirection.input,
+            side: SchematicPortSide.west,
+            tie: PinTie.undriven,
+          ),
+          SchematicPort(
+            id: 'u_mul:B',
+            name: 'B',
+            direction: PortDirection.input,
+            side: SchematicPortSide.west,
+            tie: PinTie.constant('0'),
+          ),
+          SchematicPort(
+            id: 'u_mul:C',
+            name: 'C',
+            direction: PortDirection.input,
+            side: SchematicPortSide.west,
+            tie: PinTie.constant('x'),
+          ),
+          SchematicPort(
+            id: 'u_mul:D',
+            name: 'D',
+            direction: PortDirection.input,
+            side: SchematicPortSide.west,
+            tie: PinTie.unconnected,
+          ),
+        ],
       ),
     ],
     boundaryPorts: <SchematicBoundaryPort>[],
@@ -149,6 +203,65 @@ void main() {
         expect(tester.takeException(), isNull);
         // The instance id is locale-independent, so it always renders.
         expect(find.text('u_alu'), findsOneWidget);
+      });
+    }
+  });
+
+  group('pin ties', () {
+    testWidgets('the cell view says what each pin is tied to', (tester) async {
+      final container = _container(graph: _tiedGraph);
+      addTearDown(container.dispose);
+      container
+          .read(selectedElementProvider.notifier)
+          .select(const SelectedElement.cell(cellId: 'u_mul'));
+      await tester.pumpWidget(_wrap(container, const Locale('en')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('input, Undriven (no driver in this scope)'),
+        findsOneWidget,
+      );
+      expect(find.text('input, Constant 0'), findsOneWidget);
+      expect(find.text('input, x (unknown value)'), findsOneWidget);
+      expect(find.text('input, Unconnected'), findsOneWidget);
+    });
+
+    testWidgets('the port view has a Tied to row', (tester) async {
+      final container = _container(graph: _tiedGraph);
+      addTearDown(container.dispose);
+      container
+          .read(selectedElementProvider.notifier)
+          .select(
+            const SelectedElement.port(
+              cellId: 'u_mul',
+              portId: 'u_mul:A',
+              portName: 'A',
+            ),
+          );
+      await tester.pumpWidget(_wrap(container, const Locale('en')));
+      await tester.pumpAndSettle();
+      expect(find.text('Tied to'), findsOneWidget);
+      expect(find.text('Undriven (no driver in this scope)'), findsOneWidget);
+    });
+
+    for (final locale in _locales) {
+      testWidgets('the port view pumps cleanly in $locale', (tester) async {
+        final container = _container(graph: _tiedGraph);
+        addTearDown(container.dispose);
+        container
+            .read(selectedElementProvider.notifier)
+            .select(
+              const SelectedElement.port(
+                cellId: 'u_mul',
+                portId: 'u_mul:B',
+                portName: 'B',
+              ),
+            );
+        await tester.pumpWidget(_wrap(container, locale));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final l10n = await L10N.delegate.load(locale);
+        expect(find.text(l10n.inspectorFieldTiedTo), findsOneWidget);
+        expect(find.text(l10n.inspectorTieConstant('0')), findsOneWidget);
       });
     }
   });

@@ -39,6 +39,7 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/flutter_js_host_vm.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
+import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 
 import '../../helpers/elk_ffi_library_gate.dart';
 
@@ -78,7 +79,10 @@ String _elkInputFor(_Scope scope) {
       ? utf8.decode(gzip.decode(bytes))
       : utf8.decode(bytes);
   final model = NetlistModel.fromJson(jsonDecode(text) as Map<String, Object?>);
-  return jsonEncode(buildElkInput(model.modules[scope.module]!));
+  // The module the app lays out: with every declared port of every cell.
+  return jsonEncode(
+    buildElkInput(withDeclaredCellPorts(model, model.modules[scope.module]!)),
+  );
 }
 
 /// 32-bit FNV-1a over the input text plus its length: enough to tell "same

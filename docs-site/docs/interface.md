@@ -14,12 +14,24 @@ The canvas is the center of the app and renders the elaborated netlist for the c
 
 - **Cells** are drawn as symbols. AND, OR, NOT, multiplexer, flip-flop and latch primitives get recognizable gate symbols; submodule instances and every other cell type are labeled rectangles.
 - **Wires** route between ports; the enclosing module's own ports sit on the boundary.
-- **Pins** keep to their faces: a cell's inputs are always on its left edge and its outputs on its right, even on a feedback loop or a pin with no wire.
+- **Pins** keep to their faces: a cell's inputs are always on its left edge and its outputs on its right, even on a feedback loop or a pin with no wire. Every port the cell's module or primitive declares is drawn, so a port the netlist leaves unconnected shows as a bare pin rather than going missing. See [Pin stubs](#pin-stubs).
 - **Hierarchical instances** represent submodules — double-click one to push into it.
 - A **three-band level-of-detail** system simplifies the drawing as you zoom out, so a large module stays legible. See [Navigating the schematic](navigating.md#lod).
 - The **breadcrumb bar** above the canvas shows your scope path — for example `top › cpu › alu` — and each crumb is clickable to jump straight to that level.
 
 **Pan** by dragging empty canvas, with the middle mouse button, with the scroll wheel or a two-finger trackpad scroll, or with the arrow keys; **zoom** with ++cmd++ / ++ctrl++ + scroll wheel or a pinch. Vertical and horizontal scrollbars flank the canvas, so off-screen cells are always reachable without a gesture. Selecting a cell, port or net highlights it and surfaces its details in the inspector. Right-click an element for its context menu: **Copy Path**, **Trace Fanin**, **Trace Fanout**, **Find in Hierarchy** and **Open in Inspector**, plus the Pro entries described elsewhere in this guide.
+
+### Pin stubs {#pin-stubs}
+
+A pin with no wire is marked by what it is tied to, so a dangling input stands out from a deliberate constant:
+
+| Pin | Drawn as |
+|---|---|
+| Tied to a constant | A short stub labelled with the value: `0`, `1`, `x` or `z`, or the bits most significant first when they differ. |
+| Undriven: on a net nothing in this scope drives | A stub in the theme's error colour ending in an open ring. |
+| Unconnected: declared by the cell but connected to nothing | A bare pin. |
+
+Stubs show from zoom 0.25 up; the constant labels need zoom 0.75 or more, like the other labels (see [level of detail](navigating.md#lod)). The inspector names each pin's tie in words.
 
 ## Hierarchy tree {#hierarchy}
 
@@ -31,9 +43,9 @@ The filter matches scopes by instance or module name, and lists the cells that m
 
 The right panel is the **inspector**, showing the details of whatever is selected:
 
-- **Cell** — instance name, type, kind, parameters, and its ports with their directions.
-- **Port** — the instance, port name, direction and width. A module boundary port shows `(boundary)` as its instance.
-- **Wire** — net name, net ID, driver and sinks.
+- **Cell**: instance name, type, kind, parameters, and its ports with their directions and what each is tied to.
+- **Port**: the instance, port name, direction, width and **Tied to**: the net it is on, a constant, `x`, undriven or unconnected. A module boundary port shows `(boundary)` as its instance.
+- **Wire**: net name, net ID, driver and sinks.
 
 The **Go to source** button above the details, badged <span class="tier tier-pro">Pro</span>, opens the RTL behind the selection in the Pro [RTL source pane](source-and-inspection.md#source-pane); in Open Core it says it requires NetCrux Pro. Toggle the inspector with ++cmd+2++ / ++ctrl+2++.
 

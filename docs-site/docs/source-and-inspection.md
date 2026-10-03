@@ -8,9 +8,19 @@ The right-hand **inspector** (toggle with ++cmd+2++ / ++ctrl+2++) shows the deta
 
 | Selection | What the inspector shows |
 |---|---|
-| Cell | **Instance**, **Type** (the Yosys cell type or module name), **Kind**, **Parameters** when the cell has any, and its **Ports** with their directions. |
-| Port | The **Instance**, the port name, **Direction** and **Width**. A module boundary port shows `(boundary)` as its instance. |
+| Cell | **Instance**, **Type** (the Yosys cell type or module name), **Kind**, **Parameters** when the cell has any, and its **Ports**, each with its direction and what it is tied to. |
+| Port | The **Instance**, the port name, **Direction**, **Width** and **Tied to**. A module boundary port shows `(boundary)` as its instance and no tie. |
 | Wire | The **Net** name, **Net ID**, **Driver** and **Sinks**. |
+
+**Tied to** reads one of:
+
+- the **net** the pin is on, by name (or `Net` and its ID when Yosys named none); a bus lists its nets most significant first, with the value of any bit tied to a constant;
+- **Constant** and the value, when every bit is `0`, `1` or `z`;
+- **x (unknown value)**, when every bit is `x`. Yosys ties unused inputs to `x` on purpose, for example the mask and write-data bits of an iCE40 block RAM, so an `x` pin is not by itself a fault;
+- **Undriven (no driver in this scope)**, when any bit of the input is on a net that no cell output, inout or module input in this scope drives;
+- **Unconnected**, when the cell's module or primitive declares the port but the netlist connects nothing to it.
+
+The canvas marks the same ties with [pin stubs](interface.md#pin-stubs).
 
 Right-click an element on the canvas and choose **Open in Inspector** to make it the primary selection. Above the details, a **Go to source** button <span class="tier tier-pro">Pro</span> opens the element's RTL in the [RTL source pane](#source-pane). In Open Core it says it requires NetCrux Pro.
 

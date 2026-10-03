@@ -504,6 +504,56 @@
   "@inspectorFieldNetId": {
     "description": "Inspector field label for the numeric net identifier (Yosys uses integer net ids)."
   },
+  "inspectorFieldTiedTo": "接続先",
+  "@inspectorFieldTiedTo": {
+    "description": "Inspector field label for what a selected cell pin is tied to: a net name, a constant, x, undriven or unconnected."
+  },
+  "inspectorTieConstant": "定数 {value}",
+  "@inspectorTieConstant": {
+    "description": "What a cell pin is tied to when every bit is a constant. {value} is the constant as the schematic labels it, such as 0, 1 or 0101 (most significant bit first).",
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "0"
+      }
+    }
+  },
+  "inspectorTieUnknown": "x（不定値）",
+  "@inspectorTieUnknown": {
+    "description": "What a cell pin is tied to when every bit is the Yosys constant x, an unknown value. Keep the letter x as it is."
+  },
+  "inspectorTieUndriven": "未駆動（このスコープにドライバーがありません）",
+  "@inspectorTieUndriven": {
+    "description": "What a cell input is tied to when it reads a net that nothing in the current scope drives."
+  },
+  "inspectorTieUnconnected": "未接続",
+  "@inspectorTieUnconnected": {
+    "description": "What a cell pin is tied to when its module or primitive declares the port but the netlist connects nothing to it."
+  },
+  "inspectorTieNet": "ネット {netId}",
+  "@inspectorTieNet": {
+    "description": "Name for a net Yosys gave no name, identified by its integer net id.",
+    "placeholders": {
+      "netId": {
+        "type": "int",
+        "example": "576"
+      }
+    }
+  },
+  "inspectorPortWithTie": "{direction}、{tie}",
+  "@inspectorPortWithTie": {
+    "description": "One row of the Ports list of a selected cell: the pin direction followed by what the pin is tied to.",
+    "placeholders": {
+      "direction": {
+        "type": "String",
+        "example": "input"
+      },
+      "tie": {
+        "type": "String",
+        "example": "Constant 0"
+      }
+    }
+  },
   "inspectorFieldDriver": "ドライバー",
   "@inspectorFieldDriver": {
     "description": "Inspector field label for the driving port of a wire."

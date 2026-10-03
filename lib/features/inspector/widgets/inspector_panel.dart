@@ -5,12 +5,14 @@ import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
+import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/inspector/services/pin_tie_text.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
@@ -23,8 +25,10 @@ import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 /// Renders one of four states based on the active [SelectedElement]:
 ///
 /// - none → empty message.
-/// - cell → type / instance / parameters / port-binding table.
-/// - port (or boundary port) → direction / width / net.
+/// - cell → type / instance / parameters / port-binding table, each pin
+///   with what it is tied to.
+/// - port → direction / width / what it is tied to; boundary port →
+///   direction / width.
 /// - wire → net name / width / driver / sinks.
 class InspectorPanel extends ConsumerWidget {
   /// Creates an inspector panel.
@@ -113,6 +117,7 @@ class InspectorPanel extends ConsumerWidget {
                   _PortView(
                     cellId: cellId,
                     portName: portName,
+                    schematic: laidOut.graph,
                     module: module,
                   ),
                 SelectedElementBoundaryPort(:final portName) =>
@@ -218,10 +223,16 @@ class _CellView extends StatelessWidget {
       ..add(const Divider(height: 16))
       ..add(_SectionHeader(text: l10n.inspectorPortsHeader));
     for (final port in cell.ports) {
+      final tie = pinTieText(
+        l10n,
+        port.tie,
+        modCell?.connections[port.name] ?? const <BitRef>[],
+        module,
+      );
       children.add(
         _FieldRow(
           label: port.name,
-          value: port.direction.name,
+          value: l10n.inspectorPortWithTie(port.direction.name, tie),
         ),
       );
     }
@@ -238,19 +249,32 @@ class _PortView extends StatelessWidget {
   const _PortView({
     required this.cellId,
     required this.portName,
+    required this.schematic,
     required this.module,
   });
 
   final String cellId;
   final String portName;
+  final SchematicGraph schematic;
   final Module? module;
 
   @override
   Widget build(BuildContext context) {
     final l10n = L10N.of(context);
     final cell = module?.cells[cellId];
-    final direction = cell?.portDirections[portName] ?? PortDirection.input;
-    final bits = cell?.connections[portName] ?? const [];
+    final bits = cell?.connections[portName] ?? const <BitRef>[];
+    // The drawn pin carries the tie, and the direction of a declared port
+    // the netlist left out of `connections`, which the raw cell lacks.
+    final drawn = schematic.cells
+        .where((c) => c.id == cellId)
+        .firstOrNull
+        ?.ports
+        .where((p) => p.name == portName)
+        .firstOrNull;
+    final direction =
+        cell?.portDirections[portName] ??
+        drawn?.direction ??
+        PortDirection.input;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -259,6 +283,11 @@ class _PortView extends StatelessWidget {
         _FieldRow(label: 'port', value: portName),
         _FieldRow(label: l10n.inspectorFieldDirection, value: direction.name),
         _FieldRow(label: l10n.inspectorFieldWidth, value: '${bits.length}'),
+        if (drawn != null)
+          _FieldRow(
+            label: l10n.inspectorFieldTiedTo,
+            value: pinTieText(l10n, drawn.tie, bits, module),
+          ),
       ],
     );
   }

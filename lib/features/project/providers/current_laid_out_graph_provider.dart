@@ -7,6 +7,7 @@ import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart'
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
+import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -71,7 +72,9 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   // `AsyncValue.isLoading` — a second flag could only ever disagree.
   final stopwatch = Stopwatch()..start();
   try {
-    final layout = await service.layout(module);
+    // The same patched module the graph builder draws from, so every pin
+    // it adds for a declared-but-unconnected port has a place.
+    final layout = await service.layout(withDeclaredCellPorts(model, module));
     ref.read(layoutTimingProvider.notifier).completed(stopwatch.elapsed);
     return LaidOutGraph(graph: graph, layout: layout);
   } on LayoutException {

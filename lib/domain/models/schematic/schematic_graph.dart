@@ -4,6 +4,7 @@
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 
 /// Direction of a [SchematicPort] on its parent [SchematicCell].
 enum SchematicPortSide {
@@ -35,6 +36,7 @@ class SchematicPort {
     required this.name,
     required this.direction,
     required this.side,
+    this.tie = PinTie.net,
   });
 
   /// `<cellName>:<portName>` — stable across builder runs.
@@ -50,6 +52,11 @@ class SchematicPort {
   /// Which face of the cell symbol the port lives on.
   final SchematicPortSide side;
 
+  /// What the pin is tied to: nets, a constant, an undriven net, or
+  /// nothing. Drives the stub the canvas draws beside the pin and the
+  /// inspector's "Tied to" row.
+  final PinTie tie;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -57,13 +64,14 @@ class SchematicPort {
           other.id == id &&
           other.name == name &&
           other.direction == direction &&
-          other.side == side);
+          other.side == side &&
+          other.tie == tie);
 
   @override
-  int get hashCode => Object.hash(id, name, direction, side);
+  int get hashCode => Object.hash(id, name, direction, side, tie);
 
   @override
-  String toString() => 'SchematicPort($id, $direction, $side)';
+  String toString() => 'SchematicPort($id, $direction, $side, $tie)';
 }
 
 /// A drawn cell on the schematic canvas. May be a primitive ([CellKind]

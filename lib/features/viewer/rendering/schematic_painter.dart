@@ -17,6 +17,7 @@ import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
@@ -719,6 +720,7 @@ class SchematicCanvasRenderObject extends RenderBox {
           position,
           isHighlighted,
           selectedPortIds,
+          band,
         );
       }
       if (!isHighlighted) {
@@ -828,6 +830,7 @@ class SchematicCanvasRenderObject extends RenderBox {
     NodePosition position,
     bool isHighlighted,
     Set<String> selectedPortIds,
+    LodBand band,
   ) {
     final stubPaint = Paint()
       ..color = isHighlighted
@@ -837,18 +840,96 @@ class SchematicCanvasRenderObject extends RenderBox {
     final selPaint = Paint()
       ..color = NetcruxColors.selectionAccent
       ..style = PaintingStyle.fill;
+    final undrivenPaint = Paint()
+      ..color = isHighlighted
+          ? _theme.colorScheme.error
+          : NetcruxColors.overlayDimStroke
+      ..style = PaintingStyle.fill;
     for (final port in cell.ports) {
       final box = position.ports[port.id];
       if (box == null) continue;
       final cx = position.bounds.x + box.x + box.width / 2;
       final cy = position.bounds.y + box.y + box.height / 2;
       final isSelectedPort = selectedPortIds.contains(port.id);
+      final tie = port.tie;
+      if (tie.kind == PinTieKind.constant || tie.kind == PinTieKind.undriven) {
+        // The stub leaves the pin away from the body: leftwards from a pin
+        // on the west half of the cell, rightwards from one on the east.
+        final outward = box.x + box.width / 2 < position.bounds.width / 2
+            ? -1.0
+            : 1.0;
+        _paintTieStub(
+          canvas,
+          port,
+          Offset(cx, cy),
+          outward,
+          isHighlighted,
+          band,
+        );
+      }
+      final dotPaint = isSelectedPort
+          ? selPaint
+          : tie.kind == PinTieKind.undriven
+          ? undrivenPaint
+          : stubPaint;
       canvas.drawCircle(
         Offset(cx, cy),
         isSelectedPort ? 3.5 : 2.5,
-        isSelectedPort ? selPaint : stubPaint,
+        dotPaint,
       );
     }
+  }
+
+  /// Design-space length of the stub drawn out of a constant-tied or
+  /// undriven pin. Short enough to stay inside the gap ELK leaves between
+  /// layers.
+  static const double _tieStubLength = 9;
+
+  /// Draws the stub of a pin whose [SchematicPort.tie] is a constant or
+  /// undriven, from [pin] towards [outward] (`-1` left, `1` right).
+  ///
+  /// A constant gets a stub in the muted wire colour, labelled with its
+  /// value in the detail band. An undriven input gets a stub in the theme's
+  /// error colour ending in an open ring, the mark of a pin left floating;
+  /// it needs no text to read at any zoom the stub is drawn at.
+  void _paintTieStub(
+    Canvas canvas,
+    SchematicPort port,
+    Offset pin,
+    double outward,
+    bool isHighlighted,
+    LodBand band,
+  ) {
+    final undriven = port.tie.kind == PinTieKind.undriven;
+    final colour = !isHighlighted
+        ? NetcruxColors.overlayDimStroke
+        : undriven
+        ? _theme.colorScheme.error
+        : _theme.colorScheme.onSurfaceVariant;
+    final stroke = Paint()
+      ..color = colour
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = undriven ? 1.6 : 1.2;
+    final end = pin.translate(outward * _tieStubLength, 0);
+    canvas.drawLine(pin, end, stroke);
+    if (undriven) {
+      canvas.drawCircle(end.translate(outward * 2, 0), 2, stroke);
+      return;
+    }
+    final text = port.tie.constantText;
+    if (band != LodBand.detail || text == null) return;
+    final painter = _labelLayout(
+      't:${port.id}:${band.name}:$isHighlighted',
+      text,
+      (_theme.textTheme.labelSmall ?? const TextStyle()).copyWith(
+        color: colour,
+        fontSize: 8,
+        height: 1,
+      ),
+      28,
+    );
+    final dx = outward < 0 ? end.dx - 1 - painter.width : end.dx + 1;
+    painter.paint(canvas, Offset(dx, end.dy - painter.height / 2));
   }
 
   void _paintDimVeil(Canvas canvas, Rect rect) {

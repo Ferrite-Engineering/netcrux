@@ -728,6 +728,52 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
 
 ---
 
+## 4.12 Pin ties: constant and undriven stubs, declared ports, the inspector's Tied to
+
+- **What it does.** Two things about a cell's pins. (1) **Declared ports:** `withDeclaredCellPorts` adds every port a cell's module (a user module, a `$paramod`, or a cell-library black box such as `SB_PLL40_CORE`) or a parameter-independent Yosys cell (`$mul`, `$add`, `$mux`, the `$_AND_` gates and so on) declares but the netlist omitted, as a port with no bits; the graph builder and the layout both use the patched module, so the pin is drawn, on its fixed face (§3.3). (2) **Pin ties:** `SchematicGraphBuilder` gives every pin a `PinTie`: on nets, a constant, undriven (an input with a bit on a net nothing in the scope drives: no cell output or inout, no module input or inout), or unconnected (no bits). The canvas draws a constant as a short stub labelled `0`, `1`, `x`, `z` (or the bits most significant first when they differ) and an undriven input as a stub in the theme's `colorScheme.error` ending in an open ring; an unconnected pin is a bare pin. The inspector names the tie of every pin: the Ports rows of a cell read `<direction>, <tie>`, and a selected pin has a **Tied to** row.
+- **Setup.** Two designs. (a) The iCE40 SERV netlist, unpacked for **Open Netlist JSON…**:
+
+  ```bash
+  gunzip -c test/fixtures/netlist/serv_ice40/captured/serv_ice40.netlist.json.gz > /tmp/serv_ice40.netlist.json
+  ```
+
+  (b) A small Verilog file, `tied.v`, opened with **Open Source Files…** (top `tied`):
+
+  ```verilog
+  module sub(input a, input b, output y);
+    assign y = a ^ b;
+  endmodule
+
+  module tied(input [3:0] a, input c, output [7:0] p, output [3:0] s, output y);
+    wire [3:0] dangling;          // read, never driven
+    assign p = a * dangling;      // $mul with an undriven B
+    assign s = a + 4'd1;          // $add with B tied to 0001
+    sub u_sub(.a(c), .y(y));      // b left unconnected
+  endmodule
+  ```
+- **Steps and expected behavior.**
+  1. Open (a). Find `servant.servile.cpu.alu.add_cy_r_SB_LUT4_I3_1` (**Search Design**). Expected: I0 and I1 each have a short stub labelled `0` at zoom 0.75 or more; I2 and I3 have wires. Click I3: the inspector's **Tied to** row reads `servant.servile.cpu.alu.add_cy_r`. Select the cell: its Ports rows read `input, Constant 0` for I0 and I1.
+  2. Select a block RAM such as `servant.ram.mem.0.0` (`SB_RAM40_4K`). Expected: MASK has a stub labelled `x` and reads `input, x (unknown value)`; WDATA reads its two data nets and `x`. No pin anywhere in this design has a warning stub: `x` ties are not faults.
+  3. Select the PLL (`SB_PLL40_CORE`). Expected: twelve pins, including PLLOUTGLOBAL, EXTFEEDBACK, DYNAMICDELAY, LATCHINPUTVALUE, SDO, SDI and SCLK, which the netlist leaves out of the cell's connections; each reads `Unconnected`.
+  4. Open (b). Expected: the `$mul` cell's B pin has a stub in the error colour with an open ring, and **Tied to** reads `Undriven (no driver in this scope)`. The `$add` cell's B pin has a stub labelled `0001`. The `u_sub` cell shows three pins, with `b` bare and reading `Unconnected`.
+  5. Zoom out through the bands. Expected: stubs stay visible down to zoom 0.25 and the constant labels disappear below 0.75, like the other labels; in the overview band no stubs are drawn.
+  6. Switch through all six colour presets (Settings > Appearance), including High Contrast Dark, and the light / dark modes. Expected: the undriven stub stays clearly distinct from wires, pin dots and the selection accent in every one.
+  7. Switch the language to each shipped locale and reselect the pins above. Expected: the **Tied to** row and the Ports rows are translated; no clipped or missing text.
+- **Edge cases.** A pin with some bits on nets and some constant reads as its nets plus the constant values and draws no stub. An output is never undriven, and neither is an inout (its other driver may be outside the scope). A cell type nothing declares is drawn with the pins the netlist lists, unchanged. A design with no omitted ports lays out from the same ELK input as before, so its cached layouts stay valid.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | The parity references lay out the patched module, so serv_ice40's PLL pins are placed by both engines alike | `[Coverage: UNIT]` (`test/services/layout/native_elk_parity_test.dart`) |
+  | Declared ports from netlist modules and Yosys cells, declaration order, identity when nothing is missing | `[Coverage: UNIT]` (`test/services/schematic/declared_cell_ports_test.dart`) |
+  | Pin ties on a hand-built netlist with a dangling multiplier input and on serv_ice40 (the carry LUT, 17 RAMs with `x` masks and nothing undriven, the PLL's omitted ports) | `[Coverage: UNIT]` (`test/services/schematic/schematic_graph_builder_test.dart`, "pin ties" group) |
+  | `PinTie` and `SchematicPort.tie` equality | `[Coverage: UNIT]` (`test/domain/models/schematic/pin_tie_test.dart`) |
+  | Inspector tie wording and the five-locale port view | `[Coverage: UNIT]` (`test/features/inspector/services/pin_tie_text_test.dart`) + `[Coverage: WIDGET]` (`test/features/inspector/widgets/inspector_panel_test.dart`, "pin ties" group) |
+  | Stub geometry: constant labels, undriven ring, bare unconnected pin | `[Coverage: UNIT]` golden (`test/features/viewer/rendering/schematic_painter_golden_test.dart`, `goldens/tied_pins_lut.png`) |
+  | Readability across the six presets and real designs (steps 5, 6) | `[Coverage: MANUAL]` |
+
+---
+
 ## 5. Project Files, VHDL, Web Read-Only
 
 This section covers the project/session file formats, filelist import, VHDL (and mixed-language) elaboration through a standalone `ghdl --synth` lowering step, the bounded-memory streaming JSON parser, the web read-only viewer, and Yosys diagnostic surfacing. All items are populated below: the web read-only viewer in §5.1, then `.netcrux-project` (§5.2), `.f` filelist import (§5.3), VHDL via `ghdl --synth` (§5.4), mixed-language designs (§5.5), the JSON streaming parser (§5.6), and Yosys diagnostic surfacing (§5.7).
