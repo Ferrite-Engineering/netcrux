@@ -843,13 +843,16 @@ This section covers the project/session file formats, filelist import, VHDL (and
   1. Import a `.f` with sources + `+define+` + `+incdir+`. Expected: a `NetcruxProject` with those sources, defines, and include dirs.
   2. Import a `.f` that recursively `-f`s another. Expected: the nested list is expanded inline.
   3. Import a `.f` referencing `$VAR`. Expected: the env var is expanded.
-- **Edge cases.** A self-referential / mutually-recursive `-f` chain raises `FilelistCycleException` (no infinite loop). A missing nested `.f` raises `FilelistNotFoundException`. Comments (`//`, `#`) are stripped.
+  4. Elaborate end to end, with Yosys on PATH. In a folder whose name contains a space (for example `~/Desktop/fl test/`), put `inc/defs.vh` holding `` `define WIDTH_A 4 ``, a source `top.v` that does `` `include "defs.vh" `` and declares `` output [`WIDTH_A + `EXTRA - 1:0] y ``, and a `.f` with the lines `+incdir+inc`, `+define+EXTRA=2` and `top.v`. Import it. Expected: the design elaborates and `y` is 6 bits wide in the inspector. Before crux-shared#23 this failed with `Can't open include file`, and no define applied.
+  5. Add `+define+MSG=two words` to the same `.f` and import it again. Expected: the elaboration fails with a diagnostic saying the define must not contain whitespace, rather than elaborating without it.
+- **Edge cases.** A self-referential / mutually-recursive `-f` chain raises `FilelistCycleException` (no infinite loop). A missing nested `.f` raises `FilelistNotFoundException`. Comments (`//`, `#`) are stripped. An include directory whose path contains whitespace reaches Yosys through a per-run link that `crux_yosys` removes after the run.
 - **Automation Assessment.**
 
   | Test | Coverage |
   |---|---|
   | `FilelistReader` parse (sources / defines / incdirs / recursive `-f` / comments / env-var expansion), cycle + not-found exceptions, `readAsProject` | `[Coverage: UNIT]` (`test/services/filelist/filelist_reader_test.dart`) |
   | Import action / empty-canvas button dispatch | `[Coverage: WIDGET]` (`test/features/viewer/widgets/netcrux_toolbar_test.dart` / palette dispatch, §4.1.9) |
+  | Include paths and defines reach a real Yosys, under a path with spaces; a define with whitespace is refused (steps 4, 5) | `[Coverage: UNIT]` (`crux-shared/packages/crux_yosys/test/src/yosys_runner_real_yosys_test.dart`, skipped without Yosys, and `crux-shared/packages/crux_yosys/test/src/yosys_runner_test.dart`) + `[Coverage: MANUAL]` for the import path |
 
 ### 5.4 VHDL via standalone `ghdl --synth` — lowering to Verilog + bundled engines
 

@@ -74,6 +74,8 @@ A `.netcrux-project` file captures everything needed to re-elaborate a design: t
 
 If you already maintain a `.f` filelist for a vendor flow, import it with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). NetCrux reads the source paths, `+incdir+` directories and `+define+` macros out of the filelist — following nested `-f` includes, expanding `$VAR` / `${VAR}` environment variables, and reporting include cycles — and elaborates from there in a new tab. `-y`, `+libext+` and `--top` are not supported.
 
+Source paths and `+incdir+` directories may contain spaces. A `+define+` value may not: Yosys has no way to accept one, so NetCrux reports the define as an error instead of elaborating without it. The same holds for the defines and include paths in a `.netcrux-project`.
+
 Import it from inside NetCrux rather than double-clicking it. On Linux a `.f` file belongs to Fortran, and NetCrux deliberately leaves that association alone rather than taking `.f` from Fortran editors; a double-clicked `.f` therefore opens in whatever your desktop already uses for Fortran. Every other format on this page — projects, sessions, workspaces, design manifests and HDL sources — opens on a double-click.
 
 ## Auto-reload {#auto-reload}
