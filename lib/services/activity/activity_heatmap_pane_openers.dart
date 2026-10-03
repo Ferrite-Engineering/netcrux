@@ -100,9 +100,9 @@ final runActivityAnalysisOpenerProvider = Provider<RunActivityAnalysisOpener>(
 final clearActivityColoringOpenerProvider =
     Provider<ClearActivityColoringOpener>(
       (_) => (_, _) {
-        // Open-core no-op — there is nothing to clear when no Pro
-        // controller has published an override. Pro overlay calls into
-        // its `ProActivityColorOverrideController.clear()`.
+        // Open-core no-op: there is nothing to clear when no Pro
+        // notifier has published an override. The Pro overlay hides its
+        // per-tab activity coloring.
       },
       name: 'clearActivityColoringOpenerProvider',
     );

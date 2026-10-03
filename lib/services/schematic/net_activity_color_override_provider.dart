@@ -17,10 +17,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// pass and the selection pass).
 ///
 /// Open-core resolves to `null` so the painter falls through to its
-/// default rendering. The Pro overlay binds it to a per-tab notifier, but
-/// nothing publishes into that notifier yet — publishing needs each edge's
-/// hierarchical net path, which the heat-map panel does not resolve — so in
-/// every shipped build the map is `null` and no wire is colored by activity.
+/// default rendering. The Pro overlay binds it to a per-tab notifier that
+/// derives the map from the tab's activity result, color scheme and the
+/// scope on the canvas, resolving each laid-out edge to a waveform net path.
 ///
 /// The provider returns `null` (not an empty map) when no override
 /// is active so the painter can branch off the null check rather

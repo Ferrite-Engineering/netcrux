@@ -68,7 +68,7 @@ Both **asynchronous and synchronous** resets are recognized. Yosys lowers the tw
 
 ## Switching-activity heatmap <span class="tier tier-pro">Pro</span> {#heatmap}
 
-The **switching-activity heatmap** measures how often each net toggles in a simulation and lists the result as **Hot Nets** and **Cold Nets** in the docked panel.
+The **switching-activity heatmap** measures how often each net toggles in a simulation, colors the schematic's wires by it, and lists the result as **Hot Nets** and **Cold Nets** in the docked panel.
 
 1. **Load a waveform.**
 
@@ -76,12 +76,22 @@ The **switching-activity heatmap** measures how often each net toggles in a simu
 
 2. **Run the analysis.**
 
-    `Tools → Run Switching Activity Analysis` counts every net's transitions and duty cycle and opens the panel with the hottest and coldest nets. Click a row to select that net on the schematic.
+    `Tools → Run Switching Activity Analysis` counts every net's transitions and duty cycle, colors each wire on the schematic by how hard its net toggles, and opens the panel with the hottest and coldest nets. Click a row to select that net on the schematic.
 
 3. **Narrow the window.**
 
-    The panel's **Full** / **First 10%** / **Middle 10%** / **Last 10%** chips choose the stretch of the simulation that is measured; changing them re-runs the analysis. The color-scheme menu recolors the panel's rows.
+    The panel's **Full** / **First 10%** / **Middle 10%** / **Last 10%** chips choose the stretch of the simulation that is measured; changing them re-runs the analysis and recolors the wires.
 
-!!! note "The schematic is not colored"
+4. **Pick a color scheme.**
 
-    The heatmap is a list. It does not yet color the wires on the schematic, so **Clear Activity Coloring** stays disabled.
+    The panel's scheme menu, also reached through `Tools → Configure Activity Color Scheme…`, offers **Red-Blue heatmap** (blue for quiet nets through yellow to red for the busiest), **Viridis** and **Grayscale**. Both the wires and the panel's rows follow it.
+
+5. **Clear the coloring.**
+
+    `View → Clear Activity Coloring` returns the wires to their usual color and keeps the analysis in the panel. The wires stay uncolored until you run the analysis again or pick a scheme.
+
+The coloring follows you through the design: push into an instance or pop back out and the new scope's wires are colored from the same analysis. Each tab colors its own schematic from its own waveform.
+
+!!! note "Matching the waveform to the design"
+
+    A simulator usually dumps the design under its testbench, so the design's top module `fsm_lock` appears in the VCD as a scope such as `tb_fsm_pass.dut`. NetCrux finds that scope by matching the design's net names and instance names against the waveform, so no prefix needs to be set. A wire stays its usual color when its net is not in the dump; that includes the internal wires synthesis creates, which have no counterpart in the simulation.
