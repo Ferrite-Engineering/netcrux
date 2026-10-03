@@ -156,6 +156,7 @@ void main() {
         NetcruxAction.zoomIn,
         NetcruxAction.zoomOut,
         NetcruxAction.zoomFitAll,
+        NetcruxAction.zoomToSelection,
         NetcruxAction.jumpToTop,
         NetcruxAction.popOutScope,
         NetcruxAction.openSearch,
@@ -324,6 +325,7 @@ void main() {
         NetcruxAction.zoomIn,
         NetcruxAction.zoomOut,
         NetcruxAction.zoomFitAll,
+        NetcruxAction.zoomToSelection,
         NetcruxAction.jumpToTop,
         NetcruxAction.popOutScope,
         // The trace trio shares one grouped (split) toolbar slot rather than
@@ -422,6 +424,7 @@ void main() {
       for (final action in const [
         NetcruxAction.openSearch,
         NetcruxAction.zoomFitAll,
+        NetcruxAction.zoomToSelection,
         NetcruxAction.showFanin,
         NetcruxAction.openSettings,
         NetcruxAction.openCommandPalette,
@@ -433,6 +436,35 @@ void main() {
     test('a hidden action is not invocable even when it would be enabled', () {
       expect(isActionEnabled(NetcruxAction.openProject, browser), isTrue);
       expect(isActionInvocable(NetcruxAction.openProject, browser), isFalse);
+    });
+  });
+
+  group('zoomToSelection', () {
+    test('is on the toolbar, the menu and the palette', () {
+      expect(
+        descriptorFor(NetcruxAction.zoomToSelection).surfaces,
+        NetcruxActionSurface.values.toSet(),
+      );
+    });
+
+    test('is in the Navigate category and is open core', () {
+      expect(NetcruxAction.zoomToSelection.category, ActionCategory.navigate);
+      expect(
+        NetcruxAction.zoomToSelection.requiredTier,
+        LicenseTier.openCore,
+      );
+      expect(NetcruxAction.zoomToSelection.gatedFeature, isNull);
+    });
+
+    test('is disabled until something is selected', () {
+      const loaded = NetcruxActionContext(hasOpenTab: true, hasNetlist: true);
+      expect(isActionEnabled(NetcruxAction.zoomToSelection, loaded), isFalse);
+      const selected = NetcruxActionContext(
+        hasOpenTab: true,
+        hasNetlist: true,
+        hasSelection: true,
+      );
+      expect(isActionEnabled(NetcruxAction.zoomToSelection, selected), isTrue);
     });
   });
 }

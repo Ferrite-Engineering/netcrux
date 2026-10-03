@@ -125,6 +125,127 @@ Widget _harness({
 }
 
 void main() {
+  group('SchematicGestureHandler — focus follows the pointer', () {
+    final buttonFocus = FocusNode(debugLabel: 'panel button');
+    final fieldFocus = FocusNode(debugLabel: 'filter field');
+    tearDownAll(() {
+      buttonFocus.dispose();
+      fieldFocus.dispose();
+    });
+
+    /// The canvas beside a panel holding a button and a text field, the way
+    /// the hierarchy dock sits beside the schematic.
+    Future<ProviderContainer> pumpWithPanel(WidgetTester tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 200,
+                    child: Column(
+                      children: <Widget>[
+                        TextButton(
+                          focusNode: buttonFocus,
+                          onPressed: () {},
+                          child: const Text('panel'),
+                        ),
+                        TextField(focusNode: fieldFocus),
+                      ],
+                    ),
+                  ),
+                  SizedBox.fromSize(
+                    size: _kCanvasSize,
+                    child: const SchematicGestureHandler(
+                      autofocus: false,
+                      child: ColoredBox(color: Color(0xFF202024)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return container;
+    }
+
+    Future<TestGesture> hoverOntoCanvas(WidgetTester tester) async {
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: const Offset(100, 500));
+      await tester.pump();
+      await mouse.moveTo(
+        tester.getCenter(find.byType(SchematicGestureHandler)),
+      );
+      await tester.pump();
+      return mouse;
+    }
+
+    testWidgets('the pointer entering the canvas takes focus from a panel, '
+        'so the bare zoom keys work', (tester) async {
+      final container = await pumpWithPanel(tester);
+      buttonFocus.requestFocus();
+      await tester.pump();
+
+      await hoverOntoCanvas(tester);
+      expect(buttonFocus.hasFocus, isFalse);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+      await tester.pump();
+      expect(container.read(viewportTransformProvider).zoom, greaterThan(1));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a text field mid-edit keeps focus when the pointer enters', (
+      tester,
+    ) async {
+      final container = await pumpWithPanel(tester);
+      await tester.tap(find.byType(TextField));
+      await tester.enterText(find.byType(TextField), 'add');
+      await tester.pump();
+
+      await hoverOntoCanvas(tester);
+      expect(fieldFocus.hasFocus, isTrue);
+
+      // `=` lands in the field, not on the canvas.
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+      await tester.pump();
+      expect(container.read(viewportTransformProvider).zoom, 1);
+    });
+
+    testWidgets('a right-click on the canvas takes focus, even from a text '
+        'field', (tester) async {
+      final container = await pumpWithPanel(tester);
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      expect(fieldFocus.hasFocus, isTrue);
+
+      final center = tester.getCenter(find.byType(SchematicGestureHandler));
+      final mouse = await tester.startGesture(
+        center,
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await mouse.up();
+      await tester.pump();
+      expect(fieldFocus.hasFocus, isFalse);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+      await tester.pump();
+      expect(container.read(viewportTransformProvider).zoom, greaterThan(1));
+    });
+
+    test('hoverMayTakeFocus is true when nothing has focus', () {
+      expect(SchematicGestureHandler.hoverMayTakeFocus(null), isTrue);
+    });
+  });
+
   group('SchematicGestureHandler — scroll wheel', () {
     testWidgets('Cmd+wheel up zooms in around the pointer', (tester) async {
       final container = ProviderContainer();

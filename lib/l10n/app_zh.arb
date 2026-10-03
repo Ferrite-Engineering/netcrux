@@ -220,6 +220,10 @@
   "@actionZoomFitAll": {
     "description": "Command palette / menu label for fitting the entire schematic in the viewport."
   },
+  "actionZoomToSelection": "缩放到所选内容",
+  "@actionZoomToSelection": {
+    "description": "Menu, toolbar and command palette label for framing the selected schematic elements, plus everything an active fanin / fanout trace highlights, in the viewport."
+  },
   "actionToggleHierarchyTree": "切换层次结构树",
   "@actionToggleHierarchyTree": {
     "description": "Command palette / menu label for toggling the left hierarchy tree panel."
@@ -276,9 +280,9 @@
   "@filePickerNetlistDialogTitle": {
     "description": "Title shown in the file picker when opening a pre-built Yosys JSON netlist."
   },
-  "hierarchyFilterHint": "筛选作用域…",
+  "hierarchyFilterHint": "筛选作用域和单元…",
   "@hierarchyFilterHint": {
-    "description": "Placeholder text inside the hierarchy tree panel's substring filter field."
+    "description": "Placeholder text inside the hierarchy tree panel's substring filter field. The filter matches scopes by instance or module name and lists matching cells, by cell name or cell type, under their scope."
   },
   "hierarchyClearFilterTooltip": "清除筛选",
   "@hierarchyClearFilterTooltip": {
@@ -361,9 +365,9 @@
       }
     }
   },
-  "hierarchyFilterNoMatches": "没有作用域与筛选匹配。要按名称查找单元或线网，请使用「搜索…」（Ctrl+F，macOS 上为 ⌘F）。",
+  "hierarchyFilterNoMatches": "没有作用域或单元与筛选匹配。要按名称查找线网，请使用「搜索…」（Ctrl+F，macOS 上为 ⌘F）。",
   "@hierarchyFilterNoMatches": {
-    "description": "Shown in the hierarchy tree panel when the active filter substring matches no scope names."
+    "description": "Shown in the hierarchy tree panel when the active filter matches no scope and no cell. The filter does not look at nets, so it points at Search, which finds nets by name."
   },
   "hierarchyCellCountLabel": "{count} 个单元",
   "@hierarchyCellCountLabel": {
@@ -380,6 +384,27 @@
     "placeholders": {
       "module": {
         "type": "String"
+      }
+    }
+  },
+  "hierarchyCellRowSemantics": "单元 {name}，类型 {type}",
+  "@hierarchyCellRowSemantics": {
+    "description": "Screen-reader name of a cell row in the filtered hierarchy tree: the cell's instance name and its cell type (e.g. 'Cell add_cy_3, type SB_LUT4').",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyShowMoreCells": "{count, plural, =1{再显示 1 个匹配的单元} other{显示更多（还有 {count} 个匹配的单元）}}",
+  "@hierarchyShowMoreCells": {
+    "description": "Last row under a scope in the filtered hierarchy tree when more matching cells exist than are listed; activating it lists the next page. {count} is how many matching cells are still hidden.",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },

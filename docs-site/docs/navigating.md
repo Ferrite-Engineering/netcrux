@@ -22,7 +22,17 @@ A scope path is dot-separated and starts at the design root — `top.cpu.alu`. T
 
 ## Zoom and pan {#zoom-pan}
 
-Zoom with the keyboard — **Zoom In** (++cmd+equal++ / ++ctrl+equal++), **Zoom Out** (++cmd+minus++ / ++ctrl+minus++), each a 1.25× step, and **Zoom to Fit** (++cmd+0++ / ++ctrl+0++) — or with the mouse: ++cmd++ / ++ctrl++ + scroll wheel zooms around the pointer, and a pinch zooms on a trackpad. Pan by dragging, with the middle mouse button, the scroll wheel or a two-finger trackpad scroll, or the arrow keys. The toolbar carries matching **Zoom In**, **Zoom Out** and **Zoom to Fit** buttons, and vertical and horizontal scrollbars flank the canvas so an off-screen cell is always reachable without a gesture. The bare ++equal++, ++minus++ and ++0++ keys do the same while the schematic canvas has keyboard focus; after working in a panel, click the canvas once to hand focus back, or use the modifier forms, which work from anywhere in the window. Every step zoom, from the keys, the toolbar or the menu, keeps the point at the centre of the view where it is. The zoom keys are the characters `=` and `-`, not fixed positions on the keyboard. On a layout where `=` needs ++shift++ (Swedish, German and other Nordic and European layouts), the canvas also takes ++plus++ for Zoom In, and the toolbar buttons and the View menu work on every layout. The canvas fits itself to the scope whenever a new scope lays out. The full list of canvas keys and gestures is in the [Keyboard & mouse reference](keyboard-mouse.md#canvas-keys).
+Zoom with the keyboard, using **Zoom In** (++cmd+equal++ / ++ctrl+equal++, or ++cmd+plus++ / ++ctrl+plus++), **Zoom Out** (++cmd+minus++ / ++ctrl+minus++), each a 1.25× step, and **Zoom to Fit** (++cmd+0++ / ++ctrl+0++), or with the mouse: ++cmd++ / ++ctrl++ + scroll wheel zooms around the pointer, and a pinch zooms on a trackpad. Pan by dragging, with the middle mouse button, the scroll wheel or a two-finger trackpad scroll, or the arrow keys. The toolbar carries matching **Zoom In**, **Zoom Out**, **Zoom to Fit** and **Zoom to Selection** buttons, and vertical and horizontal scrollbars flank the canvas so an off-screen cell is always reachable without a gesture. Every step zoom, from the keys, the toolbar or the menu, keeps the point at the centre of the view where it is. The canvas fits itself to the scope whenever a new scope lays out.
+
+Zoom In takes `=` and `+` with the modifier, so it works on every keyboard layout: on a US layout `=` is the unshifted key, and on Swedish, German and most other European layouts `+` has its own key. The numpad ++plus++, ++minus++ and ++0++ work with the modifier too.
+
+The bare ++equal++ (or ++plus++), ++minus++ and ++0++ keys zoom and fit while the pointer is over the schematic. The canvas takes keyboard focus when the pointer moves onto it, and when you click it with any button, so after working in a panel you only have to move the pointer back. A text field you are typing in, such as the hierarchy filter, keeps focus when the pointer passes over the schematic; click the canvas, or use the modifier forms, which work from anywhere in the window. The full list of canvas keys and gestures is in the [Keyboard & mouse reference](keyboard-mouse.md#canvas-keys).
+
+## Zoom to Selection {#zoom-to-selection}
+
+**Zoom to Selection** (++z++, the toolbar button beside **Zoom to Fit**, the `Navigate` menu or the command palette) frames what you have selected. With several elements selected it frames all of them, and while a [fanin or fanout trace](tracing.md#fanin-fanout) is showing it frames every cell and wire the trace highlights, so after tracing from a pin one key shows the whole trace. A single cell lands at a readable zoom rather than filling the window. It is greyed out until something is selected.
+
+It is also the way back to an element after panning away: choose a cell in [Search](#search) or in the filtered [hierarchy tree](interface.md#hierarchy), look around, then press ++z++ to return to it.
 
 ## Three-band level-of-detail {#lod}
 
@@ -49,6 +59,8 @@ The **Search Design** dialog (++cmd+f++ / ++ctrl+f++, or the toolbar's **Search�
 3. **Jump to a result.**
 
     Choosing a result (click it, or ++arrow-up++ / ++arrow-down++ then ++enter++) navigates to the owning scope, clears any trace overlay, and centers the canvas on the result. An instance or cell is selected. A net has no body of its own, so NetCrux selects the cell that drives it; an undriven net — a module input or a constant — leaves nothing selected.
+
+To find a cell without opening a dialog, type part of its name or its type in the hierarchy tree's **Filter scopes and cells…** field: matching cells are listed under their scope, and choosing one does the same as choosing a Search result. See [Hierarchy tree](interface.md#hierarchy).
 
 ## The command palette {#palette}
 

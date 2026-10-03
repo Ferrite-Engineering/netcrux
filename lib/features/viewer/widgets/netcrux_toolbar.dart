@@ -107,6 +107,11 @@ class NetcruxToolbar extends ConsumerWidget {
           icon: Icons.fit_screen_outlined,
           tooltip: l10n.actionZoomFitAll,
         ),
+        CruxToolbarButtonItem(
+          action: NetcruxAction.zoomToSelection,
+          icon: Icons.center_focus_strong_outlined,
+          tooltip: l10n.actionZoomToSelection,
+        ),
         const CruxToolbarSeparatorItem(),
         CruxToolbarButtonItem(
           action: NetcruxAction.jumpToTop,

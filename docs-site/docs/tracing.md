@@ -14,7 +14,11 @@ Select a cell, port or net, then ask what touches it in one hop:
 
     Press ++bracket-left++ (no modifier) for **Show Fanin** — the cells that directly drive the selection — or ++bracket-right++ for **Show Fanout** — its direct loads. The same commands are on the `Navigate` menu, the toolbar's **Trace** button, and the canvas context menu as **Trace Fanin** / **Trace Fanout**. The overlay includes the connected drivers (or loads), the edges that connect them, and the originating cell itself; everything else is dimmed, so the relevant subgraph reads at a glance.
 
-3. **Clear the overlay.**
+3. **Frame the trace.**
+
+    Press ++z++ (**Zoom to Selection**, also on the toolbar and the `Navigate` menu) to fit the view to the selection and everything the overlay highlights, so a trace whose drivers sit far apart is on screen at once. See [Zoom to Selection](navigating.md#zoom-to-selection).
+
+4. **Clear the overlay.**
 
     Press ++escape++ (**Clear Selection / Overlay**) to remove the highlight and the selection. The overlay is anchored to the selection, so any click on the canvas also clears it.
 

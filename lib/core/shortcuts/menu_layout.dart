@@ -22,7 +22,8 @@ import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 ///
 /// - **File** — New | Open/Import | Save | Export | Close | Reset
 /// - **View** — Command Palette | Zoom | Panels | Panes | Tabs | Appearance
-/// - **Navigate** — Scope | Trace overlays | Cone of influence | X-trace | Diff
+/// - **Navigate** — Scope | Trace overlays + Zoom to Selection | Cone of
+///   influence | X-trace | Diff
 /// - **Search** — Find
 /// - **Tools** — Bookmarks/annotations | Symbols | FSM | CDC | Reset domain |
 ///   Activity | Diagnostics (last)
@@ -141,6 +142,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
     [
       NetcruxAction.showFanin,
       NetcruxAction.showFanout,
+      NetcruxAction.zoomToSelection,
     ],
     [
       NetcruxAction.showConeOfInfluenceFanin,

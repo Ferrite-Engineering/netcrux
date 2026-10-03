@@ -1,6 +1,9 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:crux_a11y/crux_a11y_testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,15 +11,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
+import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/net.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port.dart';
+import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/hierarchy/widgets/hierarchy_leaf_row.dart';
 import 'package:netcrux/features/hierarchy/widgets/hierarchy_tree_panel.dart';
 import 'package:netcrux/features/hierarchy/widgets/hierarchy_tree_row.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
+import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 
 NetlistModel _model() {
   Cell cell(String name, String type) => Cell(
@@ -370,7 +379,7 @@ void main() {
       expect(
         walk.stops.map((s) => s.line),
         <String>[
-          'Filter scopes… edit',
+          'Filter scopes and cells… edit',
           'top 2 cells button expanded selected',
         ],
       );
@@ -522,6 +531,283 @@ void main() {
       expect(focusedRow(), '');
       expect(find.text('top').hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+  group('filtered cell rows', () {
+    HierarchyTreeState filtered(NetlistModel model, String filter) {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier)
+        ..setModel(model)
+        ..setFilterText(filter);
+      return container.read(hierarchyTreeProvider);
+    }
+
+    NetlistModel wideModel(int cellCount) {
+      Cell cell(String name) => Cell(
+        name: name,
+        type: 'BUF',
+        parameters: const {},
+        attributes: const {},
+        portDirections: const {},
+        connections: const {},
+      );
+      return NetlistModel(
+        creator: 'test',
+        modules: <String, Module>{
+          'top': Module(
+            name: 'top',
+            attributes: const <String, String>{'top': '1'},
+            ports: const <String, Port>{},
+            cells: <String, Cell>{
+              for (var i = 0; i < cellCount; i++) 'g$i': cell('g$i'),
+            },
+            nets: const <String, Net>{},
+          ),
+        },
+      );
+    }
+
+    test('lists a matching primitive cell under its scope', () {
+      final model = _model();
+      final entries = buildHierarchyEntries(
+        model: model,
+        state: filtered(model, 'u_and'),
+      );
+      final cells = entries.whereType<HierarchyCellEntry>().toList();
+      expect(cells, hasLength(1));
+      expect(cells.single.cellName, 'u_and');
+      expect(cells.single.cellType, r'$and');
+      expect(cells.single.scope.displayName, 'u_cpu');
+      // The scope is kept for its cell although its own name does not match,
+      // and the cell sits one level under it, right after its row.
+      final scopeIndex = entries.indexWhere(
+        (entry) =>
+            entry is HierarchyVisibleRow && entry.instanceName == 'u_cpu',
+      );
+      expect(scopeIndex, isNonNegative);
+      expect(entries[scopeIndex + 1], same(cells.single));
+      expect(cells.single.depth, entries[scopeIndex].depth + 1);
+    });
+
+    test('matches the cell type as well as the name', () {
+      final model = _model();
+      final entries = buildHierarchyEntries(
+        model: model,
+        state: filtered(model, r'$AND'),
+      );
+      expect(
+        entries.whereType<HierarchyCellEntry>().map((e) => e.cellName),
+        ['u_and'],
+      );
+    });
+
+    test('lists no instance of a user module as a cell row', () {
+      final model = _model();
+      final entries = buildHierarchyEntries(
+        model: model,
+        state: filtered(model, 'u_alu'),
+      );
+      expect(entries.whereType<HierarchyCellEntry>(), isEmpty);
+      expect(
+        entries.whereType<HierarchyVisibleRow>().map((e) => e.instanceName),
+        contains('u_alu'),
+      );
+    });
+
+    test('produces no cell rows without a filter', () {
+      final model = _model();
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier)
+        ..setModel(model)
+        ..expandScope(HierarchyNode.rootOf(model)!.child(model, 'u_cpu')!);
+      final entries = buildHierarchyEntries(
+        model: model,
+        state: container.read(hierarchyTreeProvider),
+      );
+      expect(entries.whereType<HierarchyCellEntry>(), isEmpty);
+    });
+
+    test('lists a page of cells, then a row counting the rest', () {
+      final model = wideModel(250);
+      final state = filtered(model, 'g');
+      var entries = buildHierarchyEntries(model: model, state: state);
+      expect(
+        entries.whereType<HierarchyCellEntry>(),
+        hasLength(kHierarchyCellPageSize),
+      );
+      final more = entries.whereType<HierarchyMoreCellsEntry>().single;
+      expect(more.hiddenCount, 250 - kHierarchyCellPageSize);
+      expect(entries.last, same(more));
+
+      entries = buildHierarchyEntries(
+        model: model,
+        state: state,
+        cellLimitFor: (_) => 2 * kHierarchyCellPageSize,
+      );
+      expect(
+        entries.whereType<HierarchyCellEntry>(),
+        hasLength(2 * kHierarchyCellPageSize),
+      );
+      expect(
+        entries.whereType<HierarchyMoreCellsEntry>().single.hiddenCount,
+        250 - 2 * kHierarchyCellPageSize,
+      );
+
+      entries = buildHierarchyEntries(
+        model: model,
+        state: state,
+        cellLimitFor: (_) => 300,
+      );
+      expect(entries.whereType<HierarchyCellEntry>(), hasLength(250));
+      expect(entries.whereType<HierarchyMoreCellsEntry>(), isEmpty);
+    });
+
+    test('serv_ice40: add_cy lists eleven cells in the flat service scope', () {
+      final bytes = File(
+        'test/fixtures/netlist/serv_ice40/captured/serv_ice40.netlist.json.gz',
+      ).readAsBytesSync();
+      final model = const StreamingYosysJsonReader().parse(
+        utf8.decode(gzip.decode(bytes)),
+      );
+      final entries = buildHierarchyEntries(
+        model: model,
+        state: filtered(model, 'add_cy'),
+      );
+      final scopes = entries.whereType<HierarchyVisibleRow>().toList();
+      expect(scopes.map((row) => row.instanceName), ['service']);
+      final cells = entries.whereType<HierarchyCellEntry>().toList();
+      expect(cells, hasLength(11));
+      expect(cells.where((cell) => cell.cellType == 'SB_DFF'), hasLength(1));
+      expect(cells.where((cell) => cell.cellType == 'SB_LUT4'), hasLength(10));
+      expect(entries.whereType<HierarchyMoreCellsEntry>(), isEmpty);
+    });
+  });
+
+  group('filtered cell rows in the panel', () {
+    Future<ProviderContainer> pumpFiltered(
+      WidgetTester tester,
+      NetlistModel model,
+      String filter,
+    ) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier).setModel(model);
+      await tester.pumpWidget(
+        _wrap(child: const HierarchyTreePanel(), container: container),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), filter);
+      await tester.pumpAndSettle();
+      return container;
+    }
+
+    testWidgets('a cell row shows its type and is one named node', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpFiltered(tester, _model(), 'u_and');
+      final row = find.byType(HierarchyLeafRow);
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(of: row, matching: find.text('u_and')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.text(r'$and')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(r'Cell u_and, type $and'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      handle.dispose();
+    });
+
+    testWidgets('choosing a cell row selects it and reveals it', (
+      tester,
+    ) async {
+      final container = await pumpFiltered(tester, _model(), 'u_and');
+      await tester.tap(find.byType(HierarchyLeafRow));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(hierarchyTreeProvider).selected!.displayName,
+        'u_cpu',
+      );
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'u_and'),
+      );
+      expect(container.read(revealRequestProvider), 'u_and');
+      // The row now reads as the selection.
+      expect(
+        tester
+            .widget<HierarchyLeafRow>(find.byType(HierarchyLeafRow))
+            .isSelected,
+        isTrue,
+      );
+    });
+
+    testWidgets('Enter on a focused cell row reveals it too', (tester) async {
+      final container = await pumpFiltered(tester, _model(), 'u_and');
+      tester
+          .widget<HierarchyLeafRow>(find.byType(HierarchyLeafRow))
+          .focusNode!
+          .requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(container.read(revealRequestProvider), 'u_and');
+    });
+
+    testWidgets('the show-more row lists the next page', (tester) async {
+      Cell cell(String name) => Cell(
+        name: name,
+        type: 'BUF',
+        parameters: const {},
+        attributes: const {},
+        portDirections: const {},
+        connections: const {},
+      );
+      final model = NetlistModel(
+        creator: 'test',
+        modules: <String, Module>{
+          'top': Module(
+            name: 'top',
+            attributes: const <String, String>{'top': '1'},
+            ports: const <String, Port>{},
+            cells: <String, Cell>{
+              for (var i = 0; i < 150; i++) 'g$i': cell('g$i'),
+            },
+            nets: const <String, Net>{},
+          ),
+        },
+      );
+      await pumpFiltered(tester, model, 'g');
+      final list = find.descendant(
+        of: find.byType(ListView),
+        matching: find.byType(Scrollable),
+      );
+      final more = find.text('Show more (50 more matching cells)');
+      await tester.scrollUntilVisible(more, 200, scrollable: list);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      expect(more, findsNothing);
+      await tester.scrollUntilVisible(find.text('g149'), 200, scrollable: list);
+      expect(find.text('g149'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the no-match message names cells and points at Search', (
+      tester,
+    ) async {
+      await pumpFiltered(tester, _model(), 'nothing_like_this');
+      expect(
+        find.textContaining('No scopes or cells match the filter'),
+        findsOneWidget,
+      );
     });
   });
 }

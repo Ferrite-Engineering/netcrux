@@ -8,10 +8,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
+import 'package:netcrux/features/hierarchy/widgets/hierarchy_leaf_row.dart';
 import 'package:netcrux/features/hierarchy/widgets/hierarchy_tree_row.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
+import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/hierarchy/hierarchy_walk.dart';
 
@@ -20,11 +25,14 @@ import 'package:netcrux/services/hierarchy/hierarchy_walk.dart';
 /// Renders the elaborated [NetlistModel] as an indented expand/collapse
 /// tree rooted at the top module. Filtering is a case-insensitive
 /// substring match against either the instance name *or* the module
-/// name of each scope; a parent is rendered when any descendant
-/// matches so the user can still see where the hit lives.
+/// name of each scope, and against the name or type of each primitive
+/// cell; matching cells are listed under their scope, a page at a time.
+/// A parent is rendered when any descendant matches so the user can
+/// still see where the hit lives.
 ///
 /// Interactions: click-to-select, expand/collapse via chevron, inline
-/// filter field.
+/// filter field; a cell row selects the cell and reveals it on the
+/// canvas.
 class HierarchyTreePanel extends ConsumerStatefulWidget {
   /// Creates a hierarchy tree panel.
   const HierarchyTreePanel({super.key});
@@ -35,6 +43,22 @@ class HierarchyTreePanel extends ConsumerStatefulWidget {
 
 class _HierarchyTreePanelState extends ConsumerState<HierarchyTreePanel> {
   late final TextEditingController _filterController;
+
+  // How many matching cells each scope lists, keyed by scope path, for the
+  // filter in [_cellLimitsFilter]. A new filter starts every scope over at
+  // one page.
+  final Map<String, int> _cellLimits = <String, int>{};
+  String _cellLimitsFilter = '';
+
+  int _cellLimitFor(HierarchyNode scope) =>
+      _cellLimits[scope.path.join('/')] ?? kHierarchyCellPageSize;
+
+  void _showMoreCells(HierarchyNode scope) {
+    setState(() {
+      final key = scope.path.join('/');
+      _cellLimits[key] = _cellLimitFor(scope) + kHierarchyCellPageSize;
+    });
+  }
 
   @override
   void initState() {
@@ -55,6 +79,10 @@ class _HierarchyTreePanelState extends ConsumerState<HierarchyTreePanel> {
     final l10n = L10N.of(context);
     final theme = Theme.of(context);
     final state = ref.watch(hierarchyTreeProvider);
+    if (state.filterText != _cellLimitsFilter) {
+      _cellLimitsFilter = state.filterText;
+      _cellLimits.clear();
+    }
 
     // Sync the controller back to the notifier state when something
     // else (CLI launch, test override) loaded a different filter.
@@ -73,7 +101,12 @@ class _HierarchyTreePanelState extends ConsumerState<HierarchyTreePanel> {
           _HierarchyFilterField(controller: _filterController),
           const Divider(height: 1),
           Expanded(
-            child: _HierarchyTreeBody(state: state, l10n: l10n),
+            child: _HierarchyTreeBody(
+              state: state,
+              l10n: l10n,
+              cellLimitFor: _cellLimitFor,
+              onShowMoreCells: _showMoreCells,
+            ),
           ),
         ],
       ),
@@ -126,10 +159,17 @@ class _HierarchyFilterField extends ConsumerWidget {
 }
 
 class _HierarchyTreeBody extends ConsumerWidget {
-  const _HierarchyTreeBody({required this.state, required this.l10n});
+  const _HierarchyTreeBody({
+    required this.state,
+    required this.l10n,
+    required this.cellLimitFor,
+    required this.onShowMoreCells,
+  });
 
   final HierarchyTreeState state;
   final L10N l10n;
+  final int Function(HierarchyNode scope) cellLimitFor;
+  final void Function(HierarchyNode scope) onShowMoreCells;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,15 +197,20 @@ class _HierarchyTreeBody extends ConsumerWidget {
     if (root == null) {
       return _EmptyMessage(text: l10n.hierarchyEmptyNoTop);
     }
-    final rows = buildVisibleRows(
+    final rows = buildHierarchyEntries(
       model: model,
       state: state,
+      cellLimitFor: cellLimitFor,
     );
     if (rows.isEmpty) {
       // The model has a root, but the filter wiped everything out.
       return _EmptyMessage(text: l10n.hierarchyFilterNoMatches);
     }
-    return _HierarchyTreeList(rows: rows, state: state);
+    return _HierarchyTreeList(
+      rows: rows,
+      state: state,
+      onShowMoreCells: onShowMoreCells,
+    );
   }
 }
 
@@ -181,16 +226,25 @@ class _HierarchyTreeBody extends ConsumerWidget {
 /// | Home / End   | First / last row                                         |
 /// | Right        | Expand; on an expanded row, move to its first child      |
 /// | Left         | Collapse; on a collapsed or leaf row, move to its parent |
-/// | Enter, Space | Select the scope (handled by the row)                    |
+/// | Enter, Space | Select the scope, or show the cell (handled by the row) |
+///
+/// While the filter is active, the cells that match it are leaf rows under
+/// their scope. Choosing one selects it and reveals it on the canvas, the
+/// same as choosing a Search result.
 ///
 /// Focus moves between real per-row focus nodes (roving focus), so a screen
 /// reader announces each row as it arrives. A row that has not been built
 /// yet is scrolled into view first and focused once it is laid out.
 class _HierarchyTreeList extends ConsumerStatefulWidget {
-  const _HierarchyTreeList({required this.rows, required this.state});
+  const _HierarchyTreeList({
+    required this.rows,
+    required this.state,
+    required this.onShowMoreCells,
+  });
 
-  final List<HierarchyVisibleRow> rows;
+  final List<HierarchyListEntry> rows;
   final HierarchyTreeState state;
+  final void Function(HierarchyNode scope) onShowMoreCells;
 
   @override
   ConsumerState<_HierarchyTreeList> createState() => _HierarchyTreeListState();
@@ -203,7 +257,7 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
   String? _lastSelectedKey;
   bool _pruneScheduled = false;
 
-  static String _keyOf(HierarchyVisibleRow row) => row.node.path.join('/');
+  static String _keyOf(HierarchyListEntry row) => row.key;
 
   @override
   void dispose() {
@@ -231,8 +285,17 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
     final stop = _stopKey;
     if (stop != null && keys.contains(stop)) return;
     // The stop's row went away (a collapse, a filter): the nearest ancestor
-    // still showing takes it, else the first row.
+    // still showing takes it, else the first row. A cell row's ancestor is
+    // its scope, the part of its key before the NUL separator.
     var candidate = stop;
+    final cellSeparator = candidate?.indexOf('\u0000') ?? -1;
+    if (candidate != null && cellSeparator != -1) {
+      candidate = candidate.substring(0, cellSeparator);
+      if (keys.contains(candidate)) {
+        _stopKey = candidate;
+        return;
+      }
+    }
     while (candidate != null && candidate.isNotEmpty) {
       final cut = candidate.lastIndexOf('/');
       candidate = cut == -1 ? '' : candidate.substring(0, cut);
@@ -303,6 +366,26 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
     );
   }
 
+  /// The row focus callback for the row keyed [key]: arriving on a row
+  /// moves the Tab stop to it.
+  ValueChanged<bool> _focusHandlerFor(String key) => (focused) {
+    if (focused) _onRowFocused(key);
+  };
+
+  /// Selects the cell of [entry] and reveals it on the canvas: its scope
+  /// becomes the shown scope, the trace overlay clears, and the canvas
+  /// centres on the cell once that scope is laid out. The same steps as
+  /// choosing a cell in Search.
+  void _revealCell(HierarchyCellEntry entry) {
+    ref
+      ..read(hierarchyTreeProvider.notifier).selectScope(entry.scope)
+      ..read(traceOverlayProvider.notifier).clear()
+      ..read(
+        selectedElementProvider.notifier,
+      ).select(SelectedElement.cell(cellId: entry.cellName))
+      ..read(revealRequestProvider.notifier).request(entry.cellName);
+  }
+
   /// Whether the row at [index] is showing its children.
   bool _showsChildren(int index) {
     final rows = widget.rows;
@@ -326,6 +409,7 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
     );
     if (current == -1) return KeyEventResult.ignored;
     final row = rows[current];
+    final scopeRow = row is HierarchyVisibleRow ? row : null;
     final notifier = ref.read(hierarchyTreeProvider.notifier);
     switch (event.logicalKey) {
       case LogicalKeyboardKey.arrowDown:
@@ -337,14 +421,18 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
       case LogicalKeyboardKey.end:
         _focusRow(rows.length - 1);
       case LogicalKeyboardKey.arrowRight:
+        if (scopeRow == null) return KeyEventResult.handled;
         if (_showsChildren(current)) {
           _focusRow(current + 1);
-        } else if (row.hasChildren) {
-          notifier.expandScope(row.node);
+        } else if (scopeRow.hasChildren) {
+          notifier.expandScope(scopeRow.node);
         }
       case LogicalKeyboardKey.arrowLeft:
-        if (_showsChildren(current) && !row.node.isRoot) {
-          notifier.collapseScope(row.node);
+        if (scopeRow != null &&
+            scopeRow.hasChildren &&
+            _showsChildren(current) &&
+            !scopeRow.node.isRoot) {
+          notifier.collapseScope(scopeRow.node);
         } else {
           final parent = rows.lastIndexWhere(
             (candidate) => candidate.depth == row.depth - 1,
@@ -369,7 +457,9 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
     // the row whose node path matches receives the flash token, so exactly one
     // row pulses.
     final flash = ref.watch(scopeFlashProvider);
+    final selectedElement = ref.watch(selectedElementProvider).primary;
     final notifier = ref.read(hierarchyTreeProvider.notifier);
+    final l10n = L10N.of(context);
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
@@ -382,8 +472,47 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
           itemExtent: HierarchyTreeRow.rowHeight,
           itemCount: rows.length,
           itemBuilder: (context, index) {
-            final row = rows[index];
+            final entry = rows[index];
             final key = keys[index];
+            final onFocusChange = _focusHandlerFor(key);
+            switch (entry) {
+              case HierarchyCellEntry():
+                return HierarchyLeafRow(
+                  key: ValueKey<String>(key),
+                  depth: entry.depth,
+                  icon: Icons.memory_outlined,
+                  label: entry.cellName,
+                  detail: entry.cellType,
+                  semanticLabel: l10n.hierarchyCellRowSemantics(
+                    entry.cellName,
+                    entry.cellType,
+                  ),
+                  isSelected:
+                      state.isSelected(entry.scope) &&
+                      selectedElement ==
+                          SelectedElement.cell(cellId: entry.cellName),
+                  focusNode: _nodeFor(key),
+                  isTabStop: key == _stopKey,
+                  onFocusChange: onFocusChange,
+                  onActivate: () => _revealCell(entry),
+                );
+              case HierarchyMoreCellsEntry():
+                final label = l10n.hierarchyShowMoreCells(entry.hiddenCount);
+                return HierarchyLeafRow(
+                  key: ValueKey<String>(key),
+                  depth: entry.depth,
+                  icon: Icons.more_horiz,
+                  label: label,
+                  semanticLabel: label,
+                  focusNode: _nodeFor(key),
+                  isTabStop: key == _stopKey,
+                  onFocusChange: onFocusChange,
+                  onActivate: () => widget.onShowMoreCells(entry.scope),
+                );
+              case HierarchyVisibleRow():
+                break;
+            }
+            final row = entry;
             final flashSignal = (flash != null && key == flash.pathKey)
                 ? flash.nonce
                 : null;
@@ -400,9 +529,7 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
               flashSignal: flashSignal,
               focusNode: _nodeFor(key),
               isTabStop: key == _stopKey,
-              onFocusChange: (focused) {
-                if (focused) _onRowFocused(key);
-              },
+              onFocusChange: onFocusChange,
               onTap: () => notifier.selectScope(row.node),
               onToggleExpand: row.hasChildren
                   ? () => notifier.toggleScope(row.node)
@@ -454,8 +581,31 @@ class _EmptyMessage extends StatelessWidget {
   }
 }
 
+/// How many matching cells the filtered tree lists under one scope before it
+/// offers a "show more" row, and how many each activation of that row adds.
+/// A post-synthesis scope can hold tens of thousands of cells; a filter as
+/// loose as one letter must not build a row for each of them.
+const int kHierarchyCellPageSize = 100;
+
+/// One row of the hierarchy tree: a scope ([HierarchyVisibleRow]), or, while
+/// the filter is active, a matching cell listed under its scope
+/// ([HierarchyCellEntry]) and the row that lists more of them
+/// ([HierarchyMoreCellsEntry]).
+sealed class HierarchyListEntry {
+  const HierarchyListEntry();
+
+  /// Indent depth: 0 = root, 1 = first level, …
+  int get depth;
+
+  /// Identity of the row across rebuilds — its focus node and Tab stop are
+  /// keyed by it. A scope's key is its path joined with `/`; a cell row's
+  /// key extends its scope's key past a NUL separator, which no instance
+  /// name contains.
+  String get key;
+}
+
 /// Flattened row produced by [buildVisibleRows] for one visible scope.
-class HierarchyVisibleRow {
+class HierarchyVisibleRow extends HierarchyListEntry {
   /// Creates a visible row.
   const HierarchyVisibleRow({
     required this.node,
@@ -469,8 +619,11 @@ class HierarchyVisibleRow {
   /// The [HierarchyNode] this row represents.
   final HierarchyNode node;
 
-  /// Indent depth: 0 = root, 1 = first level, …
+  @override
   final int depth;
+
+  @override
+  String get key => node.path.join('/');
 
   /// Display label for this row (instance name or top-module name).
   final String instanceName;
@@ -487,6 +640,71 @@ class HierarchyVisibleRow {
   final int cellCount;
 }
 
+/// A cell that matches the filter, listed as a leaf under [scope].
+///
+/// Only primitive cells are listed this way. An instance of a user module is
+/// a scope, so it already has a scope row, and choosing that row pushes into
+/// it as before.
+class HierarchyCellEntry extends HierarchyListEntry {
+  /// Creates a cell row.
+  const HierarchyCellEntry({
+    required this.scope,
+    required this.cellName,
+    required this.cellType,
+    required this.depth,
+  });
+
+  /// The scope the cell lives in.
+  final HierarchyNode scope;
+
+  /// The cell's instance name, which is also its schematic cell id.
+  final String cellName;
+
+  /// The cell's type (a primitive or cell-library name such as `SB_LUT4`).
+  final String cellType;
+
+  @override
+  final int depth;
+
+  @override
+  String get key => '${scope.path.join('/')}\u0000$cellName';
+}
+
+/// The last row under [scope] when more cells match than are listed.
+class HierarchyMoreCellsEntry extends HierarchyListEntry {
+  /// Creates a "show more" row.
+  const HierarchyMoreCellsEntry({
+    required this.scope,
+    required this.hiddenCount,
+    required this.depth,
+  });
+
+  /// The scope whose cell list this row extends.
+  final HierarchyNode scope;
+
+  /// How many matching cells are not listed yet.
+  final int hiddenCount;
+
+  @override
+  final int depth;
+
+  @override
+  String get key => '${scope.path.join('/')}\u0000\u0000more';
+}
+
+/// The scope rows of the tree; the same walk as [buildHierarchyEntries]
+/// without the cell rows.
+///
+/// Exposed at the top level so it's directly unit-testable without
+/// pumping widgets.
+List<HierarchyVisibleRow> buildVisibleRows({
+  required NetlistModel model,
+  required HierarchyTreeState state,
+}) => buildHierarchyEntries(
+  model: model,
+  state: state,
+).whereType<HierarchyVisibleRow>().toList();
+
 /// Walks the [HierarchyNode] tree starting at [HierarchyTreeState.root]
 /// and produces the flattened list of rows the [ListView.builder]
 /// should paint. Applies expansion + filter rules:
@@ -495,27 +713,36 @@ class HierarchyVisibleRow {
 ///     expanded its parent (so the row is structurally visible), AND
 ///     when its label matches the filter — or when any descendant
 ///     matches, so the user sees the path that leads to the hit.
-///   - The filter is case-insensitive substring against either the
-///     instance name or the module name.
-///   - With an empty filter, only the expand/collapse state matters.
-///
-/// Exposed at the top level so it's directly unit-testable without
-/// pumping widgets.
-List<HierarchyVisibleRow> buildVisibleRows({
+///   - The filter is a case-insensitive substring against the instance
+///     name or the module name of a scope, and against the name or the
+///     type of a primitive cell.
+///   - While the filter is active, the primitive cells of each scope that
+///     match it follow the scope's row as leaf rows, at most
+///     [cellLimitFor] of them (default [kHierarchyCellPageSize]), then one
+///     [HierarchyMoreCellsEntry] when more match. A scope whose cells
+///     match is kept even when its own name does not.
+///   - With an empty filter, only the expand/collapse state matters and no
+///     cell rows are produced.
+List<HierarchyListEntry> buildHierarchyEntries({
   required NetlistModel model,
   required HierarchyTreeState state,
+  int Function(HierarchyNode scope)? cellLimitFor,
 }) {
   final root = state.root;
-  if (root == null) return const <HierarchyVisibleRow>[];
+  if (root == null) return const <HierarchyListEntry>[];
   final filter = state.filterText.toLowerCase();
-  final rows = <HierarchyVisibleRow>[];
+  final rows = <HierarchyListEntry>[];
 
-  bool matches(HierarchyNode node) {
+  bool nameMatches(HierarchyNode node) {
     if (filter.isEmpty) return true;
     final instanceName = node.displayName.toLowerCase();
     final moduleName = node.moduleName.toLowerCase();
     return instanceName.contains(filter) || moduleName.contains(filter);
   }
+
+  bool matches(HierarchyNode node) =>
+      nameMatches(node) ||
+      _matchingCells(node, model, filter, stopAfterFirst: true).isNotEmpty;
 
   // Both walks keep an explicit stack and never enter a recursive
   // instantiation (HierarchyWalkFrame.isRecursive) or a scope past the
@@ -530,7 +757,8 @@ List<HierarchyVisibleRow> buildVisibleRows({
 
   final path = HierarchyWalkPath();
   final stack = <HierarchyWalkFrame>[HierarchyWalkFrame.root(root)];
-  while (stack.isNotEmpty && rows.length < maxHierarchyWalkScopes) {
+  var scopes = 0;
+  while (stack.isNotEmpty && scopes < maxHierarchyWalkScopes) {
     final frame = stack.removeLast();
     path.enter(frame);
     final node = frame.node;
@@ -540,6 +768,7 @@ List<HierarchyVisibleRow> buildVisibleRows({
         : const <String>[];
     final module = node.resolve(model);
     final cellCount = module?.cells.length ?? 0;
+    scopes++;
     rows.add(
       HierarchyVisibleRow(
         node: node,
@@ -550,6 +779,31 @@ List<HierarchyVisibleRow> buildVisibleRows({
         cellCount: cellCount,
       ),
     );
+    if (filter.isNotEmpty) {
+      final cells = _matchingCells(node, model, filter);
+      final limit = cellLimitFor?.call(node) ?? kHierarchyCellPageSize;
+      final shown = cells.length < limit ? cells.length : limit;
+      for (var i = 0; i < shown; i++) {
+        final (name, type) = cells[i];
+        rows.add(
+          HierarchyCellEntry(
+            scope: node,
+            cellName: name,
+            cellType: type,
+            depth: frame.depth + 1,
+          ),
+        );
+      }
+      if (cells.length > shown) {
+        rows.add(
+          HierarchyMoreCellsEntry(
+            scope: node,
+            hiddenCount: cells.length - shown,
+            depth: frame.depth + 1,
+          ),
+        );
+      }
+    }
     // Expand children when the user has expanded this node OR when
     // the filter is active (so all hits are visible at once).
     final descend = state.isExpanded(node) || filter.isNotEmpty;
@@ -562,6 +816,33 @@ List<HierarchyVisibleRow> buildVisibleRows({
     }
   }
   return rows;
+}
+
+/// The primitive cells of [node] whose name or type contains [filter]
+/// (already lower-cased), as `(name, type)` in the module's cell order.
+/// Instances of user modules are skipped: they are scopes, not leaves.
+List<(String, String)> _matchingCells(
+  HierarchyNode node,
+  NetlistModel model,
+  String filter, {
+  bool stopAfterFirst = false,
+}) {
+  if (filter.isEmpty) return const <(String, String)>[];
+  final module = node.resolve(model);
+  if (module == null) return const <(String, String)>[];
+  final result = <(String, String)>[];
+  for (final entry in module.cells.entries) {
+    final type = entry.value.type;
+    final definition = model.modules[type];
+    if (definition != null && !definition.isBlackBox) continue;
+    if (!entry.key.toLowerCase().contains(filter) &&
+        !type.toLowerCase().contains(filter)) {
+      continue;
+    }
+    result.add((entry.key, type));
+    if (stopAfterFirst) break;
+  }
+  return result;
 }
 
 /// Every scope under [root] mapped to whether it, or anything below it,

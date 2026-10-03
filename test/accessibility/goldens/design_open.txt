@@ -19,6 +19,6 @@
 18. [top.v button] Close top.v button
 19. Render stats for this pane button
 20. [Browser dock Hierarchy grouping] Hide Panel button
-21. Filter scopes… edit
+21. Filter scopes and cells… edit
 22. top 1 cell button expanded selected
 23. Schematic: 1 cell, 0 nets text

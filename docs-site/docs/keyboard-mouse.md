@@ -21,7 +21,7 @@ These are the default bindings that ship with NetCrux. Every one of them is rebi
 | ++cmd+comma++ / ++ctrl+comma++ | Settings… | NetCrux |
 | ++cmd+q++ / ++ctrl+q++ | Quit NetCrux — **Exit** on Linux and Windows | NetCrux (File on Linux and Windows) |
 | ++cmd+shift+p++ / ++ctrl+shift+p++ | Command Palette… | View |
-| ++cmd+equal++ / ++ctrl+equal++ | Zoom In | View |
+| ++cmd+equal++ or ++cmd+plus++ / ++ctrl+equal++ or ++ctrl+plus++ | Zoom In | View |
 | ++cmd+minus++ / ++ctrl+minus++ | Zoom Out | View |
 | ++cmd+0++ / ++ctrl+0++ | Zoom to Fit | View |
 | ++cmd+1++ / ++ctrl+1++ | Toggle Hierarchy Tree | View |
@@ -35,6 +35,7 @@ These are the default bindings that ship with NetCrux. Every one of them is rebi
 | ++cmd+bracket-left++ / ++ctrl+bracket-left++ | Pop Out of Scope | Navigate |
 | ++bracket-left++ | Show Fanin | Navigate |
 | ++bracket-right++ | Show Fanout | Navigate |
+| ++z++ | Zoom to Selection | Navigate |
 | ++escape++ | Clear Selection / Overlay | Navigate |
 | ++cmd+f++ / ++ctrl+f++ | Search… | Search |
 | ++cmd+shift+i++ / ++ctrl+shift+i++ | Tab Diagnostics… (reveal the panel) | Tools |
@@ -42,7 +43,11 @@ These are the default bindings that ship with NetCrux. Every one of them is rebi
 | ++cmd+shift+m++ / ++ctrl+shift+m++ | App Diagnostics… | Tools |
 | ++f1++ | About NetCrux | Help (NetCrux on macOS) |
 
-Tab cycling uses ++ctrl++ on every platform, macOS included — ++cmd+tab++ is the system app switcher.
+Tab cycling uses ++ctrl++ on every platform, macOS included: ++cmd+tab++ is the system app switcher.
+
+Zoom In answers to the modifier with `=` and with `+`, so it works on every keyboard layout: on a US layout `=` is the unshifted key, and on Swedish, German and most other European layouts `+` has its own key. ++cmd+shift+equal++ / ++ctrl+shift+equal++ and the numpad forms (numpad ++plus++, numpad ++minus++ and numpad ++0++ with the modifier) work as well. The extra forms follow the default binding: once you rebind Zoom In, Zoom Out or Zoom to Fit, only the key you chose triggers it. The menu shows the `=` form.
+
+**Zoom to Selection** (++z++) frames the selected elements and, while a fanin or fanout trace is showing, every cell and wire the trace highlights. On macOS the menu bar shows no key beside it, or beside **Show Fanin** and **Show Fanout**: the macOS menu bar only displays keys that carry a modifier. The keys still work, and the command palette and the toolbar tooltip show them.
 
 **Toggle Theme** switches to the built-in preset of the opposite brightness: from any dark preset to **Crux Light**, and from Crux Light to **Crux Dark**. See [Appearance & themes](appearance-and-themes.md#mode).
 
@@ -56,7 +61,7 @@ Tab cycling uses ++ctrl++ on every platform, macOS included — ++cmd+tab++ is t
 
 ## Schematic canvas keys {#canvas-keys}
 
-The canvas handles a small set of keys directly whenever it has keyboard focus. These are separate from the rebindable set above — they are part of the canvas itself and do not appear in `Settings → Keyboard Shortcuts`.
+The canvas handles a small set of keys directly whenever it has keyboard focus. It takes keyboard focus when the pointer moves onto it and when you click it with any button, so these keys work whenever the pointer is over the schematic. Moving the pointer onto the canvas never takes focus from a text field you are typing in, such as the hierarchy filter, or from an open menu; click the canvas to move focus there. These are separate from the rebindable set above: they are part of the canvas itself and do not appear in `Settings → Keyboard Shortcuts`.
 
 | Key | Action |
 |---|---|
@@ -85,9 +90,9 @@ The Hierarchy tree is a single ++tab++ stop: ++tab++ lands on the selected scope
 | ++home++ / ++end++ | Move to the first / last row. |
 | ++arrow-right++ | Expand the row; on a row that is already expanded, move to its first child. |
 | ++arrow-left++ | Collapse the row; on a collapsed or leaf row, move to its parent. |
-| ++enter++ / ++space++ | Select the scope, which the schematic canvas then shows. |
+| ++enter++ / ++space++ | Select the scope, which the schematic canvas then shows. On a cell row, select the cell and show it on the canvas; on a **Show more** row, list the next page of cells. |
 
-A screen reader reads each row as its scope and cell count, with whether it is expanded or collapsed and whether it is the selected scope.
+A screen reader reads each scope row as its scope and cell count, with whether it is expanded or collapsed and whether it is the selected scope, and each cell row as the cell's name and type.
 
 ## Panels {#panels}
 
@@ -103,6 +108,7 @@ Pointer gestures on the schematic canvas cover navigation and selection. Selecti
 | Gesture | Action |
 |---|---|
 | ++cmd++ / ++ctrl++ + scroll wheel | Zoom around the pointer. |
+| Moving the pointer onto the canvas | Give the canvas keyboard focus, so the canvas keys work, unless a text field or a menu holds focus. |
 | Scroll wheel or two-finger trackpad scroll | Pan. |
 | Middle-mouse drag | Pan. |
 | Left-click drag on the canvas | Pan. |

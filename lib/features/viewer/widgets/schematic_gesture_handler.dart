@@ -84,6 +84,33 @@ class SchematicGestureHandler extends ConsumerStatefulWidget {
   /// Keyboard zoom factor (the +/- shortcut).
   static const double keyboardZoomFactor = 1.15;
 
+  /// Whether the pointer entering the canvas may take keyboard focus from
+  /// [primary], the node that holds it now.
+  ///
+  /// False while [primary] is inside an editable text field or a menu, so
+  /// typing in the hierarchy filter and walking a menu with the keyboard are
+  /// never interrupted by the pointer passing over the schematic. True
+  /// otherwise, including when nothing has focus.
+  static bool hoverMayTakeFocus(FocusNode? primary) {
+    final focusContext = primary?.context;
+    if (focusContext == null) return true;
+    bool holdsFocus(Widget widget) =>
+        widget is EditableText ||
+        widget is MenuItemButton ||
+        widget is SubmenuButton ||
+        widget is MenuAnchor;
+    if (holdsFocus(focusContext.widget)) return false;
+    var mayTake = true;
+    focusContext.visitAncestorElements((element) {
+      if (holdsFocus(element.widget)) {
+        mayTake = false;
+        return false;
+      }
+      return true;
+    });
+    return mayTake;
+  }
+
   @override
   ConsumerState<SchematicGestureHandler> createState() =>
       _SchematicGestureHandlerState();
@@ -247,6 +274,10 @@ class _SchematicGestureHandlerState
         // pointing at whatever they passed over on the way out — presence
         // that is confidently wrong rather than absent.
         opaque: false,
+        // Focus follows the pointer onto the canvas, so the bare zoom and pan
+        // keys work whenever the pointer is over the schematic, even after a
+        // panel took focus. Never mid-edit: see [_takeFocusOnHover].
+        onEnter: (_) => _takeFocusOnHover(),
         onHover: (event) => _publishCollabCursor(event.localPosition),
         onExit: (_) => _publishCollabCursor(null),
         child: Listener(
@@ -393,6 +424,20 @@ class _SchematicGestureHandlerState
     return tester.hitTest(localPosition);
   }
 
+  /// Gives the canvas keyboard focus as the pointer enters it, unless focus
+  /// is somewhere it must stay: an editable text field (the hierarchy
+  /// filter, the inspector, a dialog field), which would lose the user's
+  /// edit, or an open menu, whose arrow keys would stop navigating it.
+  void _takeFocusOnHover() {
+    if (_focusNode.hasFocus) return;
+    if (!SchematicGestureHandler.hoverMayTakeFocus(
+      FocusManager.instance.primaryFocus,
+    )) {
+      return;
+    }
+    _focusNode.requestFocus();
+  }
+
   // ── Pointer signal (scroll wheel / trackpad scroll) ─────────────
 
   void _onPointerSignal(PointerSignalEvent event) {
@@ -451,6 +496,17 @@ class _SchematicGestureHandlerState
   // ── Pointer drag (middle-button or left-button pan) ─────────────
 
   void _onPointerDown(PointerDownEvent event) {
+    // Any press on the canvas, right-click and middle-drag included, hands
+    // keyboard focus to it. A click is a deliberate move away from whatever
+    // had focus, a text field included. Deferred to a microtask: a focused
+    // text field unfocuses itself on the same press (its tap-outside
+    // handler runs after this one), and an earlier request would lose to
+    // that unfocus.
+    if (!_focusNode.hasFocus) {
+      scheduleMicrotask(() {
+        if (mounted) _focusNode.requestFocus();
+      });
+    }
     _activePointerCount++;
     // A second pointer (trackpad pinch, second finger) means this is not a
     // click any more — cancel the pending selection.

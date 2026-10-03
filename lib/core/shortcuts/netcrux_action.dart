@@ -38,6 +38,10 @@ enum NetcruxAction implements CruxAction {
   /// Fit the entire schematic in the viewport.
   zoomFitAll,
 
+  /// Frame the selected element(s) and, while a trace overlay is active,
+  /// everything the overlay highlights.
+  zoomToSelection,
+
   /// Toggle the left hierarchy tree panel.
   toggleHierarchyTree,
 
@@ -442,6 +446,10 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.popOutScope:
       case NetcruxAction.showFanin:
       case NetcruxAction.showFanout:
+      // Framing the selection or a trace is a navigation step, so it sits
+      // in Navigate beside the trace overlays it frames, not with the
+      // viewport zoom steps in View.
+      case NetcruxAction.zoomToSelection:
       case NetcruxAction.clearOverlay:
       case NetcruxAction.showConeOfInfluenceFanin:
       case NetcruxAction.showConeOfInfluenceFanout:
@@ -511,6 +519,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionZoomOut;
       case NetcruxAction.zoomFitAll:
         return l10n.actionZoomFitAll;
+      case NetcruxAction.zoomToSelection:
+        return l10n.actionZoomToSelection;
       case NetcruxAction.toggleHierarchyTree:
         return l10n.actionToggleHierarchyTree;
       case NetcruxAction.toggleInspector:
@@ -738,6 +748,7 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.zoomIn:
       case NetcruxAction.zoomOut:
       case NetcruxAction.zoomFitAll:
+      case NetcruxAction.zoomToSelection:
       case NetcruxAction.toggleHierarchyTree:
       case NetcruxAction.toggleInspector:
       case NetcruxAction.toggleDiagnosticsPanel:
@@ -860,6 +871,7 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.zoomIn:
       case NetcruxAction.zoomOut:
       case NetcruxAction.zoomFitAll:
+      case NetcruxAction.zoomToSelection:
       case NetcruxAction.toggleHierarchyTree:
       case NetcruxAction.toggleInspector:
       case NetcruxAction.toggleDiagnosticsPanel:

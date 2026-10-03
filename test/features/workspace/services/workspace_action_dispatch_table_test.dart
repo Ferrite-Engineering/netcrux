@@ -80,6 +80,7 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.zoomFitAll: _Routing.tabScoped,
   NetcruxAction.zoomIn: _Routing.tabScoped,
   NetcruxAction.zoomOut: _Routing.tabScoped,
+  NetcruxAction.zoomToSelection: _Routing.tabScoped,
   NetcruxAction.popOutScope: _Routing.tabScoped,
   NetcruxAction.jumpToTop: _Routing.tabScoped,
   NetcruxAction.clearOverlay: _Routing.tabScoped,

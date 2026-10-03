@@ -533,7 +533,9 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   3. Backspace (or double-click empty canvas, or Cmd+[). Expected: pop out one level; breadcrumb drops the last segment.
   4. Click a breadcrumb segment. Expected: jump directly to that ancestor scope.
   5. Press `0`. Expected: the whole schematic fits the viewport (centered, not cornered).
-- **Edge cases.** An empty / missing scope produces an empty graph, not a crash. Very small zoom (sub-0.1) is clamped and still renders the overview band. High-fanout nets are elided by the layout policy.
+  6. **Zoom In on every layout.** On a US layout press Cmd/Ctrl+`=`, then Cmd/Ctrl+Shift+`=` (Cmd/Ctrl+`+`), then Cmd/Ctrl+numpad `+`. Expected: each zooms in one step. Switch the OS keyboard layout to Swedish or German and press Cmd/Ctrl+`+` (the key right of `0`). Expected: zoom in. Cmd/Ctrl+numpad `-` zooms out and Cmd/Ctrl+numpad `0` fits. The View menu still shows Cmd/Ctrl+`=` beside Zoom In. Rebind Zoom In in Settings > Keyboard Shortcuts to another chord: Cmd/Ctrl+`+` no longer zooms, the new chord does; reset the binding and Cmd/Ctrl+`+` works again.
+  7. **Focus follows the pointer onto the canvas.** Click a row in the Hierarchy tree (focus is now in the tree), move the pointer onto the schematic without clicking, press `=` and `-`. Expected: the canvas zooms in and out; `0` fits. Click into the Hierarchy filter field, type a few characters, move the pointer across the schematic and keep typing. Expected: the text keeps going into the filter, `=` typed there appears in the field and does not zoom. Right-click empty canvas (or middle-drag), then press `=`. Expected: the canvas has focus and zooms, even when the filter field had focus before.
+- **Edge cases.** An empty / missing scope produces an empty graph, not a crash. Very small zoom (sub-0.1) is clamped and still renders the overview band. High-fanout nets are elided by the layout policy. With two panes split, moving the pointer from one canvas onto the other moves keyboard focus with it, so the bare zoom keys act on the canvas under the pointer. An open in-window menu (Windows / Linux) keeps keyboard focus while the pointer crosses the canvas.
 - **Automation Assessment.**
 
   | Test | Coverage |
@@ -547,6 +549,8 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | Cell-symbol library per `CellKind` | `[Coverage: UNIT]` (`test/features/viewer/symbols/symbol_painters_test.dart`) |
   | Hierarchy push-in / pop-out state transitions | `[Coverage: UNIT]` (`test/features/hierarchy/providers/hierarchy_tree_notifier_test.dart`, selectScope/expand paths) |
   | Double-click push-in / empty-canvas pop-out *gesture* on a live canvas | `[Coverage: MANUAL]` — steps 2–3; the notifier transitions are unit-covered, the pointer gesture is not. |
+  | Zoom In on Cmd/Ctrl+`=`, Cmd/Ctrl+`+` (with and without Shift) and Cmd/Ctrl+numpad `+`; numpad `-` / `0` with the modifier; the aliases follow the default binding and never take another action's chord (step 6) | `[Coverage: UNIT]` (`test/core/shortcuts/shortcut_bindings_test.dart`) + `[Coverage: WIDGET]` (`test/core/shortcuts/shortcut_manager_widget_test.dart`, "zoom aliases and Zoom to Selection" group, which simulates the Swedish / German `+` key) + `[Coverage: MANUAL]` (a real Swedish or German OS layout) |
+  | Pointer entering the canvas takes focus from a panel so bare `=` zooms; a text field mid-edit keeps focus; a right-click takes focus even from a text field (step 7) | `[Coverage: WIDGET]` (`test/features/viewer/widgets/schematic_gesture_handler_test.dart`, "focus follows the pointer" group) + `[Coverage: MANUAL]` (step 7 on a real window, split panes, an open in-window menu) |
 
 ---
 
@@ -597,6 +601,7 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   4. Select a result with the pointer. Expected: the canvas / hierarchy navigates to the result's scope.
   5. **Keyboard-only run.** Cmd/Ctrl+F, type a substring, press ArrowDown twice, press Enter — without touching the pointer. Expected: the highlight moves down two rows (scrolling the list when it moves past the visible rows), Enter closes the dialog and navigates to that row's scope exactly as a click would.
   6. **Two-tab check.** Open two designs in two tabs. In tab B, Cmd+F and search a symbol that exists only in tab B. Expected: tab B's results appear (never tab A's), and selecting one applies the selection to tab B. (Before the tab-scope fix the dialog read the empty root model and always returned zero results.)
+  7. **Cells in the hierarchy filter.** Open `test/fixtures/netlist/serv_ice40/captured/serv_ice40.netlist.json.gz` (decompress it to a `.json` first, then File > Open Netlist JSON…). The field above the Hierarchy tree reads **Filter scopes and cells…**. Type `add_cy`. Expected: under the single `service` scope, eleven cell rows, each with a chip icon and its type beside the name: one `SB_DFF` and ten `SB_LUT4`. Click one. Expected: the cell is selected (its row and the canvas highlight it), the inspector shows it and the canvas centers on it, the same as choosing it in Search. Arrow down onto another cell row and press Enter. Expected: the same for that cell. Type `SB_LUT4`. Expected: the first 100 matching cells, then a **Show more** row counting the rest; activating it lists the next 100. Type `zzz_nothing`. Expected: "No scopes or cells match the filter", pointing at Search for nets. In a hierarchical design (e.g. `design_seed`), filter for an instance name: the instance stays a scope row, and clicking it shows that scope. Clear the filter: no cell rows remain.
 - **Edge cases.** An invalid regex does not crash the dialog (falls back / reports no match rather than throwing). An empty query yields no results, not a full dump. With no tab open, Cmd+F is a no-op (no active-tab container to scope to). Enter with an empty result list is inert (the dialog stays open). ArrowUp on the first row / ArrowDown on the last row keeps the highlight where it is rather than wrapping.
 - **Automation Assessment.**
 
@@ -608,6 +613,8 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | ArrowUp / ArrowDown highlight + Enter activation | `[Coverage: WIDGET]` (`test/features/search/widgets/search_dialog_test.dart`, "keyboard activation") |
   | Cmd/Ctrl+F bound to `openSearch` | `[Coverage: UNIT]` (`test/core/shortcuts/netcrux_action_test.dart`, "design search binding is Ctrl/Cmd+F") |
   | Result-select → live scope navigation | `[Coverage: MANUAL]` — driven navigation is exercised via the toolbar/palette Search opener; the end-to-end jump is not yet in an integration test. |
+  | Hierarchy filter lists matching primitive cells (by name or type) under their scope, never an instance; a page of 100 then a counting Show more row; no cell rows without a filter; serv_ice40 `add_cy` gives eleven cells (one `SB_DFF`, ten `SB_LUT4`) in `service` (step 7) | `[Coverage: UNIT]` (`test/features/hierarchy/widgets/hierarchy_tree_panel_test.dart`, "filtered cell rows" group) |
+  | A cell row shows its type and is one named node; click or Enter selects the cell and requests the reveal; Show more lists the next page; the new no-match message (step 7) | `[Coverage: WIDGET]` (`test/features/hierarchy/widgets/hierarchy_tree_panel_test.dart`, "filtered cell rows in the panel" group; `test/features/hierarchy/widgets/hierarchy_leaf_row_test.dart`) + `[Coverage: MANUAL]` (the canvas centering on the chosen cell in a live window) |
 
 ---
 
@@ -619,7 +626,8 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   1. Select a cell, press `]`. Expected: the fanout neighbors stay lit; everything else dims.
   2. Press `[`. Expected: the fanin neighbors are highlighted instead.
   3. Press Esc. Expected: the overlay clears; the schematic returns to full brightness.
-- **Edge cases.** Tracing with nothing selected is a no-op. The overlay is per-tab (switching tabs does not carry the overlay across).
+  4. **Zoom to Selection.** With nothing selected, open the Navigate menu and the toolbar. Expected: **Zoom to Selection** is greyed out, and the command palette does not list it. Select a cell, pan it off screen and press `Z` (or the toolbar button beside Zoom to Fit, or Navigate > Zoom to Selection). Expected: the canvas centers on the cell at a readable zoom. Shift-click a second cell far from the first and press `Z`. Expected: both are in view. Select a cell with a wide fanout, press `]`, then `Z`. Expected: every highlighted cell and wire is on screen. Choose a cell in Search (or in the filtered Hierarchy tree), pan away, press `Z`. Expected: the canvas returns to it. Click into the Hierarchy filter and type `z`. Expected: the letter goes into the field and the camera does not move. On Windows / Linux the Navigate menu shows `Z` beside the item; on macOS the menu bar shows no key there (bare keys are not macOS menu accelerators), and the toolbar tooltip and the palette show it. Rebind it in Settings > Keyboard Shortcuts: the new key works.
+- **Edge cases.** Tracing with nothing selected is a no-op. The overlay is per-tab (switching tabs does not carry the overlay across). Zoom to Selection on a lone straight wire still frames it (the box is widened to a minimum size).
 - **Automation Assessment.**
 
   | Test | Coverage |
@@ -627,6 +635,9 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | `TraceService` fanin / fanout neighbor computation; `TraceOverlay` state | `[Coverage: UNIT]` (`test/services/schematic/trace_service_test.dart`) |
   | Per-tab overlay isolation | `[Coverage: UNIT]` (`test/services/workspace/netcrux_tab_overrides_test.dart`, `traceOverlayProvider` group) |
   | `[` / `]` / Esc key wiring on a live canvas + dim-path render | `[Coverage: MANUAL]` — the service + state are unit-covered; the keyboard-to-paint round-trip is a visual check. |
+  | Zoom to Selection bounds: one cell, a multi-selection, a pin's host cell, a boundary port, every routed segment of a selected net, everything an overlay highlights, a minimum extent (step 4) | `[Coverage: UNIT]` (`test/features/viewer/selection/selection_bounds_test.dart`) |
+  | Zoom to Selection camera: a lone cell at the comfort zoom, a trace fitted in view, no-op with nothing selected or no canvas (step 4) | `[Coverage: UNIT]` (`test/features/viewer/services/zoom_to_selection_controller_test.dart`) |
+  | Zoom to Selection on the toolbar, Navigate menu and palette, open core, disabled without a selection; bare `Z` default that a text field does not lose (step 4) | `[Coverage: UNIT]` (`test/core/shortcuts/netcrux_action_descriptors_test.dart`, "zoomToSelection" group; `test/core/shortcuts/shortcut_bindings_test.dart`) + `[Coverage: WIDGET]` (`test/core/shortcuts/shortcut_manager_widget_test.dart`) + `[Coverage: MANUAL]` (step 4 framing on a live canvas) |
 
 ---
 

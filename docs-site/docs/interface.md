@@ -6,7 +6,7 @@ NetCrux is an IDE-style multi-pane application: a hierarchy tree on the left, th
 
 The menu bar carries the full command set under `File`, `View`, `Navigate`, `Search`, `Tools` and `Help`. On macOS it is the native menu bar, and the `NetCrux` application menu holds **About NetCrux**, **Check for Updates**, **Settings…** and **Quit NetCrux**; on Linux and Windows the menu bar is drawn inside the window, Settings and Exit sit at the bottom of `File`, and About and Check for Updates sit under `Help`. Menu entries for a Pro or Enterprise action carry their tier.
 
-Below the menu bar, the **toolbar** surfaces the commands you reach for constantly: **Open Project…**, **Save Session As…** and **Close Project**; **Search…**, the **Cross-Probe Panel** toggle (with a badge counting connected peers) and **Settings…**; then **Open Source Files…**, **Open Netlist JSON…**, **Zoom In**, **Zoom Out**, **Zoom to Fit**, **Jump to Top**, **Pop Out of Scope**, and a **Trace** split button whose menu offers **Show Fanin**, **Show Fanout** and **Clear Selection / Overlay**. When the window is too narrow for the whole strip, it scrolls, and an **Actions** button appears at its end listing every menu command. Buttons grey out until they have something to act on — most need a laid-out design.
+Below the menu bar, the **toolbar** surfaces the commands you reach for constantly: **Open Project…**, **Save Session As…** and **Close Project**; **Search…**, the **Cross-Probe Panel** toggle (with a badge counting connected peers) and **Settings…**; then **Open Source Files…**, **Open Netlist JSON…**, **Zoom In**, **Zoom Out**, **Zoom to Fit**, **Zoom to Selection**, **Jump to Top**, **Pop Out of Scope**, and a **Trace** split button whose menu offers **Show Fanin**, **Show Fanout** and **Clear Selection / Overlay**. When the window is too narrow for the whole strip, it scrolls, and an **Actions** button appears at its end listing every menu command. Buttons grey out until they have something to act on; most need a laid-out design.
 
 ## The schematic canvas {#canvas}
 
@@ -22,7 +22,9 @@ The canvas is the center of the app and renders the elaborated netlist for the c
 
 ## Hierarchy tree {#hierarchy}
 
-The left panel is the **hierarchy tree**: an expandable view of the module hierarchy. Each row shows the instance name and its module type — for example `cpu_core (cpu)` — and the number of cells in that scope. Type in **Filter scopes…** to narrow the tree by instance or module name, use the chevrons to expand and collapse, and click a row to show that scope on the canvas. Toggle the panel with ++cmd+1++ / ++ctrl+1++.
+The left panel is the **hierarchy tree**: an expandable view of the module hierarchy. Each row shows the instance name and its module type, for example `cpu_core (cpu)`, and the number of cells in that scope. Type in **Filter scopes and cells…** to narrow the tree, use the chevrons to expand and collapse, and click a row to show that scope on the canvas. Toggle the panel with ++cmd+1++ / ++ctrl+1++.
+
+The filter matches scopes by instance or module name, and lists the cells that match it, by cell name or cell type, under their scope. A cell row has a chip icon and shows the cell type beside its name; clicking it shows its scope, selects the cell and centers the canvas on it, the same as choosing a cell in [Search](navigating.md#search). Each scope lists its first 100 matching cells, then a **Show more** row that lists the next 100. An instance of one of your own modules stays a scope row, and clicking it shows that scope. On a flat post-synthesis netlist, where the whole design is one scope, the filter is the quickest way to find a cell by name: filtering for `add_cy` in a SERV core synthesized for iCE40 lists eleven cells, one `SB_DFF` and ten `SB_LUT4`. Nets are not listed; find them with Search.
 
 ## Inspector {#inspector}
 

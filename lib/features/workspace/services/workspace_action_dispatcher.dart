@@ -44,6 +44,7 @@ import 'package:netcrux/features/viewer/services/cone_of_influence_controller.da
 import 'package:netcrux/features/viewer/services/schematic_export_controller.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/services/x_trace_controller.dart';
+import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.dart';
 import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
 import 'package:netcrux/features/workspace/widgets/active_tab_scope.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
@@ -163,6 +164,9 @@ class WorkspaceActionDispatcher {
             notifier.reset();
           }
         }
+      case NetcruxAction.zoomToSelection:
+        final c = _ref.activeTabContainerOrNull(context);
+        if (c != null) ZoomToSelectionController(c).run();
       case NetcruxAction.popOutScope:
         final c = _ref.activeTabContainerOrNull(context);
         c?.read(hierarchyTreeProvider.notifier).popOut();

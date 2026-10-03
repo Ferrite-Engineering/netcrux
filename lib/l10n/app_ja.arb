@@ -220,6 +220,10 @@
   "@actionZoomFitAll": {
     "description": "Command palette / menu label for fitting the entire schematic in the viewport."
   },
+  "actionZoomToSelection": "選択範囲にズーム",
+  "@actionZoomToSelection": {
+    "description": "Menu, toolbar and command palette label for framing the selected schematic elements, plus everything an active fanin / fanout trace highlights, in the viewport."
+  },
   "actionToggleHierarchyTree": "階層ツリーの切り替え",
   "@actionToggleHierarchyTree": {
     "description": "Command palette / menu label for toggling the left hierarchy tree panel."
@@ -276,9 +280,9 @@
   "@filePickerNetlistDialogTitle": {
     "description": "Title shown in the file picker when opening a pre-built Yosys JSON netlist."
   },
-  "hierarchyFilterHint": "スコープを絞り込む…",
+  "hierarchyFilterHint": "スコープとセルを絞り込む…",
   "@hierarchyFilterHint": {
-    "description": "Placeholder text inside the hierarchy tree panel's substring filter field."
+    "description": "Placeholder text inside the hierarchy tree panel's substring filter field. The filter matches scopes by instance or module name and lists matching cells, by cell name or cell type, under their scope."
   },
   "hierarchyClearFilterTooltip": "フィルタをクリア",
   "@hierarchyClearFilterTooltip": {
@@ -361,9 +365,9 @@
       }
     }
   },
-  "hierarchyFilterNoMatches": "フィルタに一致するスコープはありません。セルやネットを名前で探すには「検索…」（Ctrl+F、macOS では ⌘F）を使ってください。",
+  "hierarchyFilterNoMatches": "フィルタに一致するスコープやセルはありません。ネットを名前で探すには「検索…」（Ctrl+F、macOS では ⌘F）を使ってください。",
   "@hierarchyFilterNoMatches": {
-    "description": "Shown in the hierarchy tree panel when the active filter substring matches no scope names."
+    "description": "Shown in the hierarchy tree panel when the active filter matches no scope and no cell. The filter does not look at nets, so it points at Search, which finds nets by name."
   },
   "hierarchyCellCountLabel": "{count} セル",
   "@hierarchyCellCountLabel": {
@@ -380,6 +384,27 @@
     "placeholders": {
       "module": {
         "type": "String"
+      }
+    }
+  },
+  "hierarchyCellRowSemantics": "セル {name}、タイプ {type}",
+  "@hierarchyCellRowSemantics": {
+    "description": "Screen-reader name of a cell row in the filtered hierarchy tree: the cell's instance name and its cell type (e.g. 'Cell add_cy_3, type SB_LUT4').",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "hierarchyShowMoreCells": "{count, plural, =1{一致するセルをさらに 1 件表示} other{さらに表示（一致するセルがあと {count} 件）}}",
+  "@hierarchyShowMoreCells": {
+    "description": "Last row under a scope in the filtered hierarchy tree when more matching cells exist than are listed; activating it lists the next page. {count} is how many matching cells are still hidden.",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },

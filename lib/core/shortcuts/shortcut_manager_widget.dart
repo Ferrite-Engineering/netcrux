@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action_context.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action_descriptors.dart';
+import 'package:netcrux/core/shortcuts/shortcut_bindings.dart';
 import 'package:netcrux/core/shortcuts/shortcut_bindings_provider.dart';
 import 'package:netcrux/core/shortcuts/shortcut_conflicts.dart';
 
@@ -133,9 +134,12 @@ class ShortcutManagerWidget extends ConsumerWidget {
     final effective = resolveShortcutConflicts(bindings).effectiveBindings;
     return Shortcuts.manager(
       manager: _TextAwareShortcutManager(
+        // The effective bindings plus the layout aliases (Cmd/Ctrl+`+` for
+        // Zoom In and the numpad forms), which fire only while the action
+        // keeps its default key.
         shortcuts: <ShortcutActivator, Intent>{
-          for (final e in effective.entries)
-            e.value: NetcruxActionIntent(e.key),
+          for (final e in activatorsWithAliases(effective).entries)
+            e.key: NetcruxActionIntent(e.value),
         },
       ),
       child: Actions(

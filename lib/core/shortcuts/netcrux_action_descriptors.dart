@@ -224,6 +224,14 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isEnabled: _requiresSelection,
   ),
 
+  // ── Zoom to Selection — toolbar + menu + palette, needs a selection ──
+  // Frames the selection, plus whatever a trace overlay seeded from it
+  // highlights. With nothing selected there is nothing to frame.
+  NetcruxAction.zoomToSelection => const NetcruxActionDescriptor(
+    surfaces: _everywhere,
+    isEnabled: _requiresSelection,
+  ),
+
   // ── Browsable, requires a laid-out design ───────────────────────────
   // Exports operate on the schematic and write a file, which the browser
   // build cannot.

@@ -227,4 +227,146 @@ void main() {
       },
     );
   });
+
+  group('ShortcutManagerWidget — zoom aliases and Zoom to Selection', () {
+    Future<List<NetcruxAction>> press(
+      WidgetTester tester,
+      Future<void> Function() keys,
+    ) async {
+      final fired = <NetcruxAction>[];
+      await tester.pumpWidget(
+        _app(
+          handlers: {
+            for (final action in const [
+              NetcruxAction.zoomIn,
+              NetcruxAction.zoomOut,
+              NetcruxAction.zoomFitAll,
+              NetcruxAction.zoomToSelection,
+            ])
+              action: () => fired.add(action),
+          },
+        ),
+      );
+      await tester.pump();
+      await keys();
+      await tester.pump();
+      return fired;
+    }
+
+    Future<void> chord(
+      WidgetTester tester,
+      LogicalKeyboardKey key, {
+      bool shift = false,
+    }) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      // `+` has no key of its own on a US layout, so the simulator has no
+      // physical key for it; on Swedish and German layouts it sits where US
+      // has `-`, right of 0.
+      await tester.sendKeyEvent(
+        key,
+        physicalKey: key == LogicalKeyboardKey.add
+            ? PhysicalKeyboardKey.minus
+            : null,
+      );
+      if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    }
+
+    testWidgets('Ctrl plus = and Ctrl plus + both zoom in', (tester) async {
+      expect(
+        await press(tester, () => chord(tester, LogicalKeyboardKey.equal)),
+        [NetcruxAction.zoomIn],
+      );
+      expect(
+        await press(tester, () => chord(tester, LogicalKeyboardKey.add)),
+        [NetcruxAction.zoomIn],
+      );
+      expect(
+        await press(
+          tester,
+          () => chord(tester, LogicalKeyboardKey.equal, shift: true),
+        ),
+        [NetcruxAction.zoomIn],
+      );
+      expect(
+        await press(tester, () => chord(tester, LogicalKeyboardKey.numpadAdd)),
+        [NetcruxAction.zoomIn],
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the numpad minus and 0 zoom out and fit', (tester) async {
+      expect(
+        await press(
+          tester,
+          () => chord(tester, LogicalKeyboardKey.numpadSubtract),
+        ),
+        [NetcruxAction.zoomOut],
+      );
+      expect(
+        await press(tester, () => chord(tester, LogicalKeyboardKey.numpad0)),
+        [NetcruxAction.zoomFitAll],
+      );
+    });
+
+    testWidgets('rebinding Zoom In drops its aliases', (tester) async {
+      final fired = <NetcruxAction>[];
+      await tester.pumpWidget(
+        _app(
+          handlers: {
+            NetcruxAction.zoomIn: () => fired.add(NetcruxAction.zoomIn),
+          },
+        ),
+      );
+      await tester.pump();
+      ProviderScope.containerOf(
+            tester.element(find.byType(ShortcutManagerWidget)),
+          )
+          .read(shortcutBindingsProvider.notifier)
+          .setBinding(
+            NetcruxAction.zoomIn,
+            const SingleActivator(LogicalKeyboardKey.keyK, control: true),
+          );
+      await tester.pump();
+      await chord(tester, LogicalKeyboardKey.add);
+      await tester.pump();
+      expect(fired, isEmpty);
+      await chord(tester, LogicalKeyboardKey.keyK);
+      await tester.pump();
+      expect(fired, [NetcruxAction.zoomIn]);
+    });
+
+    testWidgets('bare Z is Zoom to Selection', (tester) async {
+      expect(
+        await press(tester, () => tester.sendKeyEvent(LogicalKeyboardKey.keyZ)),
+        [NetcruxAction.zoomToSelection],
+      );
+    });
+
+    testWidgets('bare Z types into a focused text field', (tester) async {
+      var fired = false;
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: L10N.localizationsDelegates,
+            supportedLocales: L10N.supportedLocales,
+            home: ShortcutManagerWidget(
+              handlers: {NetcruxAction.zoomToSelection: () => fired = true},
+              actionContextResolver: () => _enabledContext,
+              child: Material(
+                child: TextField(controller: controller, autofocus: true),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(fired, isFalse);
+    });
+  });
 }

@@ -46,6 +46,15 @@ Map<NetcruxAction, ShortcutActivator> defaultBindings() {
     NetcruxAction.zoomIn: mod(LogicalKeyboardKey.equal),
     NetcruxAction.zoomOut: mod(LogicalKeyboardKey.minus),
     NetcruxAction.zoomFitAll: mod(LogicalKeyboardKey.digit0),
+    // Bare Z, the key WaveCrux gives Zoom to Selection. Nothing else in
+    // NetCrux binds Z, and bare keys never reach a focused text field (see
+    // ShortcutManagerWidget). macOS shows no bare-letter accelerator in the
+    // native menu, so the menu item there carries no key; the toolbar
+    // tooltip, the command palette and the in-window menus on Windows and
+    // Linux show it.
+    NetcruxAction.zoomToSelection: const SingleActivator(
+      LogicalKeyboardKey.keyZ,
+    ),
     NetcruxAction.toggleHierarchyTree: mod(LogicalKeyboardKey.digit1),
     NetcruxAction.toggleInspector: mod(LogicalKeyboardKey.digit2),
     NetcruxAction.toggleDiagnosticsPanel: mod(LogicalKeyboardKey.digit3),
@@ -123,4 +132,77 @@ Map<NetcruxAction, ShortcutActivator> defaultBindings() {
     // chord-binding pass is a follow-on cleanup.
     NetcruxAction.splitPaneRight: mod(LogicalKeyboardKey.backslash),
   };
+}
+
+/// Extra activators that fire an action alongside its default binding.
+///
+/// A binding names a character, not a key position. Zoom In's default is
+/// Cmd/Ctrl plus `=`, which is unshifted on a US layout; on Swedish, German
+/// and most Nordic and European layouts `=` is Shift+0 and `+` has a key of
+/// its own. So Zoom In also answers to Cmd/Ctrl plus `+` (with or without
+/// Shift, which is how a US layout types it) and to Cmd/Ctrl plus numpad `+`,
+/// the way browsers and VS Code accept them. Zoom Out and Zoom to Fit take
+/// their numpad keys the same way.
+///
+/// Aliases are not bindings: they are not persisted, not listed in
+/// `Settings > Keyboard Shortcuts`, and apply only while the action still
+/// holds its default activator (see [activatorsWithAliases]). Rebinding Zoom
+/// In therefore moves it entirely to the new key.
+Map<NetcruxAction, List<ShortcutActivator>> defaultBindingAliases() {
+  final isMac =
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+  SingleActivator mod(LogicalKeyboardKey key, {bool shift = false}) =>
+      SingleActivator(
+        key,
+        meta: isMac,
+        control: !isMac,
+        shift: shift,
+      );
+  return <NetcruxAction, List<ShortcutActivator>>{
+    NetcruxAction.zoomIn: <ShortcutActivator>[
+      mod(LogicalKeyboardKey.add),
+      mod(LogicalKeyboardKey.add, shift: true),
+      mod(LogicalKeyboardKey.equal, shift: true),
+      mod(LogicalKeyboardKey.numpadAdd),
+    ],
+    NetcruxAction.zoomOut: <ShortcutActivator>[
+      mod(LogicalKeyboardKey.numpadSubtract),
+    ],
+    NetcruxAction.zoomFitAll: <ShortcutActivator>[
+      mod(LogicalKeyboardKey.numpad0),
+    ],
+  };
+}
+
+/// The activator-to-action table the keyboard surface installs: every entry
+/// of [effective] (the conflict-resolved bindings), plus the
+/// [defaultBindingAliases] of each action whose effective activator is still
+/// its default.
+///
+/// An alias never takes a chord another action holds: a user who binds
+/// Cmd/Ctrl+Shift+= to something else keeps it, and Zoom In simply loses
+/// that alias.
+Map<ShortcutActivator, NetcruxAction> activatorsWithAliases(
+  Map<NetcruxAction, ShortcutActivator> effective,
+) {
+  final result = <ShortcutActivator, NetcruxAction>{
+    for (final entry in effective.entries) entry.value: entry.key,
+  };
+  final defaults = defaultBindings();
+  bool taken(ShortcutActivator candidate) => result.keys.any(
+    (activator) => KeyBindingResolver.activatorsEqual(activator, candidate),
+  );
+  for (final entry in defaultBindingAliases().entries) {
+    final action = entry.key;
+    final current = effective[action];
+    if (current == null ||
+        !KeyBindingResolver.activatorsEqual(current, defaults[action])) {
+      continue;
+    }
+    for (final alias in entry.value) {
+      if (!taken(alias)) result[alias] = action;
+    }
+  }
+  return result;
 }

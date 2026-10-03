@@ -89,7 +89,7 @@ With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, 
 
 3. **Read the schematic.**
 
-    Yosys elaborates, NetCrux lays out the top module with ELK, and the schematic appears on the canvas. The hierarchy tree on the left mirrors it and the status bar shows the first source file, the top module and the design's cell count. From here, double-click an instance to push in, or select a net and press ++bracket-left++ / ++bracket-right++ to trace it.
+    Yosys elaborates, NetCrux lays out the top module with ELK, and the schematic appears on the canvas. The hierarchy tree on the left mirrors it and the status bar shows the first source file, the top module and the design's cell count. From here, double-click an instance to push in, or select a net and press ++bracket-left++ / ++bracket-right++ to trace it, then ++z++ to frame the trace. To find a cell by name, type it in the hierarchy tree's filter.
 
 To try NetCrux before pointing it at your own RTL, open one of the projects under `examples/` in the `netcrux` repository with `File → Open Project…`.
 
