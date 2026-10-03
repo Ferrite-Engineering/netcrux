@@ -144,6 +144,14 @@ Map<String, Object?> buildElkInput(Module module) {
 
   // Cells become inner nodes. Each cell's connections list expands into
   // ELK ports beneath the node.
+  //
+  // Every cell fixes its port sides (`FIXED_SIDE`): inputs on the west
+  // face, outputs on the east. Left FREE, ELK places a port wherever its
+  // edges pull it, so a feedback edge or an unconnected pin could put both
+  // pins of a LUT on one face. The order of ports along a face stays
+  // ELK's choice, which keeps crossings low. Both engines read these as
+  // `layoutOptions`; an element carries no `properties` map beside them,
+  // because the importer reads only one of the two.
   for (final entry in module.cells.entries) {
     final cell = entry.value;
     final ports = <Map<String, Object?>>[
@@ -152,8 +160,8 @@ Map<String, Object?> buildElkInput(Module module) {
           'id': '${cell.name}:$portName',
           'width': 4,
           'height': 4,
-          'properties': <String, Object?>{
-            'side': _portSideForDirection(cell.portDirections[portName]),
+          'layoutOptions': <String, Object?>{
+            'elk.port.side': elkPortSideFor(cell.portDirections[portName]),
           },
         },
     ];
@@ -165,9 +173,8 @@ Map<String, Object?> buildElkInput(Module module) {
         <String, Object?>{'text': '${cell.name}\\n(${cell.type})'},
       ],
       'ports': ports,
-      'properties': <String, Object?>{
-        'kind': 'cell',
-        'cellType': cell.type,
+      'layoutOptions': const <String, Object?>{
+        'elk.portConstraints': 'FIXED_SIDE',
       },
     });
   }
@@ -307,13 +314,20 @@ Duration layoutTimeoutFor({required int elementCount}) {
   return total > cap ? cap : total;
 }
 
-String _portSideForDirection(PortDirection? direction) {
+/// The ELK `port.side` of a cell pin with [direction]: `WEST` for an input,
+/// `EAST` for an output or inout.
+///
+/// A pin with no recorded direction is an input, the same fallback
+/// `SchematicGraphBuilder` uses, so the face ELK puts it on agrees with the
+/// pin the canvas draws and with the edges, which treat it as a sink.
+@visibleForTesting
+String elkPortSideFor(PortDirection? direction) {
   switch (direction) {
     case PortDirection.input:
+    case null:
       return 'WEST';
     case PortDirection.output:
     case PortDirection.inout:
-    case null:
       return 'EAST';
   }
 }

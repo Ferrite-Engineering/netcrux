@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/layout_disk_cache_vm.dart';
 import 'package:path/path.dart' as p;
@@ -148,6 +149,38 @@ void main() {
         for (final c in children) (c! as Map<String, Object?>)['id']! as String,
       ];
       expect(ids, containsAll(<String>['port:a', 'port:b', 'port:y', 'u_and']));
+    });
+
+    test('fixes every cell port to a side: inputs west, outputs east', () {
+      final model = NetlistModel.fromJson(_andJson);
+      final input = buildElkInput(model.modules['and2']!);
+      final cell = (input['children']! as List<Object?>)
+          .cast<Map<String, Object?>>()
+          .singleWhere((c) => c['id'] == 'u_and');
+      expect(
+        cell['layoutOptions'],
+        <String, Object?>{'elk.portConstraints': 'FIXED_SIDE'},
+      );
+      // The importer reads `layoutOptions` or `properties`, never both.
+      expect(cell.containsKey('properties'), isFalse);
+      final sides = <String, Object?>{
+        for (final port
+            in (cell['ports']! as List<Object?>).cast<Map<String, Object?>>())
+          port['id']! as String:
+              (port['layoutOptions']! as Map<String, Object?>)['elk.port.side'],
+      };
+      expect(sides, <String, Object?>{
+        'u_and:A': 'WEST',
+        'u_and:B': 'WEST',
+        'u_and:Y': 'EAST',
+      });
+    });
+
+    test('elkPortSideFor puts a pin without a direction with the inputs', () {
+      expect(elkPortSideFor(PortDirection.input), 'WEST');
+      expect(elkPortSideFor(null), 'WEST');
+      expect(elkPortSideFor(PortDirection.output), 'EAST');
+      expect(elkPortSideFor(PortDirection.inout), 'EAST');
     });
 
     test('emits driver→sink edges for every shared net id', () {

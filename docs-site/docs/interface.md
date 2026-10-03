@@ -14,6 +14,7 @@ The canvas is the center of the app and renders the elaborated netlist for the c
 
 - **Cells** are drawn as symbols. AND, OR, NOT, multiplexer, flip-flop and latch primitives get recognizable gate symbols; submodule instances and every other cell type are labeled rectangles.
 - **Wires** route between ports; the enclosing module's own ports sit on the boundary.
+- **Pins** keep to their faces: a cell's inputs are always on its left edge and its outputs on its right, even on a feedback loop or a pin with no wire.
 - **Hierarchical instances** represent submodules — double-click one to push into it.
 - A **three-band level-of-detail** system simplifies the drawing as you zoom out, so a large module stays legible. See [Navigating the schematic](navigating.md#lod).
 - The **breadcrumb bar** above the canvas shows your scope path — for example `top › cpu › alu` — and each crumb is clickable to jump straight to that level.

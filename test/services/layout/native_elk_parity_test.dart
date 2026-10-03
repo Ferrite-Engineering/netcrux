@@ -64,6 +64,7 @@ const _scopes = <_Scope>[
   _Scope('chain_1k/generated/chain_1k.netlist.json', 'chain_1k'),
   _Scope('vexriscv/captured/vexriscv.netlist.json.gz', 'InstructionCache'),
   _Scope('vexriscv/captured/vexriscv.netlist.json.gz', 'DataCache'),
+  _Scope('serv_ice40/captured/serv_ice40.netlist.json.gz', 'service'),
   _Scope('picorv32/captured/picorv32.netlist.json.gz', 'picorv32', large: true),
   _Scope('vexriscv/captured/vexriscv.netlist.json.gz', 'VexRiscv', large: true),
 ];
@@ -166,6 +167,34 @@ List<String> layoutDifferences(
   return diffs;
 }
 
+/// Every cell port of [layout] that is not on the face [inputJson] fixes for
+/// it, described: a `WEST` port must sit on the left half of its node, an
+/// `EAST` port on the right half.
+List<String> portSideViolations(NetlistLayout layout, String inputJson) {
+  final violations = <String>[];
+  final input = jsonDecode(inputJson) as Map<String, Object?>;
+  for (final child
+      in (input['children']! as List<Object?>).cast<Map<String, Object?>>()) {
+    final ports = child['ports'] as List<Object?>?;
+    if (ports == null) continue;
+    final node = layout.findNode(child['id']! as String);
+    if (node == null) continue;
+    for (final port in ports.cast<Map<String, Object?>>()) {
+      final id = port['id']! as String;
+      final side =
+          (port['layoutOptions'] as Map<String, Object?>?)?['elk.port.side'];
+      final box = node.ports[id];
+      if (box == null) continue;
+      final centre = box.x + box.width / 2;
+      final west = centre < node.bounds.width / 2;
+      if ((side == 'WEST') != west) {
+        violations.add('$id fixed $side, placed at x=${box.x}');
+      }
+    }
+  }
+  return violations;
+}
+
 void main() {
   final writeReferences =
       Platform.environment['NETCRUX_WRITE_LAYOUT_REFERENCES'] == '1';
@@ -203,6 +232,10 @@ void main() {
         final actual = _parse(solver.solve(input));
         final diffs = layoutDifferences(actual, expected);
         expect(diffs, isEmpty, reason: diffs.take(8).join('\n'));
+        // elkjs honours the fixed port sides too: the reference is evidence
+        // about the browser engine, which has no other gate here.
+        final sides = portSideViolations(expected, input);
+        expect(sides, isEmpty, reason: sides.take(8).join('\n'));
       });
     }
   });

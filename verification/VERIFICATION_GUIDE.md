@@ -103,7 +103,8 @@ The foundation is the pipeline spine everything else stands on: the `NetlistMode
   1. Open a design and navigate a scope. Expected: cells become boxes, ports become boundary nodes, nets route as edges; the schematic reads correctly with no flipped axes.
   2. Re-open the same scope (in-session or across restart). Expected: the cached layout returns instantly (no re-solve); `layout-cache/*.json.gz` appears under app-support.
   3. Walk a deep hierarchy, visiting more than 16 distinct scopes, then return to the scope you are currently viewing. Expected: it is still instant — the current scope is never the eviction victim. Returning to a long-ago scope may re-solve (evicted from memory) but is still served from the disk cache.
-- **Edge cases.** A malformed / empty ELK input raises `LayoutException` (the same type on web, §5.1). High-fanout nets are skipped per the layout policy rather than exploding the solve.
+  4. **Fixed pin faces.** Open the iCE40 SERV netlist (unpack `test/fixtures/netlist/serv_ice40/captured/serv_ice40.netlist.json.gz` with `gunzip -c` and use **Open Netlist JSON…**) and zoom into any `SB_LUT4` and any flip-flop. Expected: every input pin is on the left edge of its box and every output on the right, including LUTs on a feedback loop (a flop's Q feeding back to its own D) and pins with no wire. `buildElkInput` sets `elk.portConstraints: FIXED_SIDE` on every cell and `elk.port.side` on every pin (`elkPortSideFor`: inputs and pins with no recorded direction `WEST`, outputs and inouts `EAST`); the native engine and elkjs both honour it. Repeat in the web viewer, which runs elkjs.
+- **Edge cases.** A malformed / empty ELK input raises `LayoutException` (the same type on web, §5.1). High-fanout nets are skipped per the layout policy rather than exploding the solve. The fixed-side options change every ELK input, so layouts cached before them are solved again once.
 - **Automation Assessment.**
 
   | Test | Coverage |
@@ -111,6 +112,10 @@ The foundation is the pipeline spine everything else stands on: the `NetlistMode
   | `buildElkInput` conversion + `ElkLayoutService` solve + isolate offload + layout cache (incl. LRU entry-cap + byte-bound eviction and the never-evict-the-newest rule) + `LayoutException` mapping | `[Coverage: UNIT]` (`test/services/layout/elk_layout_service_test.dart`) |
   | `NetlistLayout` / `NodePosition` / `EdgeRoute` (modern `sections` + legacy `bendPoints`) / `BoundingBox` round-trip + equality | `[Coverage: UNIT]` (`test/domain/models/layout/*_test.dart`) |
   | Real flutter_js + elk bundle solve on a live host | `[Coverage: MANUAL]` — the unit tests stub `ElkJsHost`; §9.9 covers the live render. |
+  | `buildElkInput` emits `FIXED_SIDE` per cell and the side per pin, with no `properties` map beside them; `elkPortSideFor` (step 4) | `[Coverage: UNIT]` (`test/services/layout/elk_layout_service_test.dart`) |
+  | The native engine keeps a feedback loop's pins and a wireless pin on their faces; the test fails against `FREE` (step 4) | `[Coverage: UNIT]` (`test/services/layout/native_elk_solver_test.dart`) |
+  | elkjs and elkrs agree coordinate for coordinate on NetCrux inputs, serv_ice40 included, and every pin of the stored elkjs references sits on its fixed face (step 4) | `[Coverage: UNIT]` (`test/services/layout/native_elk_parity_test.dart`, references under `test/fixtures/layout/`) |
+  | Pin faces on a real FPGA netlist, desktop and web (step 4) | `[Coverage: MANUAL]` |
 
 ### 3.4 Theme system — Material 3 light/dark on the muted-amber seed
 
