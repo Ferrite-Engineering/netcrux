@@ -1265,6 +1265,23 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** Domain-model round-trip + equality covered by `test/domain/models/custom_cell_symbol/{port_anchor,custom_cell_symbol,custom_cell_symbol_match}_test.dart`. NoopRegistry no-op semantics covered by `test/domain/interfaces/custom_cell_symbol_registry_test.dart`. Provider default + override semantics covered by `test/services/custom_cell_symbols/custom_cell_symbol_registry_provider_test.dart` and `test/services/custom_cell_symbols/custom_cell_symbol_openers_test.dart`. Renderer factory default + override covered by `test/features/viewer/symbols/cell_body_painter_factory_test.dart`. Action conformance covered in `test/core/shortcuts/netcrux_action_test.dart`. `[Coverage: INTEGRATION_TEST]` — `integration_test/custom_cell_symbols/custom_cell_symbol_seam_test.dart` boots the real app, seeds a design (Yosys-free), asserts `customCellSymbolRegistryProvider` resolves to `NoopCustomCellSymbolRegistry`, and dispatches `lookup` / `listAll` / `addOrUpdate` / `remove` against a real seeded module type (`cpu`), asserting empty results and a `changed` stream that never emits. Manual verification: confirm the four actions appear in the command palette in all five locales and the no-op path produces no visible change in the schematic.
 
+### 7.8 Crossing overlay seam: `schematicCrossingOverlayProvider` paints wires and cells
+
+**What it does.** `SchematicCrossingOverlay` in `lib/services/schematic/schematic_crossing_overlay_provider.dart` is the record the Pro CDC and reset-domain panels publish when a crossing is selected. Besides the source, destination and intermediate cell ids, it carries `netIds`: the Yosys net ids of the crossing net, one per bit of a bus. The painter (`_paintCrossingOverlay` in `lib/features/viewer/rendering/schematic_painter.dart`) strokes every laid-out wire whose `EdgeRoute.netId` is in that set in the overlay's severity colour, the same net-id match a wire selection uses, then outlines the named cells. `netIds` defaults to empty, so an overlay built without it paints exactly what it did before. Open Core resolves the provider to `null` and paints nothing extra.
+
+**Setup.** Open Core build: nothing to set up, the seam is inert. The visible behaviour needs the Pro overlay, whose own verification guide carries the CDC and reset-domain steps.
+
+**Steps and expected behavior.**
+1. Open Core: open `examples/cdc-capture/cdc-capture.netcrux-project` and select the `sample_a` wire. Expected: the normal selection glow on its 8 strands and no red overlay (no Pro overlay publishes one).
+2. Pro: run CDC on the same project and select `sample_a` in the CDC panel. Expected: its source and capture registers and the 8 bus wires paint red.
+
+**Edge cases.**
+- A net-only overlay (no cell ids, some `netIds`) is not empty and paints its wires.
+- Net ids with no laid-out edge in the current scope paint nothing.
+- A wire that is both selected and in the overlay shows the severity colour, because the overlay pass runs after the edge pass.
+
+**Automation assessment.** `[Coverage: UNIT]`. Record equality, hash and emptiness with `netIds`: `test/services/schematic/schematic_crossing_overlay_provider_test.dart`. Painter: `test/features/viewer/rendering/schematic_painter_test.dart` group "crossing overlay wires" (every strand of the named net takes the severity colour, an unrelated net does not, an overlay with no `netIds` draws no extra paths), plus the existing "crossing overlay paint cost" group. Step 2 is covered on the real `cdc_capture` elaboration by the Pro overlay's own tests.
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

@@ -166,6 +166,7 @@
 - [ ] `cellBodyPainterFactoryProvider` open-core default (§7.7) — `defaultCellBodyPainterFactory` returns `painterFor(cell.kind)` for every cell; provider override semantics covered in `test/features/viewer/symbols/cell_body_painter_factory_test.dart`. `[Coverage: UNIT]`
 - [ ] `NetcruxAction` custom-cell-symbol actions (§7.7) — four new entries (`openSymbolManager`, `importSymbolFromSvg`, `editSymbolForCurrentInstance`, `removeSymbolForCurrentInstance`) appear in the command palette in all five locales. All four return `LicenseTier.pro` from `requiredTier`. `[Coverage: WIDGET]` (palette + locale) `[Coverage: UNIT]` (tier mapping)
 - [ ] Custom-cell-symbol opener seams (§7.7) — `openSymbolManagerOpenerProvider` / `importSymbolFromSvgOpenerProvider` / `editSymbolForCurrentInstanceOpenerProvider` / `removeSymbolForCurrentInstanceOpenerProvider` default to no-ops on open-core; dispatch invokes without throwing. Covered by `test/services/custom_cell_symbols/custom_cell_symbol_openers_test.dart`. `[Coverage: WIDGET]`
+- [ ] Crossing overlay paints the crossing net (§7.8): `SchematicCrossingOverlay.netIds` strokes every laid-out strand of the crossing net in the severity colour; default empty, so older overlays paint as before. Pro, on cdc-capture: run CDC, select `sample_a`; expected: its source and capture registers and the 8 bus wires paint red. `[Coverage: UNIT]` (`test/features/viewer/rendering/schematic_painter_test.dart`, `test/services/schematic/schematic_crossing_overlay_provider_test.dart`)
 
 ## Color Theming & Customization (suite-wide)
 

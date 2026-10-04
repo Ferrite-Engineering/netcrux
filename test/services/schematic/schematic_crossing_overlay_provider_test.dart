@@ -80,6 +80,33 @@ void main() {
       expect(a, isNot(equals(c)));
     });
 
+    test('equality and hash include the crossing net ids', () {
+      const a = SchematicCrossingOverlay(
+        sourceCellIds: <String>{'src'},
+        destinationCellIds: <String>{},
+        intermediateCellIds: <String>{},
+        severityColor: Color(0xFFE74C3C),
+        netIds: <int>{4, 5},
+      );
+      const b = SchematicCrossingOverlay(
+        sourceCellIds: <String>{'src'},
+        destinationCellIds: <String>{},
+        intermediateCellIds: <String>{},
+        severityColor: Color(0xFFE74C3C),
+        netIds: <int>{5, 4},
+      );
+      const c = SchematicCrossingOverlay(
+        sourceCellIds: <String>{'src'},
+        destinationCellIds: <String>{},
+        intermediateCellIds: <String>{},
+        severityColor: Color(0xFFE74C3C),
+        netIds: <int>{4},
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+      expect(a, isNot(equals(c)));
+    });
+
     test('non-empty overlay reports isEmpty=false', () {
       const overlay = SchematicCrossingOverlay(
         sourceCellIds: <String>{'src'},

@@ -15,7 +15,10 @@ import 'package:meta/meta.dart';
 /// chain (when present) names the cell instances the crossing path
 /// traverses. The schematic painter consults the overlay and draws a
 /// severity-colored outline around each named cell so the user can
-/// see at a glance where the crossing lives in the design.
+/// see at a glance where the crossing lives in the design. The
+/// crossing net's own wires ride along in [SchematicCrossingOverlay.netIds]
+/// (every bit of a bus), so an unsynchronized crossing, which has no
+/// synchronizer chain to outline, still paints the net that crosses.
 ///
 /// Open-core resolves to `null` so the painter falls through to its
 /// default rendering. The Pro overlay registers a controller (one for CDC,
@@ -42,6 +45,7 @@ class SchematicCrossingOverlay {
     required this.destinationCellIds,
     required this.intermediateCellIds,
     required this.severityColor,
+    this.netIds = const <int>{},
   });
 
   /// Empty sentinel — `isEmpty` returns true and the painter treats
@@ -68,17 +72,24 @@ class SchematicCrossingOverlay {
   /// when the source net drives the destination flop directly.
   final Set<String> intermediateCellIds;
 
+  /// Yosys net ids of the crossing net's wires, one per bit of a bus.
+  /// The painter strokes every laid-out edge whose `EdgeRoute.netId` is
+  /// in this set in [severityColor], the same net-id match a wire
+  /// selection uses. Empty by default, which paints no wires.
+  final Set<int> netIds;
+
   /// Severity-coded outline colour the painter uses. Sourced from
   /// the crossing's severity (`critical` → red, `warning` → amber,
   /// `info` → blue) — the Pro overlay applies the project's design-
   /// system colour tokens before publishing.
   final Color severityColor;
 
-  /// True when all three id sets are empty.
+  /// True when all three cell id sets and [netIds] are empty.
   bool get isEmpty =>
       sourceCellIds.isEmpty &&
       destinationCellIds.isEmpty &&
-      intermediateCellIds.isEmpty;
+      intermediateCellIds.isEmpty &&
+      netIds.isEmpty;
 
   /// Returns `true` when [cellId] participates in the overlay (any
   /// of the three roles).
@@ -108,6 +119,10 @@ class SchematicCrossingOverlay {
     for (final id in intermediateCellIds) {
       if (!other.intermediateCellIds.contains(id)) return false;
     }
+    if (other.netIds.length != netIds.length) return false;
+    for (final id in netIds) {
+      if (!other.netIds.contains(id)) return false;
+    }
     return true;
   }
 
@@ -117,6 +132,7 @@ class SchematicCrossingOverlay {
     Object.hashAllUnordered(sourceCellIds),
     Object.hashAllUnordered(destinationCellIds),
     Object.hashAllUnordered(intermediateCellIds),
+    Object.hashAllUnordered(netIds),
   );
 }
 

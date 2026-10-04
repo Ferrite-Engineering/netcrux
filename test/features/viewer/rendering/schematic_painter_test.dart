@@ -300,6 +300,105 @@ void main() {
     });
   });
 
+  group('crossing overlay wires', () {
+    // Net 4 is a two-strand net (two laid-out edges); net 5 is unrelated.
+    LaidOutGraph wiredGraph() {
+      EdgeRoute route(String id, double y) => EdgeRoute(
+        id: id,
+        points: <LayoutPoint>[LayoutPoint(10, y), LayoutPoint(90, y)],
+      );
+      return LaidOutGraph(
+        graph: const SchematicGraph(
+          moduleName: 'wired',
+          cells: <SchematicCell>[
+            SchematicCell(
+              id: 'c0',
+              kind: CellKind.andGate,
+              type: r'$and',
+              ports: <SchematicPort>[],
+            ),
+          ],
+          boundaryPorts: <SchematicBoundaryPort>[],
+          edges: <SchematicEdge>[],
+        ),
+        layout: NetlistLayout(
+          nodes: const <NodePosition>[
+            NodePosition(
+              id: 'c0',
+              bounds: BoundingBox(x: 0, y: 0, width: 8, height: 8),
+            ),
+          ],
+          edges: <EdgeRoute>[
+            route('e_4_0', 20),
+            route('e_4_1', 30),
+            route('e_5_0', 40),
+          ],
+          bounds: const BoundingBox(x: 0, y: 0, width: 100, height: 50),
+        ),
+      );
+    }
+
+    const severity = Color(0xFFD32F2F);
+
+    List<Paint> pathPaints(SchematicCrossingOverlay? overlay) {
+      final renderObject = SchematicCanvasRenderObject(
+        laidOut: wiredGraph(),
+        transform: ViewportTransform.identity,
+        theme: ThemeData.light(),
+        statsSink: const NoopRenderStatsSink(),
+        crossingOverlay: overlay,
+      )..layout(BoxConstraints.tight(const Size(400, 200)));
+      final context = TestRecordingPaintingContext(TestRecordingCanvas());
+      renderObject.paint(context, Offset.zero);
+      return <Paint>[
+        for (final recorded
+            in (context.canvas as TestRecordingCanvas).invocations)
+          if (recorded.invocation.memberName == #drawPath)
+            recorded.invocation.positionalArguments[1] as Paint,
+      ];
+    }
+
+    test('a net-only overlay is not empty', () {
+      const overlay = SchematicCrossingOverlay(
+        sourceCellIds: <String>{},
+        destinationCellIds: <String>{},
+        intermediateCellIds: <String>{},
+        severityColor: severity,
+        netIds: <int>{4},
+      );
+      expect(overlay.isEmpty, isFalse);
+      expect(overlay == SchematicCrossingOverlay.empty, isFalse);
+    });
+
+    test('every strand of the crossing net paints in the severity colour', () {
+      const overlay = SchematicCrossingOverlay(
+        sourceCellIds: <String>{},
+        destinationCellIds: <String>{},
+        intermediateCellIds: <String>{},
+        severityColor: severity,
+        netIds: <int>{4},
+      );
+      final withOverlay = pathPaints(
+        overlay,
+      ).where((p) => p.color.toARGB32() == severity.toARGB32()).length;
+      final without = pathPaints(
+        null,
+      ).where((p) => p.color.toARGB32() == severity.toARGB32()).length;
+      expect(without, 0);
+      expect(withOverlay, 2, reason: 'both net-4 strands, not net 5');
+    });
+
+    test('an overlay without net ids paints no wires', () {
+      const overlay = SchematicCrossingOverlay(
+        sourceCellIds: <String>{'c0'},
+        destinationCellIds: <String>{},
+        intermediateCellIds: <String>{},
+        severityColor: severity,
+      );
+      expect(pathPaints(overlay).length, pathPaints(null).length);
+    });
+  });
+
   group('SchematicCanvas widget', () {
     testWidgets('paints an empty graph without exception', (tester) async {
       final sink = RecordingRenderStatsSink();

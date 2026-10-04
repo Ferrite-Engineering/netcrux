@@ -575,12 +575,13 @@ class SchematicCanvasRenderObject extends RenderBox {
       _paintBoundaryPorts(canvas, _lastLodBand, visibleRect);
       // Crossing overlay paints last, on top of everything the passes
       // above drew — including the per-cell selection accent, which
-      // _paintCells strokes inline. Drawn as a per-cell stroked outline
-      // in the overlay's severity colour. Skipped entirely when no Pro
-      // overlay is publishing through schematicCrossingOverlayProvider.
+      // _paintCells strokes inline. Drawn as the crossing net's wires
+      // plus a per-cell stroked outline, all in the overlay's severity
+      // colour. Skipped entirely when no Pro overlay is publishing
+      // through schematicCrossingOverlayProvider.
       final crossing = _crossingOverlay;
       if (crossing != null && !crossing.isEmpty) {
-        _paintCrossingOverlay(canvas, crossing);
+        _paintCrossingOverlay(canvas, crossing, _lastLodBand, visibleRect);
       }
     }
 
@@ -1144,8 +1145,14 @@ class SchematicCanvasRenderObject extends RenderBox {
 
   // ── Crossing overlay (CDC + Reset) ──────────────────────────────
 
-  /// Draws a severity-coded outline around each cell named in the
-  /// active [SchematicCrossingOverlay]. Source-side cells get the
+  /// Draws the active [SchematicCrossingOverlay]: first every laid-out
+  /// wire of the crossing net ([SchematicCrossingOverlay.netIds], matched
+  /// on [EdgeRoute.netId] the way a wire selection is, so each strand of
+  /// a bus paints), then a severity-coded outline around each named cell.
+  /// The wires take the severity colour at the selected-wire core width,
+  /// so a crossing net that is also selected reads as the crossing.
+  ///
+  /// Source-side cells get the
   /// strongest stroke, intermediate cells get a medium stroke, and
   /// destination cells get the strongest stroke as well — the
   /// overlay's severity colour drives the hue, the role drives the
@@ -1158,16 +1165,50 @@ class SchematicCanvasRenderObject extends RenderBox {
   /// the two strokes are at different inflations so the accent stays
   /// partly visible underneath.
   ///
-  /// Cost is O(overlay cells), not O(design cells): the three id sets
-  /// are iterated directly and each id is resolved through
+  /// The cell cost is O(overlay cells), not O(design cells): the three id
+  /// sets are iterated directly and each id is resolved through
   /// [NetlistLayout.findNode]'s O(1) index. Scanning every cell in the
   /// graph and asking [SchematicCrossingOverlay.involvesCell] made an
   /// active overlay cost a full pass over the design on every frame,
-  /// while a crossing names only a handful of cells.
+  /// while a crossing names only a handful of cells. The wire pass walks
+  /// only the wires the scene index puts in the viewport, and is skipped
+  /// when the overlay names no nets.
   void _paintCrossingOverlay(
     Canvas canvas,
     SchematicCrossingOverlay overlay,
+    LodBand band,
+    Rect visibleRect,
   ) {
+    final netIds = overlay.netIds;
+    if (netIds.isNotEmpty) {
+      final wirePaint = Paint()
+        ..color = overlay.severityColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _strokeWidth(
+          band,
+          overview: 1.8,
+          other: 3.6,
+          minDevicePx: 1.5,
+        )
+        ..strokeCap = StrokeCap.round;
+      final scene = SchematicSceneIndex.of(_laidOut);
+      final wires = scene.wires;
+      final candidates = scene.wiresIn(visibleRect);
+      final candidateCount = candidates?.length ?? wires.length;
+      for (var k = 0; k < candidateCount; k++) {
+        final i = candidates == null ? k : candidates[k];
+        final edge = wires[i];
+        final netId = edge.netId;
+        if (netId == null || !netIds.contains(netId)) continue;
+        if (edge.points.isEmpty) continue;
+        if (!visibleRect.overlaps(scene.wireBounds(i))) continue;
+        final path = Path()..moveTo(edge.points.first.x, edge.points.first.y);
+        for (var p = 1; p < edge.points.length; p++) {
+          path.lineTo(edge.points[p].x, edge.points[p].y);
+        }
+        canvas.drawPath(path, wirePaint);
+      }
+    }
     final sourcePaint = Paint()
       ..color = overlay.severityColor
       ..style = PaintingStyle.stroke
