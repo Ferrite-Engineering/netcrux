@@ -718,12 +718,15 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   1. Edit and save tab A's source file. Expected: tab A re-elaborates; tab B is untouched (its diagnostics drawer does not change).
   2. Switch AutoReloadMode to prompt, edit the file again. Expected: a Reload snackbar action appears instead of an automatic re-elaboration.
   3. Switch to off. Expected: edits are ignored until a manual re-open.
-- **Edge cases.** Editing only an `include`d header does not necessarily re-fire (the same accepted blind spot as the elaboration-cache fingerprint, §4.3). The watcher state is per-tab and does not bleed across tabs.
+  4. Set AutoReloadMode back to prompt. Open a design through the file dialog (**File > Open Source Files…** on macOS, which touches the file's attributes as it reads it). Expected: no Reload prompt appears. Then edit and save that file. Expected: the Reload prompt appears.
+- **Edge cases.** An attribute-only change (permissions, extended attributes, an access-time update such as the macOS open dialog makes) is not a modification and raises no prompt; only a change to the file's contents or modification time does. Editing only an `include`d header does not necessarily re-fire (the same accepted blind spot as the elaboration-cache fingerprint, §4.3). The watcher state is per-tab and does not bleed across tabs.
 - **Automation Assessment.**
 
   | Test | Coverage |
   |---|---|
   | `sourceReloadEventsProvider` + `sourceFileWatcherProvider` are independent per-tab | `[Coverage: UNIT]` (`test/services/reload/source_file_watcher_per_tab_test.dart`) |
+  | An attribute-only change is not reported as a modification | `[Coverage: UNIT]` (`crux-shared/packages/crux_file_watcher/test/file_watcher_service_test.dart`) |
+  | Opening through the file dialog raises no prompt; a later edit does | `[Coverage: MANUAL]`. The dialog's attribute touch is a live macOS behavior. |
   | Live file-watch → re-elaborate with AutoReloadMode auto / prompt / off | `[Coverage: MANUAL]` — the per-tab isolation is unit-covered; the OS file-watch → re-elaboration round-trip is a live check. |
 
 ---
