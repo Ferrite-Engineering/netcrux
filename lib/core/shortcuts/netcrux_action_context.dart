@@ -32,6 +32,7 @@ class NetcruxActionContext {
     this.waveformLoaded = false,
     this.cdcAnalysisPresent = false,
     this.resetAnalysisPresent = false,
+    this.hasCrossingSelection = false,
     this.fsmFocused = false,
     this.activityColoringActive = false,
     this.paneCount = 1,
@@ -84,6 +85,11 @@ class NetcruxActionContext {
   /// result. Gates Clear Reset Analysis Selection.
   final bool resetAnalysisPresent;
 
+  /// Whether the active tab has a CDC or reset-domain crossing focused,
+  /// which the schematic paints. Escape (`clearOverlay`) clears it, so it
+  /// enables that action alongside a selection or a trace.
+  final bool hasCrossingSelection;
+
   /// Whether the active tab has an FSM focused in the bubble-diagram
   /// pane. Gates Clear FSM Selection.
   final bool fsmFocused;
@@ -119,6 +125,7 @@ class NetcruxActionContext {
       other.waveformLoaded == waveformLoaded &&
       other.cdcAnalysisPresent == cdcAnalysisPresent &&
       other.resetAnalysisPresent == resetAnalysisPresent &&
+      other.hasCrossingSelection == hasCrossingSelection &&
       other.fsmFocused == fsmFocused &&
       other.activityColoringActive == activityColoringActive &&
       other.paneCount == paneCount &&
@@ -136,6 +143,7 @@ class NetcruxActionContext {
     waveformLoaded,
     cdcAnalysisPresent,
     resetAnalysisPresent,
+    hasCrossingSelection,
     fsmFocused,
     activityColoringActive,
     paneCount,

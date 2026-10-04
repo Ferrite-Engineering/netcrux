@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:io';
-
+import 'package:crux_cxp/crux_cxp.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/cdc/cdc_analysis_result.dart';
+import 'package:netcrux/domain/models/cdc/cdc_crossing.dart';
+import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
+import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
+import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
+import 'package:netcrux/domain/models/cdc/clock_domain.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
+import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/workspace/providers/active_tab_action_flags_provider.dart';
@@ -166,5 +173,48 @@ void main() {
     tab.read(traceOverlayProvider.notifier).clear();
     await Future<void>.delayed(Duration.zero);
     expect(sub.read().hasTraceOverlay, isFalse);
+  });
+
+  test('a focused CDC crossing is mirrored, so Escape stays enabled', () async {
+    await setUpHarness();
+    final sub = root.listen(activeTabActionFlagsProvider, (_, _) {});
+    addTearDown(sub.close);
+
+    final tabId = await root
+        .read(netcruxWorkspaceProvider.notifier)
+        .openTab(displayName: 'a', payload: NetcruxTabPayload.empty);
+    await root.read(netcruxWorkspaceProvider.future);
+    final tab = manager.containerFor(tabId);
+
+    tab.read(cdcAnalysisStateProvider.notifier)
+      ..setResult(
+        const CdcAnalysisResult(
+          detectedDomains: <ClockDomain>[],
+          detectedCrossings: <CdcCrossing>[
+            CdcCrossing(
+              id: 'c1',
+              sourceDomainId: 'a',
+              destinationDomainId: 'b',
+              signalId: ElementId(kind: ElementKind.signal, path: 'x'),
+              signalName: 'x',
+              crossingKind: CdcCrossingKind.singleBit,
+              synchronizerStatus: CdcSynchronizerStatus.metastable,
+              severity: CdcSeverity.warning,
+              confidence: CdcConfidence.high,
+            ),
+          ],
+          analysisDiagnostics: <String>[],
+          analysisDuration: Duration.zero,
+        ),
+      )
+      ..selectCrossing('c1');
+    await Future<void>.delayed(Duration.zero);
+    expect(sub.read().cdcCrossingFocused, isTrue);
+    expect(sub.read().hasSelection, isFalse);
+    expect(sub.read().hasTraceOverlay, isFalse);
+
+    tab.read(cdcAnalysisStateProvider.notifier).clearSelection();
+    await Future<void>.delayed(Duration.zero);
+    expect(sub.read().cdcCrossingFocused, isFalse);
   });
 }

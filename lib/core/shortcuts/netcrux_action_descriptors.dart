@@ -448,7 +448,7 @@ bool _requiresMultipleTabs(NetcruxActionContext c) =>
 bool _requiresNetlist(NetcruxActionContext c) => c.hasNetlist;
 bool _requiresSelection(NetcruxActionContext c) => c.hasSelection;
 bool _requiresOverlayOrSelection(NetcruxActionContext c) =>
-    c.hasTraceOverlay || c.hasSelection;
+    c.hasTraceOverlay || c.hasSelection || c.hasCrossingSelection;
 bool _requiresTraceOverlay(NetcruxActionContext c) => c.hasTraceOverlay;
 bool _requiresXTraceResult(NetcruxActionContext c) => c.hasXTraceResult;
 bool _requiresFsmFocused(NetcruxActionContext c) => c.fsmFocused;

@@ -46,6 +46,8 @@ class ActiveTabActionFlags {
     this.waveformLoaded = false,
     this.cdcAnalysisPresent = false,
     this.resetAnalysisPresent = false,
+    this.cdcCrossingFocused = false,
+    this.resetCrossingFocused = false,
     this.fsmFocused = false,
     this.activityColoringActive = false,
   });
@@ -75,6 +77,14 @@ class ActiveTabActionFlags {
   /// result.
   final bool resetAnalysisPresent;
 
+  /// Whether the active tab has a CDC crossing focused (and painted on
+  /// the schematic).
+  final bool cdcCrossingFocused;
+
+  /// Whether the active tab has a reset-domain crossing focused (and
+  /// painted on the schematic).
+  final bool resetCrossingFocused;
+
   /// Whether the active tab has an FSM focused in the bubble diagram.
   final bool fsmFocused;
 
@@ -91,6 +101,8 @@ class ActiveTabActionFlags {
     bool? waveformLoaded,
     bool? cdcAnalysisPresent,
     bool? resetAnalysisPresent,
+    bool? cdcCrossingFocused,
+    bool? resetCrossingFocused,
     bool? fsmFocused,
     bool? activityColoringActive,
   }) => ActiveTabActionFlags(
@@ -102,6 +114,8 @@ class ActiveTabActionFlags {
     waveformLoaded: waveformLoaded ?? this.waveformLoaded,
     cdcAnalysisPresent: cdcAnalysisPresent ?? this.cdcAnalysisPresent,
     resetAnalysisPresent: resetAnalysisPresent ?? this.resetAnalysisPresent,
+    cdcCrossingFocused: cdcCrossingFocused ?? this.cdcCrossingFocused,
+    resetCrossingFocused: resetCrossingFocused ?? this.resetCrossingFocused,
     fsmFocused: fsmFocused ?? this.fsmFocused,
     activityColoringActive:
         activityColoringActive ?? this.activityColoringActive,
@@ -118,6 +132,8 @@ class ActiveTabActionFlags {
       other.waveformLoaded == waveformLoaded &&
       other.cdcAnalysisPresent == cdcAnalysisPresent &&
       other.resetAnalysisPresent == resetAnalysisPresent &&
+      other.cdcCrossingFocused == cdcCrossingFocused &&
+      other.resetCrossingFocused == resetCrossingFocused &&
       other.fsmFocused == fsmFocused &&
       other.activityColoringActive == activityColoringActive;
 
@@ -131,6 +147,8 @@ class ActiveTabActionFlags {
     waveformLoaded,
     cdcAnalysisPresent,
     resetAnalysisPresent,
+    cdcCrossingFocused,
+    resetCrossingFocused,
     fsmFocused,
     activityColoringActive,
   );
@@ -225,13 +243,20 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
       ),
       container.listen<CdcAnalysisState>(
         cdcAnalysisStateProvider,
-        (_, next) =>
-            _apply((s) => s.copyWith(cdcAnalysisPresent: !next.result.isEmpty)),
+        (_, next) => _apply(
+          (s) => s.copyWith(
+            cdcAnalysisPresent: !next.result.isEmpty,
+            cdcCrossingFocused: next.selectedCrossingId != null,
+          ),
+        ),
       ),
       container.listen<ResetDomainAnalysisState>(
         resetDomainAnalysisStateProvider,
         (_, next) => _apply(
-          (s) => s.copyWith(resetAnalysisPresent: !next.result.isEmpty),
+          (s) => s.copyWith(
+            resetAnalysisPresent: !next.result.isEmpty,
+            resetCrossingFocused: next.selectedCrossingId != null,
+          ),
         ),
       ),
       container.listen<SelectedFsmState>(
@@ -265,6 +290,11 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
           .read(resetDomainAnalysisStateProvider)
           .result
           .isEmpty,
+      cdcCrossingFocused:
+          container.read(cdcAnalysisStateProvider).selectedCrossingId != null,
+      resetCrossingFocused:
+          container.read(resetDomainAnalysisStateProvider).selectedCrossingId !=
+          null,
       fsmFocused: container.read(selectedFsmProvider).hasFsm,
       activityColoringActive: activityColoring(
         container.read(netActivityColorOverrideProvider),

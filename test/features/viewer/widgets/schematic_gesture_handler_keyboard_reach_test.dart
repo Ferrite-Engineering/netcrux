@@ -11,21 +11,37 @@
 // selection they can act on.
 
 import 'package:crux_a11y/crux_a11y_testing.dart';
+import 'package:crux_cxp/crux_cxp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/cdc/cdc_analysis_result.dart';
+import 'package:netcrux/domain/models/cdc/cdc_crossing.dart';
+import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
+import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
+import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
+import 'package:netcrux/domain/models/cdc/clock_domain.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_crossing.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_crossing_kind.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_domain.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_domain_analysis_result.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_polarity.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_severity.dart';
+import 'package:netcrux/domain/models/reset_domain/reset_synchronizer_status.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/reset_domain/providers/reset_domain_analysis_state_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_gesture_handler.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -413,4 +429,66 @@ void main() {
     expect(find.text('Copy Path'), findsNothing);
     expect(recorder.messages, <String>['Nothing is selected']);
   });
+
+  testWidgets('Escape clears the selection and a focused CDC or reset '
+      'crossing in one press', (tester) async {
+    final container = await _pump(tester);
+    await _alt(tester, LogicalKeyboardKey.arrowDown);
+    container.read(cdcAnalysisStateProvider.notifier)
+      ..setResult(_oneCdcCrossing())
+      ..selectCrossing('c1');
+    container.read(resetDomainAnalysisStateProvider.notifier)
+      ..setResult(_oneResetCrossing())
+      ..selectCrossing('r1');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+
+    expect(_primary(container), const SelectedElement.none());
+    expect(container.read(cdcAnalysisStateProvider).selectedCrossingId, isNull);
+    expect(
+      container.read(resetDomainAnalysisStateProvider).selectedCrossingId,
+      isNull,
+    );
+  });
 }
+
+CdcAnalysisResult _oneCdcCrossing() => const CdcAnalysisResult(
+  detectedDomains: <ClockDomain>[],
+  detectedCrossings: <CdcCrossing>[
+    CdcCrossing(
+      id: 'c1',
+      sourceDomainId: 'a',
+      destinationDomainId: 'b',
+      signalId: ElementId(kind: ElementKind.signal, path: 'x'),
+      signalName: 'x',
+      crossingKind: CdcCrossingKind.singleBit,
+      synchronizerStatus: CdcSynchronizerStatus.metastable,
+      severity: CdcSeverity.warning,
+      confidence: CdcConfidence.high,
+    ),
+  ],
+  analysisDiagnostics: <String>[],
+  analysisDuration: Duration.zero,
+);
+
+ResetDomainAnalysisResult _oneResetCrossing() =>
+    const ResetDomainAnalysisResult(
+      detectedDomains: <ResetDomain>[],
+      detectedCrossings: <ResetCrossing>[
+        ResetCrossing(
+          id: 'r1',
+          sourceDomainId: 'a',
+          destinationDomainId: 'b',
+          signalId: ElementId(kind: ElementKind.signal, path: 'x'),
+          signalName: 'x',
+          crossingKind: ResetCrossingKind.resetDeassertCrossing,
+          synchronizerStatus: ResetSynchronizerStatus.missingSynchronizer,
+          severity: ResetSeverity.critical,
+          confidence: ResetConfidence.high,
+          sourcePolarity: ResetPolarity.activeHigh,
+        ),
+      ],
+      analysisDiagnostics: <String>[],
+      analysisDuration: Duration.zero,
+    );

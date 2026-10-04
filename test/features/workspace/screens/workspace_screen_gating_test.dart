@@ -367,7 +367,7 @@ List<Override> _spyOpenerOverrides(Set<NetcruxAction> fired) => <Override>[
     (_, _) => fired.add(NetcruxAction.runCdcAnalysis),
   ),
   showCdcCrossingForSelectedSignalOpenerProvider.overrideWithValue(
-    (_, _, {signalPath, signalId}) =>
+    (_, _, {signalPath, signalId, target}) =>
         fired.add(NetcruxAction.showCdcCrossingForSelectedSignal),
   ),
   showResetDomainAnalysisPaneOpenerProvider.overrideWithValue(
@@ -377,7 +377,7 @@ List<Override> _spyOpenerOverrides(Set<NetcruxAction> fired) => <Override>[
     (_, _) => fired.add(NetcruxAction.runResetDomainAnalysis),
   ),
   showResetCrossingForSelectedSignalOpenerProvider.overrideWithValue(
-    (_, _, {signalPath, signalId}) =>
+    (_, _, {signalPath, signalId, target}) =>
         fired.add(NetcruxAction.showResetCrossingForSelectedSignal),
   ),
   openWaveformFileOpenerProvider.overrideWithValue(

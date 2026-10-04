@@ -24,6 +24,7 @@ import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.da
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
 import 'package:netcrux/features/viewer/selection/schematic_hit_test.dart';
 import 'package:netcrux/features/viewer/selection/schematic_keyboard_navigator.dart';
+import 'package:netcrux/features/viewer/services/clear_schematic_paint.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_controller.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -704,8 +705,9 @@ class _SchematicGestureHandlerState
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.escape) {
-      ref.read(selectedElementProvider.notifier).clear();
-      ref.read(traceOverlayProvider.notifier).clear();
+      // The same clear as the `clearOverlay` action Escape is bound to:
+      // the selection, the trace, and any focused CDC / reset crossing.
+      clearSchematicPaint(ref.read);
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;

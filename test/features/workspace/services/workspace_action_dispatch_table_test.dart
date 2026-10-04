@@ -258,7 +258,7 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
       (_, _) => record(NetcruxAction.runCdcAnalysis),
     ),
     showCdcCrossingForSelectedSignalOpenerProvider.overrideWithValue(
-      (_, _, {signalPath, signalId}) =>
+      (_, _, {signalPath, signalId, target}) =>
           record(NetcruxAction.showCdcCrossingForSelectedSignal),
     ),
     clearCdcAnalysisSelectionOpenerProvider.overrideWithValue(
@@ -271,7 +271,7 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
       (_, _) => record(NetcruxAction.runResetDomainAnalysis),
     ),
     showResetCrossingForSelectedSignalOpenerProvider.overrideWithValue(
-      (_, _, {signalPath, signalId}) =>
+      (_, _, {signalPath, signalId, target}) =>
           record(NetcruxAction.showResetCrossingForSelectedSignal),
     ),
     clearResetAnalysisSelectionOpenerProvider.overrideWithValue(

@@ -40,6 +40,7 @@ import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/features/viewer/providers/x_trace_panel_visible_provider.dart';
+import 'package:netcrux/features/viewer/services/clear_schematic_paint.dart';
 import 'package:netcrux/features/viewer/services/cone_of_influence_controller.dart';
 import 'package:netcrux/features/viewer/services/schematic_export_controller.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
@@ -179,8 +180,7 @@ class WorkspaceActionDispatcher {
         c?.read(traceOverlayProvider.notifier).clear();
       case NetcruxAction.clearOverlay:
         final c = _ref.activeTabContainerOrNull(context);
-        c?.read(traceOverlayProvider.notifier).clear();
-        c?.read(selectedElementProvider.notifier).clear();
+        if (c != null) clearSchematicPaint(c.read);
       case NetcruxAction.showConeOfInfluenceFanin:
         if (_proActionAllowed(context, action)) {
           unawaited(

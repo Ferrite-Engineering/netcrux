@@ -430,7 +430,7 @@
   },
   "actionClearOverlay": "Clear Selection / Overlay",
   "@actionClearOverlay": {
-    "description": "Command palette / menu label for clearing the current selection and any fanin/fanout overlay."
+    "description": "Command palette / menu label for clearing the current selection, any fanin/fanout overlay, and any focused CDC or reset-domain crossing painted on the schematic."
   },
   "actionExportPng": "Export as PNG…",
   "@actionExportPng": {

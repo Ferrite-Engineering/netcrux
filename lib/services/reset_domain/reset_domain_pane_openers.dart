@@ -4,6 +4,7 @@
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/selection/selected_element.dart';
 
 /// Opens / focuses the Reset Domain Analysis pane.
 ///
@@ -30,20 +31,28 @@ typedef RunResetDomainAnalysisOpener =
       WidgetRef ref,
     );
 
-/// Scopes the Reset Domain panel to crossings involving the
-/// right-clicked (or command-palette dispatched) signal. The Pro
-/// overlay's opener reads the active per-tab schematic selection when
-/// no explicit [signalPath] is supplied (command-palette path), or
-/// accepts the path directly (schematic context-menu path), invokes
-/// `ResetDomainAnalysisService.crossingsForSignal`, surfaces the
-/// matching crossing through the per-tab
-/// `resetDomainAnalysisStateProvider`, and opens the panel.
+/// Scopes the Reset Domain panel to the crossings a signal takes part in.
+///
+/// [target] is the schematic element the request is about: the
+/// right-clicked element on the context-menu path. With no [target] and
+/// no [signalPath] (the command-palette path) the Pro overlay's opener
+/// falls back to the active tab's schematic selection. [signalPath] /
+/// [signalId] name a signal directly instead, matched against the
+/// crossings' signal names.
+///
+/// The Pro overlay's opener reuses the tab's analysis result when it is
+/// current for the loaded design and runs the analysis otherwise, filters
+/// the panel to the matching crossings through the per-tab
+/// `resetDomainAnalysisStateProvider` when there are several, focuses and
+/// reveals one, and opens the panel; it reports through a snackbar when
+/// the signal takes part in no crossing.
 typedef ShowResetCrossingForSelectedSignalOpener =
     void Function(
       BuildContext context,
       WidgetRef ref, {
       String? signalPath,
       ElementId? signalId,
+      SelectedElement? target,
     });
 
 /// Clears the Reset Domain pane's currently-focused crossing + domain
@@ -80,7 +89,7 @@ final runResetDomainAnalysisOpenerProvider =
 /// "Show Reset Crossings for This Signal" entry.
 final showResetCrossingForSelectedSignalOpenerProvider =
     Provider<ShowResetCrossingForSelectedSignalOpener>(
-      (_) => (_, _, {signalPath, signalId}) {
+      (_) => (_, _, {signalPath, signalId, target}) {
         // Open-core no-op. Pro overlay overrides this.
       },
       name: 'showResetCrossingForSelectedSignalOpenerProvider',

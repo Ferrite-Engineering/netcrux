@@ -31,6 +31,8 @@ final netcruxActionContextProvider = Provider<NetcruxActionContext>((ref) {
     waveformLoaded: flags.waveformLoaded,
     cdcAnalysisPresent: flags.cdcAnalysisPresent,
     resetAnalysisPresent: flags.resetAnalysisPresent,
+    hasCrossingSelection:
+        flags.cdcCrossingFocused || flags.resetCrossingFocused,
     fsmFocused: flags.fsmFocused,
     activityColoringActive: flags.activityColoringActive,
     paneCount: workspace?.panes.length ?? 1,

@@ -170,6 +170,13 @@ const _exemptions = <_Exemption>[
     _overlayPane,
   ),
   _Exemption(
+    'lib/shared/widgets/revealing_list_view.dart',
+    _Consumer.proOverlay,
+    'The scroll-to-row list the CDC and reset-domain pane bodies are built '
+        'on, so it is reachable only through those panes, which only the Pro '
+        'overlay mounts.',
+  ),
+  _Exemption(
     'lib/features/source_pane/widgets/source_pane.dart',
     _Consumer.proOverlay,
     _overlayPane,

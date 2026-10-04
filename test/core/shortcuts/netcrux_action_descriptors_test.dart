@@ -467,4 +467,17 @@ void main() {
       expect(isActionEnabled(NetcruxAction.zoomToSelection, selected), isTrue);
     });
   });
+
+  group('clearOverlay (Escape)', () {
+    test('is enabled by a focused crossing alone', () {
+      const loaded = NetcruxActionContext(hasOpenTab: true, hasNetlist: true);
+      expect(isActionEnabled(NetcruxAction.clearOverlay, loaded), isFalse);
+      const crossing = NetcruxActionContext(
+        hasOpenTab: true,
+        hasNetlist: true,
+        hasCrossingSelection: true,
+      );
+      expect(isActionEnabled(NetcruxAction.clearOverlay, crossing), isTrue);
+    });
+  });
 }
