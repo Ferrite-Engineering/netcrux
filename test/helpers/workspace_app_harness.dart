@@ -87,20 +87,26 @@ class WorkspaceAppHarness {
   /// last, so they win. The workspace saved in [workspaceDirectory] is
   /// restored when one is given; otherwise nothing is. No CXP server starts,
   /// layout is [RowLayoutService], and Yosys is reported missing unless an
-  /// override says otherwise.
+  /// override says otherwise. [preferences] seeds the mock
+  /// `SharedPreferences`; pass [kEulaAcceptedPrefs] in it for a test that taps
+  /// through the app, or the agreement's barrier swallows the taps.
+  /// [sourcePollInterval] is the source files' poll (see
+  /// `sourceFilePollIntervalProvider`); off unless a test is about reloading.
   static Future<WorkspaceAppHarness> boot(
     WidgetTester tester, {
     CliLaunchIntent intent = const CliLaunchIntent.empty(),
     List<Override> overrides = const <Override>[],
     Directory? workspaceDirectory,
+    Map<String, Object> preferences = const <String, Object>{},
+    Duration? sourcePollInterval,
   }) async {
     await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(preferences);
     final prefs = await SharedPreferences.getInstance();
     final root = ProviderContainer(
       overrides: <Override>[
-        ...netcruxAppTestOverrides(),
+        ...netcruxAppTestOverrides(sourcePollInterval: sourcePollInterval),
         cliLaunchIntentProvider.overrideWithValue(intent),
         cxpServerHostProvider.overrideWith(_NullCxpServerHost.new),
         settingsServiceProvider.overrideWithValue(

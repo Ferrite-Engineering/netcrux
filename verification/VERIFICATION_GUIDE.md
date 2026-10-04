@@ -731,6 +731,7 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   2. Switch AutoReloadMode to prompt, edit the file again. Expected: a Reload snackbar action appears instead of an automatic re-elaboration.
   3. Switch to off. Expected: edits are ignored until a manual re-open.
   4. Set AutoReloadMode back to prompt. Open a design through the file dialog (**File > Open Source Files…** on macOS, which touches the file's attributes as it reads it). Expected: no Reload prompt appears. Then edit and save that file. Expected: the Reload prompt appears. Dismiss it and run `touch` on the file from a terminal. Expected: the Reload prompt appears again (a touch changes only the modification time, and still counts).
+  5. Keep AutoReloadMode at prompt, with two designs open side by side (**View > Split Pane Right**, ⌘\ on macOS). Run `touch` on one design's source from a terminal. Expected: the Reload prompt appears. Click **Reload**, then `touch` the file again. Expected: the prompt appears again. Leave that prompt alone and `touch` the file a third time. Expected: a new prompt replaces it. Repeat a few times; every touch raises a prompt, within about two seconds (crux-shared#25: the platform watch can go deaf, and each source file is also polled every second).
 - **Edge cases.** An attribute-only change (permissions, extended attributes, an access-time update such as the macOS open dialog makes) is not a modification and raises no prompt; only a change to the file's contents or modification time does. Editing only an `include`d header does not necessarily re-fire (the same accepted blind spot as the elaboration-cache fingerprint, §4.3). The watcher state is per-tab and does not bleed across tabs.
 - **Automation Assessment.**
 
@@ -739,6 +740,7 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | `sourceReloadEventsProvider` + `sourceFileWatcherProvider` are independent per-tab | `[Coverage: UNIT]` (`test/services/reload/source_file_watcher_per_tab_test.dart`) |
   | An attribute-only change is not reported as a modification | `[Coverage: UNIT]` (`crux-shared/packages/crux_file_watcher/test/file_watcher_service_test.dart`) |
   | Opening through the file dialog raises no prompt; a later edit or `touch` does | `[Coverage: UNIT]` in crux-shared (`crux-shared/packages/crux_file_watcher/test/file_watcher_service_test.dart`) + `[Coverage: MANUAL]` for the live macOS dialog. |
+  | Every touch raises the prompt, with Reload tapped or the prompt left alone, in one tab, two tabs, a split, and a split restored at launch, while the platform watch goes deaf after its first burst | `[Coverage: WIDGET]` (`test/features/workspace/widgets/source_reload_prompt_test.dart`) + `[Coverage: UNIT]` for the poll itself (`crux-shared/packages/crux_file_watcher/test/file_watcher_service_test.dart`, *polling backstop*) |
   | Live file-watch → re-elaborate with AutoReloadMode auto / prompt / off | `[Coverage: MANUAL]` — the per-tab isolation is unit-covered; the OS file-watch → re-elaboration round-trip is a live check. |
 
 ---

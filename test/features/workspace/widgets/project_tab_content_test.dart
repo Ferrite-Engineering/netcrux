@@ -19,6 +19,7 @@ import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart'
 import 'package:netcrux/features/viewer/widgets/netcrux_ide_layout.dart';
 import 'package:netcrux/features/workspace/widgets/project_tab_content.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
@@ -119,6 +120,9 @@ void main() {
               versionString: 'test stub',
             ),
           ),
+          // The tab watches its sources; their poll would be a timer left
+          // running when the test ends.
+          sourceFilePollIntervalProvider.overrideWithValue(null),
         ],
       );
       addTearDown(root.dispose);

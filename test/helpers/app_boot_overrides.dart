@@ -5,11 +5,12 @@ import 'package:crux_eula/crux_eula.dart';
 import 'package:crux_updates/crux_updates.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:netcrux/app.dart';
+import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 
 /// The root-scope overrides a widget test needs to boot `NetcruxApp`.
 ///
 /// [netcruxAppOverrides] alone is the *production* wiring; a widget test needs
-/// two things on top of it, and [kEulaAcceptedPrefs] besides:
+/// three things on top of it, and [kEulaAcceptedPrefs] besides:
 ///
 /// 1. **No live update check.** `updateCheckServiceProvider` resolves to the
 ///    live HTTP service once build info loads. Pinning the no-op keeps the
@@ -22,13 +23,21 @@ import 'package:netcrux/app.dart';
 ///    correct app. [NoTimerUpdateStatusNotifier] keeps `checkNow` /
 ///    `runScheduledCheck` real while omitting the timer.
 ///
+/// 3. **No source-file poll** unless [sourcePollInterval] asks for one. The
+///    poll (`sourceFilePollIntervalProvider`) is a periodic timer owned by a
+///    per-tab container, which the test disposes after the same check.
+///
 /// Spread this instead of [netcruxAppOverrides] in any test that mounts the
 /// root widget.
-List<Override> netcruxAppTestOverrides() => <Override>[
-  ...netcruxAppOverrides,
-  updateCheckServiceProvider.overrideWithValue(const NoopUpdateCheckService()),
-  updateStatusProvider.overrideWith(NoTimerUpdateStatusNotifier.new),
-];
+List<Override> netcruxAppTestOverrides({Duration? sourcePollInterval}) =>
+    <Override>[
+      ...netcruxAppOverrides,
+      updateCheckServiceProvider.overrideWithValue(
+        const NoopUpdateCheckService(),
+      ),
+      updateStatusProvider.overrideWith(NoTimerUpdateStatusNotifier.new),
+      sourceFilePollIntervalProvider.overrideWithValue(sourcePollInterval),
+    ];
 
 /// Mock `SharedPreferences` contents that say "this installation has already
 /// accepted the current EULA".
