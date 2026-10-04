@@ -12,9 +12,10 @@ import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 /// boundary port the overlay highlights.
 ///
 /// A cell or boundary port contributes its laid-out node, a pin its host
-/// cell, and a wire every routed segment of its net (the layout and the
-/// schematic graph number edges independently, so a wire is matched on its
-/// net id as well as its edge id, the way the painter highlights it).
+/// cell, and a wire every routed segment of its net (a wire is matched on
+/// its net id as well as its edge id, the way the painter highlights it).
+/// Overlay edge ids are graph ids, which the routes share; an overlay edge
+/// on a net the layout leaves unrouted has no route and adds nothing.
 /// Returns `null` when nothing resolves to laid-out geometry.
 ///
 /// The result is never thinner than [minExtent] on either axis: a single

@@ -174,6 +174,36 @@ class SchematicBoundaryPort {
   String toString() => 'SchematicBoundaryPort($id, $direction, w=$width)';
 }
 
+/// The id of the [index]th edge of net [netId]: `e_<netId>_<index>`.
+///
+/// [index] counts within the net only, so an edge's id depends on its own
+/// net and nothing else: dropping or adding another net never renumbers it.
+String netEdgeId(int netId, int index) => 'e_${netId}_$index';
+
+/// The net id a [netEdgeId] id names, or `null` for an id of another shape
+/// (a hand-authored test id such as `e1`).
+int? netIdOfEdgeId(String edgeId) {
+  if (!edgeId.startsWith('e_')) return null;
+  final rest = edgeId.substring(2);
+  final underscore = rest.indexOf('_');
+  if (underscore <= 0) return null;
+  return int.tryParse(rest.substring(0, underscore));
+}
+
+/// The cell a `<cellName>:<portName>` pin id ([SchematicPort.id]) belongs
+/// to, or `null` for a boundary-port id (`port:<name>`) or an id with no
+/// colon.
+///
+/// Splits at the last colon: a Yosys-generated cell name carries its source
+/// location (`$and$alu.v:42$7`), so the first colon can sit inside the cell
+/// name, while a port name never contains one.
+String? cellIdOfPinId(String pinId) {
+  if (pinId.startsWith('port:')) return null;
+  final colon = pinId.lastIndexOf(':');
+  if (colon <= 0) return null;
+  return pinId.substring(0, colon);
+}
+
 /// A wire on the schematic — one driver port to one sink port, derived
 /// from one Yosys net.
 @immutable

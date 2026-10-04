@@ -39,8 +39,10 @@ A NetCrux session is a JSON document capturing one tab's view state. It is writt
 { "kind": "cell", "cellId": "u_add" }
 { "kind": "port", "cellId": "u_add", "portId": "…", "portName": "A" }
 { "kind": "boundaryPort", "portId": "…", "portName": "clk" }
-{ "kind": "wire", "edgeId": "…", "netId": 42 }
+{ "kind": "wire", "edgeId": "e_42_0", "netId": 42, "edgeIdScheme": "per-net" }
 ```
+
+A wire's `edgeId` is `e_<netId>_<k>`, where `k` numbers the wire among the driver-to-sink connections of its own net, so the id stays the same however the rest of the design changes. `edgeIdScheme` marks that numbering. A wire record without it was written by an earlier NetCrux, whose edge ids counted across the whole scope and may now name a different wire; loading it selects the first wire of its `netId` instead, which is the same net.
 
 A multi-element selection writes the primary element at the top level and the rest under an `elements` array of the same shapes.
 

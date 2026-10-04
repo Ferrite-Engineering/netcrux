@@ -202,4 +202,31 @@ void main() {
       expect(SchematicGraph.empty.findEdge('e0'), isNull);
     });
   });
+
+  group('edge and pin ids', () {
+    test('netEdgeId counts within the net', () {
+      expect(netEdgeId(576, 0), 'e_576_0');
+      expect(netEdgeId(2, 31), 'e_2_31');
+    });
+
+    test('netIdOfEdgeId reads the net back', () {
+      expect(netIdOfEdgeId(netEdgeId(576, 4)), 576);
+      expect(netIdOfEdgeId('e1'), isNull);
+      expect(netIdOfEdgeId('e__3'), isNull);
+      expect(netIdOfEdgeId('edge_5_0'), isNull);
+    });
+
+    test('cellIdOfPinId splits at the last colon', () {
+      expect(cellIdOfPinId('u_alu:A'), 'u_alu');
+      // Yosys names carry the source location.
+      expect(cellIdOfPinId(r'$and$alu.v:42$7:Y'), r'$and$alu.v:42$7');
+      expect(
+        cellIdOfPinId(r'$auto$proc_memwr.cc:45:proc_memwr$3960:DATA'),
+        r'$auto$proc_memwr.cc:45:proc_memwr$3960',
+      );
+      expect(cellIdOfPinId('port:clk'), isNull);
+      expect(cellIdOfPinId('nocolon'), isNull);
+      expect(cellIdOfPinId(':A'), isNull);
+    });
+  });
 }

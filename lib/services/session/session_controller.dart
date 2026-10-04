@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/session/netcrux_session.dart';
@@ -346,6 +347,7 @@ class SessionController {
           'kind': 'wire',
           'edgeId': edgeId,
           'netId': netId,
+          'edgeIdScheme': _perNetEdgeIdScheme,
         };
     }
   }
@@ -371,6 +373,10 @@ class SessionController {
     }
     return Selection(elements: elements, primary: primary);
   }
+
+  /// The `edgeIdScheme` a wire record carries when its edge id counts
+  /// within the net (`netEdgeId`).
+  static const String _perNetEdgeIdScheme = 'per-net';
 
   SelectedElement _elementFromJson(Map<String, Object?>? json) {
     if (json == null) return const SelectedElement.none();
@@ -406,6 +412,17 @@ class SessionController {
         final netId = json['netId'] as int?;
         if (edgeId == null || netId == null) {
           return const SelectedElement.none();
+        }
+        // A record without the scheme marker was written when the edge id
+        // counted across the whole module, so its id may name another wire
+        // or none. Its net id is still right, so the net's first edge is
+        // selected: the same net, and on a net with one driver the same
+        // driver and sinks in the inspector.
+        if (json['edgeIdScheme'] != _perNetEdgeIdScheme && netId >= 0) {
+          return SelectedElement.wire(
+            edgeId: netEdgeId(netId, 0),
+            netId: netId,
+          );
         }
         return SelectedElement.wire(edgeId: edgeId, netId: netId);
       default:

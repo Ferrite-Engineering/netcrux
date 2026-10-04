@@ -384,7 +384,7 @@ void main() {
           portName: 'rst_n',
         ),
       ),
-      ('wire', const SelectedElement.wire(edgeId: 'e_7_0', netId: 7)),
+      ('wire', const SelectedElement.wire(edgeId: 'e_7_3', netId: 7)),
     ]) {
       testWidgets('a $label selection round-trips through the file', (
         tester,
@@ -487,6 +487,49 @@ void main() {
         'edgeId': 'e_1_0',
       });
       expect(selection.isEmpty, isTrue);
+    });
+
+    testWidgets('a wire written before per-net edge ids selects its net', (
+      tester,
+    ) async {
+      // The id counted across the whole module, so it names no wire now;
+      // the net id is still right.
+      final selection = await load(tester, <String, Object?>{
+        'kind': 'wire',
+        'edgeId': 'e_576_1883',
+        'netId': 576,
+      });
+      expect(
+        selection.primary,
+        const SelectedElement.wire(edgeId: 'e_576_0', netId: 576),
+      );
+    });
+
+    testWidgets('a per-net wire record keeps its edge id', (tester) async {
+      final selection = await load(tester, <String, Object?>{
+        'kind': 'wire',
+        'edgeId': 'e_576_4',
+        'netId': 576,
+        'edgeIdScheme': 'per-net',
+      });
+      expect(
+        selection.primary,
+        const SelectedElement.wire(edgeId: 'e_576_4', netId: 576),
+      );
+    });
+
+    testWidgets('an old wire record with no resolved net is kept as is', (
+      tester,
+    ) async {
+      final selection = await load(tester, <String, Object?>{
+        'kind': 'wire',
+        'edgeId': 'e1',
+        'netId': -1,
+      });
+      expect(
+        selection.primary,
+        const SelectedElement.wire(edgeId: 'e1', netId: -1),
+      );
     });
 
     testWidgets('non-map entries in the extras list are skipped', (

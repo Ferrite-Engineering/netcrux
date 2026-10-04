@@ -171,6 +171,86 @@ void main() {
     });
   });
 
+  group('TraceService with Yosys-generated cell names', () {
+    // A Yosys cell name carries its source location, colons included.
+    const and = r'$and$alu.v:42$7';
+    const mux = r'$procmux$1851';
+    const laidOut = LaidOutGraph(
+      graph: SchematicGraph(
+        moduleName: 'alu',
+        cells: <SchematicCell>[
+          SchematicCell(
+            id: and,
+            kind: CellKind.andGate,
+            type: r'$and',
+            ports: <SchematicPort>[
+              SchematicPort(
+                id: '$and:Y',
+                name: 'Y',
+                direction: PortDirection.output,
+                side: SchematicPortSide.east,
+              ),
+            ],
+          ),
+          SchematicCell(
+            id: mux,
+            kind: CellKind.mux,
+            type: r'$mux',
+            ports: <SchematicPort>[
+              SchematicPort(
+                id: '$mux:A',
+                name: 'A',
+                direction: PortDirection.input,
+                side: SchematicPortSide.west,
+              ),
+            ],
+          ),
+        ],
+        boundaryPorts: <SchematicBoundaryPort>[],
+        edges: <SchematicEdge>[
+          SchematicEdge(
+            id: 'e_9_0',
+            sourcePortId: '$and:Y',
+            targetPortId: '$mux:A',
+            netId: 9,
+          ),
+        ],
+      ),
+      layout: NetlistLayout(
+        nodes: <NodePosition>[
+          NodePosition(
+            id: and,
+            bounds: BoundingBox(x: 0, y: 0, width: 60, height: 40),
+          ),
+          NodePosition(
+            id: mux,
+            bounds: BoundingBox(x: 200, y: 0, width: 60, height: 40),
+          ),
+        ],
+        edges: <EdgeRoute>[],
+        bounds: BoundingBox(x: 0, y: 0, width: 260, height: 40),
+      ),
+    );
+
+    test('a fanin lights the driver by its whole name', () {
+      final overlay = const TraceService().compute(
+        laidOut: laidOut,
+        selection: const SelectedElement.cell(cellId: mux),
+        mode: TraceOverlayMode.fanin,
+      );
+      expect(overlay.highlightedCellIds, <String>{mux, and});
+    });
+
+    test('a wire lights both of its cells', () {
+      final overlay = const TraceService().compute(
+        laidOut: laidOut,
+        selection: const SelectedElement.wire(edgeId: 'e_9_0', netId: 9),
+        mode: TraceOverlayMode.fanout,
+      );
+      expect(overlay.highlightedCellIds, <String>{mux, and});
+    });
+  });
+
   group('TraceOverlay', () {
     test('empty equals empty', () {
       expect(TraceOverlay.empty == TraceOverlay.empty, isTrue);

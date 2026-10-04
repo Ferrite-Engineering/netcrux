@@ -3,6 +3,7 @@
 
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 
@@ -125,8 +126,7 @@ class TraceService {
       boundaries.add(portId);
       return;
     }
-    final colon = portId.indexOf(':');
-    if (colon < 0) return;
-    cellIds.add(portId.substring(0, colon));
+    final cellId = cellIdOfPinId(portId);
+    if (cellId != null) cellIds.add(cellId);
   }
 }

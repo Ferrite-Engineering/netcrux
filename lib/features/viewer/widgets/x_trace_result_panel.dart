@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
@@ -253,12 +254,7 @@ class _ChainList extends ConsumerWidget {
 
   /// `<cellName>:<portName>` → `<cellName>`, or `null` when [portId] names no
   /// cell (a `port:*` boundary id, or an edge id that is not a port id).
-  static String? _cellOfPort(String portId) {
-    if (portId.startsWith('port:')) return null;
-    final colon = portId.indexOf(':');
-    if (colon <= 0) return null;
-    return portId.substring(0, colon);
-  }
+  static String? _cellOfPort(String portId) => cellIdOfPinId(portId);
 }
 
 /// Strips the `port:` prefix the graph builder applies to boundary-port ids,

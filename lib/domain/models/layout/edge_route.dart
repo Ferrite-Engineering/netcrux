@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:meta/meta.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 
 /// A single (x, y) point in layout coordinates.
 @immutable
@@ -128,29 +129,15 @@ class EdgeRoute {
   final String? targetPortId;
 
   /// The Yosys net id this routed edge carries, parsed from the [id]'s
-  /// `e_<netId>_<counter>` form — the id scheme both `buildElkInput`
-  /// (the ELK layout input) and `SchematicGraphBuilder` emit. Returns
-  /// `null` for ids that don't follow that scheme (e.g. hand-authored
-  /// test ids like `e1`), so callers fall back to id matching.
+  /// `e_<netId>_<k>` form, where `k` counts the edge within its net: the
+  /// ids [netEdgeId] makes and `enumerateNetEdges` gives, which the ELK layout input and
+  /// `SchematicGraphBuilder` share. Returns `null` for ids that don't
+  /// follow that scheme (e.g. hand-authored test ids like `e1`), so
+  /// callers fall back to id matching.
   ///
-  /// The renderer keys wire-selection highlighting off this rather than
-  /// the opaque [id]: the laid-out edge ids and the schematic graph's
-  /// edge ids are numbered by two INDEPENDENT global counters (ELK
-  /// drops high-fanout / dangling nets the graph builder keeps, so a
-  /// given net is the Nth emitted edge in one builder and the Mth in the
-  /// other), so an [id] resolved against a freshly-built graph is not
-  /// guaranteed to appear among the laid-out edge ids the painter draws.
-  /// The net id encoded in both id schemes IS stable, so highlighting by
-  /// net id lights up a selection regardless of which builder produced
-  /// the selected edge id.
-  int? get netId {
-    // Expect `e_<netId>_<counter>`; the middle segment is the net id.
-    if (!id.startsWith('e_')) return null;
-    final rest = id.substring(2);
-    final underscore = rest.indexOf('_');
-    if (underscore <= 0) return null;
-    return int.tryParse(rest.substring(0, underscore));
-  }
+  /// The renderer keys wire-selection highlighting off this as well as
+  /// the [id], so a selected wire lights every routed segment of its net.
+  int? get netId => netIdOfEdgeId(id);
 
   /// Returns a copy with the given fields replaced.
   EdgeRoute copyWith({

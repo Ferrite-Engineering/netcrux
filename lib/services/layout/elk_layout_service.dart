@@ -21,6 +21,7 @@ import 'package:netcrux/services/layout/elk_solver_stub.dart'
 // web `kElkWebSolverAvailable` is false and the isolate path is used.
 import 'package:netcrux/services/layout/elk_web_solver_stub.dart'
     if (dart.library.html) 'package:netcrux/services/layout/elk_web_solver_web.dart';
+import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
 
 /// Narrow seam over [JavascriptRuntime] — exposing only what
 /// [ElkLayoutService] actually needs. Implementing a full
@@ -111,6 +112,10 @@ abstract interface class LayoutDiskCache {
   Future<void> write(String key, String value);
 }
 
+/// The most edges a net may have and still be routed by the layout; a net
+/// with more is drawn as an implied global net (clock, reset, enables).
+const int highFanoutEdgeCap = 32;
+
 /// Builds the ELK-compatible input JSON for a single module out of a
 /// [NetlistModel]. Pure function — exposed at the top level so it can be
 /// unit-tested without spinning up a JS runtime.
@@ -179,52 +184,10 @@ Map<String, Object?> buildElkInput(Module module) {
     });
   }
 
-  // Build edges by finding which cell ports drive which other cell ports
-  // for each net id. The result is a list of "for each net id, all the
-  // (node, port) attachments" — every output→input pair becomes an edge.
-  final attachmentsByNetId = <int, List<_Attachment>>{};
-  for (final entry in module.cells.entries) {
-    final cell = entry.value;
-    for (final connEntry in cell.connections.entries) {
-      final direction = cell.portDirections[connEntry.key];
-      for (final bit in connEntry.value) {
-        // bit is a BitRef; we care about NetBit only (constants don't
-        // route).
-        final id = bit.toJson();
-        if (id is! int) continue;
-        attachmentsByNetId
-            .putIfAbsent(id, () => <_Attachment>[])
-            .add(
-              _Attachment(
-                nodeId: cell.name,
-                portId: '${cell.name}:${connEntry.key}',
-                isDriver: direction?.toJsonString() == 'output',
-              ),
-            );
-      }
-    }
-  }
-  for (final portEntry in module.ports.entries) {
-    final port = portEntry.value;
-    for (final bit in port.bits) {
-      final id = bit.toJson();
-      if (id is! int) continue;
-      attachmentsByNetId
-          .putIfAbsent(id, () => <_Attachment>[])
-          .add(
-            _Attachment(
-              nodeId: 'port:${port.name}',
-              portId: 'port:${port.name}',
-              isDriver: port.direction.toJsonString() == 'input',
-            ),
-          );
-    }
-  }
-
   // Route only "datapath" nets as point-to-point edges, skipping
   // high-fanout global nets (clock, reset, enable — which drive every
-  // flop). A net whose driver×sink product exceeds [highFanoutEdgeCap]
-  // is treated as global and left un-routed in the layout.
+  // flop). A net with more than [highFanoutEdgeCap] edges is treated as
+  // global and left un-routed in the layout.
   //
   // Why: a single high-fanout net (clk → ~1 600 flops) expands to ~1 600
   // point-to-point edges, and ELK's layered algorithm inserts a dummy
@@ -235,22 +198,18 @@ Map<String, Object?> buildElkInput(Module module) {
   // connectivity that actually drives a readable, compact layout. Edges
   // stay 'simple' (1 source → 1 target) as ELK's layered algorithm
   // requires — it rejects multi-endpoint hyperedges.
-  const highFanoutEdgeCap = 32;
-  var edgeCounter = 0;
-  for (final entry in attachmentsByNetId.entries) {
-    final attachments = entry.value;
-    final drivers = attachments.where((a) => a.isDriver).toList();
-    final sinks = attachments.where((a) => !a.isDriver).toList();
-    if (drivers.isEmpty || sinks.isEmpty) continue;
-    if (drivers.length * sinks.length > highFanoutEdgeCap) continue;
-    for (final driver in drivers) {
-      for (final sink in sinks) {
-        edges.add(<String, Object?>{
-          'id': 'e_${entry.key}_${edgeCounter++}',
-          'sources': <String>[driver.portId],
-          'targets': <String>[sink.portId],
-        });
-      }
+  //
+  // The edges come from the enumeration the schematic graph is built
+  // from, with their ids unchanged: a skipped net renumbers nothing, so a
+  // routed edge's id names the same wire in the graph.
+  for (final group in enumerateNetEdges(module)) {
+    if (group.edges.length > highFanoutEdgeCap) continue;
+    for (final edge in group.edges) {
+      edges.add(<String, Object?>{
+        'id': edge.id,
+        'sources': <String>[edge.sourcePortId],
+        'targets': <String>[edge.targetPortId],
+      });
     }
   }
 
@@ -330,17 +289,6 @@ String elkPortSideFor(PortDirection? direction) {
     case PortDirection.inout:
       return 'EAST';
   }
-}
-
-class _Attachment {
-  const _Attachment({
-    required this.nodeId,
-    required this.portId,
-    required this.isDriver,
-  });
-  final String nodeId;
-  final String portId;
-  final bool isDriver;
 }
 
 /// Async layout pipeline over the Eclipse Layout Kernel.

@@ -127,12 +127,12 @@ class SchematicHitTester {
         final b = Offset(edge.points[i + 1].x, edge.points[i + 1].y);
         if (_distanceToSegment(designPoint, a, b) <= wireSlop) {
           // The net id is encoded in the laid-out edge id itself
-          // ([EdgeRoute.netId]); prefer it. `graph.findEdge` is only a
-          // fallback for the rare hand-authored id that carries no net
-          // id — and it can miss entirely, because the laid-out edge ids
-          // and the schematic-graph edge ids are numbered by independent
-          // counters. Keeping the net id correct here is what arms the
-          // outbound cross-probe with the right net name after a click.
+          // ([EdgeRoute.netId]); prefer it. `graph.findEdge` is the
+          // fallback for a hand-authored id that carries no net id: the
+          // laid-out and schematic-graph edge ids are the same, so the
+          // lookup finds the wire. Keeping the net id correct here is what
+          // arms the outbound cross-probe with the right net name after a
+          // click.
           final netId =
               edge.netId ?? laidOut.graph.findEdge(edge.id)?.netId ?? -1;
           return SelectedElement.wire(edgeId: edge.id, netId: netId);

@@ -409,16 +409,14 @@ class SchematicCanvasRenderObject extends RenderBox {
 
   /// Net ids in the current selection (wire selections).
   ///
-  /// Wire selections are keyed by net, not by a single laid-out edge:
-  /// the row-tap probe, the CXP inbound handler, and the canvas
-  /// hit-test all resolve a wire against a *freshly built* schematic
-  /// graph whose edge ids are numbered independently of the laid-out
-  /// [EdgeRoute] ids this painter draws (see [EdgeRoute.netId]). Matching
-  /// the selection's [SelectedElementWire.netId] against each drawn
-  /// edge's [EdgeRoute.netId] is therefore what makes a selection light
-  /// up — a match on the opaque edge id alone silently misses whenever
-  /// the two id counters diverge. Negative sentinel net ids (an
-  /// unresolved hit) are dropped so they can never match a real edge.
+  /// Wire selections are keyed by net, not by a single laid-out edge: a
+  /// selected wire lights every routed segment of its net, matched on
+  /// [EdgeRoute.netId]. The laid-out and schematic-graph edge ids are the
+  /// same (both come from `enumerateNetEdges`), so the edge id also
+  /// matches; the net match is what lights the rest of the net, and what
+  /// keeps a wire restored from a saved session, whose edge id may no
+  /// longer exist, lit. Negative sentinel net ids (an unresolved hit) are
+  /// dropped so they can never match a real edge.
   Set<int> _selectedWireNetIds() {
     if (_selection.isEmpty) return const <int>{};
     final ids = <int>{};
