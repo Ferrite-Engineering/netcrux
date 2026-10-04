@@ -29,6 +29,7 @@ import 'package:netcrux/features/viewer/rendering/schematic_scene_index.dart';
 import 'package:netcrux/features/viewer/symbols/cell_body_painter_factory.dart';
 import 'package:netcrux/features/viewer/symbols/symbol_painters.dart';
 import 'package:netcrux/services/schematic/schematic_crossing_overlay_provider.dart';
+import 'package:netcrux/shared/widgets/start_ellipsis_text.dart';
 
 /// Sink the [SchematicCanvasRenderObject] writes its paint-time
 /// metrics into. The viewer wires this to [PaneRenderStatsNotifier];
@@ -315,19 +316,26 @@ class SchematicCanvasRenderObject extends RenderBox {
   /// Returns the cached laid-out painter for [key], building and caching
   /// it on first use and promoting it to the LRU tail. The caller owns
   /// nothing — the cache disposes the painter on eviction or invalidation.
+  ///
+  /// A label too wide for [maxWidth] loses its end behind an ellipsis, or
+  /// its start when [elideStart] is set ([startElidedText]).
   TextPainter _labelLayout(
     String key,
     String text,
     TextStyle style,
-    double maxWidth,
-  ) {
+    double maxWidth, {
+    bool elideStart = false,
+  }) {
     final cached = _textLayoutCache.remove(key);
     if (cached != null) {
       _textLayoutCache[key] = cached;
       return cached;
     }
+    final shown = elideStart
+        ? startElidedText(text, style: style, maxWidth: maxWidth)
+        : text;
     final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
+      text: TextSpan(text: shown, style: style),
       textDirection: TextDirection.ltr,
       maxLines: 1,
       ellipsis: '…',
@@ -775,11 +783,15 @@ class SchematicCanvasRenderObject extends RenderBox {
     // Memoized per (cell, band): the layout is stable for a given
     // NetlistLayout + theme, so we lay it out once and just re-paint it
     // each frame. The cache is disposed when the layout or theme changes.
+    //
+    // A long name keeps its tail: in a flat netlist every cell name carries
+    // the same dotted path, and the end is what tells two cells apart.
     final painter = _labelLayout(
       'c:${cell.id}:${band.name}',
       cell.displayLabel,
       style,
       size.width - 8,
+      elideStart: true,
     );
     painter.paint(
       canvas,

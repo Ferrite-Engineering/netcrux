@@ -726,6 +726,18 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets('a cell row keeps the tail of its name and tooltips it all', (
+      tester,
+    ) async {
+      await pumpFiltered(tester, _model(), 'u_and');
+      final row = tester.widget<HierarchyLeafRow>(
+        find.byType(HierarchyLeafRow),
+      );
+      expect(row.elideLabelStart, isTrue);
+      expect(row.tooltip, 'u_and');
+      expect(row.label, 'u_and');
+    });
+
     testWidgets('choosing a cell row selects it and reveals it', (
       tester,
     ) async {
@@ -792,6 +804,12 @@ void main() {
       );
       final more = find.text('Show more (50 more matching cells)');
       await tester.scrollUntilVisible(more, 200, scrollable: list);
+      // The show-more row is a sentence: it keeps the ordinary end cut.
+      final moreRow = tester.widget<HierarchyLeafRow>(
+        find.ancestor(of: more, matching: find.byType(HierarchyLeafRow)),
+      );
+      expect(moreRow.elideLabelStart, isFalse);
+      expect(moreRow.tooltip, isNull);
       await tester.tap(more);
       await tester.pumpAndSettle();
       expect(more, findsNothing);

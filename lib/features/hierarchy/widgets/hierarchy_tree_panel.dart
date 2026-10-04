@@ -483,6 +483,8 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
                   icon: Icons.memory_outlined,
                   label: entry.cellName,
                   detail: entry.cellType,
+                  elideLabelStart: true,
+                  tooltip: entry.cellName,
                   semanticLabel: l10n.hierarchyCellRowSemantics(
                     entry.cellName,
                     entry.cellType,

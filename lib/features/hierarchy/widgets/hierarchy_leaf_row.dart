@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netcrux/features/hierarchy/widgets/hierarchy_tree_row.dart';
+import 'package:netcrux/shared/widgets/start_ellipsis_text.dart';
 
 /// A leaf row of the filtered hierarchy tree that is not a scope: a matching
 /// cell listed under its scope, or the row that lists more of them.
@@ -21,6 +22,8 @@ class HierarchyLeafRow extends StatefulWidget {
     required this.semanticLabel,
     required this.onActivate,
     this.detail,
+    this.elideLabelStart = false,
+    this.tooltip,
     this.isSelected = false,
     this.focusNode,
     this.isTabStop = true,
@@ -39,6 +42,16 @@ class HierarchyLeafRow extends StatefulWidget {
 
   /// Muted text after [label] (a cell's type), or null for none.
   final String? detail;
+
+  /// Whether a [label] too wide for the row loses its start rather than its
+  /// end (`…alu.add_cy_r_SB_LUT4_I3_1`). A cell row sets it: a flat
+  /// netlist's cell names share a long dotted prefix and differ in the tail.
+  final bool elideLabelStart;
+
+  /// Hover text for the row, such as the full name an elided [label] cuts,
+  /// or null for none. Kept out of the semantics tree: [semanticLabel] is
+  /// the row's one name.
+  final String? tooltip;
 
   /// What a screen reader announces for the row; the visible text is
   /// excluded so nothing is read twice.
@@ -101,6 +114,19 @@ class _HierarchyLeafRowState extends State<HierarchyLeafRow> {
     return KeyEventResult.ignored;
   }
 
+  Widget _label(TextStyle? base, Color color) {
+    final style = base?.copyWith(color: color) ?? TextStyle(color: color);
+    if (widget.elideLabelStart) {
+      return StartEllipsisText(widget.label, style: style);
+    }
+    return Text(
+      widget.label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -118,14 +144,7 @@ class _HierarchyLeafRowState extends State<HierarchyLeafRow> {
           SizedBox(width: widget.depth * _indentPerLevel + _chevronSize + 2),
           Icon(widget.icon, size: _iconSize, color: mutedColor),
           const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              widget.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium?.copyWith(color: color),
-            ),
-          ),
+          Flexible(child: _label(theme.textTheme.bodyMedium, color)),
           if (detail != null) ...<Widget>[
             const SizedBox(width: 8),
             Text(
@@ -138,6 +157,7 @@ class _HierarchyLeafRowState extends State<HierarchyLeafRow> {
         ],
       ),
     );
+    final tooltip = widget.tooltip;
     return Material(
       color: widget.isSelected ? theme.colorScheme.primary : Colors.transparent,
       child: Semantics(
@@ -166,7 +186,14 @@ class _HierarchyLeafRowState extends State<HierarchyLeafRow> {
                       ? Border.all(color: theme.colorScheme.tertiary, width: 2)
                       : null,
                 ),
-                child: row,
+                child: tooltip == null
+                    ? row
+                    : Tooltip(
+                        message: tooltip,
+                        excludeFromSemantics: true,
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: row,
+                      ),
               ),
             ),
           ),
