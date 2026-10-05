@@ -238,6 +238,26 @@ void main() {
       expect(and['B']!.tie.isX, isTrue);
     });
 
+    test('a cell carries the init value of the net its output drives', () {
+      final json =
+          jsonDecode(jsonEncode(_danglingMulJson)) as Map<String, Object?>;
+      final modules = json['modules']! as Map<String, Object?>;
+      final top = modules['top']! as Map<String, Object?>;
+      // `reg [1:0] p = 2'b01;`: Yosys writes the init on the wire.
+      (top['netnames']! as Map<String, Object?>)['p'] = <String, Object?>{
+        'hide_name': 0,
+        'bits': <Object>[4, 5],
+        'attributes': <String, Object?>{'init': '01'},
+      };
+      final model = NetlistModel.fromJson(json);
+      final graph = builder.build(model, HierarchyNode.rootOf(model)!);
+      final mul = graph.cells.singleWhere((c) => c.id == 'u_mul');
+      final and = graph.cells.singleWhere((c) => c.id == 'u_and');
+      expect(mul.initValue, '01');
+      // An input on an init net does not give the reader the value.
+      expect(and.initValue, isNull);
+    });
+
     test('a declared port Yosys left out is drawn, unconnected', () {
       final json =
           jsonDecode(jsonEncode(_danglingMulJson)) as Map<String, Object?>;

@@ -149,5 +149,29 @@ void main() {
       expect(a.hashCode, equals(b.hashCode));
       expect(a, isNot(equals(c)));
     });
+
+    test('equality compares the origin reason and port', () {
+      XTraceResult origin(XTraceOriginReason? reason, String? port) =>
+          XTraceResult(
+            rootNetId: 4,
+            chain: const <XTraceStep>[
+              XTraceStep(depth: 0, netId: 4, edgeId: 'e_4'),
+            ],
+            termination: XTraceTermination.foundOrigin,
+            originReason: reason,
+            originPortId: port,
+          );
+      final a = origin(XTraceOriginReason.undrivenInput, 'u_mul:B');
+      expect(a, origin(XTraceOriginReason.undrivenInput, 'u_mul:B'));
+      expect(
+        a.hashCode,
+        origin(XTraceOriginReason.undrivenInput, 'u_mul:B').hashCode,
+      );
+      expect(a, isNot(origin(XTraceOriginReason.xTiedInput, 'u_mul:B')));
+      expect(a, isNot(origin(XTraceOriginReason.undrivenInput, 'u_mul:A')));
+      // Omitting both keeps the pre-reason shape.
+      expect(origin(null, null).originReason, isNull);
+      expect(XTraceResult.empty.originReason, isNull);
+    });
   });
 }

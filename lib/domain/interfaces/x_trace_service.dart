@@ -12,9 +12,11 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 /// (e.g. "X origin reached", "depth limit reached", "no waveform
 /// loaded").
 enum XTraceTermination {
-  /// The traversal found a driver whose current value is not `x` — **an**
-  /// origin of the unknown propagation. The final [XTraceStep] in
-  /// [XTraceResult.chain] is that origin.
+  /// The traversal found a cell that can produce an unknown by itself:
+  /// **an** origin of the unknown propagation. The final [XTraceStep] in
+  /// [XTraceResult.chain] is that origin, and [XTraceResult.originReason]
+  /// says why it is one (an undriven or `x`-tied input, a register with no
+  /// reset, or a cell with no driven inputs).
   ///
   /// Never "the origin". At a cell with several inputs the walk follows one
   /// of them, so the chain is a single route through a back-cone that
@@ -48,6 +50,27 @@ enum XTraceTermination {
   /// (e.g. an isolated cell selected, or an empty graph). The chain is
   /// empty.
   noTraceableSelection,
+}
+
+/// Why the cell a [XTraceTermination.foundOrigin] walk stopped at counts as
+/// an origin of an unknown. Carried by [XTraceResult.originReason]; `null`
+/// for every other termination.
+enum XTraceOriginReason {
+  /// An input of the cell is on a net nothing in the scope drives (the
+  /// pin's tie is `PinTie.undriven`). [XTraceResult.originPortId] names it.
+  undrivenInput,
+
+  /// An input of the cell is tied to a constant with an `x` bit.
+  /// [XTraceResult.originPortId] names it.
+  xTiedInput,
+
+  /// The cell is a register with no reset and no initial value, so it
+  /// powers up unknown.
+  registerWithoutReset,
+
+  /// The cell has no driven inputs at all: it is a primary driver of its
+  /// output in this scope.
+  noDrivenInputs,
 }
 
 /// A single step on the X-trace causal chain.
@@ -192,6 +215,8 @@ class XTraceResult {
     required this.rootNetId,
     required this.chain,
     required this.termination,
+    this.originReason,
+    this.originPortId,
   });
 
   /// Empty result — the canonical "nothing to trace" snapshot.
@@ -213,6 +238,16 @@ class XTraceResult {
   /// Why the traversal stopped.
   final XTraceTermination termination;
 
+  /// For [XTraceTermination.foundOrigin], why the last cell is an origin.
+  /// `null` for every other termination, and from implementations that do
+  /// not classify their origins.
+  final XTraceOriginReason? originReason;
+
+  /// For [XTraceOriginReason.undrivenInput] and
+  /// [XTraceOriginReason.xTiedInput], the `<cellName>:<portName>` id of the
+  /// input that is the source. `null` otherwise.
+  final String? originPortId;
+
   /// True when the chain has no steps.
   bool get isEmpty => chain.isEmpty;
 
@@ -222,6 +257,8 @@ class XTraceResult {
     if (other is! XTraceResult) return false;
     if (other.rootNetId != rootNetId) return false;
     if (other.termination != termination) return false;
+    if (other.originReason != originReason) return false;
+    if (other.originPortId != originPortId) return false;
     if (other.chain.length != chain.length) return false;
     for (var i = 0; i < chain.length; i++) {
       if (other.chain[i] != chain[i]) return false;
@@ -230,13 +267,19 @@ class XTraceResult {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(rootNetId, termination, Object.hashAll(chain));
+  int get hashCode => Object.hash(
+    rootNetId,
+    termination,
+    originReason,
+    originPortId,
+    Object.hashAll(chain),
+  );
 
   @override
   String toString() =>
       'XTraceResult(root=$rootNetId, '
-      'chain.length=${chain.length}, termination=$termination)';
+      'chain.length=${chain.length}, termination=$termination, '
+      'origin=$originReason $originPortId)';
 }
 
 /// Extension-point service that walks backward through driver

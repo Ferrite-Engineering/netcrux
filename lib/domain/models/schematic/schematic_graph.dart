@@ -86,6 +86,7 @@ class SchematicCell {
     required this.type,
     required this.ports,
     this.label,
+    this.initValue,
   });
 
   /// Cell instance name. Stable id used by [SchematicEdge] endpoints.
@@ -105,6 +106,13 @@ class SchematicCell {
   /// ordering when multiple pins share the same face.
   final List<SchematicPort> ports;
 
+  /// The `init` attribute Yosys recorded on a net this cell's outputs
+  /// drive, as written (most-significant bit first), or `null` when none
+  /// does. Set for a register given an initial value in the HDL
+  /// (`reg q = 1'b0;`): such a register does not power up unknown, which is
+  /// what the X-trace needs to know.
+  final String? initValue;
+
   /// Convenience: the text the renderer should show for the cell.
   String get displayLabel => label ?? id;
 
@@ -116,6 +124,7 @@ class SchematicCell {
     if (other.kind != kind) return false;
     if (other.type != type) return false;
     if (other.label != label) return false;
+    if (other.initValue != initValue) return false;
     if (other.ports.length != ports.length) return false;
     for (var i = 0; i < ports.length; i++) {
       if (other.ports[i] != ports[i]) return false;
@@ -124,7 +133,8 @@ class SchematicCell {
   }
 
   @override
-  int get hashCode => Object.hash(id, kind, type, label, Object.hashAll(ports));
+  int get hashCode =>
+      Object.hash(id, kind, type, label, initValue, Object.hashAll(ports));
 
   @override
   String toString() =>

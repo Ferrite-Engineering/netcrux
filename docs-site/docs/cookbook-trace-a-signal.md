@@ -25,7 +25,7 @@ Elaborate the design ([Installation & first elaboration](getting-started.md)) an
 
 3. **Run X-Trace for one concrete chain.** <span class="tier tier-pro">Pro</span>
 
-    Right-click the net and choose **Trace X Origin** (or use `Navigate → Show X-Trace`). It walks the driver chain backward, opens the **X-Trace** panel with one row per step, and reports why it stopped: **Origin reached** (a driver with no inputs, such as a constant), **Boundary reached** (the value comes in from outside this module), **Combinational cycle**, or **Depth limit reached**. Remember that X-Trace follows one input pin per cell — the cone shows every route.
+    Right-click the net and choose **Trace X Origin** (or use `Navigate → Show X-Trace`). It walks the driver chain backward, opens the **X-Trace** panel with one row per step, and reports why it stopped: **Origin reached on this path** with the reason (an undriven input, an input tied to `x`, a register with no reset, or a cell with no driven inputs), **Boundary reached** (the value comes in from outside this module), **Combinational cycle**, or **Depth limit reached**. Remember that X-Trace follows one input per cell, data inputs before clocks and resets; the cone shows every route.
 
 4. **Confirm at the source.**
 

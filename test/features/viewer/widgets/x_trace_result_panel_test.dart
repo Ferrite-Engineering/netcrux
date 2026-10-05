@@ -210,6 +210,89 @@ void main() {
       }
       expect(XTraceTermination.values, hasLength(6));
     });
+
+    const reasons = <XTraceOriginReason, (String?, String)>{
+      XTraceOriginReason.undrivenInput: (
+        r'$mul$mac.v:25$1:B',
+        'Origin reached on this path: undriven input B',
+      ),
+      XTraceOriginReason.xTiedInput: (
+        r'$procmux$26:A',
+        'Origin reached on this path: input A tied to x',
+      ),
+      XTraceOriginReason.registerWithoutReset: (
+        null,
+        'Origin reached on this path: register with no reset',
+      ),
+      XTraceOriginReason.noDrivenInputs: (
+        null,
+        'Origin reached on this path: no driven inputs',
+      ),
+    };
+
+    for (final entry in reasons.entries) {
+      testWidgets('an origin names its reason: ${entry.key.name}', (
+        tester,
+      ) async {
+        final (portId, label) = entry.value;
+        await _pump(
+          tester,
+          result: XTraceResult(
+            rootNetId: 7,
+            chain: const <XTraceStep>[
+              XTraceStep(depth: 0, netId: 7, edgeId: 'e7', cellId: 'buf1'),
+            ],
+            termination: XTraceTermination.foundOrigin,
+            originReason: entry.key,
+            originPortId: portId,
+          ),
+        );
+        expect(find.text(label), findsOneWidget);
+      });
+    }
+
+    testWidgets('every origin reason has a label in every locale', (
+      tester,
+    ) async {
+      await _pump(tester);
+      for (final locale in L10N.supportedLocales) {
+        final l10n = await L10N.delegate.load(locale);
+        for (final reason in XTraceOriginReason.values) {
+          final label = statusLabel(
+            l10n,
+            XTraceResult(
+              rootNetId: 1,
+              chain: const <XTraceStep>[],
+              termination: XTraceTermination.foundOrigin,
+              originReason: reason,
+              originPortId: 'c:B',
+            ),
+          );
+          expect(
+            label,
+            isNot(l10n.xTracePanelTerminationFoundOrigin),
+            reason: '$locale ${reason.name}',
+          );
+        }
+      }
+    });
+
+    testWidgets('a reason on another termination is not shown', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      final label = statusLabel(
+        l10n,
+        const XTraceResult(
+          rootNetId: 1,
+          chain: <XTraceStep>[],
+          termination: XTraceTermination.reachedBoundary,
+          originReason: XTraceOriginReason.undrivenInput,
+        ),
+      );
+      expect(label, 'Boundary reached');
+    });
   });
 
   group('step rows', () {

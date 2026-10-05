@@ -155,7 +155,7 @@ This file is read by whoever runs your log shipper, which is usually not the tea
 
 ## X-Trace, for a reviewer reading a chain {#tracing}
 
-[X-Trace](tracing.md#x-trace) is documented for the engineer elsewhere. One property matters when a trace is used as evidence in a review: **the walk follows the first input pin at each cell, so the chain it reports is one route through a cone that usually has many.** It is a path, not the path — a genuine answer to "where could this have come from" and not a complete answer to "everywhere it could have come from". Use [Cone of Influence](tracing.md#cone) when you need the whole set.
+[X-Trace](tracing.md#x-trace) is documented for the engineer elsewhere. One property matters when a trace is used as evidence in a review: **the walk follows one input at each cell (data inputs before clocks and resets), so the chain it reports is one route through a cone that usually has many.** When it ends at an origin, the panel says why that cell is one (an undriven input, an input tied to `x`, a register with no reset, or no driven inputs). It is a path, not the path — a genuine answer to "where could this have come from" and not a complete answer to "everywhere it could have come from". Use [Cone of Influence](tracing.md#cone) when you need the whole set.
 
 ## Managed installs and updates {#packaging}
 

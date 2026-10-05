@@ -2869,6 +2869,41 @@
   "@xTracePanelTerminationFoundOrigin": {
     "description": "Status label shown in the X-trace panel when the trace found a non-X driver. Say AN origin, never THE origin: the walk follows one input per cell, so a cone with several X inputs has other origins this chain does not name."
   },
+  "xTracePanelTerminationFoundOriginWithReason": "Origin reached on this path: {reason}",
+  "@xTracePanelTerminationFoundOriginWithReason": {
+    "description": "Status label shown in the X-trace panel when the trace found an origin and knows why the cell is one. {reason} is one of the xTracePanelOriginReason* strings. Keep AN origin, never THE origin, as in xTracePanelTerminationFoundOrigin.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "xTracePanelOriginReasonUndriven": "undriven input {pin}",
+  "@xTracePanelOriginReasonUndriven": {
+    "description": "Why an X-trace origin is one: the cell input {pin} (a port name such as B) is on a net nothing in the scope drives. Inserted into xTracePanelTerminationFoundOriginWithReason, so it starts lower-case in English.",
+    "placeholders": {
+      "pin": {
+        "type": "String"
+      }
+    }
+  },
+  "xTracePanelOriginReasonXTied": "input {pin} tied to x",
+  "@xTracePanelOriginReasonXTied": {
+    "description": "Why an X-trace origin is one: the cell input {pin} (a port name such as A) is tied to a constant with an unknown (x) bit. Keep x untranslated; it is the Verilog unknown value.",
+    "placeholders": {
+      "pin": {
+        "type": "String"
+      }
+    }
+  },
+  "xTracePanelOriginReasonNoReset": "register with no reset",
+  "@xTracePanelOriginReasonNoReset": {
+    "description": "Why an X-trace origin is one: the cell is a flip-flop or latch with no reset and no initial value, so it powers up unknown."
+  },
+  "xTracePanelOriginReasonNoInputs": "no driven inputs",
+  "@xTracePanelOriginReasonNoInputs": {
+    "description": "Why an X-trace origin is one: the cell has no input driven from inside the scope, so it is a primary driver."
+  },
   "xTracePanelTerminationMaxDepth": "Depth limit reached",
   "@xTracePanelTerminationMaxDepth": {
     "description": "Status label shown in the X-trace panel when the trace hit its maximum depth before finding an origin."

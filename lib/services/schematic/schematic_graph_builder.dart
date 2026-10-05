@@ -43,6 +43,7 @@ class SchematicGraphBuilder {
     if (resolved == null) return SchematicGraph.empty;
     final module = withDeclaredCellPorts(model, resolved);
     final driven = drivenNetIds(module);
+    final initByNet = initValuesByNetId(module);
 
     final cells = <SchematicCell>[];
     for (final entry in module.cells.entries) {
@@ -78,6 +79,7 @@ class SchematicGraphBuilder {
           kind: kind,
           type: cell.type,
           ports: ports,
+          initValue: _initValueFor(cell, initByNet),
         ),
       );
     }
@@ -131,6 +133,37 @@ class SchematicGraphBuilder {
       if (port.direction != PortDirection.output) addBits(port.bits);
     }
     return driven;
+  }
+
+  /// The `init` attribute of every net in [module] that carries one, keyed
+  /// by each net id among its bits. Yosys records a register's initial
+  /// value on the wire its output drives, not on the cell.
+  @visibleForTesting
+  static Map<int, String> initValuesByNetId(Module module) {
+    final byNet = <int, String>{};
+    for (final net in module.nets.values) {
+      final init = net.attributes['init'];
+      if (init == null) continue;
+      for (final bit in net.bits) {
+        if (bit is NetBit) byNet.putIfAbsent(bit.netId, () => init);
+      }
+    }
+    return byNet;
+  }
+
+  /// The init value of the first net [cell]'s outputs drive that carries
+  /// one, or `null`.
+  static String? _initValueFor(Cell cell, Map<int, String> initByNet) {
+    if (initByNet.isEmpty) return null;
+    for (final entry in cell.connections.entries) {
+      if (cell.portDirections[entry.key] != PortDirection.output) continue;
+      for (final bit in entry.value) {
+        if (bit is! NetBit) continue;
+        final init = initByNet[bit.netId];
+        if (init != null) return init;
+      }
+    }
+    return null;
   }
 
   /// What a pin with [bits] and [direction] is tied to, given the

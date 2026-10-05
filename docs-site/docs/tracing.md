@@ -48,20 +48,43 @@ Reach it by right-clicking a net, cell or port and choosing **Trace X Origin**, 
 
 X-Trace does not read simulation values yet: it follows the structural driver chain, so it answers "which path of drivers leads here", not "where did this X appear in my simulation".
 
+### Which inputs the walk follows {#x-trace-inputs}
+
+At each cell X-Trace follows **one** input, chosen by what the pin does:
+
+- **Data inputs first.** A register's `D`, every input of a gate, an adder or a mux (the select included), and every input of a submodule instance count as data. The walk takes the first data input, in the cell's pin order, that leads somewhere it has not been.
+- **Then control inputs.** A register's reset (`ARST`, `SRST`, async load, set and clear), then its enable, then its clock. These are followed only when no data route is left: when a register's data loops back on itself, as a counter's does, the reset is how an unknown would get in. This applies to Yosys's word-level and gate-level flip-flops and latches and to the iCE40 `SB_DFF` family.
+- **Loops are stepped around.** When every input of a cell leads back onto the path, the walk backs up to the last cell that still has an untried input and continues from there. A register's hold loop (`q <= en ? d : q`) therefore leads on to `d`.
+
+### What counts as an origin {#x-trace-origins}
+
+The walk stops at the first cell that can produce an unknown by itself, and the panel says why:
+
+| Reason shown | When |
+|---|---|
+| **undriven input** *pin* | An input of the cell is on a net nothing in the scope drives. The same pin draws the undriven stub on the canvas. |
+| **input** *pin* **tied to x** | An input of the cell is tied to a constant with an `x` bit. A `case` with no `default` elaborates to one of these. |
+| **register with no reset** | The cell is a flip-flop or latch with no reset on a net and no initial value, so it powers up unknown. A reset tied to a constant does not count; an initial value (`reg q = 1'b0;`) does, and iCE40 flops power up at 0. |
+| **no driven inputs** | Nothing in the scope drives any input of the cell: a constant or other primary driver. |
+
+An undriven or `x`-tied input wins over continuing up the cell's other inputs, because it is a certain source where a driven input is only a candidate. The last row of the chain names the origin cell.
+
+### Why the walk stopped {#x-trace-status}
+
 The status line at the top of the panel gives one of four reasons the walk stopped:
 
 | Status | What it means |
 |---|---|
-| **Origin reached** | The walk reached a driver with no inputs of its own — a constant or other primary driver. |
+| **Origin reached on this path** | The walk reached an origin, and the status adds the reason from the table above. |
 | **Boundary reached** | The walk hit a boundary port of the current scope; the value comes from outside this module. |
 | **Depth limit reached** | The chain was longer than the depth limit, and the walk stopped before an origin. |
-| **Combinational cycle** | The driver chain loops back on itself. |
+| **Combinational cycle** | The driver chain loops back on itself with no other way out. |
 
-A selection with nothing to trace from — a boundary *input*, which is itself a primary driver — offers no **Trace X Origin** entry, rather than running a walk that returns nothing.
+A selection with nothing to trace from (a boundary *input*, which is itself a primary driver) offers no **Trace X Origin** entry, rather than running a walk that returns nothing. Selecting a cell starts the walk on the wire it drives, so the cell itself is checked first.
 
 !!! note "A chain, not the chain"
 
-    At each cell the walk follows the cell's **first input pin**. So for a cell with several inputs — an adder, a mux, a register's data and clock — X-Trace reports *one* route back through a cone that usually has many. That is what makes it fast and readable, and it is worth knowing before you use a chain as evidence: it answers "where could this have come from", not "everywhere it could have come from". When you need the whole set, run [Cone of Influence](#cone) instead — it does not pick a path.
+    X-Trace reports *one* route back through a cone that usually has many. That is what makes it fast and readable, and it is worth knowing before you use a chain as evidence: it answers "where could this have come from", not "everywhere it could have come from". A fully reset design often has no origin in it at all, and the walk then ends at a boundary port. When you need the whole set, run [Cone of Influence](#cone) instead: it does not pick a path.
 
 !!! note "Large designs trace in the background"
 

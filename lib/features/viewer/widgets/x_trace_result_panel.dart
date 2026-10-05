@@ -119,7 +119,7 @@ class _StatusRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              terminationLabel(l10n, result.termination),
+              statusLabel(l10n, result),
               style: theme.textTheme.bodySmall?.copyWith(color: tone),
               overflow: TextOverflow.ellipsis,
             ),
@@ -155,6 +155,36 @@ String terminationLabel(L10N l10n, XTraceTermination termination) =>
       XTraceTermination.noTraceableSelection =>
         l10n.xTracePanelTerminationNothing,
     };
+
+/// The status row's text for [result]: [terminationLabel], extended with
+/// the origin reason when the walk found an origin and says why the cell is
+/// one. A pin-level reason names the pin by its port name, the part of
+/// `originPortId` after the cell name.
+String statusLabel(L10N l10n, XTraceResult result) {
+  final reason = result.termination == XTraceTermination.foundOrigin
+      ? result.originReason
+      : null;
+  if (reason == null) return terminationLabel(l10n, result.termination);
+  final pin = _pinName(result.originPortId);
+  final text = switch (reason) {
+    XTraceOriginReason.undrivenInput => l10n.xTracePanelOriginReasonUndriven(
+      pin,
+    ),
+    XTraceOriginReason.xTiedInput => l10n.xTracePanelOriginReasonXTied(pin),
+    XTraceOriginReason.registerWithoutReset =>
+      l10n.xTracePanelOriginReasonNoReset,
+    XTraceOriginReason.noDrivenInputs => l10n.xTracePanelOriginReasonNoInputs,
+  };
+  return l10n.xTracePanelTerminationFoundOriginWithReason(text);
+}
+
+/// `<cellName>:<portName>` → `<portName>`. Cut at the last colon, since a
+/// Yosys cell name carries its source location (`$mul$mac.v:25$1:B`).
+String _pinName(String? portId) {
+  if (portId == null) return '';
+  final colon = portId.lastIndexOf(':');
+  return colon < 0 ? portId : portId.substring(colon + 1);
+}
 
 /// Icon and tone for [termination]. An answer (origin / boundary) reads as
 /// primary, a bail-out (depth limit) as tertiary, and a cycle as an error —
