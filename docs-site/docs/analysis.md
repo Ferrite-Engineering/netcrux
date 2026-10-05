@@ -18,7 +18,7 @@ The **Netlist Diff View** compares two elaborated revisions and tells you what a
 
     Results are summarized as **Added** / **Removed** / **Modified** / **Unchanged** chips, with element-type chips for **Instances**, **Nets**, **Ports** and **Modules**, so you can focus on, say, only modified nets.
 
-    A cell or net you named in the source is listed by its name. One Yosys generated (its name starts with `$`) is listed by its cell type and the file and line it came from, such as `$add  gray_counter.v:14`; hover the row for its full name.
+    A cell or net you named in the source is listed by its name. One Yosys generated (its name starts with `$`) is listed by its cell type and the file and line it came from, such as `$add  gray_counter.v:14`. A generated net reads the same way, followed by the pin it comes from: `$add  gray_counter.v:15  (Y)`. Hover the row for its full name. A folder with spaces in its name shows as written, even though Yosys spells each space `$20` inside the full name.
 
 3. **Step through the changes.**
 
@@ -30,14 +30,16 @@ The **Netlist Diff View** compares two elaborated revisions and tells you what a
 
 ### Show in Schematic {#diff-show}
 
-The schematic shows the baseline: the design in the active tab. Clicking a row, or its **Show in Schematic** button, finds the element there:
+The schematic shows the baseline: the design in the active tab. Click a row to show its element: the row becomes the active one (the "*N* of *M*" position follows it) and that row's element, never a neighbour, is selected on the schematic. Clicking the active row again shows it again. The row's **Show in Schematic** button does the same. It is the target icon at the row's right end and stays in view however narrow the panel is: the element's name is cut short first. Hover the icon for its name; in a wide panel the button also carries the words **Show in Schematic**.
+
+Showing an element:
 
 - a **cell** is selected, its scope becomes the shown scope, and the canvas centers on it;
 - a **net** has every drawn strand selected, and the canvas centers on the cell driving it;
 - a **port** is selected on the boundary of its module's scope;
 - a **module** becomes the shown scope.
 
-**Removed**, **Modified** and **Unchanged** elements are all in the baseline, so all of them can be shown. An **Added** element exists only in the comparison netlist: there is nothing on the schematic to show, so its button is disabled, and its tooltip says so.
+**Removed**, **Modified** and **Unchanged** elements are all in the baseline, so all of them can be shown. An **Added** element exists only in the comparison netlist: there is nothing on the schematic to show, so its button is disabled, and its tooltip says so. Clicking an Added row makes it the active row and clears the schematic selection, so nothing stays selected that belongs to another row.
 
 ### How elements are matched {#diff-matching}
 

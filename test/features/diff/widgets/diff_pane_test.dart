@@ -58,6 +58,7 @@ Widget _wrap(
   Locale locale = const Locale('en'),
   NetlistDiff? seeded,
   void Function(ElementChange)? onShowInSchematic,
+  double width = 600,
 }) {
   return ProviderScope(
     overrides: <Override>[
@@ -83,7 +84,7 @@ Widget _wrap(
       ],
       home: Scaffold(
         body: SizedBox(
-          width: 600,
+          width: width,
           height: 500,
           child: DiffPane(onShowInSchematic: onShowInSchematic),
         ),
@@ -141,6 +142,12 @@ void main() {
       await tester.tap(btn);
       await tester.pumpAndSettle();
       expect(captured?.elementId.path, 'top:net:foo');
+      // It also makes its row the active one, so the footer counter and
+      // the row highlight name the element the schematic shows.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DiffPane)),
+      );
+      expect(container.read(diffPaneStateProvider).selectedChangeIndex, 1);
     });
 
     testWidgets('an added row is not on the schematic: its Show in Schematic '
@@ -178,7 +185,36 @@ void main() {
       expect(find.text(l10n.diffPaneShowInSchematic), findsNothing);
     });
 
-    testWidgets('clicking the selected row again shows it again', (
+    testWidgets('clicking a row shows its element, and again on a second '
+        'click', (tester) async {
+      final captured = <ElementChange>[];
+      await tester.pumpWidget(
+        _wrap(
+          const DiffPane(),
+          seeded: _seed(),
+          onShowInSchematic: captured.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DiffPane)),
+      );
+      // The row click is the primary reveal. It selects the
+      // row and hands the host exactly that row's change, not one looked up
+      // again by index.
+      await tester.tap(find.text('foo'));
+      await tester.pumpAndSettle();
+      expect(captured.single.elementId.path, 'top:net:foo');
+      expect(container.read(diffPaneStateProvider).selectedChangeIndex, 1);
+      await tester.tap(find.text('foo'));
+      await tester.pumpAndSettle();
+      expect(captured.map((c) => c.elementId.path), <String>[
+        'top:net:foo',
+        'top:net:foo',
+      ]);
+    });
+
+    testWidgets('clicking an added row selects it and shows nothing', (
       tester,
     ) async {
       final captured = <ElementChange>[];
@@ -190,15 +226,118 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      // The first click selects the row; the host panel's selection
-      // listener shows it. A second click changes no state, so the pane
-      // shows it directly.
-      await tester.tap(find.text('foo'));
+      await tester.tap(find.text('top.alu').first);
       await tester.pumpAndSettle();
       expect(captured, isEmpty);
-      await tester.tap(find.text('foo'));
+    });
+
+    group('at a narrow width', () {
+      NetlistDiff longNames() => NetlistDiff(
+        baselineNetlist: const NetlistRef(identifier: 'a'),
+        comparisonNetlist: const NetlistRef(identifier: 'b'),
+        generatedAt: DateTime.utc(2026, 10, 5),
+        elementChanges: const <ElementChange>[
+          ElementChange(
+            kind: ElementChangeKind.added,
+            elementKind: NetlistDiffElementKind.instance,
+            elementId: ElementId(
+              kind: ElementKind.instance,
+              path: 'top.u_a_very_long_instance_name_that_cannot_fit:cell',
+            ),
+          ),
+          ElementChange(
+            kind: ElementChangeKind.removed,
+            elementKind: NetlistDiffElementKind.net,
+            elementId: ElementId(
+              kind: ElementKind.net,
+              path:
+                  r'gray_counter:net:$add$/Users/me/Getting$20Started$20Videos'
+                  r'/NetCrux/Assets/gray_counter.v:15$5_Y',
+            ),
+          ),
+        ],
+      );
+
+      for (final width in const <double>[200, 280, 360]) {
+        testWidgets('${width.toInt()} px: the icon button stays inside the '
+            'row and the name truncates', (tester) async {
+          final captured = <ElementChange>[];
+          await tester.pumpWidget(
+            _wrap(
+              const DiffPane(),
+              seeded: longNames(),
+              onShowInSchematic: captured.add,
+              width: width,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          final l10n = await L10N.delegate.load(const Locale('en'));
+          // Icon only: the label is the tooltip.
+          expect(find.text(l10n.diffPaneShowInSchematic), findsNothing);
+          final icons = find.byIcon(Icons.center_focus_strong);
+          expect(icons, findsNWidgets(2));
+          for (var i = 0; i < 2; i++) {
+            final rect = tester.getRect(icons.at(i));
+            expect(rect.right, lessThanOrEqualTo(width), reason: 'row $i');
+            expect(rect.left, greaterThan(width / 2), reason: 'row $i');
+          }
+          // The enabled one says what it does; the added row's says why
+          // it is disabled.
+          expect(find.byTooltip(l10n.diffPaneShowInSchematic), findsOneWidget);
+          expect(
+            find.byTooltip(l10n.diffPaneShowInSchematicComparisonOnly),
+            findsOneWidget,
+          );
+          final added = find.ancestor(
+            of: icons.at(0),
+            matching: find.byType(IconButton),
+          );
+          expect(tester.widget<IconButton>(added).onPressed, isNull);
+          await tester.tap(icons.at(1));
+          await tester.pumpAndSettle();
+          expect(captured.single.elementKind, NetlistDiffElementKind.net);
+          // The net reads like a cell row, with no `$20` left in it.
+          expect(
+            find.text(r'$add  gray_counter.v:15  (Y)'),
+            findsOneWidget,
+          );
+        });
+      }
+
+      testWidgets('the button keeps its place whatever the name length', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          _wrap(
+            const DiffPane(),
+            seeded: longNames(),
+            onShowInSchematic: (_) {},
+            width: 280,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final icons = find.byIcon(Icons.center_focus_strong);
+        expect(
+          tester.getRect(icons.at(0)).right,
+          tester.getRect(icons.at(1)).right,
+        );
+      });
+    });
+
+    testWidgets('a wide row shows the label beside the icon', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const DiffPane(),
+          seeded: _seed(),
+          onShowInSchematic: (_) {},
+          width: DiffPane.showInSchematicLabelMinWidth + 40,
+        ),
+      );
       await tester.pumpAndSettle();
-      expect(captured.single.elementId.path, 'top:net:foo');
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      expect(find.text(l10n.diffPaneShowInSchematic), findsNWidgets(3));
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('a generated cell shows its type and file:line', (
