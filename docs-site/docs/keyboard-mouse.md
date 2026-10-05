@@ -76,7 +76,7 @@ The canvas handles a small set of keys directly whenever it has keyboard focus. 
 | ++shift+f10++ / ++menu++ | Open the context menu for the selected element: Copy Path, the traces, Find in Hierarchy, and in Pro the cross-probe and analysis entries. |
 | ++backspace++ | Pop out of the scope, clearing the selection and trace overlay. |
 | ++cmd+bracket-left++ / ++ctrl+bracket-left++ | Pop out of the scope. |
-| ++escape++ | Clear the selection and trace overlay. |
+| ++escape++ | Clear the selection, the trace overlay, and a selected CDC or reset crossing, in one press. |
 
 A screen reader announces each element the keyboard selects — a cell with its type, a module port, a pin with its cell, or a net by name — so the selection can be followed without seeing the canvas.
 
