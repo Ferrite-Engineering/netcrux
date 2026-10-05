@@ -72,16 +72,29 @@ class DiffPaneState {
   bool get hasActiveDiff =>
       activeDiff != null && activeRequest != null && errorMessage == null;
 
-  /// Filtered view of [activeDiff]'s [NetlistDiff.elementChanges].
-  /// Empty when no diff is active or every change is filtered out.
+  /// Filtered view of [activeDiff]'s [NetlistDiff.elementChanges], in the
+  /// order the pane lists them: added, removed, modified, unchanged, each
+  /// group in the service's order. Navigation steps through this list, so
+  /// next / previous walk down the list as the user sees it rather than
+  /// jumping between groups. Empty when no diff is active or every change
+  /// is filtered out.
   List<ElementChange> get filteredChanges {
     final diff = activeDiff;
     if (diff == null) return const <ElementChange>[];
     return <ElementChange>[
-      for (final c in diff.elementChanges)
-        if (_passesFilters(c)) c,
+      for (final kind in displayOrder)
+        for (final c in diff.elementChanges)
+          if (c.kind == kind && _passesFilters(c)) c,
     ];
   }
+
+  /// The order of the pane's groups.
+  static const List<ElementChangeKind> displayOrder = <ElementChangeKind>[
+    ElementChangeKind.added,
+    ElementChangeKind.removed,
+    ElementChangeKind.modified,
+    ElementChangeKind.unchanged,
+  ];
 
   bool _passesFilters(ElementChange c) {
     if (filteredKinds.isNotEmpty && !filteredKinds.contains(c.kind)) {
@@ -211,10 +224,7 @@ class DiffPaneStateNotifier extends Notifier<DiffPaneState> {
         clearSelectedChangeIndex: diff.elementChanges.isEmpty,
       );
     } on Object catch (e) {
-      state = state.copyWith(
-        isComputing: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isComputing: false, errorMessage: e.toString());
     }
   }
 
@@ -238,10 +248,7 @@ class DiffPaneStateNotifier extends Notifier<DiffPaneState> {
   void toggleKindFilter(ElementChangeKind kind) {
     final next = <ElementChangeKind>{...state.filteredKinds};
     if (!next.add(kind)) next.remove(kind);
-    state = state.copyWith(
-      filteredKinds: next,
-      clearSelectedChangeIndex: true,
-    );
+    state = state.copyWith(filteredKinds: next, clearSelectedChangeIndex: true);
   }
 
   /// Toggles whether [elementKind] is in

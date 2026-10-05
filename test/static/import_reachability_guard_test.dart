@@ -160,6 +160,12 @@ const _exemptions = <_Exemption>[
     _overlayPane,
   ),
   _Exemption(
+    'lib/features/diff/widgets/diff_row_label.dart',
+    _Consumer.proOverlay,
+    'What a Netlist Diff View row shows, imported by the diff pane body, '
+        'which only the Pro overlay mounts.',
+  ),
+  _Exemption(
     'lib/features/fsm/widgets/fsm_bubble_diagram_pane.dart',
     _Consumer.proOverlay,
     _overlayPane,
@@ -188,6 +194,12 @@ const _exemptions = <_Exemption>[
     _Consumer.proOverlay,
     'The row-click bridge from an analysis panel to the schematic '
         'selection. Every analysis panel that has rows is a Pro panel.',
+  ),
+  _Exemption(
+    'lib/domain/models/diff/diff_element_address.dart',
+    _Consumer.proOverlay,
+    'Parses a diff row path into module and element name for the diff '
+        'pane and the Pro diff panel that routes Show in Schematic.',
   ),
   _Exemption(
     'lib/services/telemetry/netcrux_telemetry_vocabulary.dart',

@@ -12,6 +12,7 @@ import 'package:netcrux/domain/models/netlist/port.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/services/analysis_selection_probe.dart';
 
@@ -233,5 +234,102 @@ void main() {
         expect((primary as SelectedElementWire).netId, 101);
       },
     );
+  });
+
+  group('exact-name probes (the Netlist Diff View)', () {
+    test('revealCellIn navigates, selects and reveals', () {
+      final container = makeContainer();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.revealCellIn('sync', 'ff1'), isTrue);
+      expect(container.read(hierarchyTreeProvider).selected!.path, <String>[
+        'u_sync',
+      ]);
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'ff1'),
+      );
+      expect(container.read(revealRequestProvider), 'ff1');
+    });
+
+    test('revealCellIn takes a generated name whole', () {
+      // A Yosys-generated name holds dots and slashes; `selectCell` would
+      // split it and look for `v:3$1`.
+      const name = r'$add$/home/me/rtl/counter.v:3$1';
+      const top = Module(
+        name: 'top',
+        attributes: <String, String>{'top': '1'},
+        ports: <String, Port>{},
+        cells: <String, Cell>{
+          name: Cell(
+            name: name,
+            type: r'$add',
+            parameters: {},
+            attributes: {},
+            portDirections: {},
+            connections: {},
+          ),
+        },
+        nets: <String, Net>{},
+      );
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container
+          .read(hierarchyTreeProvider.notifier)
+          .setModel(
+            const NetlistModel(
+              creator: 'probe-test',
+              modules: <String, Module>{'top': top},
+            ),
+          );
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.revealCellIn('top', name), isTrue);
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: name),
+      );
+      expect(container.read(revealRequestProvider), name);
+    });
+
+    test('revealCellIn is false for a cell no scope declares', () {
+      final container = makeContainer();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.revealCellIn('top', 'ff1'), isFalse);
+      expect(container.read(selectedElementProvider).isEmpty, isTrue);
+      expect(container.read(revealRequestProvider), isNull);
+    });
+
+    test('revealNetIn selects the wire and reveals its driver', () {
+      final container = makeContainer();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.revealNetIn('top', 'async_data'), isTrue);
+      final primary = container.read(selectedElementProvider).primary;
+      expect(primary, isA<SelectedElementWire>());
+      expect((primary as SelectedElementWire).netId, 5);
+      expect(container.read(revealRequestProvider), 'u_src');
+    });
+
+    test('selectPortIn selects the boundary port of the module scope', () {
+      final container = makeContainer();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.selectPortIn('sync', 'D'), isTrue);
+      expect(
+        container.read(hierarchyTreeProvider).selected!.moduleName,
+        'sync',
+      );
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.boundaryPort(portId: 'port:D', portName: 'D'),
+      );
+    });
+
+    test('enterModule pushes to a scope of the module', () {
+      final container = makeContainer();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.enterModule('sync'), isTrue);
+      expect(container.read(hierarchyTreeProvider).selected!.path, <String>[
+        'u_sync',
+      ]);
+      expect(probe.enterModule('nope'), isFalse);
+    });
   });
 }

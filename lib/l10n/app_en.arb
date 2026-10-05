@@ -1547,6 +1547,10 @@
   "@diffPaneShowInSchematic": {
     "description": "Per-row action label that highlights the corresponding element in the schematic canvas."
   },
+  "diffPaneShowInSchematicComparisonOnly": "This element exists only in the comparison netlist.",
+  "@diffPaneShowInSchematicComparisonOnly": {
+    "description": "Tooltip on the disabled Show in Schematic button of an added row. The schematic shows the baseline design, and an added element exists only in the comparison netlist, so there is nothing to show."
+  },
   "diffPaneElementKindInstance": "Instance",
   "@diffPaneElementKindInstance": {
     "description": "Label for NetlistDiffElementKind.instance in the Diff View pane."

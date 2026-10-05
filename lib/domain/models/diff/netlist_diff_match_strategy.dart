@@ -11,9 +11,17 @@
 /// A Pro service that does not implement a strategy throws
 /// [UnsupportedError] when asked for it.
 enum NetlistDiffMatchStrategy {
-  /// Match elements with the same hierarchical name. Two elements with
-  /// different names never match — additions and removals fall out
-  /// naturally from the keyset difference. This is the v1 default.
+  /// Match user-named elements by their exact name, and Yosys-generated
+  /// ones (names starting with `$`) by structure. This is the default.
+  ///
+  /// A user-named module, cell, net or port with no namesake on the other
+  /// side is added or removed. A generated name embeds the source path,
+  /// the line and a running counter, so it is no identity: the same `$add`
+  /// is renamed by any edit that moves its line, and differs between two
+  /// files outright. Generated cells and nets are therefore paired by type,
+  /// parameters and their connections to named nets and ports, refined
+  /// through chains of generated cells; only what stays unpaired is added
+  /// or removed.
   exactNameMatch,
 
   /// Reserved for v2: match elements by name with Levenshtein /

@@ -8,6 +8,7 @@ import 'package:netcrux/domain/models/diff/element_change.dart';
 import 'package:netcrux/domain/models/diff/netlist_diff.dart';
 import 'package:netcrux/domain/models/diff/netlist_diff_element_kind.dart';
 import 'package:netcrux/features/diff/providers/diff_pane_state_provider.dart';
+import 'package:netcrux/features/diff/widgets/diff_row_label.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
 /// Open-core Netlist Diff View widget.
@@ -102,10 +103,7 @@ class _ComputingState extends StatelessWidget {
         children: <Widget>[
           const CircularProgressIndicator(strokeWidth: 2),
           const SizedBox(height: 12),
-          Text(
-            l10n.diffPaneComputing,
-            style: theme.textTheme.bodySmall,
-          ),
+          Text(l10n.diffPaneComputing, style: theme.textTheme.bodySmall),
         ],
       ),
     );
@@ -127,11 +125,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(
-              Icons.error_outline,
-              size: 28,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 28, color: theme.colorScheme.error),
             const SizedBox(height: 8),
             Text(
               l10n.diffPaneEmptyTitle,
@@ -202,20 +196,12 @@ class _LoadedView extends StatelessWidget {
     for (var i = 0; i < changes.length; i++) {
       byKind.putIfAbsent(changes[i].kind, () => <int>[]).add(i);
     }
-    // Stable presentation order: Added, Removed, Modified, Unchanged.
-    const order = <ElementChangeKind>[
-      ElementChangeKind.added,
-      ElementChangeKind.removed,
-      ElementChangeKind.modified,
-      ElementChangeKind.unchanged,
-    ];
+    // The same order [DiffPaneState.filteredChanges] uses, so a row's
+    // position in the list is its navigation index.
     final groups = <_DiffGroup>[
-      for (final k in order)
+      for (final k in DiffPaneState.displayOrder)
         if (byKind[k] != null && byKind[k]!.isNotEmpty)
-          _DiffGroup(
-            kind: k,
-            indices: byKind[k]!,
-          ),
+          _DiffGroup(kind: k, indices: byKind[k]!),
     ];
 
     return Column(
@@ -238,14 +224,24 @@ class _LoadedView extends StatelessWidget {
               final changeIndex = lookup.group.indices[lookup.rowIndex];
               final change = changes[changeIndex];
               final isSelected = selectedIndex == changeIndex;
+              final show = onShowInSchematic;
+              final onSchematic = isOnSchematic(change);
               return _ChangeRow(
                 l10n: l10n,
                 change: change,
                 isSelected: isSelected,
-                onTap: () => onSelectRow(changeIndex),
-                onShowInSchematic: onShowInSchematic == null
+                onTap: () {
+                  // A new row reaches the schematic through the hosting
+                  // panel's selection listener. Clicking the row that is
+                  // already selected changes no state, so it shows the
+                  // element again directly.
+                  if (isSelected && onSchematic) show?.call(change);
+                  onSelectRow(changeIndex);
+                },
+                hasShowInSchematic: show != null,
+                onShowInSchematic: show == null || !onSchematic
                     ? null
-                    : () => onShowInSchematic!(change),
+                    : () => show(change),
               );
             },
           ),
@@ -278,6 +274,14 @@ class _LoadedView extends StatelessWidget {
     return _PositionLookup(group: groups.last, isHeader: false, rowIndex: 0);
   }
 }
+
+/// Whether [change]'s element is in the design the schematic shows.
+///
+/// The schematic shows the baseline: the tab's own elaboration. Removed,
+/// modified and unchanged elements exist there; an added element exists
+/// only in the comparison netlist, so there is nothing to show.
+bool isOnSchematic(ElementChange change) =>
+    change.kind != ElementChangeKind.added;
 
 class _DiffGroup {
   _DiffGroup({required this.kind, required this.indices});
@@ -383,6 +387,7 @@ class _ChangeRow extends StatelessWidget {
     required this.change,
     required this.isSelected,
     required this.onTap,
+    required this.hasShowInSchematic,
     required this.onShowInSchematic,
   });
 
@@ -390,13 +395,33 @@ class _ChangeRow extends StatelessWidget {
   final ElementChange change;
   final bool isSelected;
   final VoidCallback onTap;
+
+  /// Whether the host panel routes Show in Schematic at all. Without one
+  /// the row carries no button.
+  final bool hasShowInSchematic;
+
+  /// Null when the element is not on the schematic: the button is then
+  /// disabled and its tooltip says why.
   final VoidCallback? onShowInSchematic;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final leafName = _leafName(change.elementId.path);
+    final label = DiffRowLabel.of(change);
+    final button = TextButton.icon(
+      onPressed: onShowInSchematic,
+      icon: const Icon(Icons.center_focus_strong, size: 12),
+      label: Text(
+        l10n.diffPaneShowInSchematic,
+        style: const TextStyle(fontSize: 10),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -413,13 +438,16 @@ class _ChangeRow extends StatelessWidget {
                   Row(
                     children: <Widget>[
                       Flexible(
-                        child: Text(
-                          leafName,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w600,
+                        child: Tooltip(
+                          message: label.tooltip,
+                          child: Text(
+                            label.title,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -430,7 +458,7 @@ class _ChangeRow extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    change.elementId.path,
+                    label.subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontFamily: 'monospace',
                       fontSize: 10,
@@ -454,32 +482,19 @@ class _ChangeRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (onShowInSchematic != null)
-              TextButton.icon(
-                onPressed: onShowInSchematic,
-                icon: const Icon(Icons.center_focus_strong, size: 12),
-                label: Text(
-                  l10n.diffPaneShowInSchematic,
-                  style: const TextStyle(fontSize: 10),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
+            if (hasShowInSchematic && isOnSchematic(change))
+              button
+            else if (hasShowInSchematic)
+              // Disabled, and saying why: the element is not in the design
+              // the schematic shows.
+              Tooltip(
+                message: l10n.diffPaneShowInSchematicComparisonOnly,
+                child: button,
               ),
           ],
         ),
       ),
     );
-  }
-
-  String _leafName(String path) {
-    if (path.isEmpty) return path;
-    final dot = path.lastIndexOf('.');
-    final colon = path.lastIndexOf(':');
-    final split = dot > colon ? dot : colon;
-    return split < 0 ? path : path.substring(split + 1);
   }
 }
 

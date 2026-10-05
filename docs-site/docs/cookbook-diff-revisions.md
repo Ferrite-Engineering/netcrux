@@ -33,11 +33,11 @@ Have both revisions on disk — two checkouts, or the same files at two commits.
 
 5. **Scope down and jump to source.**
 
-    To investigate one subtree, right-click an element on the canvas and choose **Compare with this Element in Baseline** to limit the diff to it. Use **Show in Schematic** on a change to jump the canvas to it, then **Go to source** in the inspector to land on the RTL that produced it.
+    To investigate one subtree, right-click an element on the canvas and choose **Compare with this Element in Baseline** to limit the diff to it. Click a change, or its **Show in Schematic**, to select it on the canvas and center the canvas on it, then **Go to source** in the inspector to land on the RTL that produced it. The canvas shows the baseline, so an **Added** element (which exists only in the new revision) cannot be shown; its button is disabled.
 
 !!! note "Structural, not textual"
 
-    The diff compares elaborated structure, so a pure source reformat that produces the same netlist shows as all **Unchanged** — which is exactly the signal you want when a PR claims to be a no-op refactor.
+    The diff compares elaborated structure, so a pure source reformat that produces the same netlist shows as all **Unchanged**, which is exactly the signal you want when a PR claims to be a no-op refactor. That holds even though the reformat moves lines: the cells Yosys generates are named after their line, so the diff matches them by what they connect to rather than by name. See [How elements are matched](analysis.md#diff-matching).
 
 ## Where to go next {#next}
 

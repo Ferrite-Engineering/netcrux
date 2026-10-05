@@ -18,13 +18,37 @@ The **Netlist Diff View** compares two elaborated revisions and tells you what a
 
     Results are summarized as **Added** / **Removed** / **Modified** / **Unchanged** chips, with element-type chips for **Instances**, **Nets**, **Ports** and **Modules**, so you can focus on, say, only modified nets.
 
+    A cell or net you named in the source is listed by its name. One Yosys generated (its name starts with `$`) is listed by its cell type and the file and line it came from, such as `$add  gray_counter.v:14`; hover the row for its full name.
+
 3. **Step through the changes.**
 
-    Use the panel's previous and next arrows, or `Navigate → Previous Diff` / `Navigate → Next Diff`; the panel shows an "*N* of *M*" position so you know how far through you are. These commands have no default key binding; assign one in `Settings → Keyboard Shortcuts` if you want it.
+    Use the panel's previous and next arrows, or `Navigate → Previous Diff` / `Navigate → Next Diff`; the panel shows an "*N* of *M*" position so you know how far through you are. The arrows walk the list top to bottom as it is shown, and each step selects that change on the schematic the way **Show in Schematic** does. These commands have no default key binding; assign one in `Settings → Keyboard Shortcuts` if you want it.
 
 4. **Scope the comparison.**
 
     Right-click an element on the canvas and choose **Compare with this Element in Baseline** to narrow the diff to that subtree, or use **Show in Schematic** on a change to jump the canvas to it. `File → Clear Comparison Netlist` (or **Clear** in the panel) drops the comparison.
+
+### Show in Schematic {#diff-show}
+
+The schematic shows the baseline: the design in the active tab. Clicking a row, or its **Show in Schematic** button, finds the element there:
+
+- a **cell** is selected, its scope becomes the shown scope, and the canvas centers on it;
+- a **net** has every drawn strand selected, and the canvas centers on the cell driving it;
+- a **port** is selected on the boundary of its module's scope;
+- a **module** becomes the shown scope.
+
+**Removed**, **Modified** and **Unchanged** elements are all in the baseline, so all of them can be shown. An **Added** element exists only in the comparison netlist: there is nothing on the schematic to show, so its button is disabled, and its tooltip says so.
+
+### How elements are matched {#diff-matching}
+
+Modules, ports, and the cells and nets you named in the source are matched by name. A name that exists on one side only is reported as added or removed.
+
+The cells and nets Yosys generates (`$add`, `$xor`, `$procdff`, their output wires) are named after the source file, the line and a running counter, as in `$add$/home/me/rtl/gray_counter.v:14$3`. Those names change whenever an edit moves a line, and differ outright between two files, so they are not used to match. Instead each generated cell is matched by its type, its parameters, and what its pins connect to: the named nets and ports it touches, and, step by step, the generated cells between it and them. Generated nets are matched by the cells on their bits. Only what is left without a match is reported as added or removed. As a result:
+
+- inserting a comment line at the top of a file changes every generated name, and the diff reports no change;
+- comparing `gray_counter.v` with a copy whose Gray-code conversion became `bin + 1` reports one `$add` and one `$xor` removed, with their three output nets, and nothing else.
+
+A matched element is **Modified** when its type, parameters, port widths or (for a net or port) width differ. A module is **Modified** when its ports, cell count or net count change. The source location never counts: an edit above an element moves its line without changing it.
 
 !!! tip "Recipe"
 

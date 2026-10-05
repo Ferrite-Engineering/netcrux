@@ -175,4 +175,51 @@ void main() {
     expect(c.read(activeDiffProvider), isNotNull);
     expect(c.read(activeDiffProvider)!.elementChanges, hasLength(3));
   });
+
+  test('filteredChanges lists the groups in display order, so navigation '
+      'walks the list as shown', () {
+    final diff = NetlistDiff(
+      baselineNetlist: const NetlistRef(identifier: 'a'),
+      comparisonNetlist: const NetlistRef(identifier: 'b'),
+      generatedAt: DateTime.utc(2026, 10, 5),
+      elementChanges: const <ElementChange>[
+        ElementChange(
+          kind: ElementChangeKind.modified,
+          elementKind: NetlistDiffElementKind.module,
+          elementId: ElementId(kind: ElementKind.scope, path: 'top:module'),
+        ),
+        ElementChange(
+          kind: ElementChangeKind.unchanged,
+          elementKind: NetlistDiffElementKind.instance,
+          elementId: ElementId(kind: ElementKind.instance, path: 'top.u:cell'),
+        ),
+        ElementChange(
+          kind: ElementChangeKind.removed,
+          elementKind: NetlistDiffElementKind.instance,
+          elementId: ElementId(kind: ElementKind.instance, path: 'top.r:cell'),
+        ),
+        ElementChange(
+          kind: ElementChangeKind.added,
+          elementKind: NetlistDiffElementKind.net,
+          elementId: ElementId(kind: ElementKind.net, path: 'top:net:a'),
+        ),
+        ElementChange(
+          kind: ElementChangeKind.removed,
+          elementKind: NetlistDiffElementKind.net,
+          elementId: ElementId(kind: ElementKind.net, path: 'top:net:r'),
+        ),
+      ],
+    );
+    final state = DiffPaneState(activeDiff: diff);
+    expect(
+      state.filteredChanges.map((c) => c.elementId.path),
+      <String>[
+        'top:net:a',
+        'top.r:cell',
+        'top:net:r',
+        'top:module',
+        'top.u:cell',
+      ],
+    );
+  });
 }

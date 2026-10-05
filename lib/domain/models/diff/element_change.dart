@@ -8,9 +8,9 @@ import 'package:netcrux/domain/models/diff/netlist_diff_element_kind.dart';
 /// Classification of a single [ElementChange].
 ///
 /// One of the four buckets the diff engine sorts elements into when it
-/// walks both netlists in lockstep. [added] and [removed] come from the
-/// keyset symmetric difference; [modified] and [unchanged] come from
-/// attribute comparison on the keyset intersection.
+/// walks both netlists in lockstep. [added] and [removed] are the elements
+/// left without a match on the other side; [modified] and [unchanged] come
+/// from comparing the attributes of a matched pair.
 enum ElementChangeKind {
   /// The element is present in the comparison netlist but missing
   /// from the baseline.
@@ -61,6 +61,8 @@ class ElementChange {
     this.baselineSnapshot,
     this.comparisonSnapshot,
     this.modifiedAttributes = const <String>[],
+    this.sourceLocation,
+    this.comparisonName,
   });
 
   /// JSON round-trip constructor. Mirrors [toJson] so a [NetlistDiff]
@@ -88,6 +90,8 @@ class ElementChange {
       modifiedAttributes: modifiedAttrsRaw is List
           ? <String>[for (final v in modifiedAttrsRaw) v.toString()]
           : const <String>[],
+      sourceLocation: json['sourceLocation'] as String?,
+      comparisonName: json['comparisonName'] as String?,
     );
   }
 
@@ -118,6 +122,21 @@ class ElementChange {
   /// empty otherwise.
   final List<String> modifiedAttributes;
 
+  /// The element's Yosys `src` attribute (`path:line.col-line.col`) on the
+  /// side [elementId] names: the baseline for removed, modified and
+  /// unchanged rows, the comparison for added rows. Null when the element
+  /// carries none. Display only: it never takes part in classification,
+  /// since an edit above an element moves its line without changing it.
+  final String? sourceLocation;
+
+  /// The comparison-side name of an element matched by structure rather
+  /// than by name. Yosys names the cells and nets it generates after the
+  /// source path, the line and a running counter, so the same `$add` is
+  /// `$add$a.v:14$3` on one side and `$add$b.v:17$3` on the other; the row
+  /// is keyed on the baseline name and this records the other. Null when
+  /// both sides share the name, and on added or removed rows.
+  final String? comparisonName;
+
   /// Returns a copy with the given fields replaced.
   ElementChange copyWith({
     ElementChangeKind? kind,
@@ -126,6 +145,8 @@ class ElementChange {
     Map<String, String>? baselineSnapshot,
     Map<String, String>? comparisonSnapshot,
     List<String>? modifiedAttributes,
+    String? sourceLocation,
+    String? comparisonName,
   }) {
     return ElementChange(
       kind: kind ?? this.kind,
@@ -134,6 +155,8 @@ class ElementChange {
       baselineSnapshot: baselineSnapshot ?? this.baselineSnapshot,
       comparisonSnapshot: comparisonSnapshot ?? this.comparisonSnapshot,
       modifiedAttributes: modifiedAttributes ?? this.modifiedAttributes,
+      sourceLocation: sourceLocation ?? this.sourceLocation,
+      comparisonName: comparisonName ?? this.comparisonName,
     );
   }
 
@@ -146,6 +169,8 @@ class ElementChange {
     if (baselineSnapshot != null) 'baselineSnapshot': baselineSnapshot,
     if (comparisonSnapshot != null) 'comparisonSnapshot': comparisonSnapshot,
     if (modifiedAttributes.isNotEmpty) 'modifiedAttributes': modifiedAttributes,
+    if (sourceLocation != null) 'sourceLocation': sourceLocation,
+    if (comparisonName != null) 'comparisonName': comparisonName,
   };
 
   @override
@@ -159,6 +184,8 @@ class ElementChange {
     if (!_mapEquals(other.comparisonSnapshot, comparisonSnapshot)) {
       return false;
     }
+    if (other.sourceLocation != sourceLocation) return false;
+    if (other.comparisonName != comparisonName) return false;
     if (other.modifiedAttributes.length != modifiedAttributes.length) {
       return false;
     }
@@ -176,6 +203,8 @@ class ElementChange {
     _mapHash(baselineSnapshot),
     _mapHash(comparisonSnapshot),
     Object.hashAll(modifiedAttributes),
+    sourceLocation,
+    comparisonName,
   );
 
   @override

@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
+import 'package:netcrux/domain/models/netlist/net.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/schematic/wire_selection_builder.dart';
@@ -92,6 +96,123 @@ class AnalysisSelectionProbe {
     _navigateTo(node);
     tab.read(selectedElementProvider.notifier).replace(selection);
     return true;
+  }
+
+  /// Selects the cell named exactly [cellName] in a scope of module
+  /// [moduleName], navigating there when needed, and asks the canvas to
+  /// reveal it. Unlike [selectCell], the name is never split: a
+  /// Yosys-generated cell name (`$add$/src/counter.v:14$3`) contains dots.
+  /// Returns false when no scope of that module declares the cell.
+  bool revealCellIn(String moduleName, String cellName) {
+    final node = _scopeOfModule(
+      moduleName,
+      (module) => module.cells.containsKey(cellName),
+    );
+    if (node == null) return false;
+    _navigateTo(node);
+    tab
+        .read(selectedElementProvider.notifier)
+        .select(SelectedElement.cell(cellId: cellName));
+    tab.read(revealRequestProvider.notifier).request(cellName);
+    return true;
+  }
+
+  /// Selects every drawn strand of the net named exactly [netName] in a
+  /// scope of module [moduleName], navigating there when needed, and
+  /// reveals the cell driving it (the reveal is cell-addressed). Returns
+  /// false when no scope declares the net or the net has no drawn edge.
+  bool revealNetIn(String moduleName, String netName) {
+    final model = tab.read(hierarchyTreeProvider).model;
+    if (model == null) return false;
+    final node = _scopeOfModule(
+      moduleName,
+      (module) => module.nets.containsKey(netName),
+    );
+    if (node == null) return false;
+    final module = node.resolve(model)!;
+    final net = module.nets[netName]!;
+    final graph = const SchematicGraphBuilder().build(model, node);
+    final selection = buildWholeNetWireSelection(net, graph);
+    if (selection == null) return false;
+    _navigateTo(node);
+    tab.read(selectedElementProvider.notifier).replace(selection);
+    final driver = _driverOf(module, net);
+    if (driver != null) {
+      tab.read(revealRequestProvider.notifier).request(driver);
+    }
+    return true;
+  }
+
+  /// Selects the boundary port named [portName] of a scope of module
+  /// [moduleName], navigating there when needed. Returns false when no
+  /// scope of that module has the port.
+  bool selectPortIn(String moduleName, String portName) {
+    final node = _scopeOfModule(
+      moduleName,
+      (module) => module.ports.containsKey(portName),
+    );
+    if (node == null) return false;
+    _navigateTo(node);
+    tab
+        .read(selectedElementProvider.notifier)
+        .select(
+          SelectedElement.boundaryPort(
+            portId: 'port:$portName',
+            portName: portName,
+          ),
+        );
+    return true;
+  }
+
+  /// Makes a scope of module [moduleName] the shown scope. Returns false
+  /// when no instance of the module is in the hierarchy.
+  bool enterModule(String moduleName) {
+    final node = _scopeOfModule(moduleName, (_) => true);
+    if (node == null) return false;
+    _navigateTo(node);
+    return true;
+  }
+
+  /// The scope showing module [moduleName] whose module passes [contains]:
+  /// the current scope when it qualifies, else the first in a breadth-first
+  /// walk of the hierarchy.
+  HierarchyNode? _scopeOfModule(
+    String moduleName,
+    bool Function(Module module) contains,
+  ) {
+    final tree = tab.read(hierarchyTreeProvider);
+    final model = tree.model;
+    if (model == null) return null;
+    final current = tree.selected;
+    final currentModule = current?.resolve(model);
+    if (current != null &&
+        current.moduleName == moduleName &&
+        currentModule != null &&
+        contains(currentModule)) {
+      return current;
+    }
+    return _search(
+      model,
+      (node, module) => node.moduleName == moduleName && contains(module),
+    );
+  }
+
+  /// The name of the cell in [module] whose output drives a bit of [net],
+  /// or null when the net is driven from outside (a port, a constant).
+  static String? _driverOf(Module module, Net net) {
+    final bits = <int>{
+      for (final bit in net.bits)
+        if (bit is NetBit) bit.netId,
+    };
+    for (final cell in module.cells.values) {
+      for (final entry in cell.connections.entries) {
+        if (cell.portDirections[entry.key] != PortDirection.output) continue;
+        for (final bit in entry.value) {
+          if (bit is NetBit && bits.contains(bit.netId)) return cell.name;
+        }
+      }
+    }
+    return null;
   }
 
   /// Resolves the hierarchy scope that contains [path]'s leaf, testing

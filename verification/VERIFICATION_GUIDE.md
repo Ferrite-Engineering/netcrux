@@ -1287,6 +1287,30 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]`. Record equality, hash and emptiness with `netIds`: `test/services/schematic/schematic_crossing_overlay_provider_test.dart`. Painter: `test/features/viewer/rendering/schematic_painter_test.dart` group "crossing overlay wires" (every strand of the named net takes the severity colour, an unrelated net does not, an overlay with no `netIds` draws no extra paths), plus the existing "crossing overlay paint cost" group. Step 2 is covered on the real `cdc_capture` elaboration by the Pro overlay's own tests.
 
+### 7.9 Diff pane seam: row labels, exact-name selection, the comparison-only button
+
+**What it does.** The open-core `DiffPane` (`lib/features/diff/widgets/diff_pane.dart`) is the change list the Pro Netlist Diff View mounts. Four pieces of it are open core:
+
+- `DiffElementAddress` (`lib/domain/models/diff/diff_element_address.dart`) splits a row path (`<module>.<cell>:cell`, `<module>:net:<net>`, `<module>.<port>`, `<module>:module`) into module and element name at the module boundary, so a Yosys-generated name such as `$add$/src/counter.v:14$3` stays whole. Splitting on the last dot is what made Show in Schematic look for a cell named `v:14$3`.
+- `DiffRowLabel` (`lib/features/diff/widgets/diff_row_label.dart`) shows a generated cell as its type and `file:line` (from the row's `sourceLocation`, else from the name), and a generated net as its name with the path cut to the file name. The full path, the comparison-side name and the `src` are in the row tooltip. A user-named element shows its name over its path, as before.
+- The schematic shows the baseline, so an **Added** row's Show in Schematic is disabled, wrapped in a tooltip from `diffPaneShowInSchematicComparisonOnly`. Clicking the already-selected row shows it again.
+- `AnalysisSelectionProbe` gains exact-name methods: `revealCellIn` (navigate, select, reveal), `revealNetIn` (select every drawn strand, reveal the driver), `selectPortIn` and `enterModule`. They take the module and the name separately and never split the name.
+
+`DiffPaneState.filteredChanges` lists the groups in display order (added, removed, modified, unchanged), so the footer arrows and `Navigate → Next Diff` walk the list as shown. `ElementChange` carries two display-only fields, `sourceLocation` and `comparisonName`, round-tripped through JSON.
+
+**Setup.** Open Core build: the diff actions show the "requires NetCrux Pro" notice and no pane mounts. The visible behaviour needs the Pro overlay, whose verification guide carries the end-to-end steps on the gray_counter pair.
+
+**Steps and expected behavior.**
+1. Open Core: `File → Load Comparison Netlist…`. Expected: the Pro notice, no pane.
+2. Pro: follow the Netlist Diff View steps in the Pro verification guide. Expected: generated rows read `$add  gray_counter.v:15`, an Added row's button is disabled with the tooltip "This element exists only in the comparison netlist.", and a Removed row's button selects and centers the cell.
+
+**Edge cases.**
+- A path of another shape parses to null and Show in Schematic does nothing.
+- A location inside Yosys's own sources (`proc_dff.cc:220`) is not shown as a design location.
+- A source path containing spaces still shortens to its file name.
+
+**Automation assessment.** `[Coverage: UNIT]` and `[Coverage: WIDGET]`. `test/domain/models/diff/diff_element_address_test.dart`, `test/features/diff/widgets/diff_row_label_test.dart`, `test/domain/models/diff/element_change_test.dart` (the two new fields), `test/features/diff/providers/diff_pane_state_provider_test.dart` (display order), `test/features/viewer/services/analysis_selection_probe_test.dart` group "exact-name probes", and `test/features/diff/widgets/diff_pane_test.dart` (disabled added button and its tooltip, no button without a host, re-click shows again, generated label). Step 2 is covered on real Yosys elaborations by the Pro overlay's tests.
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.
