@@ -84,6 +84,7 @@ class NetcruxRightDock extends ConsumerWidget {
     AnalysisPanelKind.fsmResults => Icons.account_tree,
     AnalysisPanelKind.activity => Icons.bar_chart,
     AnalysisPanelKind.diff => Icons.compare_arrows,
+    AnalysisPanelKind.source => Icons.code,
   };
 
   static String _analysisLabel(L10N l10n, AnalysisPanelKind kind) =>
@@ -94,6 +95,7 @@ class NetcruxRightDock extends ConsumerWidget {
         AnalysisPanelKind.fsmResults => l10n.dockTabFsmResults,
         AnalysisPanelKind.activity => l10n.dockTabActivity,
         AnalysisPanelKind.diff => l10n.dockTabDiff,
+        AnalysisPanelKind.source => l10n.dockTabSource,
       };
 }
 

@@ -2308,6 +2308,7 @@
   "dockTabFsmResults": "FSM 結果",
   "dockTabActivity": "アクティビティ",
   "dockTabDiff": "差分",
+  "dockTabSource": "ソース",
   "dockCollapseTooltip": "パネルを隠す",
   "accessibilityRightDockRegion": "詳細ドック",
   "accessibilityLeftDockRegion": "ブラウザードック",

@@ -26,19 +26,21 @@ Right-click an element on the canvas and choose **Open in Inspector** to make it
 
 ## The RTL source pane <span class="tier tier-pro">Pro</span> {#source-pane}
 
-The **RTL source pane** brings the HDL into the app, kept in step with the schematic.
+The **RTL source pane** brings the HDL into the app, kept in step with the schematic. It opens as a **Source** tab in the dock beside the schematic, next to the Inspector and any open [analyses](analysis.md), so the drawing stays visible and interactive while you read the code.
 
 1. **Open the pane.**
 
-    Run **Show RTL Source Pane** from the `View` menu or the command palette. The pane opens as a window over the workspace; **Close RTL Source Pane** dismisses it and keeps its place for next time.
+    Run **Show RTL Source Pane** from the `View` menu or the command palette. The Source tab opens in the right dock, or comes to the front if it is already open. Close it with the tab's **×** or **Close RTL Source Pane**; the pane keeps its file and line for next time. Like the analysis tabs, it can be dragged into the bottom dock.
 
 2. **Jump from schematic to source.**
 
-    Select a cell, port or net and choose **Show Source for this Element** — from the canvas context menu, the `Navigate` menu, the command palette, or the inspector's **Go to source** button. NetCrux uses the Yosys `src` attribute to resolve the element to its file and line and scrolls the read-only, syntax-highlighted Verilog / SystemVerilog / VHDL to it. An element Yosys recorded no location for shows "No source attribution recorded for this element."
+    Select a cell, port or net and choose **Show Source for this Element** from the canvas context menu, the `Navigate` menu or the command palette, or use the inspector's **Go to source** button. NetCrux uses the Yosys `src` attribute to resolve the element to its file and line, opens the Source tab, and scrolls the read-only, syntax-highlighted Verilog / SystemVerilog / VHDL to that line and highlights it. An element Yosys recorded no location for shows "No source attribution recorded for this element."
 
 3. **Navigate both directions.**
 
-    The pane keeps a **bidirectional source ↔ schematic index**: identifiers in the source that map to schematic elements can be clicked to select those elements on the canvas.
+    The pane keeps a **bidirectional source ↔ schematic index**: identifiers in the source that map to schematic elements are underlined, and clicking one selects that element on the canvas beside the pane. **Jump to element** in the pane's status bar selects the element under the last identifier you clicked again.
+
+The code lays out at its own width: in a narrow dock, long lines scroll sideways inside the pane rather than being cut off, and the file path above the code shortens to fit. Widen the dock by dragging its edge.
 
 !!! note "File size budget"
 

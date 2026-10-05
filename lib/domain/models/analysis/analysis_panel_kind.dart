@@ -28,4 +28,9 @@ enum AnalysisPanelKind {
 
   /// Netlist diff (Pro).
   diff,
+
+  /// RTL source view: the file behind the selected element, with its line
+  /// highlighted. Docked beside the schematic rather than shown as a modal,
+  /// so both directions of the source link stay in view (Pro).
+  source,
 }

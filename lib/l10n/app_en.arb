@@ -2524,6 +2524,10 @@
   "@dockTabDiff": {
     "description": "Right-dock tab label for the netlist-diff panel."
   },
+  "dockTabSource": "Source",
+  "@dockTabSource": {
+    "description": "Right-dock tab label for the RTL source panel, which shows the source file behind the selected schematic element."
+  },
   "dockCollapseTooltip": "Hide Panel",
   "@dockCollapseTooltip": {
     "description": "Tooltip on the dock strip button that hides the whole region (VSCode panel-close)."

@@ -2308,6 +2308,7 @@
   "dockTabFsmResults": "FSM 结果",
   "dockTabActivity": "活动",
   "dockTabDiff": "差异",
+  "dockTabSource": "源代码",
   "dockCollapseTooltip": "隐藏面板",
   "accessibilityRightDockRegion": "详情停靠区",
   "accessibilityLeftDockRegion": "浏览器停靠区",

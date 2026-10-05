@@ -169,6 +169,101 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('a line longer than the pane scrolls sideways inside the '
+        'code view instead of clipping', (tester) async {
+      // A docked pane starts at a few hundred pixels; RTL lines run longer.
+      final longLine =
+          '  assign result = ${List.filled(30, 'operand_a').join(' + ')};';
+      final content = SourceFileContent(
+        filePath: '/proj/wide.v',
+        lines: <String>['module wide;', longLine, 'endmodule'],
+        tokens: const <SourceToken>[],
+      );
+      await tester.pumpWidget(
+        _wrapWithOverrides(
+          child: const SourcePane(),
+          initialContent: content,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final horizontal = tester.state<ScrollableState>(
+        find.byWidgetPredicate(
+          (w) => w is Scrollable && w.axisDirection == AxisDirection.right,
+        ),
+      );
+      expect(
+        horizontal.position.maxScrollExtent,
+        greaterThan(0),
+        reason: 'the code is wider than the 500 px pane, so it must scroll',
+      );
+      // The far end of the line is reachable by scrolling, not cut off.
+      horizontal.position.jumpTo(horizontal.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('short lines lay out at the pane width with nothing to '
+        'scroll sideways', (tester) async {
+      const content = SourceFileContent(
+        filePath: '/proj/a.v',
+        lines: <String>['module a;', 'endmodule'],
+        tokens: <SourceToken>[],
+      );
+      await tester.pumpWidget(
+        _wrapWithOverrides(
+          child: const SourcePane(),
+          initialContent: content,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final horizontal = tester.state<ScrollableState>(
+        find.byWidgetPredicate(
+          (w) => w is Scrollable && w.axisDirection == AxisDirection.right,
+        ),
+      );
+      expect(horizontal.position.maxScrollExtent, 0);
+    });
+
+    testWidgets('a remount with no pending scroll centres the highlighted '
+        'line again', (tester) async {
+      // The dock rebuilds a tab's body each time the tab comes to the
+      // front, after the original jump was acknowledged. The reader must
+      // land back on the highlighted line, not on line 1.
+      final content = SourceFileContent(
+        filePath: '/proj/long.v',
+        lines: <String>[for (var i = 1; i <= 300; i++) '// line $i'],
+        tokens: const <SourceToken>[],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sourcePaneServiceProvider.overrideWithValue(_FakeService(content)),
+            sourcePaneStateProvider.overrideWith(
+              () => _HighlightedNotifier(content, line: 200),
+            ),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: [
+              L10N.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('en')],
+            home: Scaffold(
+              body: SizedBox(width: 500, height: 400, child: SourcePane()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('200'), findsOneWidget);
+      expect(find.text('1'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     for (final locale in const [
       Locale('en'),
       Locale('zh', 'CN'),
@@ -183,6 +278,20 @@ void main() {
       });
     }
   });
+}
+
+/// A pane whose jump to [line] was already acknowledged: the line is still
+/// highlighted, but no scroll is pending.
+class _HighlightedNotifier extends SourcePaneStateNotifier {
+  _HighlightedNotifier(this._content, {required this.line});
+  final SourceFileContent _content;
+  final int line;
+
+  @override
+  SourcePaneState build() => SourcePaneState(
+    currentContent: _content,
+    highlightedLines: <int>{line},
+  );
 }
 
 class _ErrorStateNotifier extends SourcePaneStateNotifier {

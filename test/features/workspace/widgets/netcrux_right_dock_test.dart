@@ -126,6 +126,32 @@ void main() {
       expect(find.byType(InspectorPanel), findsOneWidget);
     });
 
+    testWidgets('the Source kind docks as its own closable tab', (
+      tester,
+    ) async {
+      final container = makeContainer(
+        overrides: [analysisPanelBuilderProvider.overrideWithValue(marker)],
+      );
+      await tester.pumpWidget(harness(container));
+      container
+          .read(analysisDockProvider.notifier)
+          .open(AnalysisPanelKind.source);
+      await tester.pumpAndSettle();
+      expect(find.text('panel:source'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('cruxDockTab-analysis:source')),
+        findsOneWidget,
+      );
+      expect(find.text('Source'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey('cruxDockClose-analysis:source')),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(analysisDockProvider), isEmpty);
+      expect(find.byType(InspectorPanel), findsOneWidget);
+    });
+
     testWidgets('tapping the Inspector tab keeps the analysis listed', (
       tester,
     ) async {
@@ -358,6 +384,28 @@ void main() {
 
         expect(tester.takeException(), isNull);
         expect(find.byType(InspectorPanel), findsOneWidget);
+      });
+    }
+
+    // Every analysis kind's tab carries a label in every locale: one tab per
+    // kind, all open at once, the strip at its tightest.
+    for (final locale in L10N.supportedLocales) {
+      testWidgets('labels every analysis tab in ${locale.toLanguageTag()}', (
+        tester,
+      ) async {
+        final container = makeContainer(
+          overrides: [analysisPanelBuilderProvider.overrideWithValue(marker)],
+        );
+        await tester.pumpWidget(harness(container, locale: locale));
+        AnalysisPanelKind.values.forEach(
+          container.read(analysisDockProvider.notifier).open,
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        final l10n = await L10N.delegate.load(locale);
+        expect(find.text(l10n.dockTabSource), findsOneWidget);
+        expect(l10n.dockTabSource, isNotEmpty);
       });
     }
   });

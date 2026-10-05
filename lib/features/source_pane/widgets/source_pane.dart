@@ -16,7 +16,10 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 /// Renders the source file currently held by
 /// [sourcePaneStateProvider]: line numbers + token-classified text in
 /// monospace, with the active line highlighted and the viewport
-/// auto-scrolled when [SourcePaneState.scrollToLine] is set.
+/// auto-scrolled when [SourcePaneState.scrollToLine] is set. A remount
+/// with no pending scroll centres the highlighted line again, and lines
+/// longer than the pane is wide scroll sideways inside the code view
+/// rather than being clipped.
 ///
 /// Tokens that carry an [SourceToken.associatedElementId] render as
 /// tappable; the tap callback fires [onTokenTap]. The hosting Pro
@@ -33,11 +36,7 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 /// supplied separately by the Pro overlay's L10NPro.
 class SourcePane extends ConsumerWidget {
   /// Creates the source-pane widget.
-  const SourcePane({
-    this.onTokenTap,
-    this.onCursorPositionChanged,
-    super.key,
-  });
+  const SourcePane({this.onTokenTap, this.onCursorPositionChanged, super.key});
 
   /// Invoked when the user taps a token that carries an associated
   /// [ElementId]. The caller typically emits a selection into the
@@ -96,11 +95,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(
-              Icons.error_outline,
-              size: 28,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 28, color: theme.colorScheme.error),
             const SizedBox(height: 8),
             Text(
               body,
@@ -166,10 +161,24 @@ class _LoadedView extends StatefulWidget {
 
 class _LoadedViewState extends State<_LoadedView> {
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _horizontalController = ScrollController();
   // Tokens grouped by 1-based line number for cheap per-line lookup.
   late Map<int, List<SourceToken>> _tokensByLine;
+  // Character count of the file's longest line, tabs counted wide, so the
+  // code can be laid out at its own width and scroll sideways in a pane
+  // narrower than it.
+  late int _longestLineChars;
 
   static const double _lineHeight = 18;
+
+  // `_SourceLineRow`'s fixed chrome: horizontal padding on both sides, the
+  // line-number gutter and the gap after it.
+  static const double _rowChromeWidth = 8 + 44 + 8 + 8;
+
+  // A tab renders narrower than the column it advances to in an editor; it
+  // is counted as this many characters so a tab-indented line is not
+  // clipped at its end.
+  static const int _tabWidthChars = 4;
 
   @override
   void initState() {
@@ -193,6 +202,7 @@ class _LoadedViewState extends State<_LoadedView> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _horizontalController.dispose();
     super.dispose();
   }
 
@@ -205,11 +215,23 @@ class _LoadedViewState extends State<_LoadedView> {
       list.sort((a, b) => a.columnStart.compareTo(b.columnStart));
     }
     _tokensByLine = map;
+    var longest = 0;
+    for (final line in widget.content.lines) {
+      final tabs = '\t'.allMatches(line).length;
+      final chars = line.length + tabs * (_tabWidthChars - 1);
+      if (chars > longest) longest = chars;
+    }
+    _longestLineChars = longest;
   }
 
   void _applyScroll() {
-    if (!_scrollController.hasClients) return;
-    final target = widget.scrollToLine;
+    if (!mounted || !_scrollController.hasClients) return;
+    final pending = widget.scrollToLine;
+    // With no pending jump, the highlight still marks the line the reader was
+    // taken to. A docked pane is rebuilt each time its tab comes back to the
+    // front, so centring the highlight again keeps that line in view instead
+    // of starting the file at line 1.
+    final target = pending ?? _firstHighlightedLine();
     if (target == null) return;
     final lineTop = (target - 1) * _lineHeight;
     final viewport = _scrollController.position.viewportDimension;
@@ -219,13 +241,38 @@ class _LoadedViewState extends State<_LoadedView> {
       maxExtent < 0 ? 0.0 : maxExtent,
     );
     _scrollController.jumpTo(goal);
+    if (pending == null) return;
+    // A new navigation starts at the line numbers, not wherever an earlier
+    // read left the sideways scroll.
+    if (_horizontalController.hasClients) _horizontalController.jumpTo(0);
     widget.onScrollAcknowledged();
+  }
+
+  int? _firstHighlightedLine() {
+    final lines = widget.highlightedLines;
+    if (lines.isEmpty) return null;
+    return lines.reduce((a, b) => a < b ? a : b);
+  }
+
+  /// The width the longest line needs, measured with the code font.
+  double _codeWidth(BuildContext context) {
+    final painter = TextPainter(
+      text: const TextSpan(
+        text: 'M',
+        style: TextStyle(fontSize: 12, fontFamily: 'monospace'),
+      ),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final charWidth = painter.width;
+    painter.dispose();
+    return _rowChromeWidth + _longestLineChars * charWidth;
   }
 
   @override
   Widget build(BuildContext context) {
     final lines = widget.content.lines;
-    return ListView.builder(
+    final list = ListView.builder(
       controller: _scrollController,
       itemCount: lines.length,
       itemExtent: _lineHeight,
@@ -239,6 +286,43 @@ class _LoadedViewState extends State<_LoadedView> {
           isHighlighted: isHighlighted,
           onTokenTap: widget.onTokenTap,
           onTokenSelected: widget.onCursorPositionChanged,
+        );
+      },
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
+          return list;
+        }
+        // The code lays out at its own width and scrolls sideways when the
+        // pane is narrower, so a docked pane at its default width still
+        // shows a long line in full instead of clipping it. Only the code
+        // scrolls: the panel chrome around it stays at the pane's width.
+        final codeWidth = _codeWidth(context);
+        final width = codeWidth > constraints.maxWidth
+            ? codeWidth
+            : constraints.maxWidth;
+        // Both bars are explicit: the vertical one sits on the pane's edge
+        // (it hears the list one level down), where the list's own default
+        // bar would sit on the far edge of the wide code, out of view.
+        return ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: Scrollbar(
+            controller: _scrollController,
+            notificationPredicate: (n) => n.depth == 1,
+            child: Scrollbar(
+              controller: _horizontalController,
+              child: SingleChildScrollView(
+                controller: _horizontalController,
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: width,
+                  height: constraints.maxHeight,
+                  child: list,
+                ),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -347,22 +431,13 @@ class _SourceLineRow extends StatelessWidget {
               ),
               onTap: () {
                 onTokenTap?.call(elementId);
-                onTokenSelected?.call(
-                  token.line,
-                  token.columnStart,
-                  elementId,
-                );
+                onTokenSelected?.call(token.line, token.columnStart, elementId);
               },
             ),
           ),
         );
       } else {
-        children.add(
-          TextSpan(
-            text: text,
-            style: _styleFor(token.kind, cs),
-          ),
-        );
+        children.add(TextSpan(text: text, style: _styleFor(token.kind, cs)));
       }
       cursor = token.columnEnd;
     }
@@ -371,10 +446,7 @@ class _SourceLineRow extends StatelessWidget {
       final tail = _substringByColumn(rawText, cursor, rawText.length + 1);
       if (tail.isNotEmpty) {
         children.add(
-          TextSpan(
-            text: tail,
-            style: _styleFor(SourceTokenKind.unknown, cs),
-          ),
+          TextSpan(text: tail, style: _styleFor(SourceTokenKind.unknown, cs)),
         );
       }
     }
@@ -389,10 +461,7 @@ class _SourceLineRow extends StatelessWidget {
   }
 
   TextStyle _styleFor(SourceTokenKind kind, ColorScheme cs) {
-    const base = TextStyle(
-      fontSize: 12,
-      fontFamily: 'monospace',
-    );
+    const base = TextStyle(fontSize: 12, fontFamily: 'monospace');
     switch (kind) {
       case SourceTokenKind.keyword:
         return base.copyWith(color: cs.primary, fontWeight: FontWeight.w600);

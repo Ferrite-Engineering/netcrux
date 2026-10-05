@@ -1316,6 +1316,28 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]` and `[Coverage: WIDGET]`. `test/domain/models/diff/diff_element_address_test.dart`, `test/features/diff/widgets/diff_row_label_test.dart`, `test/domain/models/diff/element_change_test.dart` (the two new fields), `test/features/diff/providers/diff_pane_state_provider_test.dart` (display order), `test/features/viewer/services/analysis_selection_probe_test.dart` group "exact-name probes", and `test/features/diff/widgets/diff_pane_test.dart` (disabled added button and its tooltip, no button without a host, a row click and the button each select the row and hand over that row's change, re-click shows again, an Added row click shows nothing, at 200 / 280 / 360 px the icon button stays inside the row at the same place for long and short names with no overflow, the label beside the icon in a wide row, the `$20` net label, generated label). Step 2 is covered on real Yosys elaborations by the Pro overlay's tests.
 
+### 7.10 Source pane seam: the Source dock tab, sideways scroll, the highlight kept in view
+
+**What it does.** The RTL source pane is a tab in the right dock, not a modal window. Three pieces of that are open core:
+
+- `AnalysisPanelKind.source` (`lib/domain/models/analysis/analysis_panel_kind.dart`) is the dock kind the Pro overlay opens for the source pane. `NetcruxRightDock` (`lib/features/workspace/widgets/netcrux_docks.dart`) labels its tab **Source** (`dockTabSource`, all five locales) with the `Icons.code` icon, and gives it a × like every other analysis tab. As with the other kinds, an Open Core build never lists it: there is no Pro panel builder.
+- `SourcePane` (`lib/features/source_pane/widgets/source_pane.dart`) lays the code out at its longest line's width and scrolls it sideways inside the view when the pane is narrower, so a dock at its default width shows a long line in full instead of clipping it. The vertical scrollbar stays on the pane's edge. A new navigation resets the sideways scroll to the line numbers.
+- `CruxDock` rebuilds a tab's body each time the tab comes to the front, after the original jump to the line was acknowledged. With no pending scroll, `SourcePane` centres the first highlighted line again, so switching to the Inspector tab and back does not drop the reader at line 1.
+
+**Setup.** Open Core build: the source-pane actions show the "requires NetCrux Pro" notice and no tab opens. The visible behaviour needs the Pro overlay, whose verification guide carries the end-to-end steps.
+
+**Steps and expected behavior.**
+1. Open Core: `View → Show RTL Source Pane`. Expected: the Pro notice, no Source tab.
+2. Pro: right-click a cell and choose **Show Source for this Element**. Expected: a **Source** tab opens in the right dock beside the Inspector, the line is highlighted and centred, and the schematic stays visible and clickable.
+3. Pro: drag the right dock narrow (about 300 px) with a file whose lines are longer than the pane. Expected: the code scrolls sideways inside the pane; the breadcrumb, header and status bar stay at the pane's width.
+4. Pro: click the **Inspector** tab, then the **Source** tab. Expected: the highlighted line is in view again.
+
+**Edge cases.**
+- Lines shorter than the pane leave nothing to scroll sideways.
+- A tab character is counted as four characters when sizing the code, so a tab-indented line is not clipped at its end.
+
+**Automation assessment.** `[Coverage: WIDGET]`. `test/features/source_pane/widgets/source_pane_test.dart` (a long line scrolls sideways at 500 px, short lines do not, a remount with no pending scroll shows line 200 of 300 and not line 1) and `test/features/workspace/widgets/netcrux_right_dock_test.dart` (the Source kind docks as its own closable tab; every analysis tab is labelled in all five locales). Steps 2 to 4 are covered by the Pro overlay's tests.
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

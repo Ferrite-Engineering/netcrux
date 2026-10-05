@@ -9,9 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// Default is a no-op so [NetcruxAction.showSourcePane] remains
 /// discoverable in the command palette / menu bar on open-core
-/// builds. The Pro overlay overrides this with a callback
-/// that mounts the panel through the workspace's docking
-/// infrastructure.
+/// builds. The Pro overlay overrides this with a callback that opens
+/// the panel as the right dock's Source tab
+/// (`AnalysisPanelKind.source`), or brings that tab to the front when
+/// it is already open.
 typedef ShowSourcePaneOpener = void Function(BuildContext context);
 
 /// Resolves [elementId] through the active [SourcePaneService] and
@@ -40,8 +41,8 @@ typedef OpenSourceForElementOpener =
 /// Closes / dismisses the RTL source pane.
 ///
 /// Default is a no-op. The Pro overlay overrides with a callback
-/// that drops the pane from the workspace's docking infrastructure
-/// and clears the per-tab source-pane state.
+/// that closes the right dock's Source tab. The per-tab source-pane
+/// state is kept, so reopening the tab shows the same file and line.
 typedef CloseSourcePaneOpener = void Function(BuildContext context);
 
 /// Open-core extension point for showing the RTL source pane.
