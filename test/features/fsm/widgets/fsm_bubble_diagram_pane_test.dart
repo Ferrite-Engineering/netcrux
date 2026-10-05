@@ -73,8 +73,32 @@ void main() {
       await tester.pumpAndSettle();
       // Title + hint render as one CruxPanelEmptyState message.
       expect(find.textContaining('No FSM selected'), findsOneWidget);
+      // The hint names the entries that focus an FSM, not a stale label.
+      expect(
+        find.textContaining('"Detect FSM for This Register"'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('"Run FSM Detection Across Design…"'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
+
+    // Every locale's hint quotes that locale's palette action label
+    // verbatim, so the user can type it into the palette search.
+    for (final locale in L10N.supportedLocales) {
+      test(
+        'the empty-state hint names the palette action in $locale',
+        () async {
+          final l10n = await L10N.delegate.load(locale);
+          expect(
+            l10n.fsmBubbleDiagramEmptyHint,
+            contains(l10n.actionRunFsmDetectionAcrossDesign),
+          );
+        },
+      );
+    }
 
     testWidgets('renders states and transitions when an FSM is focused', (
       tester,

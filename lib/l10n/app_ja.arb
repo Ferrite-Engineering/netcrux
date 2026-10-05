@@ -1517,7 +1517,7 @@
   "@fsmBubbleDiagramEmptyTitle": {
     "description": "Open-core empty-state title for the FSM bubble diagram pane."
   },
-  "fsmBubbleDiagramEmptyHint": "回路図上のレジスタを右クリックし、「FSM バブル図を表示」を選択するとステートマシンを可視化できます。",
+  "fsmBubbleDiagramEmptyHint": "回路図上のレジスタを右クリックして「このレジスタの FSM を検出」を選択するか、コマンドパレットから「設計全体で FSM 検出を実行…」を実行してください。",
   "@fsmBubbleDiagramEmptyHint": {
     "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
   },

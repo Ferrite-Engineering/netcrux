@@ -1603,9 +1603,9 @@
   "@fsmBubbleDiagramEmptyTitle": {
     "description": "Open-core empty-state title for the FSM bubble diagram pane."
   },
-  "fsmBubbleDiagramEmptyHint": "Right-click a register in the schematic and choose \"Show FSM Bubble Diagram\" to visualize its state machine.",
+  "fsmBubbleDiagramEmptyHint": "Right-click a register in the schematic and choose \"Detect FSM for This Register\", or run \"Run FSM Detection Across Design…\" from the command palette.",
   "@fsmBubbleDiagramEmptyHint": {
-    "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
+    "description": "Empty-state hint in the FSM bubble diagram panel naming the two ways to focus an FSM: the schematic context-menu entry \"Detect FSM for This Register\" and the command-palette action \"Run FSM Detection Across Design…\" (keep both labels identical to those entries)."
   },
   "fsmBubbleDiagramStatesSection": "States",
   "@fsmBubbleDiagramStatesSection": {

@@ -1517,7 +1517,7 @@
   "@fsmBubbleDiagramEmptyTitle": {
     "description": "Open-core empty-state title for the FSM bubble diagram pane."
   },
-  "fsmBubbleDiagramEmptyHint": "在原理图中右键单击某个寄存器，然后选择“显示 FSM 气泡图”以可视化其状态机。",
+  "fsmBubbleDiagramEmptyHint": "在原理图中右键单击某个寄存器并选择“为此寄存器检测 FSM”，或在命令面板中运行“在整个设计中运行 FSM 检测…”。",
   "@fsmBubbleDiagramEmptyHint": {
     "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
   },

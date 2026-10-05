@@ -75,20 +75,21 @@ class Fsm {
   /// across refreshes.
   final String id;
 
-  /// Canonical cross-suite identifier for the register whose value
-  /// enumerates this FSM's states. Built via the resolver so it
-  /// interoperates with the rest of the per-tab schematic-selection
-  /// surfaces (cross-probe, source pane, bookmarks).
+  /// Identifier for the register whose value enumerates this FSM's
+  /// states. Its path is `<moduleName>.<cellName>`
+  /// (`fsm_lock.$procdff$17`), not a schematic cell id: the schematic
+  /// names a cell bare within the scope it shows. Translate between the
+  /// two by joining or stripping the [containingInstanceId] module name as
+  /// a prefix, never by splitting on a dot, because Yosys cell names carry
+  /// dots of their own.
   final ElementId stateRegisterId;
 
   /// Human-readable name of the state register, for display in the
   /// panel header and detection-results dialog (e.g. `"state_q"`).
   final String stateRegisterName;
 
-  /// Cross-suite identifier for the module instance that contains the
-  /// FSM. Used by the bubble diagram's header breadcrumb and by the
-  /// schematic context menu's "Detect FSM" entry to scope detection
-  /// reruns.
+  /// Identifier for the module that contains the FSM. Its path is the
+  /// module name (`fsm_lock`), the prefix of [stateRegisterId]'s path.
   final ElementId containingInstanceId;
 
   /// All detected states, in detector-discovery order. `FsmState.id`

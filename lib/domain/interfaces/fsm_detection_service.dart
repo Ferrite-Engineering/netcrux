@@ -58,6 +58,10 @@ abstract interface class FsmDetectionService {
   /// menu's "Detect FSM for This Register" entry — the user is
   /// asserting "this is an FSM register, try harder".
   ///
+  /// [stateRegisterId] takes the same `<moduleName>.<cellName>` path form
+  /// as [Fsm.stateRegisterId], so a caller holding a schematic cell id
+  /// qualifies it with the viewed scope's module name first.
+  ///
   /// Returns the detected [Fsm], or null when the targeted register
   /// has no parseable driving logic. Open-core's no-op throws
   /// [UnimplementedFsmDetection].

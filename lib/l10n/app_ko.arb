@@ -1517,7 +1517,7 @@
   "@fsmBubbleDiagramEmptyTitle": {
     "description": "Open-core empty-state title for the FSM bubble diagram pane."
   },
-  "fsmBubbleDiagramEmptyHint": "회로도에서 레지스터를 마우스 오른쪽 버튼으로 클릭하고 \"FSM 버블 다이어그램 표시\"를 선택하여 상태 머신을 시각화하세요.",
+  "fsmBubbleDiagramEmptyHint": "회로도에서 레지스터를 마우스 오른쪽 버튼으로 클릭하고 \"이 레지스터의 FSM 감지\"를 선택하거나, 명령 팔레트에서 \"전체 설계에서 FSM 감지 실행…\"을 실행하세요.",
   "@fsmBubbleDiagramEmptyHint": {
     "description": "Open-core empty-state hint explaining how to open an FSM in the bubble diagram pane."
   },
