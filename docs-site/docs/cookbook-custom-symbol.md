@@ -25,7 +25,7 @@ Know the module's exact module type name and its port list — names, and which 
 
 3. **Draw it on the SVG Content tab.**
 
-    On the **SVG Content** tab, edit the markup and watch the live preview update. On import and save, the [SVG sanitizer](customizing.md#sanitizer) strips any scripts, event handlers, external references and `javascript:` URLs — the symbol is artwork only.
+    Already have the drawing as a file? Click **Load from file…** above the editor to replace the content with an `.svg` file; the module type the right-click filled in stays as it is. On the **SVG Content** tab, edit the markup and watch the live preview update. On import and save, the [SVG sanitizer](customizing.md#sanitizer) strips any scripts, event handlers, external references and `javascript:` URLs — the symbol is artwork only.
 
 4. **Place the port anchors.**
 

@@ -14,7 +14,7 @@ Custom symbols live in the **Custom Cell Symbols** manager, opened with `Tools �
 
 2. **Edit the SVG content.**
 
-    The first tab, **SVG Content**, holds the drawing with a live **Preview** beside it — edit the markup and watch the symbol update.
+    The first tab, **SVG Content**, holds the drawing with a live **Preview** beside it — edit the markup and watch the symbol update. To start from a drawing on disk, click **Load from file…** above the editor and pick an `.svg` file: it runs through the [sanitizer](#sanitizer), replaces the content (after asking, if you have edited it), and keeps the module type the editor already has.
 
 3. **Place the port anchors.**
 
