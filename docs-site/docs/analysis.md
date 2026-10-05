@@ -37,7 +37,7 @@ Showing an element:
 - a **cell** is selected, its scope becomes the shown scope, and the canvas centers on it;
 - a **net** has every drawn strand selected, and the canvas centers on the cell driving it;
 - a **port** is selected on the boundary of its module's scope;
-- a **module** becomes the shown scope.
+- a **module** becomes the shown scope, the selection and any trace are cleared, and the view fits the whole module (when you are already in that module, this is the visible effect).
 
 **Removed**, **Modified** and **Unchanged** elements are all in the baseline, so all of them can be shown. An **Added** element exists only in the comparison netlist: there is nothing on the schematic to show, so its button is disabled, and its tooltip says so. Clicking an Added row makes it the active row and clears the schematic selection, so nothing stays selected that belongs to another row.
 

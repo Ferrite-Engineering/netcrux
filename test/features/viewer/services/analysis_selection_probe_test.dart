@@ -1,8 +1,10 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
@@ -12,8 +14,12 @@ import 'package:netcrux/domain/models/netlist/port.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/viewer/providers/canvas_fit_target_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
+import 'package:netcrux/features/viewer/rendering/schematic_painter.dart'
+    show ViewportTransform;
 import 'package:netcrux/features/viewer/services/analysis_selection_probe.dart';
 
 /// Two-level design:
@@ -330,6 +336,27 @@ void main() {
         'u_sync',
       ]);
       expect(probe.enterModule('nope'), isFalse);
+    });
+
+    test('enterModule on the shown scope clears the selection and fits', () {
+      final container = makeContainer();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.selectCell('u_src'), isTrue);
+      container
+          .read(canvasFitTargetProvider.notifier)
+          .set(
+            const Size(800, 600),
+            const BoundingBox(x: 0, y: 0, width: 400, height: 300),
+          );
+      container
+          .read(viewportTransformProvider.notifier)
+          .restore(const ViewportTransform(zoom: 3, offset: Offset(-50, -50)));
+
+      expect(probe.enterModule('top'), isTrue);
+
+      expect(container.read(selectedElementProvider).isEmpty, isTrue);
+      expect(container.read(hierarchyTreeProvider).selected!.isRoot, isTrue);
+      expect(container.read(viewportTransformProvider).zoom, isNot(3));
     });
   });
 }

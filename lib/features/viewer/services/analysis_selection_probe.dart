@@ -10,8 +10,11 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/viewer/providers/canvas_fit_target_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
+import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/schematic/wire_selection_builder.dart';
 
@@ -164,12 +167,32 @@ class AnalysisSelectionProbe {
     return true;
   }
 
-  /// Makes a scope of module [moduleName] the shown scope. Returns false
-  /// when no instance of the module is in the hierarchy.
+  /// Makes a scope of module [moduleName] the shown scope, clears the
+  /// element selection and any trace, and frames the whole module. Returns
+  /// false when no instance of the module is in the hierarchy.
+  ///
+  /// When the module is already the shown scope there is nothing to
+  /// navigate to, so the view is fitted to it the way Zoom to Fit does;
+  /// without that, choosing the module left the previous element selected
+  /// and nothing visibly happened. A scope change fits on its own.
   bool enterModule(String moduleName) {
     final node = _scopeOfModule(moduleName, (_) => true);
     if (node == null) return false;
+    final alreadyShown = identical(
+      tab.read(hierarchyTreeProvider).selected,
+      node,
+    );
     _navigateTo(node);
+    tab.read(selectedElementProvider.notifier).clear();
+    tab.read(traceOverlayProvider.notifier).clear();
+    if (alreadyShown) {
+      final target = tab.read(canvasFitTargetProvider);
+      if (target != null) {
+        tab
+            .read(viewportTransformProvider.notifier)
+            .fitToBounds(target.size, target.bounds);
+      }
+    }
     return true;
   }
 

@@ -1306,6 +1306,7 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 1. Open Core: `File → Load Comparison Netlist…`. Expected: the Pro notice, no pane.
 2. Pro: follow the Netlist Diff View steps in the Pro verification guide. Expected: generated cell rows read `$add  gray_counter.v:15` and net rows `$add  gray_counter.v:15  (Y)`, also from a folder whose name has spaces; an Added row's button is disabled with the tooltip "This element exists only in the comparison netlist."; clicking a Removed row, or its button, makes it the active row and selects and centers exactly its cell.
 3. Pro: drag the right pane narrow (about 300 px). Expected: every row still ends in the target icon button, inside the pane; long names end in an ellipsis; hovering the icon shows "Show in Schematic".
+4. Pro: select a Removed net row so a wire is selected, then click the Modified module row (`gray_counter`). Expected: the wire's selection clears, and the view fits the whole module.
 
 **Edge cases.**
 - A path of another shape parses to null and Show in Schematic does nothing.
