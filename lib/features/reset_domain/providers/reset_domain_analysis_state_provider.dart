@@ -186,8 +186,9 @@ class ResetDomainAnalysisNotifier extends Notifier<ResetDomainAnalysisState> {
     // shared by every tab, so each tab's notifier clears its own state.
     ref.listen<List<AnalysisPanelKind>>(analysisDockProvider, (prev, next) {
       final wasOpen = prev?.contains(AnalysisPanelKind.resetDomain) ?? false;
-      if (wasOpen && !next.contains(AnalysisPanelKind.resetDomain))
+      if (wasOpen && !next.contains(AnalysisPanelKind.resetDomain)) {
         _onPanelClosed();
+      }
     });
     return ResetDomainAnalysisState.empty;
   }

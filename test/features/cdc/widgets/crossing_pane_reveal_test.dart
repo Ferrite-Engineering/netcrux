@@ -171,7 +171,7 @@ void main() {
       expect(_onScreen(tester, 'sig_150'), isTrue);
     });
 
-    testWidgets('a signal filter lists only that signal\'s crossings', (
+    testWidgets("a signal filter lists only that signal's crossings", (
       tester,
     ) async {
       final container = await _pump(tester, const CdcAnalysisPane());
@@ -212,7 +212,7 @@ void main() {
       );
     });
 
-    testWidgets('a signal filter lists only that signal\'s crossings', (
+    testWidgets("a signal filter lists only that signal's crossings", (
       tester,
     ) async {
       final container = await _pump(tester, const ResetDomainAnalysisPane());
