@@ -42,7 +42,7 @@ Where the one-step overlay stops at the immediate neighbors, the **Cone of Influ
 
 ## X-Trace <span class="tier tier-pro">Pro</span> {#x-trace}
 
-**X-Trace** walks the driver chain backward from a selected element, one step at a time, and reports *why* the walk stopped rather than just where. Results land in the **X-Trace** panel, which lists the chain step by step — each row naming the net and the cell or boundary port that drives it — and clicking a row selects that element and reveals it on the canvas. The whole chain is highlighted on the schematic at the same time.
+**X-Trace** walks the driver chain backward from a selected element, one step at a time, and reports *why* the walk stopped rather than just where. Results land in the **X-Trace** panel, which lists the chain step by step — each row naming the net and the cell or boundary port that drives it — and clicking a row selects that element and reveals it on the canvas. A name Yosys generated, which embeds the whole source path, shows as its cell type and `file:line` (`$add  dsp_mac.v:77`, or `$add  dsp_mac.v:77  (Y)` for the net it drives); hover the row for the full name. The whole chain is highlighted on the schematic at the same time.
 
 Reach it by right-clicking a net, cell or port and choosing **Trace X Origin**, or from `Navigate → Show X-Trace` and the command palette. **Show X-Trace Panel** opens the panel on its own — useful empty, since it tells you what to select — and **Clear X-Trace** (or the panel's **Clear** button) empties the result while leaving the panel open. Closing the panel's tab keeps the chain, so reopening restores it.
 

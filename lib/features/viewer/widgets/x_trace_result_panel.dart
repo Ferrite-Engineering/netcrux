@@ -13,6 +13,7 @@ import 'package:netcrux/features/viewer/providers/x_trace_in_flight_provider.dar
 import 'package:netcrux/features/viewer/providers/x_trace_result_notifier.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/schematic/net_name_lookup.dart';
+import 'package:netcrux/shared/yosys_names.dart';
 
 /// The X-trace result panel: the causal chain the back-cone walker produced,
 /// rendered as a depth-ordered list under a one-line termination status.
@@ -193,14 +194,8 @@ String _pinName(String? portId) {
   XTraceTermination termination,
   ThemeData theme,
 ) => switch (termination) {
-  XTraceTermination.foundOrigin => (
-    Icons.gps_fixed,
-    theme.colorScheme.primary,
-  ),
-  XTraceTermination.reachedBoundary => (
-    Icons.login,
-    theme.colorScheme.primary,
-  ),
+  XTraceTermination.foundOrigin => (Icons.gps_fixed, theme.colorScheme.primary),
+  XTraceTermination.reachedBoundary => (Icons.login, theme.colorScheme.primary),
   XTraceTermination.maxDepthReached => (
     Icons.more_horiz,
     theme.colorScheme.tertiary,
@@ -327,8 +322,16 @@ class _StepRow extends StatelessWidget {
     final secondary = boundaryPortId != null
         ? l10n.xTracePanelStepBoundary(stripPortPrefix(boundaryPortId))
         : cellId != null
-        ? l10n.xTracePanelStepCell(cellId)
+        ? l10n.xTracePanelStepCell(YosysNames.displayName(cellId))
         : null;
+    // Generated names embed the whole source path; show the readable form
+    // and keep the full name in a tooltip.
+    final rawName = netName ?? '${step.netId}';
+    final shownName = YosysNames.displayName(rawName);
+    final fullNames = <String>[
+      if (shownName != rawName) rawName,
+      if (cellId != null && YosysNames.displayName(cellId) != cellId) cellId,
+    ];
 
     return InkWell(
       onTap: onTap,
@@ -347,32 +350,35 @@ class _StepRow extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    // Falls back to the raw Yosys id rather than showing
-                    // nothing: an unresolvable net is rare (a bit with no
-                    // named carrier in this scope) and an id the user can
-                    // paste into a search beats a blank row.
-                    netName ?? '${step.netId}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
-                      fontWeight: isTerminator
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (secondary != null)
+              child: _MaybeTooltip(
+                message: fullNames.join('\n'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                     Text(
-                      secondary,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      // Falls back to the raw Yosys id rather than showing
+                      // nothing: an unresolvable net is rare (a bit with no
+                      // named carrier in this scope) and an id the user can
+                      // paste into a search beats a blank row.
+                      shownName,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        fontWeight: isTerminator
+                            ? FontWeight.w700
+                            : FontWeight.w400,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                ],
+                    if (secondary != null)
+                      Text(
+                        secondary,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
             ),
             // Null on every step until X-trace v2 samples a cursor time. The
@@ -399,4 +405,17 @@ class _StepRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Wraps [child] in a [Tooltip] showing [message], or returns [child] alone
+/// when there is nothing the row shortened.
+class _MaybeTooltip extends StatelessWidget {
+  const _MaybeTooltip({required this.message, required this.child});
+
+  final String message;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      message.isEmpty ? child : Tooltip(message: message, child: child);
 }

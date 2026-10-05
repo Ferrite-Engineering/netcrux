@@ -39,6 +39,9 @@ XTraceResult _boundaryChain() => const XTraceResult(
   termination: XTraceTermination.reachedBoundary,
 );
 
+const String _addY = r'$add$/Users/me/Getting$20Started/dsp_mac.v:77$10_Y';
+const String _mul = r'$mul$/Users/me/Getting$20Started/dsp_mac.v:25$1';
+
 NetlistModel _model() => const NetlistModel(
   creator: 'test',
   modules: <String, Module>{
@@ -58,6 +61,12 @@ NetlistModel _model() => const NetlistModel(
         'stage0': Net(
           name: 'stage0',
           bits: <BitRef>[NetBit(4)],
+          attributes: <String, String>{},
+        ),
+        // A Yosys-generated net under a path with a space ($20).
+        _addY: Net(
+          name: _addY,
+          bits: <BitRef>[NetBit(9)],
           attributes: <String, String>{},
         ),
       },
@@ -166,6 +175,44 @@ void main() {
         ),
       );
       expect(find.text('1 step'), findsOneWidget);
+    });
+  });
+
+  group('generated names', () {
+    testWidgets('rows show the readable form, the full name in a tooltip', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        result: const XTraceResult(
+          rootNetId: 9,
+          chain: <XTraceStep>[
+            XTraceStep(depth: 0, netId: 9, edgeId: 'e9', cellId: _mul),
+          ],
+          termination: XTraceTermination.foundOrigin,
+        ),
+      );
+      expect(find.text(r'$add  dsp_mac.v:77  (Y)'), findsOneWidget);
+      expect(find.textContaining(r'$mul  dsp_mac.v:25'), findsOneWidget);
+      expect(find.textContaining('Getting'), findsNothing);
+      final tooltip = tester.widget<Tooltip>(find.byType(Tooltip));
+      expect(tooltip.message, contains(_addY));
+      expect(tooltip.message, contains(_mul));
+    });
+
+    testWidgets('user-written names carry no tooltip', (tester) async {
+      await _pump(
+        tester,
+        result: const XTraceResult(
+          rootNetId: 7,
+          chain: <XTraceStep>[
+            XTraceStep(depth: 0, netId: 7, edgeId: 'e7', cellId: 'buf1'),
+          ],
+          termination: XTraceTermination.foundOrigin,
+        ),
+      );
+      expect(find.text('alarm_r'), findsOneWidget);
+      expect(find.byType(Tooltip), findsNothing);
     });
   });
 
