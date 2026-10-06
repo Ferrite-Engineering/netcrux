@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_license/crux_license.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,6 +61,22 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    test('an entry carries no tier unless one is given', () {
+      final free = SchematicContextMenuExtensionEntry(
+        id: 'a',
+        label: 'A',
+        onTap: (_, _) async {},
+      );
+      final pro = SchematicContextMenuExtensionEntry(
+        id: 'b',
+        label: 'B',
+        requiredTier: LicenseTier.pro,
+        onTap: (_, _) async {},
+      );
+      expect(free.requiredTier, isNull);
+      expect(pro.requiredTier, LicenseTier.pro);
+    });
 
     test('entries support an enabled=false greyed state with tooltip', () {
       const entry = SchematicContextMenuExtensionEntry(

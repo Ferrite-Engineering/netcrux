@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_license/crux_license.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
@@ -19,6 +20,13 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 /// for cases like "Cross-probe to peer" entries that should render
 /// even when no peers are connected, paired with a tooltip
 /// explaining the disabled state.
+///
+/// [requiredTier] is the licence tier the entry's action needs. The menu
+/// draws the same tier chip beside the label that the menu bar and the
+/// command palette draw for that tier, at every licence tier, so a Pro
+/// entry is marked as Pro before it is clicked. Contributors take it from
+/// the gate the entry's [onTap] checks, so the chip and the gate agree.
+/// `null` or [LicenseTier.openCore] draws no chip.
 @immutable
 class SchematicContextMenuExtensionEntry {
   /// Creates a context-menu extension entry.
@@ -28,6 +36,7 @@ class SchematicContextMenuExtensionEntry {
     required this.onTap,
     this.enabled = true,
     this.tooltip,
+    this.requiredTier,
   });
 
   /// Stable id (within a single build) — exposed so widget tests can
@@ -39,6 +48,10 @@ class SchematicContextMenuExtensionEntry {
 
   /// Optional tooltip shown when the entry is disabled.
   final String? tooltip;
+
+  /// The licence tier the entry's action needs, drawn as a tier chip
+  /// beside the label; `null` for an entry every tier can use.
+  final LicenseTier? requiredTier;
 
   /// True when the entry is selectable; false renders the entry
   /// greyed but still visible.

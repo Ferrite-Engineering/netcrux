@@ -1201,6 +1201,7 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 2. Selecting any built-in entry dispatches as before; no regressions in the existing flow.
 3. Overriding `schematicContextMenuExtensionsProvider` with a builder that emits one entry → the menu renders the entry below a `PopupMenuDivider`. Selecting the entry calls its `onTap` closure with the build context + ref.
 4. Entries with `enabled: false` render greyed; entries with a tooltip render their tooltip on hover (desktop) — useful for "Cross-probe to peer → (no peers connected)" disabled state.
+5. An entry with a `requiredTier` above Open Core renders the tier chip (`NetCruxFeatureTierBadge`, the chip the menu bar and the palette draw) beside its label, at every licence tier. In the Pro build every Pro entry (Add Bookmark…, Show Source for this Element, Show CDC Crossings for This Signal, Trace X Origin and the rest) shows **PRO** before it is clicked.
 
 **Tier-gate scenarios.**
 
@@ -1211,7 +1212,7 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 - Builder returns empty list for a given target → no entry is appended for that target (the divider only renders when at least one extension entry is present).
 - Multiple builders registered → entries from each builder are concatenated in registration order. No de-duplication; contributors are responsible for unique ids.
 
-**Automation assessment.** Provider default + override semantics covered by `test/features/viewer/widgets/schematic_context_menu_extension_test.dart`. The controller's showMenu integration is implicitly verified at runtime; a widget-test capturing the menu items list under override is a follow-up.
+**Automation assessment.** Provider default + override semantics covered by `test/features/viewer/widgets/schematic_context_menu_extension_test.dart`. The open menu (entries below the divider, dispatch, the disabled tooltip, and the tier chip on a Pro and an Enterprise entry but not on an untiered one) is covered by `test/features/viewer/widgets/schematic_context_menu_controller_test.dart`. `[Coverage: WIDGET]`
 
 ### 7.5 Bookmarks + Annotations seam — `BookmarkAnnotationStore`
 

@@ -13,6 +13,7 @@ import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
 /// Identifiers for the entries the schematic right-click context menu
 /// can dispatch. Stable string ids so widget tests can find the menu
@@ -197,9 +198,22 @@ class SchematicContextMenuController {
   }
 
   Widget _extensionChild(SchematicContextMenuExtensionEntry ext) {
+    final tier = ext.requiredTier;
+    // The same chip the menu bar and the palette draw; it renders nothing
+    // for the Open Core tier.
+    final label = tier == null
+        ? Text(ext.label)
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Flexible(child: Text(ext.label)),
+              const SizedBox(width: 8),
+              NetCruxFeatureTierBadge(requiredTier: tier),
+            ],
+          );
     final tooltip = ext.tooltip;
-    if (tooltip == null) return Text(ext.label);
-    return Tooltip(message: tooltip, child: Text(ext.label));
+    if (tooltip == null) return label;
+    return Tooltip(message: tooltip, child: label);
   }
 
   void _findInHierarchy() {

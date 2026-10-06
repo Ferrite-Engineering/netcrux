@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:crux_license/crux_license.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
 /// `top` with one child scope `u_cpu` (module `cpu`) so the hierarchy
 /// notifier has a real root to select and pop out of.
@@ -396,6 +398,61 @@ void main() {
         isTrue,
         reason: 'an extension dispatch must not mutate the built-in selection',
       );
+    });
+
+    testWidgets('a tiered extension entry carries the tier chip beside its '
+        'label', (tester) async {
+      final h = await pumpController(
+        tester,
+        overrides: [
+          schematicContextMenuExtensionsProvider.overrideWithValue(
+            <SchematicContextMenuExtensionBuilder>[
+              (ref, element) => <SchematicContextMenuExtensionEntry>[
+                SchematicContextMenuExtensionEntry(
+                  id: 'ext-pro',
+                  label: 'Pro entry',
+                  requiredTier: LicenseTier.pro,
+                  onTap: (_, _) async {},
+                ),
+                SchematicContextMenuExtensionEntry(
+                  id: 'ext-ent',
+                  label: 'Enterprise entry',
+                  requiredTier: LicenseTier.enterprise,
+                  onTap: (_, _) async {},
+                ),
+                SchematicContextMenuExtensionEntry(
+                  id: 'ext-free',
+                  label: 'Free entry',
+                  onTap: (_, _) async {},
+                ),
+              ],
+            ],
+          ),
+        ],
+      );
+
+      unawaitedShow(h.controller, h.context);
+      await tester.pumpAndSettle();
+
+      Finder chipIn(String label) => find.descendant(
+        of: find.ancestor(of: find.text(label), matching: find.byType(Row)),
+        matching: find.byType(NetCruxFeatureTierBadge),
+      );
+      expect(
+        tester
+            .widget<NetCruxFeatureTierBadge>(chipIn('Pro entry'))
+            .requiredTier,
+        LicenseTier.pro,
+      );
+      expect(
+        tester
+            .widget<NetCruxFeatureTierBadge>(chipIn('Enterprise entry'))
+            .requiredTier,
+        LicenseTier.enterprise,
+      );
+      expect(find.byType(NetCruxFeatureTierBadge), findsNWidgets(2));
+      expect(find.text('PRO'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('a disabled extension entry renders its tooltip and cannot '
