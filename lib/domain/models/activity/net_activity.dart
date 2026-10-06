@@ -23,6 +23,7 @@ class NetActivity {
     required this.dutyCyclePercent,
     required this.activityScore,
     this.netBitWidth = 1,
+    this.isClock = false,
   }) : assert(transitionCount >= 0, 'transitionCount must be >= 0'),
        assert(
          dutyCyclePercent >= 0 && dutyCyclePercent <= 100,
@@ -41,6 +42,7 @@ class NetActivity {
       dutyCyclePercent: (json['dutyCyclePercent'] as num?)?.toDouble() ?? 0.0,
       activityScore: (json['activityScore'] as num?)?.toDouble() ?? 0.0,
       netBitWidth: (json['netBitWidth'] as num?)?.toInt() ?? 1,
+      isClock: json['isClock'] == true,
     );
   }
 
@@ -68,6 +70,14 @@ class NetActivity {
   /// than break out per-bit.
   final int netBitWidth;
 
+  /// True when the analyzer identified this net as a clock (it feeds the
+  /// clock pin of a register). A clock is scored apart: it is left out of
+  /// the range the other nets are normalized against, so it cannot push
+  /// them all to the cold end, and it paints in
+  /// `ActivityColorScheme.clockColor` rather than on the scheme's ramp.
+  /// Its [activityScore] is 1.0.
+  final bool isClock;
+
   /// Returns a copy with the given fields replaced.
   NetActivity copyWith({
     String? netPath,
@@ -75,12 +85,14 @@ class NetActivity {
     double? dutyCyclePercent,
     double? activityScore,
     int? netBitWidth,
+    bool? isClock,
   }) => NetActivity(
     netPath: netPath ?? this.netPath,
     transitionCount: transitionCount ?? this.transitionCount,
     dutyCyclePercent: dutyCyclePercent ?? this.dutyCyclePercent,
     activityScore: activityScore ?? this.activityScore,
     netBitWidth: netBitWidth ?? this.netBitWidth,
+    isClock: isClock ?? this.isClock,
   );
 
   /// JSON map suitable for fixture round-trip.
@@ -90,6 +102,7 @@ class NetActivity {
     'dutyCyclePercent': dutyCyclePercent,
     'activityScore': activityScore,
     'netBitWidth': netBitWidth,
+    if (isClock) 'isClock': true,
   };
 
   @override
@@ -100,7 +113,8 @@ class NetActivity {
         transitionCount == other.transitionCount &&
         dutyCyclePercent == other.dutyCyclePercent &&
         activityScore == other.activityScore &&
-        netBitWidth == other.netBitWidth;
+        netBitWidth == other.netBitWidth &&
+        isClock == other.isClock;
   }
 
   @override
@@ -110,6 +124,7 @@ class NetActivity {
     dutyCyclePercent,
     activityScore,
     netBitWidth,
+    isClock,
   );
 
   @override
@@ -118,5 +133,6 @@ class NetActivity {
       'net: $netPath, '
       'transitions: $transitionCount, '
       'duty: ${dutyCyclePercent.toStringAsFixed(1)}%, '
-      'score: ${activityScore.toStringAsFixed(3)})';
+      'score: ${activityScore.toStringAsFixed(3)}'
+      '${isClock ? ', clock' : ''})';
 }

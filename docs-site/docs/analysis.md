@@ -108,7 +108,7 @@ The **switching-activity heatmap** measures how often each net toggles in a simu
 
 2. **Run the analysis.**
 
-    `Tools → Run Switching Activity Analysis` counts every net's transitions and duty cycle, colors each wire on the schematic by how hard its net toggles, and opens the panel with the hottest and coldest nets. Click a row to select that net on the schematic.
+    `Tools → Run Switching Activity Analysis` counts every net's transitions and duty cycle, colors each wire on the schematic by how hard its net toggles, and opens the panel with a color legend and the hottest and coldest nets. Click a row to select that net on the schematic.
 
 3. **Narrow the window.**
 
@@ -116,14 +116,22 @@ The **switching-activity heatmap** measures how often each net toggles in a simu
 
 4. **Pick a color scheme.**
 
-    The panel's scheme menu, also reached through `Tools → Configure Activity Color Scheme…`, offers **Red-Blue heatmap** (blue for quiet nets through yellow to red for the busiest), **Viridis** and **Grayscale**. Both the wires and the panel's rows follow it.
+    The panel's scheme menu, also reached through `Tools → Configure Activity Color Scheme…`, offers **Red-Blue heatmap** (blue for quiet nets through cyan and yellow to red for the busiest), **Viridis** (violet through green to yellow) and **Grayscale** (mid gray to white on a dark theme, to black on a light one). Both the wires and the panel's rows follow it, and each scheme switches to a darker set of warm colors on a light theme so every wire stays readable on the canvas.
 
 5. **Clear the coloring.**
 
     `View → Clear Activity Coloring` returns the wires to their usual color and keeps the analysis in the panel. The wires stay uncolored until you run the analysis again or pick a scheme.
 
+!!! note "Reading the colors"
+
+    **Clocks are shown apart.** A net that feeds the clock pin of a flip-flop (directly, or through the clock port of a submodule) is a clock. Clocks paint in one fixed magenta in every scheme, marked **Clock** in the panel's legend and on their rows, and they are left out of the scale. A clock is nearly always the busiest net by far; scaled with the rest, it would take the hot end and push every other net into the cold end.
+
+    **The other nets are ranked.** Their distinct transition counts are spaced evenly across the whole scheme: the quietest count gets the coldest color, the busiest the hottest, and nets that switch the same number of times share a color. So every level of activity in the design gets a color of its own, however unevenly the counts are spread. The colors show order, not ratio: read the exact counts from the panel's rows.
+
+    **The legend matches the canvas.** The strip above the list runs from **Least active** to **Most active** in the scheme's colors, and each row's bar is drawn in the color of that net's wires. Colored wires are drawn slightly wider than uncolored ones, wires the analysis has no color for fade while the coloring is shown, and even the coldest color stands clear of an uncolored wire on every theme.
+
 The coloring follows you through the design: push into an instance or pop back out and the new scope's wires are colored from the same analysis. Each tab colors its own schematic from its own waveform.
 
 !!! note "Matching the waveform to the design"
 
-    A simulator usually dumps the design under its testbench, so the design's top module `fsm_lock` appears in the VCD as a scope such as `tb_fsm_pass.dut`. NetCrux finds that scope by matching the design's net names and instance names against the waveform, so no prefix needs to be set. A wire stays its usual color when its net is not in the dump; that includes the internal wires synthesis creates, which have no counterpart in the simulation.
+    A simulator usually dumps the design under its testbench, so the design's top module `fsm_lock` appears in the VCD as a scope such as `tb_fsm_pass.dut`. NetCrux finds that scope by matching the design's net names and instance names against the waveform, so no prefix needs to be set. A wire whose net is not in the dump keeps its usual color, faded while the coloring is shown; that includes the internal wires synthesis creates, which have no counterpart in the simulation.

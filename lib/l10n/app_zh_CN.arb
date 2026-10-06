@@ -1894,6 +1894,26 @@
       }
     }
   },
+  "activityHeatmapLegendLeast": "活动最少",
+  "@activityHeatmapLegendLeast": {
+    "description": "Low end of the switching-activity color legend: the color of the quietest data nets."
+  },
+  "activityHeatmapLegendMost": "活动最多",
+  "@activityHeatmapLegendMost": {
+    "description": "High end of the switching-activity color legend: the color of the busiest data nets."
+  },
+  "activityHeatmapLegendClock": "时钟",
+  "@activityHeatmapLegendClock": {
+    "description": "Switching-activity legend entry and per-row tag for clock nets, which paint in one fixed clock color instead of the scale."
+  },
+  "activityHeatmapLegendClockTooltip": "时钟线网以此颜色绘制，且不参与色阶，其他线网因此铺满整个色阶。",
+  "@activityHeatmapLegendClockTooltip": {
+    "description": "Tooltip on the clock entry of the switching-activity legend, explaining why clocks are drawn apart."
+  },
+  "activityHeatmapLegendScale": "按跳变次数排序的线网，从活动最少到最多",
+  "@activityHeatmapLegendScale": {
+    "description": "Accessible label of the switching-activity color scale bar."
+  },
   "statusBarFile": "文件：{fileName}",
   "@statusBarFile": {
     "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",

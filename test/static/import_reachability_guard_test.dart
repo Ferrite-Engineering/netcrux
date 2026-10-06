@@ -113,17 +113,7 @@ const _exemptions = <_Exemption>[
     _overlayActivitySeam,
   ),
   _Exemption(
-    'lib/domain/models/activity/activity_color_scheme.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
     'lib/domain/models/activity/activity_normalization.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/domain/models/activity/net_activity.dart',
     _Consumer.proOverlay,
     _overlayActivitySeam,
   ),

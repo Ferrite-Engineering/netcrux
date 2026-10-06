@@ -1342,6 +1342,31 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: WIDGET]`. `test/features/source_pane/widgets/source_pane_test.dart` (a long line scrolls sideways at 500 px, short lines do not, a remount with no pending scroll shows line 200 of 300 and not line 1) and `test/features/workspace/widgets/netcrux_right_dock_test.dart` (the Source kind docks as its own closable tab; every analysis tab is labelled in all five locales). Steps 2 to 4 are covered by the Pro overlay's tests.
 
+### 7.11 Switching-activity colors seam: clocks apart, rank normalization, a ramp per canvas brightness, the legend
+
+**What it does.** The open-core activity models decide what the Pro switching-activity heatmap paints, so the schematic and the heatmap list color every net alike:
+
+- `NetActivity.isClock` (`lib/domain/models/activity/net_activity.dart`) marks a net the analyzer identified as a clock. A clock is left out of the range the other nets are normalized against and scores 1.0. JSON writes the flag only when it is set.
+- `ActivityNormalization.rank` (`lib/domain/models/activity/activity_normalization.dart`) is the default of `ActivityAnalysisOptions`: the distinct transition counts of the data nets are spaced evenly over `[0.0, 1.0]`, so equal counts score alike and every level of activity gets its own color. Unknown JSON tags now parse to `rank`.
+- `ActivityColorScheme` (`lib/domain/models/activity/activity_color_scheme.dart`) has one ramp per canvas `Brightness` (`stops`, `colorForScore(score, brightness)`). Every color on a ramp is at least 3:1 against the canvas of every built-in theme of that brightness, and the coldest is at least 2:1 and a clear hue step from the theme's uncolored wire. `clockColor` is one magenta for every clock in every scheme; `colorForNet` returns it for a clock and the ramp color otherwise.
+- `activityCanvasBrightnessProvider` (`lib/services/schematic/net_activity_color_override_provider.dart`) is the active preset's brightness, the one input both the Pro override map and the pane pick their ramp by.
+- The schematic painter (`_paintEdges` in `lib/features/viewer/rendering/schematic_painter.dart`) draws colored wires at 2 px against 1.2 px for an uncolored one, and while an override map is present a wire missing from it paints at `ActivityColorScheme.uncoloredWireOpacity` (25 %), so no colored wire, a Grayscale gray included, reads as an uncolored one.
+- `ActivityHeatmapPane` (`lib/features/activity/widgets/activity_heatmap_pane.dart`) draws a legend under its header (**Least active**, the ramp, **Most active**, and **Clock** with an explaining tooltip when the result holds a clock), paints each row's bar in `colorForNet`, and tags clock rows **Clock**. The four legend strings are in all five locales.
+
+**Setup.** Open Core build: the activity actions show the "requires NetCrux Pro" notice and no pane mounts. The visible behaviour needs the Pro overlay, whose verification guide carries the end-to-end steps on `fsm_lock` with `fsm_pass.vcd`.
+
+**Steps and expected behavior.**
+1. Open Core: `Tools → Run Switching Activity Analysis`. Expected: the Pro notice, no pane.
+2. Pro: follow the switching-activity steps in the Pro verification guide. Expected: `clk` paints magenta and is tagged **Clock** in the list; `mode`, `rst_n` and `done`, `start` and `state` (three activity levels) paint three clearly different colors, none of them close to an uncolored wire; the legend strip shows the scheme's ramp.
+3. Pro: switch to Crux Light. Expected: the warm colors darken (teal, amber, brick red in Red-Blue) and stay readable on the white canvas; the legend and the rows switch with the wires.
+
+**Edge cases.**
+- A result without a clock shows no **Clock** legend entry.
+- With the coloring cleared (`View → Clear Activity Coloring`), every wire returns to full opacity.
+- A JSON result written before the flag existed loads with every net a data net.
+
+**Automation assessment.** `[Coverage: UNIT]` and `[Coverage: WIDGET]`. `test/domain/models/activity/activity_color_scheme_test.dart` (control points per brightness, clamping, `colorForNet`, and group "legibility on every built-in theme": every sampled ramp color at least 3:1 on the canvas of all six presets, the coldest at least 2:1 and delta-E 20 from the uncolored wire, every sampled color at least 1.5:1 and delta-E 20 from the faded uncolored wire, cold, middle and hot at least delta-E 20 apart, the clock color at least 3:1 on every canvas and delta-E 30 from every ramp color and the uncolored wire), `test/domain/models/activity/net_activity_test.dart` (clock flag round trip), `test/domain/models/activity/activity_analysis_options_test.dart` (rank default), `test/features/activity/widgets/activity_heatmap_pane_test.dart` (bars and legend equal `colorForNet` and `stops` for every scheme on Crux Dark and Crux Light, the clock legend entry and row tag), `test/features/viewer/rendering/schematic_painter_test.dart` group "activity coloring wires" (a colored wire is wider than an uncolored one; an uncolored wire fades only while a map is present). Step 2 is covered on the real `fsm_lock` elaboration by the Pro overlay's tests.
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

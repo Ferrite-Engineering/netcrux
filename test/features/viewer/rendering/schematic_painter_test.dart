@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/activity/activity_color_scheme.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -396,6 +397,91 @@ void main() {
         severityColor: severity,
       );
       expect(pathPaints(overlay).length, pathPaints(null).length);
+    });
+  });
+
+  group('activity coloring wires', () {
+    LaidOutGraph wiredGraph() {
+      EdgeRoute route(String id, double y) => EdgeRoute(
+        id: id,
+        points: <LayoutPoint>[LayoutPoint(10, y), LayoutPoint(90, y)],
+      );
+      return LaidOutGraph(
+        graph: const SchematicGraph(
+          moduleName: 'wired',
+          cells: <SchematicCell>[
+            SchematicCell(
+              id: 'c0',
+              kind: CellKind.andGate,
+              type: r'$and',
+              ports: <SchematicPort>[],
+            ),
+          ],
+          boundaryPorts: <SchematicBoundaryPort>[],
+          edges: <SchematicEdge>[],
+        ),
+        layout: NetlistLayout(
+          nodes: const <NodePosition>[
+            NodePosition(
+              id: 'c0',
+              bounds: BoundingBox(x: 0, y: 0, width: 8, height: 8),
+            ),
+          ],
+          edges: <EdgeRoute>[route('e_hot', 20), route('e_none', 30)],
+          bounds: const BoundingBox(x: 0, y: 0, width: 100, height: 50),
+        ),
+      );
+    }
+
+    final theme = ThemeData.dark();
+
+    List<Paint> pathPaints(Map<String, Color>? override) {
+      final renderObject = SchematicCanvasRenderObject(
+        laidOut: wiredGraph(),
+        transform: ViewportTransform.identity,
+        theme: theme,
+        statsSink: const NoopRenderStatsSink(),
+        netActivityColorOverride: override,
+      )..layout(BoxConstraints.tight(const Size(400, 200)));
+      final context = TestRecordingPaintingContext(TestRecordingCanvas());
+      renderObject.paint(context, Offset.zero);
+      return <Paint>[
+        for (final recorded
+            in (context.canvas as TestRecordingCanvas).invocations)
+          if (recorded.invocation.memberName == #drawPath)
+            recorded.invocation.positionalArguments[1] as Paint,
+      ];
+    }
+
+    test('a colored wire paints its color, wider than an uncolored one', () {
+      const hot = Color(0xFFE74C3C);
+      final paints = pathPaints(const <String, Color>{'e_hot': hot});
+      final colored = paints.singleWhere(
+        (p) => p.color.toARGB32() == hot.toARGB32(),
+      );
+      final others = paints.where((p) => !identical(p, colored));
+      expect(others, isNotEmpty);
+      for (final p in others) {
+        expect(colored.strokeWidth, greaterThan(p.strokeWidth));
+      }
+    });
+
+    test('a wire with no activity color fades while the coloring is '
+        'shown', () {
+      final wire = theme.colorScheme.onSurfaceVariant;
+      final shown = pathPaints(const <String, Color>{
+        'e_hot': Color(0xFFE74C3C),
+      });
+      expect(
+        shown.map((p) => p.color.toARGB32()),
+        contains(ActivityColorScheme.uncoloredWire(wire).toARGB32()),
+      );
+      final hidden = pathPaints(null).map((p) => p.color.toARGB32());
+      expect(hidden, contains(wire.toARGB32()));
+      expect(
+        hidden,
+        isNot(contains(ActivityColorScheme.uncoloredWire(wire).toARGB32())),
+      );
     });
   });
 

@@ -1894,6 +1894,26 @@
       }
     }
   },
+  "activityHeatmapLegendLeast": "활동 적음",
+  "@activityHeatmapLegendLeast": {
+    "description": "Low end of the switching-activity color legend: the color of the quietest data nets."
+  },
+  "activityHeatmapLegendMost": "활동 많음",
+  "@activityHeatmapLegendMost": {
+    "description": "High end of the switching-activity color legend: the color of the busiest data nets."
+  },
+  "activityHeatmapLegendClock": "클록",
+  "@activityHeatmapLegendClock": {
+    "description": "Switching-activity legend entry and per-row tag for clock nets, which paint in one fixed clock color instead of the scale."
+  },
+  "activityHeatmapLegendClockTooltip": "클록 넷은 이 색으로 그려지고 색상 척도에서 제외되므로 다른 넷이 척도 전체에 펼쳐집니다.",
+  "@activityHeatmapLegendClockTooltip": {
+    "description": "Tooltip on the clock entry of the switching-activity legend, explaining why clocks are drawn apart."
+  },
+  "activityHeatmapLegendScale": "트랜지션 수로 순위를 매긴 넷, 활동 적음부터 많음까지",
+  "@activityHeatmapLegendScale": {
+    "description": "Accessible label of the switching-activity color scale bar."
+  },
   "statusBarFile": "파일: {fileName}",
   "@statusBarFile": {
     "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",

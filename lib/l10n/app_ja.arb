@@ -1894,6 +1894,26 @@
       }
     }
   },
+  "activityHeatmapLegendLeast": "活動が少ない",
+  "@activityHeatmapLegendLeast": {
+    "description": "Low end of the switching-activity color legend: the color of the quietest data nets."
+  },
+  "activityHeatmapLegendMost": "活動が多い",
+  "@activityHeatmapLegendMost": {
+    "description": "High end of the switching-activity color legend: the color of the busiest data nets."
+  },
+  "activityHeatmapLegendClock": "クロック",
+  "@activityHeatmapLegendClock": {
+    "description": "Switching-activity legend entry and per-row tag for clock nets, which paint in one fixed clock color instead of the scale."
+  },
+  "activityHeatmapLegendClockTooltip": "クロックネットはこの色で描画され、カラースケールから除外されるため、他のネットがスケール全体に広がります。",
+  "@activityHeatmapLegendClockTooltip": {
+    "description": "Tooltip on the clock entry of the switching-activity legend, explaining why clocks are drawn apart."
+  },
+  "activityHeatmapLegendScale": "トランジション数で順位付けしたネット（活動が少ない順から多い順）",
+  "@activityHeatmapLegendScale": {
+    "description": "Accessible label of the switching-activity color scale bar."
+  },
   "statusBarFile": "ファイル: {fileName}",
   "@statusBarFile": {
     "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",

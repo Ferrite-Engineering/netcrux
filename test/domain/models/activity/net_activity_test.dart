@@ -24,6 +24,23 @@ void main() {
       expect(na.dutyCyclePercent, 0.0);
       expect(na.activityScore, 0.0);
       expect(na.netBitWidth, 1);
+      expect(na.isClock, isFalse);
+    });
+
+    test('the clock flag round-trips, and only a clock writes it', () {
+      const clock = NetActivity(
+        netPath: 'tb.dut.clk',
+        transitionCount: 9,
+        dutyCyclePercent: 50,
+        activityScore: 1,
+        isClock: true,
+      );
+      expect(clock.toJson()['isClock'], isTrue);
+      expect(NetActivity.fromJson(clock.toJson()), clock);
+      final data = clock.copyWith(isClock: false);
+      expect(data.toJson().containsKey('isClock'), isFalse);
+      expect(data == clock, isFalse);
+      expect(clock.toString(), contains('clock'));
     });
 
     test('asserts: transitionCount must be non-negative', () {

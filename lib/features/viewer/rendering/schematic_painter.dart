@@ -13,6 +13,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:netcrux/core/theme/netcrux_colors.dart';
+import 'package:netcrux/domain/models/activity/activity_color_scheme.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
@@ -124,8 +125,10 @@ class SchematicCanvas extends LeafRenderObjectWidget {
   /// (selection + dim overlays still win). The Pro overlay's
   /// Switching Activity Heatmap publishes this map; open-core
   /// passes `null` so wires render at the theme's default
-  /// `onSurfaceVariant`. See the `netActivityColorOverrideProvider` entry in
-  /// `docs/ARCHITECTURE.md` §10.
+  /// `onSurfaceVariant`. While a map is present, a wire missing from it
+  /// paints at [ActivityColorScheme.uncoloredWireOpacity]. See the
+  /// `netActivityColorOverrideProvider` entry in `docs/ARCHITECTURE.md`
+  /// §10.
   final Map<String, Color>? netActivityColorOverride;
 
   /// Optional severity-coded crossing overlay published by the Pro
@@ -477,8 +480,9 @@ class SchematicCanvasRenderObject extends RenderBox {
   /// painter applies these colors to edges in [_paintEdges] *after*
   /// the dim-overlay branch but *before* the selection branch, so
   /// activity colors are visible on highlighted edges while
-  /// selection accent still wins. `null` (open-core default) skips
-  /// the per-edge color lookup entirely.
+  /// selection accent still wins. A wire the map has no color for
+  /// paints dimmed while the map is present. `null` (open-core default)
+  /// skips the per-edge color lookup entirely.
   Map<String, Color>? get netActivityColorOverride => _netActivityColorOverride;
   set netActivityColorOverride(Map<String, Color>? value) {
     if (identical(value, _netActivityColorOverride)) return;
@@ -1214,6 +1218,17 @@ class SchematicCanvasRenderObject extends RenderBox {
     final selectedEdgeIds = _selectedEdgeIds();
     final selectedWireNetIds = _selectedWireNetIds();
     final activityOverride = _netActivityColorOverride;
+    // While activity coloring is shown, a wire it has no color for recedes,
+    // so it cannot be taken for a colored one.
+    final uncoloredPaint = activityOverride == null
+        ? basePaint
+        : (Paint()
+            ..color = ActivityColorScheme.uncoloredWire(
+              _theme.colorScheme.onSurfaceVariant,
+            )
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = _strokeWidth(band, overview: 0.6, other: 1.2)
+            ..strokeCap = StrokeCap.round);
     // Only the wires the scene index says may be on screen, in layout order;
     // their bounds are computed once per layout rather than every frame.
     final scene = SchematicSceneIndex.of(_laidOut);
@@ -1280,7 +1295,7 @@ class SchematicCanvasRenderObject extends RenderBox {
           // in the cone accent so the cone's wiring pops.
           paint = conePaint;
         } else {
-          paint = basePaint;
+          paint = uncoloredPaint;
         }
       }
       canvas.drawPath(path, paint);

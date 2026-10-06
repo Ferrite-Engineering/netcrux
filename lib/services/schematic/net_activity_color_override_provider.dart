@@ -3,6 +3,7 @@
 
 import 'dart:ui';
 
+import 'package:crux_theme/crux_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Open-core extension point through which the Pro overlay's
@@ -30,4 +31,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final netActivityColorOverrideProvider = Provider<Map<String, Color>?>(
   (ref) => null,
   name: 'netActivityColorOverrideProvider',
+);
+
+/// Brightness of the canvas activity colors are drawn on: the active color
+/// preset's. Each `ActivityColorScheme` has one ramp per brightness, so the
+/// schematic's override map and the heatmap list both pick their ramp
+/// through this provider and cannot disagree.
+final activityCanvasBrightnessProvider = Provider<Brightness>(
+  (ref) => ref.watch(cruxColorThemeProvider.select((t) => t.brightness)),
+  name: 'activityCanvasBrightnessProvider',
 );

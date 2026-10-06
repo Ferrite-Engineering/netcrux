@@ -17,7 +17,7 @@ class ActivityAnalysisOptions {
   const ActivityAnalysisOptions({
     this.scopeFilter,
     this.timeRange = WaveformTimeRange.fullSimulationSentinel,
-    this.normalization = ActivityNormalization.perNet,
+    this.normalization = ActivityNormalization.rank,
     this.topN = 50,
     this.excludedNetPaths = const <String>[],
   });

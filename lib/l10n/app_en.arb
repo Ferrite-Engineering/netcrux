@@ -1994,6 +1994,26 @@
       }
     }
   },
+  "activityHeatmapLegendLeast": "Least active",
+  "@activityHeatmapLegendLeast": {
+    "description": "Low end of the switching-activity color legend: the color of the quietest data nets."
+  },
+  "activityHeatmapLegendMost": "Most active",
+  "@activityHeatmapLegendMost": {
+    "description": "High end of the switching-activity color legend: the color of the busiest data nets."
+  },
+  "activityHeatmapLegendClock": "Clock",
+  "@activityHeatmapLegendClock": {
+    "description": "Switching-activity legend entry and per-row tag for clock nets, which paint in one fixed clock color instead of the scale."
+  },
+  "activityHeatmapLegendClockTooltip": "Clock nets are drawn in this color and left out of the scale, so the other nets spread across all of it.",
+  "@activityHeatmapLegendClockTooltip": {
+    "description": "Tooltip on the clock entry of the switching-activity legend, explaining why clocks are drawn apart."
+  },
+  "activityHeatmapLegendScale": "Nets ranked by transition count, least to most active",
+  "@activityHeatmapLegendScale": {
+    "description": "Accessible label of the switching-activity color scale bar."
+  },
   "statusBarFile": "File: {fileName}",
   "@statusBarFile": {
     "description": "Status bar segment showing the primary source file of the loaded design (bare filename, no directory).",

@@ -17,7 +17,7 @@ void main() {
       const o = ActivityAnalysisOptions.defaults;
       expect(o.scopeFilter, isNull);
       expect(o.timeRange, WaveformTimeRange.fullSimulationSentinel);
-      expect(o.normalization, ActivityNormalization.perNet);
+      expect(o.normalization, ActivityNormalization.rank);
       expect(o.topN, 50);
       expect(o.excludedNetPaths, isEmpty);
     });
