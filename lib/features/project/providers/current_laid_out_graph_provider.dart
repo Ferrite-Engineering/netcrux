@@ -5,6 +5,7 @@ import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
+import 'package:netcrux/services/custom_cell_symbols/cell_symbol_geometry_provider.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/schematic/declared_cell_ports.dart';
@@ -55,6 +56,11 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   final graph = const SchematicGraphBuilder().build(model, node);
   if (graph.isEmpty) return LaidOutGraph.empty;
 
+  // Custom cell symbols shape the cells they draw, so a symbol added,
+  // removed or re-anchored lays the scope out again. Open core always has
+  // none, and the provider is value-equal, so this never re-solves there.
+  final symbols = ref.watch(cellSymbolGeometriesProvider);
+
   final service = ref.read(elkLayoutServiceProvider);
   // Leaving this scope (a new selection rebuilds the provider) or closing
   // the tab abandons a solve still running for it: the engine cannot be
@@ -74,9 +80,14 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   try {
     // The same patched module the graph builder draws from, so every pin
     // it adds for a declared-but-unconnected port has a place.
-    final layout = await service.layout(withDeclaredCellPorts(model, module));
+    final patched = withDeclaredCellPorts(model, module);
+    final layout = await service.layout(patched, symbols: symbols);
     ref.read(layoutTimingProvider.notifier).completed(stopwatch.elapsed);
-    return LaidOutGraph(graph: graph, layout: layout);
+    return LaidOutGraph(
+      graph: graph,
+      layout: layout,
+      symbolCells: symbolCellAnchoredPorts(patched, symbols),
+    );
   } on LayoutException {
     // Deliberately not recorded: a failed layout measures how long the
     // failure took to detect, not what laying this scope out costs, and

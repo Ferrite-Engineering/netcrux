@@ -27,6 +27,7 @@ import 'package:netcrux/app.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/shortcut_manager_widget.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -82,7 +83,10 @@ const String _designJson = '''
 /// `flutter test`.
 class _RowLayoutService extends ElkLayoutService {
   @override
-  Future<NetlistLayout> layout(Module module) async => NetlistLayout(
+  Future<NetlistLayout> layout(
+    Module module, {
+    CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  }) async => NetlistLayout(
     nodes: <NodePosition>[
       for (final (i, name) in module.cells.keys.indexed)
         NodePosition(

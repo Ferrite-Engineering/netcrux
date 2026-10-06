@@ -4,9 +4,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:meta/meta.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/port_anchor.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
@@ -125,7 +128,15 @@ const int highFanoutEdgeCap = 32;
 /// connection between a cell port and another cell port / module port)
 /// becomes one ELK edge. Bit-level granularity is collapsed to net-level
 /// — no bit-fanout / bit-merge cells are drawn.
-Map<String, Object?> buildElkInput(Module module) {
+///
+/// A cell whose `type` has an entry in [symbols] is drawn with a custom
+/// symbol, and its node takes that symbol's shape instead of the built-in
+/// one (see [symbolCellNodeSize] and [symbolPortCentres]). With no
+/// [symbols] the input is exactly what it was before symbols existed.
+Map<String, Object?> buildElkInput(
+  Module module, {
+  CellSymbolGeometries symbols = CellSymbolGeometries.none,
+}) {
   final children = <Map<String, Object?>>[];
   final edges = <Map<String, Object?>>[];
 
@@ -159,6 +170,14 @@ Map<String, Object?> buildElkInput(Module module) {
   // because the importer reads only one of the two.
   for (final entry in module.cells.entries) {
     final cell = entry.value;
+    // A cell drawn with a custom symbol gets a node of the drawing's shape
+    // with its pins at the anchors; every other cell keeps the built-in
+    // geometry below, byte for byte.
+    final geometry = symbols[cell.type];
+    if (geometry != null) {
+      children.add(_symbolCellNode(cell, geometry));
+      continue;
+    }
     final ports = <Map<String, Object?>>[
       for (final portName in cell.connections.keys)
         <String, Object?>{
@@ -291,6 +310,243 @@ String elkPortSideFor(PortDirection? direction) {
   }
 }
 
+/// The spacing between two pins on one face of a symbol-bearing node, in
+/// layout units: the ten per pin a built-in node's height allows.
+const double symbolPinPitch = 10;
+
+/// The ELK node for [cell], drawn with the custom symbol [geometry]: sized
+/// by [symbolCellNodeSize], with `FIXED_POS` ports at [symbolPortCentres],
+/// so the drawing fills the node and each anchored pin sits on the face and
+/// at the place its anchor names.
+Map<String, Object?> _symbolCellNode(Cell cell, CellSymbolGeometry geometry) {
+  final faces = symbolPortFaces(cell, geometry);
+  final size = symbolCellNodeSize(faces.values, geometry.aspect);
+  final centres = symbolPortCentres(cell, geometry, faces, size);
+  const portSize = 4.0;
+  const half = portSize / 2;
+  final ports = <Map<String, Object?>>[
+    for (final portName in cell.connections.keys)
+      () {
+        // Both maps are built over these same `connections` keys, so every
+        // port has a face and a centre.
+        final side = faces[portName]!;
+        final c = centres[portName]!;
+        final (x, y) = switch (side) {
+          'WEST' => (-portSize, c - half),
+          'EAST' => (size.width, c - half),
+          'NORTH' => (c - half, -portSize),
+          _ => (c - half, size.height),
+        };
+        return <String, Object?>{
+          'id': '${cell.name}:$portName',
+          'width': portSize,
+          'height': portSize,
+          'x': _round2(x),
+          'y': _round2(y),
+          'layoutOptions': <String, Object?>{'elk.port.side': side},
+        };
+      }(),
+  ];
+  return <String, Object?>{
+    'id': cell.name,
+    'width': size.width,
+    'height': size.height,
+    'labels': <Map<String, Object?>>[
+      <String, Object?>{'text': '${cell.name}\\n(${cell.type})'},
+    ],
+    'ports': ports,
+    'layoutOptions': const <String, Object?>{
+      'elk.portConstraints': 'FIXED_POS',
+    },
+  };
+}
+
+double _round2(double value) => (value * 100).roundToDouble() / 100;
+
+/// The ELK face (`WEST`, `EAST`, `NORTH` or `SOUTH`) of each pin of [cell]
+/// under the symbol [geometry], by port name in `connections` order.
+///
+/// A pin whose name equals an anchor's port name goes on the anchor's side.
+/// Any other pin keeps the face its direction gives it ([elkPortSideFor]).
+/// Anchors that name no pin of the cell are ignored.
+@visibleForTesting
+Map<String, String> symbolPortFaces(Cell cell, CellSymbolGeometry geometry) {
+  return <String, String>{
+    for (final portName in cell.connections.keys)
+      portName: switch (geometry.anchors[portName]?.side) {
+        PortAnchorSide.left => 'WEST',
+        PortAnchorSide.right => 'EAST',
+        PortAnchorSide.top => 'NORTH',
+        PortAnchorSide.bottom => 'SOUTH',
+        null => elkPortSideFor(cell.portDirections[portName]),
+      },
+  };
+}
+
+/// The node size of a symbol-bearing cell whose pins sit on [faces], for a
+/// drawing of [aspect] (width over height).
+///
+/// Each face must hold its pins at [symbolPinPitch] with the same margin a
+/// built-in node keeps: the west and east faces need a height of
+/// `32 + 10 × pins` for the busier of the two, the north and south faces
+/// the same in width. The node is the smallest rectangle of the drawing's
+/// aspect that meets both, rounded to hundredths.
+@visibleForTesting
+({double width, double height}) symbolCellNodeSize(
+  Iterable<String> faces,
+  double aspect,
+) {
+  var west = 0;
+  var east = 0;
+  var north = 0;
+  var south = 0;
+  for (final face in faces) {
+    switch (face) {
+      case 'WEST':
+        west++;
+      case 'EAST':
+        east++;
+      case 'NORTH':
+        north++;
+      default:
+        south++;
+    }
+  }
+  final minHeight = 32 + symbolPinPitch * math.max(west, east);
+  final minWidth = 32 + symbolPinPitch * math.max(north, south);
+  final height = math.max(minHeight, minWidth / aspect);
+  return (width: _round2(height * aspect), height: _round2(height));
+}
+
+/// Where each pin of [cell] sits along its face, measured from the face's
+/// top (west and east) or left (north and south) end, in layout units.
+///
+/// An anchored pin asks for its anchor's position along the face (`y` on
+/// the west and east faces, `x` on the north and south), scaled to the
+/// face. Unanchored pins on a face ask for even spacing among themselves.
+/// [spreadAlongFace] then keeps every pin at least [symbolPinPitch] from
+/// its neighbours and clear of the corners, moving pins that ask for the
+/// same place apart around it in declaration order.
+@visibleForTesting
+Map<String, double> symbolPortCentres(
+  Cell cell,
+  CellSymbolGeometry geometry,
+  Map<String, String> faces,
+  ({double width, double height}) size,
+) {
+  final result = <String, double>{};
+  for (final face in const <String>['WEST', 'EAST', 'NORTH', 'SOUTH']) {
+    final names = <String>[
+      for (final entry in faces.entries)
+        if (entry.value == face) entry.key,
+    ];
+    if (names.isEmpty) continue;
+    final vertical = face == 'WEST' || face == 'EAST';
+    final length = vertical ? size.height : size.width;
+    final unanchored = <String>[
+      for (final name in names)
+        if (geometry.anchors[name] == null) name,
+    ];
+    final desired = <double>[
+      for (final name in names)
+        () {
+          final anchor = geometry.anchors[name];
+          final fraction = anchor == null
+              ? (unanchored.indexOf(name) + 1) / (unanchored.length + 1)
+              : (vertical ? anchor.y : anchor.x).clamp(0.0, 1.0);
+          return fraction * length;
+        }(),
+    ];
+    final placed = spreadAlongFace(desired, length, symbolPinPitch);
+    for (var i = 0; i < names.length; i++) {
+      result[names[i]] = placed[i];
+    }
+  }
+  return result;
+}
+
+/// Moves the points [desired] along a segment of [length] as little as
+/// possible so that no two are closer than [pitch] and none is nearer an
+/// end than half a pitch, keeping their order (ties in input order).
+///
+/// Points that crowd together are spread evenly around their mean, then the
+/// group is slid back inside the segment. When they cannot fit at [pitch]
+/// at all, they are spaced evenly along the whole segment instead.
+@visibleForTesting
+List<double> spreadAlongFace(
+  List<double> desired,
+  double length,
+  double pitch,
+) {
+  final n = desired.length;
+  if (n == 0) return const <double>[];
+  final low = math.min(pitch / 2, length / 2);
+  final high = length - low;
+  final order = List<int>.generate(n, (i) => i)
+    ..sort((a, b) {
+      final byPosition = desired[a].compareTo(desired[b]);
+      return byPosition != 0 ? byPosition : a.compareTo(b);
+    });
+  final placed = List<double>.filled(n, 0);
+  if (pitch * (n - 1) > high - low) {
+    for (var k = 0; k < n; k++) {
+      placed[order[k]] = length * (k + 1) / (n + 1);
+    }
+    return placed;
+  }
+  // Each group: how many points, and the sum of where they asked to be.
+  final counts = <int>[];
+  final sums = <double>[];
+  double first(int g) {
+    final span = pitch * (counts[g] - 1);
+    final start = sums[g] / counts[g] - span / 2;
+    return start.clamp(low, high - span);
+  }
+
+  for (final i in order) {
+    counts.add(1);
+    sums.add(desired[i].clamp(low, high));
+    while (counts.length > 1) {
+      final last = counts.length - 1;
+      final previousEnd = first(last - 1) + pitch * counts[last - 1];
+      if (previousEnd <= first(last) + 1e-9) break;
+      counts[last - 1] += counts[last];
+      sums[last - 1] += sums[last];
+      counts.removeLast();
+      sums.removeLast();
+    }
+  }
+  var k = 0;
+  for (var g = 0; g < counts.length; g++) {
+    final start = first(g);
+    for (var j = 0; j < counts[g]; j++) {
+      placed[order[k++]] = start + pitch * j;
+    }
+  }
+  return placed;
+}
+
+/// The cells of [module] drawn with a custom symbol, by cell name, each with
+/// the names of its pins that an anchor names exactly: the pins the canvas
+/// labels. A cell whose symbol anchors none of its pins maps to an empty
+/// set. Pins are matched by name only, never by order or position.
+Map<String, Set<String>> symbolCellAnchoredPorts(
+  Module module,
+  CellSymbolGeometries symbols,
+) {
+  if (symbols.isEmpty) return const <String, Set<String>>{};
+  final result = <String, Set<String>>{};
+  for (final cell in module.cells.values) {
+    final geometry = symbols[cell.type];
+    if (geometry == null) continue;
+    result[cell.name] = <String>{
+      for (final portName in cell.connections.keys)
+        if (geometry.anchors.containsKey(portName)) portName,
+    };
+  }
+  return result;
+}
+
 /// Async layout pipeline over the Eclipse Layout Kernel.
 ///
 /// Lifecycle:
@@ -417,8 +673,15 @@ class ElkLayoutService {
   /// never blocks the UI isolate. The provider stays in its loading state
   /// while the isolate works, so the canvas can paint a live progress
   /// indicator.
-  Future<NetlistLayout> layout(Module module) async {
-    final input = buildElkInput(module);
+  ///
+  /// Cells whose type has an entry in [symbols] are laid out in their custom
+  /// symbol's shape (see [buildElkInput]); that changes the ELK input, and
+  /// so the cache key, only for scopes that contain such a cell.
+  Future<NetlistLayout> layout(
+    Module module, {
+    CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  }) async {
+    final input = buildElkInput(module, symbols: symbols);
     final inputJson = jsonEncode(input);
     final key = _cacheKey(inputJson);
 

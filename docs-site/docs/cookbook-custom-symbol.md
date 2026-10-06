@@ -29,7 +29,7 @@ Know the module's exact module type name and its port list — names, and which 
 
 4. **Place the port anchors.**
 
-    On the **Port Anchors** tab, **Add port** for each port, pick its side, and set its position with the slider so wires meet the shape at the right point, not the bounding box.
+    On the **Port Anchors** tab, **Add port** for each port, typing its name exactly as the module declares it, pick its side, and set its position with the sliders so wires meet the shape at the right point, not the bounding box. Give each port its own position: ports left at the same spot are spread apart around it. Each pin whose name matches is labelled beside it on the drawing; see [How a symbol is sized, labelled and pinned](customizing.md#sizing).
 
 5. **Set the metadata and scope.**
 
@@ -37,7 +37,7 @@ Know the module's exact module type name and its port list — names, and which 
 
 6. **Save and watch it repaint.**
 
-    Click **Save**. The schematic repaints — every instance of that module type in the open design switches to the new shape immediately, with no re-elaboration.
+    Click **Save**. The schematic updates: every instance of that module type in the open scope is laid out again in the drawing's shape, with its pins on the drawing's edges and its instance name below it, immediately and with no re-elaboration.
 
 !!! note "Project beats user on a collision"
 

@@ -7,12 +7,20 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/port_anchor.dart';
+import 'package:netcrux/domain/models/layout/bounding_box.dart';
+import 'package:netcrux/domain/models/layout/edge_route.dart';
+import 'package:netcrux/domain/models/layout/netlist_layout.dart';
+import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
+import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/services/custom_cell_symbols/cell_symbol_geometry_provider.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 
@@ -112,6 +120,30 @@ ProviderContainer _container({NetlistModel? netlist}) {
   );
 }
 
+/// Lays every node out in a row and remembers the symbols it was given.
+class _RecordingLayoutService extends ElkLayoutService {
+  CellSymbolGeometries lastSymbols = CellSymbolGeometries.none;
+
+  @override
+  Future<NetlistLayout> layout(
+    Module module, {
+    CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  }) async {
+    lastSymbols = symbols;
+    return NetlistLayout(
+      nodes: <NodePosition>[
+        for (final (i, name) in module.cells.keys.indexed)
+          NodePosition(
+            id: name,
+            bounds: BoundingBox(x: i * 100.0, y: 0, width: 80, height: 40),
+          ),
+      ],
+      edges: const <EdgeRoute>[],
+      bounds: const BoundingBox(x: 0, y: 0, width: 400, height: 40),
+    );
+  }
+}
+
 class _StubLoadedNetlist extends LoadedNetlist {
   @override
   Future<NetlistModel?> build() async => _injectedNetlist;
@@ -184,6 +216,49 @@ void main() {
       // The deterministic host places one node per (cell + boundary
       // port) — one cell + three boundary ports.
       expect(result.layout.nodes, hasLength(4));
+    });
+
+    test('lays a symbol-bearing cell out in its symbol and lists the pins '
+        'its anchors name', () async {
+      final model = _loadFixture('and2');
+      final cell = model.topModule!.cells.values.single;
+      final container = ProviderContainer(
+        overrides: <Override>[
+          elkLayoutServiceProvider.overrideWith((ref) {
+            final service = _RecordingLayoutService();
+            ref.onDispose(service.dispose);
+            return service;
+          }),
+          loadedNetlistProvider.overrideWith(_StubLoadedNetlist.new),
+          cellSymbolGeometriesProvider.overrideWithValue(
+            CellSymbolGeometries(<String, CellSymbolGeometry>{
+              cell.type: const CellSymbolGeometry(
+                aspect: 2,
+                anchors: <String, PortAnchor>{
+                  'A': PortAnchor(x: 0, y: 0.5, side: PortAnchorSide.left),
+                  // Names no pin of the cell: no label, no guess.
+                  'Z': PortAnchor(x: 1, y: 0.5, side: PortAnchorSide.right),
+                },
+              ),
+            }),
+          ),
+        ],
+      );
+      _injectedNetlist = model;
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier).setModel(model);
+      final sub = container.listen<AsyncValue<LaidOutGraph>>(
+        currentLaidOutGraphProvider,
+        (previous, next) {},
+      );
+      addTearDown(sub.close);
+      final result = await container.read(currentLaidOutGraphProvider.future);
+      expect(result.symbolCells, <String, Set<String>>{
+        cell.name: <String>{'A'},
+      });
+      final service =
+          container.read(elkLayoutServiceProvider) as _RecordingLayoutService;
+      expect(service.lastSymbols[cell.type]?.aspect, 2);
     });
 
     test('propagates LoadedNetlistException so the schematic surfaces '

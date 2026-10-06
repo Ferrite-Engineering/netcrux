@@ -14,6 +14,7 @@ import 'package:netcrux/app.dart';
 import 'package:netcrux/core/cli/cli_launch_intent.dart';
 import 'package:netcrux/core/cli/cli_launch_intent_provider.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -41,7 +42,10 @@ import 'app_boot_overrides.dart';
 /// `flutter test` — and whose real isolate would outlive the test.
 class RowLayoutService extends ElkLayoutService {
   @override
-  Future<NetlistLayout> layout(Module module) async => NetlistLayout(
+  Future<NetlistLayout> layout(
+    Module module, {
+    CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  }) async => NetlistLayout(
     nodes: <NodePosition>[
       for (final (i, name) in module.cells.keys.indexed)
         NodePosition(

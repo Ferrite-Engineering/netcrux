@@ -21,6 +21,7 @@ class LaidOutGraph {
   const LaidOutGraph({
     required this.graph,
     required this.layout,
+    this.symbolCells = const <String, Set<String>>{},
   });
 
   /// Empty pair — empty schematic + empty layout. The renderer paints
@@ -40,16 +41,40 @@ class LaidOutGraph {
   /// Positions and routed paths from elkjs.
   final NetlistLayout layout;
 
+  /// The cells drawn with a custom symbol, by cell id, each with the names
+  /// of the pins a symbol anchor names exactly. The layout gave these cells
+  /// their symbol's shape, so the painter puts their label outside the
+  /// drawing and names the listed pins beside them. Empty in open core,
+  /// which has no symbols.
+  final Map<String, Set<String>> symbolCells;
+
   /// True when there is nothing to paint.
   bool get isEmpty => graph.isEmpty || layout.nodes.isEmpty;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is LaidOutGraph && other.graph == graph && other.layout == layout);
+      (other is LaidOutGraph &&
+          other.graph == graph &&
+          other.layout == layout &&
+          _symbolCellsEqual(other.symbolCells, symbolCells));
 
   @override
-  int get hashCode => Object.hash(graph, layout);
+  int get hashCode => Object.hash(graph, layout, symbolCells.length);
+
+  static bool _symbolCellsEqual(
+    Map<String, Set<String>> a,
+    Map<String, Set<String>> b,
+  ) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      final other = b[entry.key];
+      if (other == null || other.length != entry.value.length) return false;
+      if (!other.containsAll(entry.value)) return false;
+    }
+    return true;
+  }
 
   @override
   String toString() =>

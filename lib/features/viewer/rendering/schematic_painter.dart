@@ -13,6 +13,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:netcrux/core/theme/netcrux_colors.dart';
+import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
@@ -573,6 +574,9 @@ class SchematicCanvasRenderObject extends RenderBox {
       paintedCells = _paintCells(canvas, _lastLodBand, visibleRect);
       paintedEdges = _paintEdges(canvas, _lastLodBand, visibleRect);
       _paintBoundaryPorts(canvas, _lastLodBand, visibleRect);
+      // Labels of cells drawn with a custom symbol sit outside the drawing,
+      // where wires may pass, so they paint over the wires on a backing.
+      _paintOutsideCellLabels(canvas);
       // Crossing overlay paints last, on top of everything the passes
       // above drew — including the per-cell selection accent, which
       // _paintCells strokes inline. Drawn as the crossing net's wires
@@ -643,6 +647,7 @@ class SchematicCanvasRenderObject extends RenderBox {
   // ── Cell painting ──────────────────────────────────────────────
 
   int _paintCells(Canvas canvas, LodBand band, Rect visibleRect) {
+    _pendingOutsideLabels.clear();
     final symbolCtx = SymbolPaintContext.fromTheme(_theme);
     final labelStyle = (_theme.textTheme.labelSmall ?? const TextStyle())
         .copyWith(color: _theme.colorScheme.onSurface);
@@ -709,7 +714,22 @@ class SchematicCanvasRenderObject extends RenderBox {
           _cellBodyPainterFactory(cell)(canvas, rect.size, symbolCtx);
         case LodBand.detail:
           _cellBodyPainterFactory(cell)(canvas, rect.size, symbolCtx);
-          _paintCellLabel(canvas, rect.size, cell, labelStyle, band);
+          final anchoredPins = _laidOut.symbolCells[cell.id];
+          if (anchoredPins == null) {
+            _paintCellLabel(canvas, rect.size, cell, labelStyle, band);
+          } else {
+            _paintSymbolPinNames(
+              canvas,
+              cell,
+              position,
+              anchoredPins,
+              labelStyle,
+              band,
+            );
+            _pendingOutsideLabels.add(
+              _OutsideLabel(cell, rect, isHighlighted: isHighlighted),
+            );
+          }
       }
       // Accent the cone cell in ALL bands (drawn under any selection
       // overlay so a selected cone cell still reads as selected).
@@ -801,6 +821,186 @@ class SchematicCanvasRenderObject extends RenderBox {
         (size.height - painter.height) / 2,
       ),
     );
+  }
+
+  /// Labels of custom-symbol cells collected by [_paintCells] for
+  /// [_paintOutsideCellLabels], which draws them after the wires.
+  final List<_OutsideLabel> _pendingOutsideLabels = <_OutsideLabel>[];
+
+  /// The widest an outside label may be, in design units, when its cell is
+  /// narrower: a symbol node can be small, and the name should stay legible.
+  static const double _outsideLabelMinWidth = 120;
+
+  /// Gap between a symbol cell's drawing and its outside label.
+  static const double _outsideLabelGap = 2;
+
+  /// Paints the label of every cell drawn with a custom symbol outside its
+  /// drawing: centred below the node, or above it when a neighbouring cell
+  /// or module port occupies the space below and none occupies the space
+  /// above. A surface-coloured backing keeps it legible over wires.
+  void _paintOutsideCellLabels(Canvas canvas) {
+    if (_pendingOutsideLabels.isEmpty) return;
+    final style = (_theme.textTheme.labelSmall ?? const TextStyle()).copyWith(
+      color: _theme.colorScheme.onSurface,
+    );
+    final backing = Paint()
+      ..color = _theme.colorScheme.surface.withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+    for (final label in _pendingOutsideLabels) {
+      final cellRect = label.rect;
+      final painter = _labelLayout(
+        'o:${label.cell.id}',
+        label.cell.displayLabel,
+        style,
+        math.max(cellRect.width, _outsideLabelMinWidth),
+        elideStart: true,
+      );
+      final rect = outsideLabelRect(
+        cellRect,
+        Size(painter.width, painter.height),
+        isFree: (candidate) => _isFreeOfOtherNodes(candidate, label.cell.id),
+      );
+      canvas.drawRect(rect.inflate(1), backing);
+      painter.paint(canvas, rect.topLeft);
+      if (!label.isHighlighted) _paintDimVeil(canvas, rect.inflate(1));
+    }
+    _pendingOutsideLabels.clear();
+  }
+
+  /// Whether [rect] overlaps no cell other than [selfId] and no module port.
+  bool _isFreeOfOtherNodes(Rect rect, String selfId) {
+    final scene = SchematicSceneIndex.of(_laidOut);
+    final cells =
+        scene.cellsIn(rect) ?? List<int>.generate(scene.cells.length, (i) => i);
+    for (final i in cells) {
+      if (scene.cells[i].id == selfId) continue;
+      if (_nodeRect(scene.cellNodes[i]).overlaps(rect)) return false;
+    }
+    final ports =
+        scene.boundaryPortsIn(rect) ??
+        List<int>.generate(scene.boundaryPorts.length, (i) => i);
+    for (final i in ports) {
+      if (_nodeRect(scene.boundaryPortNodes[i]).overlaps(rect)) return false;
+    }
+    return true;
+  }
+
+  static Rect _nodeRect(NodePosition node) => Rect.fromLTWH(
+    node.bounds.x,
+    node.bounds.y,
+    node.bounds.width,
+    node.bounds.height,
+  );
+
+  /// Where the outside label of a cell at [cellRect] goes, for a label of
+  /// [labelSize]: centred under the cell, [_outsideLabelGap] below it, when
+  /// [isFree] says that space is clear; otherwise the same distance above
+  /// when that is clear; otherwise below regardless. Never inside
+  /// [cellRect].
+  @visibleForTesting
+  static Rect outsideLabelRect(
+    Rect cellRect,
+    Size labelSize, {
+    required bool Function(Rect candidate) isFree,
+  }) {
+    final left = cellRect.center.dx - labelSize.width / 2;
+    final below = Rect.fromLTWH(
+      left,
+      cellRect.bottom + _outsideLabelGap,
+      labelSize.width,
+      labelSize.height,
+    );
+    if (isFree(below)) return below;
+    final above = Rect.fromLTWH(
+      left,
+      cellRect.top - _outsideLabelGap - labelSize.height,
+      labelSize.width,
+      labelSize.height,
+    );
+    return isFree(above) ? above : below;
+  }
+
+  /// Inset of a pin name from the edge of a symbol's drawing.
+  static const double _pinNameInset = 3;
+
+  /// Names each pin of a custom-symbol [cell] that a symbol anchor names
+  /// exactly ([anchoredPins]), just inside the drawing beside the pin, on
+  /// the pin's face: left-aligned against the west edge, right-aligned
+  /// against the east, centred under the north edge and above the south.
+  /// Detail band only. A pin no anchor names gets no name.
+  void _paintSymbolPinNames(
+    Canvas canvas,
+    SchematicCell cell,
+    NodePosition position,
+    Set<String> anchoredPins,
+    TextStyle labelStyle,
+    LodBand band,
+  ) {
+    if (anchoredPins.isEmpty) return;
+    final width = position.bounds.width;
+    final height = position.bounds.height;
+    final style = labelStyle.copyWith(
+      fontSize: (labelStyle.fontSize ?? 11) * 0.8,
+    );
+    final backing = Paint()
+      ..color = _theme.colorScheme.surface.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+    for (final port in cell.ports) {
+      if (!anchoredPins.contains(port.name)) continue;
+      final box = position.ports[port.id];
+      if (box == null) continue;
+      final cx = box.x + box.width / 2;
+      final cy = box.y + box.height / 2;
+      final face = symbolPinFace(box, width, height);
+      final vertical =
+          face == SchematicPortSide.west || face == SchematicPortSide.east;
+      final painter = _labelLayout(
+        'p:${port.id}:${band.name}',
+        port.name,
+        style,
+        math.max(1, (vertical ? width / 2 : width) - 2 * _pinNameInset),
+      );
+      final origin = switch (face) {
+        SchematicPortSide.west => Offset(
+          _pinNameInset,
+          cy - painter.height / 2,
+        ),
+        SchematicPortSide.east => Offset(
+          width - _pinNameInset - painter.width,
+          cy - painter.height / 2,
+        ),
+        SchematicPortSide.north => Offset(
+          cx - painter.width / 2,
+          _pinNameInset,
+        ),
+        SchematicPortSide.south => Offset(
+          cx - painter.width / 2,
+          height - _pinNameInset - painter.height,
+        ),
+      };
+      canvas.drawRect(
+        (origin & Size(painter.width, painter.height)).inflate(0.5),
+        backing,
+      );
+      painter.paint(canvas, origin);
+    }
+  }
+
+  /// The face of a symbol node that a pin [box] (relative to the node, of
+  /// [width] by [height]) sits on: the layout puts west pins wholly left of
+  /// the node, east pins at its right edge, north pins above it and south
+  /// pins at its bottom edge.
+  @visibleForTesting
+  static SchematicPortSide symbolPinFace(
+    BoundingBox box,
+    double width,
+    double height,
+  ) {
+    const slop = 0.5;
+    if (box.x + box.width <= slop) return SchematicPortSide.west;
+    if (box.x >= width - slop) return SchematicPortSide.east;
+    if (box.y + box.height <= slop) return SchematicPortSide.north;
+    return SchematicPortSide.south;
   }
 
   /// Positive cone-of-influence highlight: an azure tint + outline drawn
@@ -1553,4 +1753,15 @@ class RecordingRenderStatsSink implements RenderStatsSink {
 
   @override
   void record(PaneRenderStats stats) => samples.add(stats);
+}
+
+/// A custom-symbol cell whose label [SchematicCanvasRenderObject] paints
+/// outside its drawing after the wires: the cell, its node rectangle in
+/// design units, and whether the active overlay highlights it.
+class _OutsideLabel {
+  const _OutsideLabel(this.cell, this.rect, {required this.isHighlighted});
+
+  final SchematicCell cell;
+  final Rect rect;
+  final bool isHighlighted;
 }
