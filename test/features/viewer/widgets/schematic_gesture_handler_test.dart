@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/bookmark.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -20,6 +21,8 @@ import 'package:netcrux/features/project/providers/current_laid_out_graph_provid
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_gesture_handler.dart';
+import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
+import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 
 const Size _kCanvasSize = Size(400, 300);
 
@@ -603,6 +606,101 @@ void main() {
       expect(state.offset.dx, closeTo(20, 1e-9));
       expect(state.offset.dy, closeTo(30, 1e-9));
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('SchematicGestureHandler — annotation badge', () {
+    // The cell u_alu spans design (100, 100) to (180, 160); its badge is
+    // centred on the top-right corner, (180, 100).
+    Future<(ProviderContainer, List<BookmarkAnnotationTarget>)> pumpBadged(
+      WidgetTester tester, {
+      SchematicAnnotationMarkers? markers,
+    }) async {
+      final opened = <BookmarkAnnotationTarget>[];
+      final container = ProviderContainer(
+        overrides: [
+          currentLaidOutGraphProvider.overrideWith(
+            (ref) async => _clickTargetGraph(),
+          ),
+          schematicAnnotationMarkersProvider.overrideWithValue(
+            markers ??
+                SchematicAnnotationMarkers.from(
+                  const <SchematicAnnotationMarker>[
+                    SchematicAnnotationMarker(
+                      kind: BookmarkTargetKind.cell,
+                      targetId: 'u_alu',
+                      annotationIds: <String>['a1'],
+                    ),
+                  ],
+                ),
+          ),
+          showAnnotationForTargetOpenerProvider.overrideWithValue(
+            (_, _, target) => opened.add(target),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(_harness(container: container));
+      await tester.pumpAndSettle();
+      return (container, opened);
+    }
+
+    testWidgets('a click on the badge opens the annotation and selects', (
+      tester,
+    ) async {
+      final (container, opened) = await pumpBadged(tester);
+      await tester.tapAt(
+        _globalForDesign(tester, container, const Offset(182, 98)),
+      );
+      await tester.pump();
+
+      expect(opened, hasLength(1));
+      expect(opened.single.kind, BookmarkTargetKind.cell);
+      expect(opened.single.targetId, 'u_alu');
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'u_alu'),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+    });
+
+    testWidgets('a click on the cell body away from the badge only selects', (
+      tester,
+    ) async {
+      final (container, opened) = await pumpBadged(tester);
+      await tester.tapAt(
+        _globalForDesign(tester, container, const Offset(120, 140)),
+      );
+      await tester.pump();
+
+      expect(opened, isEmpty);
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'u_alu'),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+    });
+
+    testWidgets('with no annotations the badge corner selects as before', (
+      tester,
+    ) async {
+      final (container, opened) = await pumpBadged(
+        tester,
+        markers: SchematicAnnotationMarkers.empty,
+      );
+      // Just outside the cell box, where the badge would overhang: empty
+      // canvas, so the click clears.
+      container
+          .read(selectedElementProvider.notifier)
+          .select(const SelectedElement.cell(cellId: 'u_alu'));
+      await tester.tapAt(
+        _globalForDesign(tester, container, const Offset(183, 97)),
+      );
+      await tester.pump();
+
+      expect(opened, isEmpty);
+      expect(container.read(selectedElementProvider).isEmpty, isTrue);
+      await tester.pump(const Duration(milliseconds: 400));
     });
   });
 }

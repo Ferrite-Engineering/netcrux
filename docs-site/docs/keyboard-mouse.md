@@ -113,6 +113,7 @@ Pointer gestures on the schematic canvas cover navigation and selection. Selecti
 | Middle-mouse drag | Pan. |
 | Left-click drag on the canvas | Pan. |
 | Left-click an element | Select it. Clicking empty canvas clears the selection. |
+| Left-click an annotation badge <span class="tier tier-pro">Pro</span> | Select the annotated element and open the **Annotations** tab at its note. The keyboard route is the element's context menu: **Show Annotation**. |
 | ++shift++ + click | Add to the selection. |
 | ++cmd++ / ++ctrl++ + click | Toggle an element in or out of the selection. |
 | Right-click (secondary tap) | Make the element under the pointer the primary selection and open the context menu. |

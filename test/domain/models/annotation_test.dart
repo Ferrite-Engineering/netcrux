@@ -80,6 +80,35 @@ void main() {
         updatedAtMillis: 1,
       );
       expect(annotation.toJson().containsKey('author'), isFalse);
+      expect(annotation.toJson().containsKey('moduleName'), isFalse);
+    });
+
+    test('moduleName round-trips and takes part in equality', () {
+      const annotation = Annotation(
+        id: 'a1',
+        targetKind: BookmarkTargetKind.cell,
+        targetId: 'u_fifo',
+        body: 'Overflows at full rate.',
+        createdAtMillis: 1,
+        updatedAtMillis: 1,
+        moduleName: 'rx_path',
+      );
+      final restored = Annotation.fromJson(annotation.toJson());
+      expect(restored, annotation);
+      expect(restored!.moduleName, 'rx_path');
+      expect(annotation, isNot(annotation.copyWith(moduleName: 'tx_path')));
+    });
+
+    test('an annotation saved without moduleName loads with none', () {
+      final restored = Annotation.fromJson(const <String, Object?>{
+        'id': 'a1',
+        'targetKind': 'cell',
+        'targetId': 'u_alu',
+        'body': 'b',
+        'createdAtMillis': 1,
+        'updatedAtMillis': 1,
+      });
+      expect(restored!.moduleName, isNull);
     });
 
     test('fromJson returns null on missing required fields', () {

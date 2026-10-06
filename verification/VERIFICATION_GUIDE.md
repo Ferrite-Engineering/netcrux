@@ -1367,6 +1367,30 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]` and `[Coverage: WIDGET]`. `test/domain/models/activity/activity_color_scheme_test.dart` (control points per brightness, clamping, `colorForNet`, and group "legibility on every built-in theme": every sampled ramp color at least 3:1 on the canvas of all six presets, the coldest at least 2:1 and delta-E 20 from the uncolored wire, every sampled color at least 1.5:1 and delta-E 20 from the faded uncolored wire, cold, middle and hot at least delta-E 20 apart, the clock color at least 3:1 on every canvas and delta-E 30 from every ramp color and the uncolored wire), `test/domain/models/activity/net_activity_test.dart` (clock flag round trip), `test/domain/models/activity/activity_analysis_options_test.dart` (rank default), `test/features/activity/widgets/activity_heatmap_pane_test.dart` (bars and legend equal `colorForNet` and `stops` for every scheme on Crux Dark and Crux Light, the clock legend entry and row tag), `test/features/viewer/rendering/schematic_painter_test.dart` group "activity coloring wires" (a colored wire is wider than an uncolored one; an uncolored wire fades only while a map is present). Step 2 is covered on the real `fsm_lock` elaboration by the Pro overlay's tests.
 
+### 7.12 Bookmarks and annotations: the dock tabs, no bookmark colour, module names, the annotation badge
+
+**What it does.** The open-core half of docking the Pro Bookmarks and Annotations panels and badging annotated elements on the schematic:
+
+- `AnalysisPanelKind.bookmarks` and `AnalysisPanelKind.annotations` (`lib/domain/models/analysis/analysis_panel_kind.dart`) are the dock kinds the Pro overlay opens for the two panels. `NetcruxRightDock` labels them **Bookmarks** (`dockTabBookmarks`, `Icons.bookmark_border`) and **Annotations** (`dockTabAnnotations`, `Icons.sticky_note_2_outlined`), all five locales, each with a ×. An Open Core build never lists them.
+- `Bookmark` has no colour. `Bookmark.fromJson` ignores a `colorHex` key like any unknown key, so a session written by a build with the colour field loads with every bookmark and drops the colour; saving again leaves the key out.
+- `Bookmark` and `Annotation` carry an optional `moduleName`, the module of the scope the element was marked in, written as `moduleName` and absent when unknown.
+- `schematicAnnotationMarkersProvider` (`lib/services/schematic/schematic_annotation_markers_provider.dart`) publishes the annotated cells, pins and boundary ports of the scope on the canvas. Open core resolves it to `null`. The painter draws a note badge (a disc in the theme's secondary colour with three short lines, ringed in the canvas background) centred on the top-right corner of each marked cell, beside a marked pin and on a marked boundary port's corner, in the mid and detail bands only. `AnnotationBadgeLayout` (`lib/features/viewer/rendering/annotation_badge_layout.dart`) places the badges for both the painter and the click test.
+- A left click on a badge selects the element and calls `showAnnotationForTargetOpenerProvider` (no-op in open core) instead of the ordinary click.
+
+**Setup.** Open Core build: nothing publishes markers and no dock tab opens, so the visible behaviour needs the Pro overlay, whose verification guide carries the end-to-end steps. The open-core checks are the session file and the absence of any change.
+
+**Steps and expected behavior.**
+1. Open Core: open a design and compare the schematic with the previous release at overview, mid and detail zoom. Expected: no difference; no badge anywhere.
+2. Open Core: open a `.netcrux` session whose `bookmarks` entries carry `colorHex`. Expected: the session loads without an error; `File → Save Session As…` writes the bookmarks back without `colorHex`.
+3. Pro: annotate a cell. Expected: a round note badge on the cell's top-right corner at detail and mid zoom, none at overview zoom.
+
+**Edge cases.**
+- A marker naming an element that is not on the current layout places no badge.
+- Net and scope annotations put no badge on the canvas; they have no corner to sit on.
+- With no markers the canvas issues exactly the same draw calls as without the seam, so the painter goldens do not move.
+
+**Automation assessment.** `[Coverage: UNIT]` `[Coverage: WIDGET]`. `test/domain/models/bookmark_test.dart` (no `colorHex` written, an older `colorHex` and a malformed one ignored, `moduleName` round trip), `test/domain/models/annotation_test.dart`, `test/domain/models/session/netcrux_session_test.dart` (an older session with bookmark colours loads, colour dropped on resave), `test/services/schematic/schematic_annotation_markers_provider_test.dart`, `test/features/viewer/rendering/annotation_badge_layout_test.dart` (corner rule for cells, pins and boundary ports, bands, hit test, 3:1 contrast of disc and glyph on all six presets), `test/features/viewer/rendering/schematic_annotation_badge_paint_test.dart` (an annotated cell only, mid and detail but not overview, an unchanged pass with no markers), `test/features/viewer/widgets/schematic_gesture_handler_test.dart` (a badge click opens the note and selects; the body away from the badge only selects) and `test/features/workspace/widgets/netcrux_right_dock_test.dart` (both kinds dock as closable tabs, labelled in all five locales).
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

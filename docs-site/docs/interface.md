@@ -49,6 +49,8 @@ The right panel is the **inspector**, showing the details of whatever is selecte
 
 The **Go to source** button above the details, badged <span class="tier tier-pro">Pro</span>, opens the RTL behind the selection in the Pro [RTL source pane](source-and-inspection.md#source-pane); in Open Core it says it requires NetCrux Pro. Toggle the inspector with ++cmd+2++ / ++ctrl+2++.
 
+The inspector is the pinned tab of the right dock. Other tabs open beside it on demand, each closed with the **×** on its tab: **Cross-Probe**, **X-Trace**, and in Pro the analysis panels, the **Source** view, and the [**Bookmarks** and **Annotations**](bookmarks.md) lists.
+
 ## Diagnostics panel {#diagnostics}
 
 The bottom **Diagnostics** panel lists the warnings and errors Yosys reported while elaborating. Severity filter chips (**Errors** / **Warnings** / **Info**) narrow the list, the **Copy Report** button on the panel's tab strip puts the whole list on your clipboard, and clicking a row copies its `file:line` so you can paste it into your editor's go-to-file dialog. Toggle the panel with ++cmd+3++ / ++ctrl+3++, or reveal it with `Tools → Tab Diagnostics…` (++cmd+shift+i++ / ++ctrl+shift+i++).

@@ -26,10 +26,12 @@ import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
+import 'package:netcrux/features/viewer/rendering/annotation_badge_layout.dart';
 import 'package:netcrux/features/viewer/rendering/lod_band.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_scene_index.dart';
 import 'package:netcrux/features/viewer/symbols/cell_body_painter_factory.dart';
 import 'package:netcrux/features/viewer/symbols/symbol_painters.dart';
+import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
 import 'package:netcrux/services/schematic/schematic_crossing_overlay_provider.dart';
 import 'package:netcrux/shared/widgets/start_ellipsis_text.dart';
 
@@ -90,6 +92,7 @@ class SchematicCanvas extends LeafRenderObjectWidget {
     this.cellBodyPainterFactory = defaultCellBodyPainterFactory,
     this.netActivityColorOverride,
     this.crossingOverlay,
+    this.annotationMarkers,
     this.presenceOverlay,
     this.filterViewMode = false,
     this.theme,
@@ -139,6 +142,13 @@ class SchematicCanvas extends LeafRenderObjectWidget {
   /// See `schematicCrossingOverlayProvider`.
   final SchematicCrossingOverlay? crossingOverlay;
 
+  /// The annotated elements of the scope on the canvas, each drawn with a
+  /// note badge on its corner in the mid and detail bands. `null` (the
+  /// open-core default) or empty skips the badge pass, so a canvas with no
+  /// annotations paints exactly as it would without the seam. See
+  /// `schematicAnnotationMarkersProvider`.
+  final SchematicAnnotationMarkers? annotationMarkers;
+
   /// Remote participants' cursors and selections in a collaborative
   /// session, already filtered to the scope on screen. `null` outside a
   /// session — including for the whole life of an open-core build, whose
@@ -176,6 +186,7 @@ class SchematicCanvas extends LeafRenderObjectWidget {
       cellBodyPainterFactory: cellBodyPainterFactory,
       netActivityColorOverride: netActivityColorOverride,
       crossingOverlay: crossingOverlay,
+      annotationMarkers: annotationMarkers,
       presenceOverlay: presenceOverlay,
       filterViewMode: filterViewMode,
       theme: theme ?? Theme.of(context),
@@ -197,6 +208,7 @@ class SchematicCanvas extends LeafRenderObjectWidget {
       ..cellBodyPainterFactory = cellBodyPainterFactory
       ..netActivityColorOverride = netActivityColorOverride
       ..crossingOverlay = crossingOverlay
+      ..annotationMarkers = annotationMarkers
       ..presenceOverlay = presenceOverlay
       ..filterViewMode = filterViewMode
       ..theme = theme ?? Theme.of(context)
@@ -218,6 +230,7 @@ class SchematicCanvasRenderObject extends RenderBox {
         defaultCellBodyPainterFactory,
     Map<String, Color>? netActivityColorOverride,
     SchematicCrossingOverlay? crossingOverlay,
+    SchematicAnnotationMarkers? annotationMarkers,
     CollabPresenceOverlay? presenceOverlay,
     bool filterViewMode = false,
     bool cullingEnabled = true,
@@ -230,6 +243,7 @@ class SchematicCanvasRenderObject extends RenderBox {
        _cellBodyPainterFactory = cellBodyPainterFactory,
        _netActivityColorOverride = netActivityColorOverride,
        _crossingOverlay = crossingOverlay,
+       _annotationMarkers = annotationMarkers,
        _presenceOverlay = presenceOverlay,
        _filterViewMode = filterViewMode,
        _cullingEnabled = cullingEnabled;
@@ -506,6 +520,18 @@ class SchematicCanvasRenderObject extends RenderBox {
     markNeedsPaint();
   }
 
+  SchematicAnnotationMarkers? _annotationMarkers;
+
+  /// The annotated elements of the scope on the canvas, each badged on its
+  /// corner after the crossing overlay. `null` or empty skips the pass. See
+  /// `schematicAnnotationMarkersProvider`.
+  SchematicAnnotationMarkers? get annotationMarkers => _annotationMarkers;
+  set annotationMarkers(SchematicAnnotationMarkers? value) {
+    if (value == _annotationMarkers) return;
+    _annotationMarkers = value;
+    markNeedsPaint();
+  }
+
   CollabPresenceOverlay? _presenceOverlay;
 
   /// Remote participants' cursors and selections, drawn as the last pass
@@ -590,6 +616,15 @@ class SchematicCanvasRenderObject extends RenderBox {
       final crossing = _crossingOverlay;
       if (crossing != null && !crossing.isEmpty) {
         _paintCrossingOverlay(canvas, crossing, _lastLodBand, visibleRect);
+      }
+      // Annotation badges sit on top of the design and the crossing
+      // outline, so a note on a crossing's flop is not hidden by the
+      // outline it is likely to be about.
+      final markers = _annotationMarkers;
+      if (markers != null &&
+          !markers.isEmpty &&
+          AnnotationBadgeLayout.drawnIn(_lastLodBand)) {
+        _paintAnnotationBadges(canvas, markers, visibleRect);
       }
     }
 
@@ -1463,6 +1498,54 @@ class SchematicCanvasRenderObject extends RenderBox {
     paintRole(overlay.sourceCellIds, sourcePaint);
     paintRole(overlay.destinationCellIds, destinationPaint);
     paintRole(overlay.intermediateCellIds, intermediatePaint);
+  }
+
+  // ── Annotation badges ───────────────────────────────────────────
+
+  /// Draws a note badge on every annotated element the layout places in
+  /// view: a disc in the theme's secondary colour, ringed in the canvas
+  /// background, carrying three short lines of text in the disc's
+  /// on-colour. The radius comes from [AnnotationBadgeLayout.radiusAt], so
+  /// the badge the click test finds is the badge drawn.
+  ///
+  /// O(markers) per frame: the layout resolves each element by id.
+  void _paintAnnotationBadges(
+    Canvas canvas,
+    SchematicAnnotationMarkers markers,
+    Rect visibleRect,
+  ) {
+    final zoom = _transform.zoom;
+    final radius = AnnotationBadgeLayout.radiusAt(zoom);
+    final colors = AnnotationBadgeColors.of(_theme);
+    final fill = Paint()
+      ..color = colors.fill
+      ..style = PaintingStyle.fill;
+    final ring = Paint()
+      ..color = colors.ring
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = radius * 0.25;
+    final glyph = Paint()
+      ..color = colors.glyph
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = radius * 0.18
+      ..strokeCap = StrokeCap.round;
+    for (final badge in AnnotationBadgeLayout.place(_laidOut, markers)) {
+      final c = badge.center;
+      if (!visibleRect.contains(c)) continue;
+      canvas
+        ..drawCircle(c, radius, fill)
+        ..drawCircle(c, radius, ring);
+      final half = radius * 0.45;
+      final step = radius * 0.36;
+      canvas
+        ..drawLine(c.translate(-half, -step), c.translate(half, -step), glyph)
+        ..drawLine(c.translate(-half, 0), c.translate(half, 0), glyph)
+        ..drawLine(
+          c.translate(-half, step),
+          c.translate(half * 0.3, step),
+          glyph,
+        );
+    }
   }
 
   // ── Collaboration presence ──────────────────────────────────────

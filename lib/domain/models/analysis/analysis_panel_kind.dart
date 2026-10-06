@@ -33,4 +33,14 @@ enum AnalysisPanelKind {
   /// highlighted. Docked beside the schematic rather than shown as a modal,
   /// so both directions of the source link stay in view (Pro).
   source,
+
+  /// The design's bookmarks: named places to return to. Docked beside the
+  /// schematic so a row click lands on the element while the list stays in
+  /// view (Pro).
+  bookmarks,
+
+  /// The design's annotations: Markdown notes on schematic elements. Docked
+  /// beside the schematic, where the badge on an annotated cell opens it at
+  /// that cell's note (Pro).
+  annotations,
 }

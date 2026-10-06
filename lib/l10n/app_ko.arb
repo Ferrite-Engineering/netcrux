@@ -2329,6 +2329,8 @@
   "dockTabActivity": "활동",
   "dockTabDiff": "차이",
   "dockTabSource": "소스",
+  "dockTabBookmarks": "북마크",
+  "dockTabAnnotations": "주석",
   "dockCollapseTooltip": "패널 숨기기",
   "accessibilityRightDockRegion": "세부 정보 독",
   "accessibilityLeftDockRegion": "브라우저 독",

@@ -38,6 +38,13 @@ void main() {
       expect(opener, isA<AnnotationsPanelOpener>());
     });
 
+    test('showAnnotationForTargetOpenerProvider default is a no-op', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final opener = container.read(showAnnotationForTargetOpenerProvider);
+      expect(opener, isA<ShowAnnotationForTargetOpener>());
+    });
+
     test('BookmarkAnnotationTarget round-trips its fields', () {
       const target = BookmarkAnnotationTarget(
         kind: BookmarkTargetKind.cell,

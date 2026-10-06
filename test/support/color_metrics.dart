@@ -9,7 +9,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:crux_theme/crux_theme.dart';
-import 'package:flutter/material.dart' show ThemeExtension;
+import 'package:flutter/material.dart' show ThemeData, ThemeExtension;
 import 'package:netcrux/core/theme/netcrux_theme.dart';
 
 /// WCAG 2.1 relative luminance (SC 1.4.3 definitions).
@@ -70,15 +70,21 @@ List<CanvasColors> canvasColorsOfEveryPreset() => <CanvasColors>[
   for (final preset in builtinPresets().values) _canvasColors(preset),
 ];
 
-CanvasColors _canvasColors(CruxColorTheme preset) {
+/// The theme the app builds for [preset]: the NetCrux Material theme of the
+/// preset's brightness with the preset's chrome tokens applied.
+ThemeData themeOfPreset(CruxColorTheme preset) {
   final ext = CruxThemeExtension(theme: preset);
   final base = preset.brightness == Brightness.light
       ? NetcruxTheme.light()
       : NetcruxTheme.dark();
-  final theme = applyChromeTokens(
+  return applyChromeTokens(
     base.copyWith(extensions: <ThemeExtension<dynamic>>[ext]),
     ext,
   );
+}
+
+CanvasColors _canvasColors(CruxColorTheme preset) {
+  final theme = themeOfPreset(preset);
   return (
     presetId: preset.id,
     brightness: preset.brightness,

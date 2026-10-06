@@ -37,7 +37,7 @@ Elaborate the design and make sure the clocks are real clocks — a CDC view is 
 
 !!! tip "Bookmark the bad ones"
 
-    Right-click each unsynchronized crossing's destination and choose **Add Bookmark…** — a red `#RRGGBB` color and a note — so you have a punch list in the Bookmarks panel. Save the session to keep it.
+    Right-click each unsynchronized crossing's destination and choose **Add Bookmark…**, with a note on what is wrong, so you have a punch list in the **Bookmarks** tab. Hover a row to read its note; click it to select that register again. Save the session to keep it.
 
 ## Where to go next {#next}
 

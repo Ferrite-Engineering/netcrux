@@ -29,7 +29,7 @@ A NetCrux session is a JSON document capturing one tab's view state. It is writt
 | `selection` | The primary selected element; absent when nothing was selected. See below. |
 | `overlayMode` | `fanin` or `fanout`; absent when no trace overlay was showing. |
 | `expandedScopes` | Expanded hierarchy-tree nodes, each an instance-name path joined with `/`. `""` is the root. |
-| `bookmarks`, `annotations` | Written only when non-empty. Authoring them is a Pro feature; Open Core builds keep them empty. See [Bookmarks & annotations](../bookmarks.md). |
+| `bookmarks`, `annotations` | This tab's bookmarks and annotations, written only when non-empty. Authoring them is a Pro feature; Open Core builds keep them empty. See below and [Bookmarks & annotations](../bookmarks.md). |
 
 ## Selection
 
@@ -46,9 +46,51 @@ A wire's `edgeId` is `e_<netId>_<k>`, where `k` numbers the wire among the drive
 
 A multi-element selection writes the primary element at the top level and the rest under an `elements` array of the same shapes.
 
+## Bookmarks and annotations
+
+Each entry names its element with a `targetKind` (`cell`, `port`, `boundaryPort`, `net` or `scope`) and a `targetId` in the canvas's own id shapes: a cell instance name, `<cell>:<port>` for a pin, `port:<name>` for a boundary port, a wire's `e_<netId>_<k>` edge id for a net, and a dotted instance path for a scope.
+
+```json
+"bookmarks": [
+  {
+    "id": "bm-1759780000000-0",
+    "name": "State register",
+    "targetKind": "cell",
+    "targetId": "$procdff$17",
+    "createdAtMillis": 1759780000000,
+    "note": "Check the reset value",
+    "moduleName": "fsm_lock"
+  }
+],
+"annotations": [
+  {
+    "id": "an-1759780000500-0",
+    "targetKind": "cell",
+    "targetId": "$procdff$17",
+    "body": "Resets to **IDLE**, not LOCKED.",
+    "createdAtMillis": 1759780000500,
+    "updatedAtMillis": 1759780000500,
+    "author": "me",
+    "moduleName": "fsm_lock"
+  }
+]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Opaque id, unique within the session. |
+| `name` | A bookmark's label. |
+| `note` | A bookmark's optional note; absent when it has none. |
+| `body` | An annotation's Markdown text. |
+| `author` | An annotation's optional author; absent when unattributed. |
+| `createdAtMillis`, `updatedAtMillis` | Milliseconds since the Unix epoch. Bookmarks carry only `createdAtMillis`. |
+| `moduleName` | The module of the scope the element was marked in. Element ids are local to a module, so this says which module's `u_fifo` is meant. Absent in entries written before NetCrux recorded it; those are matched by id in whichever scope is open. |
+
+An entry with a missing required field or an unknown `targetKind` is skipped and the rest of the session loads. A bookmark's `colorHex` key, written by NetCrux builds whose bookmarks had a colour, is ignored: the bookmark loads without it, and saving the session again leaves it out.
+
 ## What loading restores
 
-Loading re-elaborates `sourceFiles` with `topModule` as the top and restores bookmarks and annotations straight away. Once the design has elaborated it opens `scopePath`, expands `expandedScopes`, restores `selection`, and reinstates `zoom` / `panX` / `panY` when that scope is laid out, in place of the usual fit-to-view.
+Loading re-elaborates `sourceFiles` with `topModule` as the top and restores the tab's bookmarks and annotations straight away, replacing the ones the tab had. Once the design has elaborated it opens `scopePath`, expands `expandedScopes`, restores `selection`, and reinstates `zoom` / `panX` / `panY` when that scope is laid out, in place of the usual fit-to-view.
 
 - A `scopePath` that no longer resolves leaves the tab at the root, fitted to the view.
 - Element ids in `selection` that the re-elaborated design no longer has select nothing.

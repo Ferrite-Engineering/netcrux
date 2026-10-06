@@ -2548,6 +2548,14 @@
   "@dockTabSource": {
     "description": "Right-dock tab label for the RTL source panel, which shows the source file behind the selected schematic element."
   },
+  "dockTabBookmarks": "Bookmarks",
+  "@dockTabBookmarks": {
+    "description": "Right-dock tab label for the Bookmarks panel, which lists the named places in the design the user marked to return to."
+  },
+  "dockTabAnnotations": "Annotations",
+  "@dockTabAnnotations": {
+    "description": "Right-dock tab label for the Annotations panel, which lists the notes the user wrote on schematic elements."
+  },
   "dockCollapseTooltip": "Hide Panel",
   "@dockCollapseTooltip": {
     "description": "Tooltip on the dock strip button that hides the whole region (VSCode panel-close)."

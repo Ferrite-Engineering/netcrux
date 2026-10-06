@@ -7,7 +7,7 @@ import 'package:netcrux/domain/models/bookmark.dart';
 /// A free-text note (markdown body) pinned to a schematic element.
 ///
 /// Distinct from [Bookmark]: bookmarks are short navigation pointers
-/// (a name + an optional color + an optional note); annotations carry
+/// (a name + an optional note); annotations carry
 /// the prose explaining *why* a particular element matters. Both
 /// share the same [BookmarkTargetKind] target taxonomy so the UI can
 /// render them in a single per-element overlay if it wants to.
@@ -27,6 +27,7 @@ class Annotation {
     required this.createdAtMillis,
     required this.updatedAtMillis,
     this.author,
+    this.moduleName,
   });
 
   /// Reads an annotation back from its JSON shape produced by
@@ -51,6 +52,7 @@ class Annotation {
         .firstWhere((k) => k != null, orElse: () => null);
     if (kind == null) return null;
     final author = json['author'];
+    final moduleName = json['moduleName'];
     return Annotation(
       id: id,
       targetKind: kind,
@@ -59,6 +61,9 @@ class Annotation {
       createdAtMillis: created,
       updatedAtMillis: updated,
       author: author is String ? author : null,
+      moduleName: moduleName is String && moduleName.isNotEmpty
+          ? moduleName
+          : null,
     );
   }
 
@@ -90,6 +95,12 @@ class Annotation {
   /// so reviewers can see when a note was updated.
   final int updatedAtMillis;
 
+  /// The module of the scope the target was annotated in, or `null` for an
+  /// annotation written before the field existed. Same meaning as
+  /// [Bookmark.moduleName]: it says which module's `u_fifo` the note is on,
+  /// so the schematic badges the element only in scopes of that module.
+  final String? moduleName;
+
   /// Returns a copy with selected fields replaced. [updatedAtMillis]
   /// must be supplied explicitly — `copyWith` does *not* auto-bump it
   /// because the caller (the store) knows when the change happened.
@@ -101,6 +112,7 @@ class Annotation {
     String? author,
     int? createdAtMillis,
     int? updatedAtMillis,
+    String? moduleName,
   }) {
     return Annotation(
       id: id ?? this.id,
@@ -110,6 +122,7 @@ class Annotation {
       author: author ?? this.author,
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
       updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
+      moduleName: moduleName ?? this.moduleName,
     );
   }
 
@@ -122,6 +135,7 @@ class Annotation {
     'createdAtMillis': createdAtMillis,
     'updatedAtMillis': updatedAtMillis,
     if (author != null) 'author': author,
+    if (moduleName != null) 'moduleName': moduleName,
   };
 
   @override
@@ -134,7 +148,8 @@ class Annotation {
         other.body == body &&
         other.author == author &&
         other.createdAtMillis == createdAtMillis &&
-        other.updatedAtMillis == updatedAtMillis;
+        other.updatedAtMillis == updatedAtMillis &&
+        other.moduleName == moduleName;
   }
 
   @override
@@ -146,6 +161,7 @@ class Annotation {
     author,
     createdAtMillis,
     updatedAtMillis,
+    moduleName,
   );
 
   @override

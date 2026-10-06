@@ -2329,6 +2329,8 @@
   "dockTabActivity": "アクティビティ",
   "dockTabDiff": "差分",
   "dockTabSource": "ソース",
+  "dockTabBookmarks": "ブックマーク",
+  "dockTabAnnotations": "注釈",
   "dockCollapseTooltip": "パネルを隠す",
   "accessibilityRightDockRegion": "詳細ドック",
   "accessibilityLeftDockRegion": "ブラウザードック",

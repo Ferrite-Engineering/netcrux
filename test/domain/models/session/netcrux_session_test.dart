@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/bookmark.dart';
@@ -89,8 +91,8 @@ void main() {
         targetKind: BookmarkTargetKind.net,
         targetId: 'e_clk',
         createdAtMillis: 100,
-        colorHex: '#FFCC00',
         note: 'CDC suspect',
+        moduleName: 'top',
       );
       const annotation = Annotation(
         id: 'a1',
@@ -172,6 +174,42 @@ void main() {
         expect(restored.annotations.single.id, 'a1');
       },
     );
+
+    test('a session whose bookmarks carry a colour loads, colour dropped', () {
+      // The shape a build with the bookmark Color field wrote.
+      final json =
+          jsonDecode(r'''
+{
+  "version": 1,
+  "sourceFiles": ["/tmp/fsm_lock.v"],
+  "topModule": "fsm_lock",
+  "scopePath": [],
+  "zoom": 1.0,
+  "panX": 0.0,
+  "panY": 0.0,
+  "expandedScopes": [],
+  "bookmarks": [
+    {
+      "id": "b1",
+      "name": "State register",
+      "targetKind": "cell",
+      "targetId": "$procdff$17",
+      "createdAtMillis": 100,
+      "colorHex": "#FF8800",
+      "note": "Check the reset value"
+    }
+  ]
+}
+''')
+              as Map<String, Object?>;
+      final restored = NetcruxSession.fromJson(json);
+      expect(restored.bookmarks.single.name, 'State register');
+      expect(restored.bookmarks.single.note, 'Check the reset value');
+      expect(restored.bookmarks.single.moduleName, isNull);
+      final resaved = jsonEncode(restored.toJson());
+      expect(resaved, isNot(contains('colorHex')));
+      expect(resaved, contains(r'$procdff$17'));
+    });
 
     test('equality / hashCode', () {
       const a = NetcruxSession(

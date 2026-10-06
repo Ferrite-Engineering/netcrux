@@ -38,6 +38,7 @@ import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/schematic/coi_filter_view_mode_provider.dart';
 import 'package:netcrux/services/schematic/net_activity_color_override_provider.dart';
+import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
 import 'package:netcrux/services/schematic/schematic_crossing_overlay_provider.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 
@@ -293,6 +294,7 @@ class _SchematicCenter extends ConsumerWidget {
     final cellBodyPainterFactory = ref.watch(cellBodyPainterFactoryProvider);
     final activityColorOverride = ref.watch(netActivityColorOverrideProvider);
     final crossingOverlay = ref.watch(schematicCrossingOverlayProvider);
+    final annotationMarkers = ref.watch(schematicAnnotationMarkersProvider);
     final presenceOverlay = ref.watch(collabPresenceOverlayProvider);
     final filterViewMode = ref.watch(coiFilterViewModeProvider);
 
@@ -334,6 +336,7 @@ class _SchematicCenter extends ConsumerWidget {
                 cellBodyPainterFactory: cellBodyPainterFactory,
                 netActivityColorOverride: activityColorOverride,
                 crossingOverlay: crossingOverlay,
+                annotationMarkers: annotationMarkers,
                 presenceOverlay: presenceOverlay,
                 filterViewMode: filterViewMode,
                 statsSink: _NotifierStatsSink(statsNotifier),

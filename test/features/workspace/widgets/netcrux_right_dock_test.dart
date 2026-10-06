@@ -152,6 +152,35 @@ void main() {
       expect(find.byType(InspectorPanel), findsOneWidget);
     });
 
+    for (final (kind, label) in <(AnalysisPanelKind, String)>[
+      (AnalysisPanelKind.bookmarks, 'Bookmarks'),
+      (AnalysisPanelKind.annotations, 'Annotations'),
+    ]) {
+      testWidgets('the ${kind.name} kind docks as its own closable tab', (
+        tester,
+      ) async {
+        final container = makeContainer(
+          overrides: [analysisPanelBuilderProvider.overrideWithValue(marker)],
+        );
+        await tester.pumpWidget(harness(container));
+        container.read(analysisDockProvider.notifier).open(kind);
+        await tester.pumpAndSettle();
+        expect(find.text('panel:${kind.name}'), findsOneWidget);
+        expect(
+          find.byKey(ValueKey('cruxDockTab-analysis:${kind.name}')),
+          findsOneWidget,
+        );
+        expect(find.text(label), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(ValueKey('cruxDockClose-analysis:${kind.name}')),
+        );
+        await tester.pumpAndSettle();
+        expect(container.read(analysisDockProvider), isEmpty);
+        expect(find.byType(InspectorPanel), findsOneWidget);
+      });
+    }
+
     testWidgets('tapping the Inspector tab keeps the analysis listed', (
       tester,
     ) async {
@@ -406,6 +435,8 @@ void main() {
         final l10n = await L10N.delegate.load(locale);
         expect(find.text(l10n.dockTabSource), findsOneWidget);
         expect(l10n.dockTabSource, isNotEmpty);
+        expect(find.text(l10n.dockTabBookmarks), findsOneWidget);
+        expect(find.text(l10n.dockTabAnnotations), findsOneWidget);
       });
     }
   });

@@ -52,14 +52,19 @@ class Bookmark {
     required this.targetKind,
     required this.targetId,
     required this.createdAtMillis,
-    this.colorHex,
     this.note,
+    this.moduleName,
   });
 
   /// Reads a bookmark back from its JSON shape produced by [toJson].
   /// Returns `null` when the JSON is malformed or carries an unknown
   /// `targetKind` — bookmarks tolerate forward-incompatible additions
   /// without breaking session load.
+  ///
+  /// A `colorHex` key, written by builds whose bookmark dialog had a
+  /// colour field, is ignored like any other unknown key: the colour was
+  /// never drawn on the schematic, so a session carrying one loads with
+  /// the bookmark intact and the colour dropped.
   static Bookmark? fromJson(Map<String, Object?> json) {
     final id = json['id'];
     final name = json['name'];
@@ -76,16 +81,18 @@ class Bookmark {
         .cast<BookmarkTargetKind?>()
         .firstWhere((k) => k != null, orElse: () => null);
     if (kind == null) return null;
-    final color = json['colorHex'];
     final note = json['note'];
+    final moduleName = json['moduleName'];
     return Bookmark(
       id: id,
       name: name,
       targetKind: kind,
       targetId: targetId,
       createdAtMillis: created,
-      colorHex: color is String ? color : null,
       note: note is String ? note : null,
+      moduleName: moduleName is String && moduleName.isNotEmpty
+          ? moduleName
+          : null,
     );
   }
 
@@ -108,12 +115,18 @@ class Bookmark {
   /// order in the panel and as a tie-breaker for id generation.
   final int createdAtMillis;
 
-  /// Optional swatch color stored as `#RRGGBB` or `#AARRGGBB` hex.
-  /// `null` = default color from the active theme.
-  final String? colorHex;
-
   /// Optional free-text note attached to the bookmark.
   final String? note;
+
+  /// The module of the scope the target was marked in (the hierarchy
+  /// node's module name), or `null` for a bookmark written before the
+  /// field existed, or one whose target is a scope.
+  ///
+  /// Cell, pin, port and net ids are local to a module: two modules can
+  /// each declare a `u_fifo`. The module name says which one the bookmark
+  /// means, so revealing it navigates to a scope of that module and an
+  /// annotation's badge paints only in that module's scopes.
+  final String? moduleName;
 
   /// Returns a copy with selected fields replaced.
   Bookmark copyWith({
@@ -122,8 +135,8 @@ class Bookmark {
     BookmarkTargetKind? targetKind,
     String? targetId,
     int? createdAtMillis,
-    String? colorHex,
     String? note,
+    String? moduleName,
   }) {
     return Bookmark(
       id: id ?? this.id,
@@ -131,8 +144,8 @@ class Bookmark {
       targetKind: targetKind ?? this.targetKind,
       targetId: targetId ?? this.targetId,
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
-      colorHex: colorHex ?? this.colorHex,
       note: note ?? this.note,
+      moduleName: moduleName ?? this.moduleName,
     );
   }
 
@@ -144,8 +157,8 @@ class Bookmark {
     'targetKind': targetKind.name,
     'targetId': targetId,
     'createdAtMillis': createdAtMillis,
-    if (colorHex != null) 'colorHex': colorHex,
     if (note != null) 'note': note,
+    if (moduleName != null) 'moduleName': moduleName,
   };
 
   @override
@@ -157,8 +170,8 @@ class Bookmark {
         other.targetKind == targetKind &&
         other.targetId == targetId &&
         other.createdAtMillis == createdAtMillis &&
-        other.colorHex == colorHex &&
-        other.note == note;
+        other.note == note &&
+        other.moduleName == moduleName;
   }
 
   @override
@@ -168,8 +181,8 @@ class Bookmark {
     targetKind,
     targetId,
     createdAtMillis,
-    colorHex,
     note,
+    moduleName,
   );
 
   @override

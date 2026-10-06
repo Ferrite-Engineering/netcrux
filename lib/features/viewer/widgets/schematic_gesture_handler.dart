@@ -8,9 +8,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/bookmark.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
@@ -21,6 +23,7 @@ import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
+import 'package:netcrux/features/viewer/rendering/annotation_badge_layout.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
 import 'package:netcrux/features/viewer/selection/schematic_hit_test.dart';
 import 'package:netcrux/features/viewer/selection/schematic_keyboard_navigator.dart';
@@ -29,6 +32,8 @@ import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_controller.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/schematic/net_name_lookup.dart';
+import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
+import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 
 /// Wraps [child] with pointer and keyboard handling for the schematic
 /// canvas.
@@ -41,6 +46,7 @@ import 'package:netcrux/services/schematic/net_name_lookup.dart';
 /// | Two-finger trackpad scroll             | Pan in screen-space             |
 /// | Middle-mouse drag                      | Pan                             |
 /// | Left-click (release without dragging)  | Select the element under it     |
+/// | Left-click on an annotation badge      | Open the element's annotation   |
 /// | Left-double-click                      | Push into / pop out of a scope  |
 /// | Left-click + drag on empty canvas      | Pan (drag cancels the select)   |
 /// | Arrow keys                             | Pan by a fixed step             |
@@ -366,6 +372,7 @@ class _SchematicGestureHandlerState
   /// Called from the raw `Listener`'s pointer-up (see the `_pressPointer`
   /// bookkeeping above), never from a tap recognizer.
   void _selectAt(Offset localPosition) {
+    if (_openAnnotationBadgeAt(localPosition)) return;
     final hit = _hitTestAt(localPosition);
     final notifier = ref.read(selectedElementProvider.notifier);
     final keys = HardwareKeyboard.instance.logicalKeysPressed;
@@ -412,6 +419,76 @@ class _SchematicGestureHandlerState
     // stale ids into the new scope's id namespace.
     ref.read(selectedElementProvider.notifier).clear();
     ref.read(traceOverlayProvider.notifier).clear();
+  }
+
+  /// Handles a click on an annotation badge: selects the annotated element
+  /// and opens the Annotations panel at its note. Returns false, doing
+  /// nothing, when no badge is under [localPosition], so the click selects
+  /// as usual.
+  ///
+  /// Tested before the element hit test because a badge sits on its
+  /// element's corner and overhangs it: the part of the badge over the
+  /// cell would otherwise select the cell, and the part outside it would
+  /// select whatever lies beneath.
+  bool _openAnnotationBadgeAt(Offset localPosition) {
+    final markers = ref.read(schematicAnnotationMarkersProvider);
+    if (markers == null || markers.isEmpty) return false;
+    final laidOut = ref.read(currentLaidOutGraphProvider).value;
+    if (laidOut == null || laidOut.isEmpty) return false;
+    final transform = ref.read(viewportTransformProvider);
+    if (transform.zoom <= 0) return false;
+    final badge = AnnotationBadgeLayout.hitTest(
+      laidOut: laidOut,
+      markers: markers,
+      zoom: transform.zoom,
+      designPoint: (localPosition - transform.offset) / transform.zoom,
+    );
+    if (badge == null) return false;
+    final marker = badge.marker;
+    final element = _elementOfMarker(laidOut, marker);
+    if (element != null) {
+      ref.read(selectedElementProvider.notifier).select(element);
+      ref.read(traceOverlayProvider.notifier).clear();
+    }
+    ref.read(showAnnotationForTargetOpenerProvider)(
+      context,
+      ref,
+      BookmarkAnnotationTarget(kind: marker.kind, targetId: marker.targetId),
+    );
+    return true;
+  }
+
+  /// The selection a badge's element maps to, or null for a marker kind
+  /// the canvas does not select.
+  static SelectedElement? _elementOfMarker(
+    LaidOutGraph laidOut,
+    SchematicAnnotationMarker marker,
+  ) {
+    switch (marker.kind) {
+      case BookmarkTargetKind.cell:
+        return SelectedElement.cell(cellId: marker.targetId);
+      case BookmarkTargetKind.port:
+        final cellId = cellIdOfPinId(marker.targetId);
+        if (cellId == null) return null;
+        return SelectedElement.port(
+          cellId: cellId,
+          portId: marker.targetId,
+          portName: marker.targetId.substring(cellId.length + 1),
+        );
+      case BookmarkTargetKind.boundaryPort:
+        for (final port in laidOut.graph.boundaryPorts) {
+          if (port.id == marker.targetId) {
+            return SelectedElement.boundaryPort(
+              portId: port.id,
+              portName: port.name,
+            );
+          }
+        }
+        return null;
+      case BookmarkTargetKind.net:
+      case BookmarkTargetKind.scope:
+        return null;
+    }
   }
 
   SelectedElement _hitTestAt(Offset localPosition) {

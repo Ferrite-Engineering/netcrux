@@ -52,13 +52,27 @@ typedef AddAnnotationDialogOpener =
       BookmarkAnnotationTarget? target,
     });
 
-/// Opens the Bookmarks panel (the side panel listing every bookmark in
-/// the active session). Open-core default is a no-op; the Pro overlay
-/// overrides with a callback that mounts the panel.
+/// Opens the Bookmarks panel, the list of the active design's bookmarks.
+/// Open-core default is a no-op; the Pro overlay overrides it with a
+/// callback that opens the panel as the right dock's Bookmarks tab
+/// (`AnalysisPanelKind.bookmarks`), or closes that tab when it is already
+/// open, matching the other View-menu panel toggles.
 typedef BookmarksPanelOpener = void Function(BuildContext context);
 
-/// Opens the Annotations panel. Same semantics as [BookmarksPanelOpener].
+/// Opens the Annotations panel as the right dock's Annotations tab. Same
+/// semantics as [BookmarksPanelOpener].
 typedef AnnotationsPanelOpener = void Function(BuildContext context);
+
+/// Opens the Annotations panel, or brings it to the front, scrolled to the
+/// first annotation on [target] and flashing it. Reached from a click on an
+/// annotated element's badge and from its *Show Annotation* context-menu
+/// entry. [ref] resolves the active tab, whose annotations the panel lists.
+typedef ShowAnnotationForTargetOpener =
+    void Function(
+      BuildContext context,
+      WidgetRef ref,
+      BookmarkAnnotationTarget target,
+    );
 
 /// Open-core extension point through which the Pro overlay registers an
 /// Add Bookmark dialog opener.
@@ -93,3 +107,15 @@ final annotationsPanelOpenerProvider = Provider<AnnotationsPanelOpener>(
   },
   name: 'annotationsPanelOpenerProvider',
 );
+
+/// Open-core extension point for opening the Annotations panel at an
+/// element's note. The schematic gesture handler calls it when a click
+/// lands on an annotation badge; open-core publishes no badges, so the
+/// no-op default is never reached there.
+final showAnnotationForTargetOpenerProvider =
+    Provider<ShowAnnotationForTargetOpener>(
+      (_) => (_, _, _) {
+        // Open-core no-op. The Pro overlay overrides this.
+      },
+      name: 'showAnnotationForTargetOpenerProvider',
+    );
