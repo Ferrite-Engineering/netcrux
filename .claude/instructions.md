@@ -48,7 +48,6 @@ The "never" renderings are enforced: `assets/l10n/glossary.json` lists them unde
 | X-trace | X 追溯 | X トレース | X 추적 |
 | diff / comparison | 比较 / 差异 | 比較 / 差分 | 비교 / 차이 |
 | custom cell symbol | 自定义单元符号 | カスタムセルシンボル | 사용자 정의 셀 기호 |
-| bookmark | 书签 | ブックマーク | 북마크 |
 | annotation / comment | 注释 | コメント | 주석 |
 | diagnostics drawer | 诊断抽屉 | 診断ドロワー | 진단 드로어 (never 진단 창) |
 | force-directed layout | 力导向布局 | 力学配置 (never 力指向) | 힘 기반 레이아웃 |

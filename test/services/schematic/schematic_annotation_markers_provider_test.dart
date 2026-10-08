@@ -3,11 +3,11 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
 
 SchematicAnnotationMarker _m(
-  BookmarkTargetKind kind,
+  AnnotationTargetKind kind,
   String id, [
   List<String> ids = const <String>['a1'],
 ]) => SchematicAnnotationMarker(kind: kind, targetId: id, annotationIds: ids);
@@ -21,9 +21,9 @@ void main() {
 
   test('from() sorts markers by the kind the canvas badges', () {
     final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-      _m(BookmarkTargetKind.cell, 'u_alu'),
-      _m(BookmarkTargetKind.port, 'u_alu:A'),
-      _m(BookmarkTargetKind.boundaryPort, 'port:clk'),
+      _m(AnnotationTargetKind.cell, 'u_alu'),
+      _m(AnnotationTargetKind.port, 'u_alu:A'),
+      _m(AnnotationTargetKind.boundaryPort, 'port:clk'),
     ]);
     expect(markers.cells.keys, <String>['u_alu']);
     expect(markers.pins.keys, <String>['u_alu:A']);
@@ -34,9 +34,9 @@ void main() {
 
   test('from() drops nets, scopes and markers with no annotation', () {
     final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-      _m(BookmarkTargetKind.net, 'e_4_0'),
-      _m(BookmarkTargetKind.scope, 'top.cpu'),
-      _m(BookmarkTargetKind.cell, 'u_alu', const <String>[]),
+      _m(AnnotationTargetKind.net, 'e_4_0'),
+      _m(AnnotationTargetKind.scope, 'top.cpu'),
+      _m(AnnotationTargetKind.cell, 'u_alu', const <String>[]),
     ]);
     expect(markers.isEmpty, isTrue);
     expect(markers, SchematicAnnotationMarkers.empty);
@@ -44,8 +44,8 @@ void main() {
 
   test('two notes on one element merge into one marker, in order', () {
     final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-      _m(BookmarkTargetKind.cell, 'u_alu', const <String>['a0']),
-      _m(BookmarkTargetKind.cell, 'u_alu', const <String>['a2']),
+      _m(AnnotationTargetKind.cell, 'u_alu', const <String>['a0']),
+      _m(AnnotationTargetKind.cell, 'u_alu', const <String>['a2']),
     ]);
     expect(markers.cells['u_alu']!.annotationIds, <String>['a0', 'a2']);
   });
@@ -53,8 +53,8 @@ void main() {
   test('equality is by content', () {
     SchematicAnnotationMarkers build() =>
         SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-          _m(BookmarkTargetKind.cell, 'u_alu'),
-          _m(BookmarkTargetKind.port, 'u_alu:A'),
+          _m(AnnotationTargetKind.cell, 'u_alu'),
+          _m(AnnotationTargetKind.port, 'u_alu:A'),
         ]);
     expect(build(), build());
     expect(build().hashCode, build().hashCode);
@@ -62,7 +62,7 @@ void main() {
       build(),
       isNot(
         SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-          _m(BookmarkTargetKind.cell, 'u_alu', const <String>['a9']),
+          _m(AnnotationTargetKind.cell, 'u_alu', const <String>['a9']),
         ]),
       ),
     );

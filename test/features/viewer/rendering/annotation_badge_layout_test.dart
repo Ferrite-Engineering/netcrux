@@ -3,7 +3,7 @@
 
 import 'package:crux_theme/crux_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -78,7 +78,7 @@ LaidOutGraph badgeGraph() {
   return const LaidOutGraph(graph: graph, layout: layout);
 }
 
-SchematicAnnotationMarker marker(BookmarkTargetKind kind, String id) =>
+SchematicAnnotationMarker marker(AnnotationTargetKind kind, String id) =>
     SchematicAnnotationMarker(
       kind: kind,
       targetId: id,
@@ -91,7 +91,7 @@ void main() {
       final badges = AnnotationBadgeLayout.place(
         badgeGraph(),
         SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-          marker(BookmarkTargetKind.cell, 'u_and'),
+          marker(AnnotationTargetKind.cell, 'u_and'),
         ]),
       );
       expect(badges.single.center, const Offset(100, 30));
@@ -101,7 +101,7 @@ void main() {
       final badges = AnnotationBadgeLayout.place(
         badgeGraph(),
         SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-          marker(BookmarkTargetKind.port, 'u_and:Y'),
+          marker(AnnotationTargetKind.port, 'u_and:Y'),
         ]),
       );
       // The pin box is (20 + 76, 30 + 28) 4 x 4.
@@ -112,7 +112,7 @@ void main() {
       final badges = AnnotationBadgeLayout.place(
         badgeGraph(),
         SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-          marker(BookmarkTargetKind.boundaryPort, 'port:y'),
+          marker(AnnotationTargetKind.boundaryPort, 'port:y'),
         ]),
       );
       expect(badges.single.center, const Offset(176, 30));
@@ -122,10 +122,10 @@ void main() {
       final badges = AnnotationBadgeLayout.place(
         badgeGraph(),
         SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-          marker(BookmarkTargetKind.cell, 'u_elsewhere'),
-          marker(BookmarkTargetKind.port, 'u_elsewhere:A'),
-          marker(BookmarkTargetKind.port, 'u_and:NOPE'),
-          marker(BookmarkTargetKind.boundaryPort, 'port:nope'),
+          marker(AnnotationTargetKind.cell, 'u_elsewhere'),
+          marker(AnnotationTargetKind.port, 'u_elsewhere:A'),
+          marker(AnnotationTargetKind.port, 'u_and:NOPE'),
+          marker(AnnotationTargetKind.boundaryPort, 'port:nope'),
         ]),
       );
       expect(badges, isEmpty);
@@ -153,7 +153,7 @@ void main() {
 
   group('AnnotationBadgeLayout.hitTest', () {
     final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-      marker(BookmarkTargetKind.cell, 'u_and'),
+      marker(AnnotationTargetKind.cell, 'u_and'),
     ]);
 
     test('a point on the badge hits its marker', () {

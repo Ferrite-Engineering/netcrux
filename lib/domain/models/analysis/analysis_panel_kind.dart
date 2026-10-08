@@ -7,7 +7,7 @@
 /// Open-core declares the vocabulary so the docking chrome (the right
 /// IDE pane, its visibility logic, and the View-menu toggles) can be
 /// built and tested without the Pro overlay. Open core builds the
-/// [bookmarks] and [annotations] panels itself; the overlay supplies the
+/// [annotations] panel itself; the overlay supplies the
 /// widgets for the analyses through `analysisPanelBuilderProvider`.
 enum AnalysisPanelKind {
   /// Clock-domain-crossing analysis (Pro).
@@ -35,28 +35,24 @@ enum AnalysisPanelKind {
   /// so both directions of the source link stay in view (Pro).
   source,
 
-  /// The design's bookmarks: named places to return to. Docked beside the
-  /// schematic so a row click lands on the element while the list stays in
-  /// view.
-  bookmarks,
-
-  /// The design's annotations: Markdown notes on schematic elements. Docked
-  /// beside the schematic, where the badge on an annotated cell opens it at
+  /// The design's annotations: titled Markdown notes on schematic elements.
+  /// Docked beside the schematic so a row click lands on the element while
+  /// the list stays in view, and the badge on an annotated cell opens it at
   /// that cell's note.
   annotations,
 }
 
 /// Which analysis panels are Pro.
 extension AnalysisPanelKindTier on AnalysisPanelKind {
-  /// Whether this panel is a NetCrux Pro surface. Bookmarks and annotations
-  /// are open core; every analysis and the source view are Pro.
+  /// Whether this panel is a NetCrux Pro surface. Annotations are open core;
+  /// every analysis and the source view are Pro.
   ///
   /// A collaborative session uses it to decide what a follower is shown when
   /// the presenter has a panel open: an open-core panel opens for everyone, a
   /// Pro one only where this build and licence include Pro, and otherwise the
   /// follower is told it requires NetCrux Pro rather than given it.
   bool get requiresPro => switch (this) {
-    AnalysisPanelKind.bookmarks || AnalysisPanelKind.annotations => false,
+    AnalysisPanelKind.annotations => false,
     AnalysisPanelKind.cdc ||
     AnalysisPanelKind.resetDomain ||
     AnalysisPanelKind.fsm ||

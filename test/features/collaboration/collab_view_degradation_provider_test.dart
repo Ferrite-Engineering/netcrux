@@ -60,7 +60,6 @@ void main() {
 
   test('open-core panels never degrade', () {
     expect(_degraded(_following('annotations')), isNull);
-    expect(_degraded(_following('bookmarks')), isNull);
   });
 
   test('nothing for the presenter, no panel, or a panel this build lacks', () {

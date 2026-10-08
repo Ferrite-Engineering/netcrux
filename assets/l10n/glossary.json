@@ -32,7 +32,6 @@
     "heatmap": { "en": "heatmap", "zh": "热图", "ja": "ヒートマップ", "ko": "히트맵" },
     "x_trace": { "en": "X-trace", "zh": "X 追溯", "ja": "X トレース", "ko": "X 추적" },
     "custom_cell_symbol": { "en": "custom cell symbol", "zh": "自定义单元符号", "ja": "カスタムセルシンボル", "ko": "사용자 정의 셀 기호" },
-    "bookmark": { "en": "bookmark", "zh": "书签", "ja": "ブックマーク", "ko": "북마크" },
     "annotation": { "en": "annotation / comment", "zh": "注释", "ja": "コメント", "ko": "주석" },
     "diagnostics_drawer": { "en": "diagnostics drawer", "zh": "诊断抽屉", "ja": "診断ドロワー", "ko": "진단 드로어" },
     "force_directed_layout": { "en": "force-directed layout", "zh": "力导向布局", "ja": "力学配置", "ko": "힘 기반 레이아웃" },

@@ -224,15 +224,9 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
     },
   ),
 
-  // A bookmark or annotation added from the dialog. Recorded in open core,
-  // where both are free; `kind` says which of the two it was.
-  TelemetryCatalogEvent(
-    'annotation.added',
-    enumeratedValues: <String, List<String>>{
-      // `NetcruxAnnotationKind.values`.
-      'kind': <String>['bookmark', 'annotation'],
-    },
-  ),
+  // An annotation added from the dialog. Recorded in open core, where
+  // annotations are free.
+  TelemetryCatalogEvent('annotation.added'),
 
   // ── Pro overlay ────────────────────────────────────────────────────────
   // Recorded from the Pro overlay's code, through the open-core

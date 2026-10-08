@@ -55,7 +55,7 @@ class NetcruxActionContext {
 
   /// Whether the active tab has at least one schematic element selected.
   /// Gates the selection-seeded actions (fanin / fanout, cone of
-  /// influence, X-trace, add bookmark / annotation, show source for
+  /// influence, X-trace, add annotation, show source for
   /// element, per-instance symbol editing, per-register FSM detection,
   /// per-signal CDC / reset crossing scoping).
   final bool hasSelection;

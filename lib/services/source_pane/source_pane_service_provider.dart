@@ -16,7 +16,7 @@ import 'package:netcrux/domain/interfaces/source_pane_service.dart';
 /// Pro overlay can override it with `.overrideWith` without taking
 /// the build_runner generator dep. Matches the
 /// [coneOfInfluenceServiceProvider] / [xTraceServiceProvider] /
-/// [bookmarkAnnotationStoreProvider] /
+/// [annotationStoreProvider] /
 /// [schematicContextMenuExtensionsProvider] pattern.
 final sourcePaneServiceProvider = Provider<SourcePaneService>(
   (ref) => const NoopSourcePaneService(),

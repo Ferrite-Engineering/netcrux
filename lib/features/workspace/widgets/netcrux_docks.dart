@@ -56,7 +56,7 @@ class NetcruxRightDock extends ConsumerWidget {
         builder: (_) => const InspectorPanel(),
       ),
       // The docked panels — one tab per open panel, in the order opened
-      // (CDC beside the diff is what the strip is for). Bookmarks and
+      // (CDC beside the diff is what the strip is for).
       // Annotations are open core's; the analyses are the Pro overlay's, and
       // a build without its builder never lists them, because every
       // analysis opener is a no-op there.
@@ -87,7 +87,6 @@ class NetcruxRightDock extends ConsumerWidget {
     AnalysisPanelKind.activity => Icons.bar_chart,
     AnalysisPanelKind.diff => Icons.compare_arrows,
     AnalysisPanelKind.source => Icons.code,
-    AnalysisPanelKind.bookmarks => Icons.bookmark_border,
     AnalysisPanelKind.annotations => Icons.sticky_note_2_outlined,
   };
 
@@ -106,7 +105,6 @@ String analysisPanelLabel(L10N l10n, AnalysisPanelKind kind) => switch (kind) {
   AnalysisPanelKind.activity => l10n.dockTabActivity,
   AnalysisPanelKind.diff => l10n.dockTabDiff,
   AnalysisPanelKind.source => l10n.dockTabSource,
-  AnalysisPanelKind.bookmarks => l10n.dockTabBookmarks,
   AnalysisPanelKind.annotations => l10n.dockTabAnnotations,
 };
 
@@ -216,7 +214,7 @@ List<CruxDockEntry> _movableEntries(
 
   bool placedHere(String id) => (placements[id] ?? kDockRegionRight) == region;
 
-  // Open core builds the Bookmarks and Annotations panels itself; every other
+  // Open core builds the Annotations panel itself; every other
   // analysis panel comes from the overlay's builder, so a build without one
   // never lists a tab it cannot fill.
   AnalysisPanelBuilder? builderFor(AnalysisPanelKind kind) =>

@@ -5,15 +5,15 @@ import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/theme/collaborator_palette.dart';
-import 'package:netcrux/domain/interfaces/bookmark_annotation_store.dart';
+import 'package:netcrux/domain/interfaces/annotation_store.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
-import 'package:netcrux/features/bookmarks/providers/annotation_writing_provider.dart';
+import 'package:netcrux/features/annotations/providers/annotation_writing_provider.dart';
 import 'package:netcrux/features/collaboration/collab_annotation_adoption.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
-import 'package:netcrux/services/session/bookmark_annotation_state.dart';
-import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
+import 'package:netcrux/services/session/annotation_state.dart';
+import 'package:netcrux/services/session/annotation_store_provider.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 
 /// The session layer id for a collaborative session: the same for every
@@ -106,11 +106,9 @@ class _CollabAnnotationSyncState extends ConsumerState<CollabAnnotationSync> {
     return ref.read(netcruxWorkspaceProvider).value?.activeTabId == tab;
   }
 
-  BookmarkAnnotationStore get _store =>
-      ref.read(bookmarkAnnotationStoreProvider);
+  AnnotationStore get _store => ref.read(annotationStoreProvider);
 
-  List<Annotation> get _notes =>
-      ref.read(bookmarkAnnotationStateProvider).annotations;
+  List<Annotation> get _notes => ref.read(annotationStateProvider).annotations;
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +131,7 @@ class _CollabAnnotationSyncState extends ConsumerState<CollabAnnotationSync> {
         _onSession(session);
       })
       ..listen(
-        bookmarkAnnotationStateProvider,
+        annotationStateProvider,
         (previous, next) => _onLocalNotes(),
       )
       ..listen(annotationWritingProvider, (previous, writing) {
@@ -206,7 +204,7 @@ class _CollabAnnotationSyncState extends ConsumerState<CollabAnnotationSync> {
                 choice: choice,
               );
               ref
-                  .read(bookmarkAnnotationStateProvider.notifier)
+                  .read(annotationStateProvider.notifier)
                   .setAnnotations(adopted);
             },
           ),

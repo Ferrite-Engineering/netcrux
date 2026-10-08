@@ -7,13 +7,13 @@ import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
 
 void main() {
-  test('bookmarks and annotations are open core; every analysis is Pro', () {
+  test('annotations are open core; every analysis is Pro', () {
     expect(
       [
         for (final k in AnalysisPanelKind.values)
           if (!k.requiresPro) k,
       ],
-      [AnalysisPanelKind.bookmarks, AnalysisPanelKind.annotations],
+      [AnalysisPanelKind.annotations],
     );
   });
 
@@ -26,7 +26,6 @@ void main() {
       AnalysisPanelKind.activity: NetcruxAction.showActivityHeatmap,
       AnalysisPanelKind.diff: NetcruxAction.showDiffPane,
       AnalysisPanelKind.source: NetcruxAction.showSourcePane,
-      AnalysisPanelKind.bookmarks: NetcruxAction.showBookmarksPanel,
       AnalysisPanelKind.annotations: NetcruxAction.showAnnotationsPanel,
     };
     shownBy.forEach((kind, action) {

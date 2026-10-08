@@ -32,7 +32,7 @@ void main() {
       // projection + the reveal-request seam + the scope-flash seam +
       // source-pane state + file watcher + schematic-canvas RepaintBoundary
       // key + CDC analysis state with its four derived views + the
-      // bookmark / annotation state with its store, snapshot, reveal request
+      // annotation state with its store, snapshot, reveal request
       // and canvas markers). When that
       // count changes, update the `docs/ARCHITECTURE.md` inventory and the
       // verification doc.

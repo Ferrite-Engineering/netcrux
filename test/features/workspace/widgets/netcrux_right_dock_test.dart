@@ -8,8 +8,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
-import 'package:netcrux/features/bookmarks/widgets/annotations_panel.dart';
-import 'package:netcrux/features/bookmarks/widgets/bookmarks_panel.dart';
+import 'package:netcrux/features/annotations/widgets/annotations_panel.dart';
 import 'package:netcrux/features/inspector/widgets/inspector_panel.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
 import 'package:netcrux/features/viewer/providers/analysis_dock_provider.dart';
@@ -154,10 +153,9 @@ void main() {
       expect(find.byType(InspectorPanel), findsOneWidget);
     });
 
-    // Open core builds these two panels itself, so they dock with no
+    // Open core builds this panel itself, so it docks with no
     // `analysisPanelBuilderProvider` registered at all.
     for (final (kind, label, panel) in <(AnalysisPanelKind, String, Type)>[
-      (AnalysisPanelKind.bookmarks, 'Bookmarks', BookmarksPanel),
       (AnalysisPanelKind.annotations, 'Annotations', AnnotationsPanel),
     ]) {
       testWidgets('the ${kind.name} kind docks as its own closable tab', (
@@ -439,7 +437,6 @@ void main() {
         expect(find.text(l10n.dockTabSource), findsOneWidget);
         expect(l10n.dockTabSource, isNotEmpty);
         for (final (kind, label) in <(AnalysisPanelKind, String)>[
-          (AnalysisPanelKind.bookmarks, l10n.dockTabBookmarks),
           (AnalysisPanelKind.annotations, l10n.dockTabAnnotations),
         ]) {
           expect(

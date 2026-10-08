@@ -385,7 +385,7 @@ class ResetDomainAnalysisNotifier extends Notifier<ResetDomainAnalysisState> {
 
 /// Per-tab provider exposing the [ResetDomainAnalysisNotifier].
 /// Scoped per-tab via the workspace's `TabContainerManager`, same
-/// pattern as CDC / FSM / diff / source pane / bookmarks / X-trace.
+/// pattern as CDC / FSM / diff / source pane / annotations / X-trace.
 final resetDomainAnalysisStateProvider =
     NotifierProvider<ResetDomainAnalysisNotifier, ResetDomainAnalysisState>(
       ResetDomainAnalysisNotifier.new,

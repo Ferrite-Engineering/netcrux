@@ -1397,14 +1397,6 @@
   "@actionClearXTrace": {
     "description": "Command palette / menu label that clears any active X-trace result."
   },
-  "actionAddBookmark": "Add Bookmark…",
-  "@actionAddBookmark": {
-    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
-  },
-  "actionShowBookmarksPanel": "Show Bookmarks Panel",
-  "@actionShowBookmarksPanel": {
-    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
-  },
   "actionAddAnnotation": "Add Annotation…",
   "@actionAddAnnotation": {
     "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
@@ -2560,10 +2552,6 @@
   "@dockTabSource": {
     "description": "Right-dock tab label for the RTL source panel, which shows the source file behind the selected schematic element."
   },
-  "dockTabBookmarks": "Bookmarks",
-  "@dockTabBookmarks": {
-    "description": "Right-dock tab label for the Bookmarks panel, which lists the named places in the design the user marked to return to."
-  },
   "dockTabAnnotations": "Annotations",
   "@dockTabAnnotations": {
     "description": "Right-dock tab label for the Annotations panel, which lists the notes the user wrote on schematic elements."
@@ -3060,6 +3048,18 @@
   "@annotationDialogAuthorLabel": {
     "description": "Form field label for the optional author label on an annotation."
   },
+  "annotationDialogTitleLabel": "Title",
+  "@annotationDialogTitleLabel": {
+    "description": "Form field label for the optional one-line title of an annotation, shown above the Markdown body. An annotation needs a title, a body, or both."
+  },
+  "annotationDialogTitleHint": "One line, shown in the Annotations panel",
+  "@annotationDialogTitleHint": {
+    "description": "Hint inside the empty Title field of the Add / Edit Annotation dialog: the title is a single line and is what the Annotations panel lists the annotation by."
+  },
+  "annotationDialogEmptyError": "Add a title or a body.",
+  "@annotationDialogEmptyError": {
+    "description": "Error shown under the Body field, and announced, when the user presses Save on the Add / Edit Annotation dialog with both the title and the body empty."
+  },
   "annotationDialogBodyLabel": "Body (markdown)",
   "@annotationDialogBodyLabel": {
     "description": "Form field label for the markdown body of an annotation."
@@ -3080,79 +3080,47 @@
   "@annotationsPanelTitle": {
     "description": "Title of the Annotations panel listing all annotations in the active session."
   },
-  "bookmarkContextMenuDelete": "Delete Bookmark",
-  "@bookmarkContextMenuDelete": {
-    "description": "Context-menu item that deletes a bookmark."
+  "annotationDialogCancelButton": "Cancel",
+  "@annotationDialogCancelButton": {
+    "description": "Cancel button on the Add / Edit Annotation dialog."
   },
-  "bookmarkContextMenuEdit": "Edit Bookmark…",
-  "@bookmarkContextMenuEdit": {
-    "description": "Context-menu item that opens the Edit Bookmark dialog on a bookmark row."
+  "annotationDialogSaveButton": "Save",
+  "@annotationDialogSaveButton": {
+    "description": "Save button on the Add / Edit Annotation dialog."
   },
-  "bookmarkDialogCancelButton": "Cancel",
-  "@bookmarkDialogCancelButton": {
-    "description": "Cancel button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogEditTitle": "Edit Bookmark",
-  "@bookmarkDialogEditTitle": {
-    "description": "Title of the dialog when editing an existing bookmark."
-  },
-  "bookmarkDialogNameLabel": "Name",
-  "@bookmarkDialogNameLabel": {
-    "description": "Form field label for the bookmark display name."
-  },
-  "bookmarkDialogNoteLabel": "Note (optional)",
-  "@bookmarkDialogNoteLabel": {
-    "description": "Form field label for the optional free-text note attached to a bookmark."
-  },
-  "bookmarkDialogSaveButton": "Save",
-  "@bookmarkDialogSaveButton": {
-    "description": "Save button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogTitle": "Add Bookmark",
-  "@bookmarkDialogTitle": {
-    "description": "Title of the dialog for adding a bookmark on the currently selected schematic element."
-  },
-  "bookmarkMenuAddAnnotation": "Add Annotation…",
-  "@bookmarkMenuAddAnnotation": {
+  "annotationMenuAdd": "Add Annotation…",
+  "@annotationMenuAdd": {
     "description": "Schematic context-menu entry that opens the Add Annotation dialog pre-populated with the right-clicked element as the target."
   },
-  "bookmarkMenuAddBookmark": "Add Bookmark…",
-  "@bookmarkMenuAddBookmark": {
-    "description": "Schematic context-menu entry that opens the Add Bookmark dialog pre-populated with the right-clicked element as the target."
-  },
-  "bookmarkMenuShowAnnotation": "Show Annotation",
-  "@bookmarkMenuShowAnnotation": {
+  "annotationMenuShow": "Show Annotation",
+  "@annotationMenuShow": {
     "description": "Schematic context-menu entry on an annotated element. Opens the Annotations panel scrolled to that element's note."
   },
-  "bookmarkTargetKindBoundaryPort": "Boundary Port",
-  "@bookmarkTargetKindBoundaryPort": {
-    "description": "Human-readable label for BookmarkTargetKind.boundaryPort."
+  "annotationTargetKindBoundaryPort": "Boundary Port",
+  "@annotationTargetKindBoundaryPort": {
+    "description": "Human-readable label for AnnotationTargetKind.boundaryPort."
   },
-  "bookmarkTargetKindCell": "Cell",
-  "@bookmarkTargetKindCell": {
-    "description": "Human-readable label for the BookmarkTargetKind.cell value (shown in the bookmark row subtitle)."
+  "annotationTargetKindCell": "Cell",
+  "@annotationTargetKindCell": {
+    "description": "Human-readable label for the AnnotationTargetKind.cell value (shown in the annotation row subtitle)."
   },
-  "bookmarkTargetKindNet": "Net",
-  "@bookmarkTargetKindNet": {
-    "description": "Human-readable label for BookmarkTargetKind.net."
+  "annotationTargetKindNet": "Net",
+  "@annotationTargetKindNet": {
+    "description": "Human-readable label for AnnotationTargetKind.net."
   },
-  "bookmarkTargetKindPort": "Port",
-  "@bookmarkTargetKindPort": {
-    "description": "Human-readable label for BookmarkTargetKind.port."
+  "annotationTargetKindPort": "Port",
+  "@annotationTargetKindPort": {
+    "description": "Human-readable label for AnnotationTargetKind.port."
   },
-  "bookmarkTargetKindScope": "Scope",
-  "@bookmarkTargetKindScope": {
-    "description": "Human-readable label for BookmarkTargetKind.scope."
+  "annotationTargetKindScope": "Scope",
+  "@annotationTargetKindScope": {
+    "description": "Human-readable label for AnnotationTargetKind.scope."
   },
-  "bookmarksPanelEmpty": "No bookmarks yet. Right-click a cell, wire, or port and choose \"Add Bookmark…\".",
-  "@bookmarksPanelEmpty": {
-    "description": "Placeholder shown in the Bookmarks panel when the session has no bookmarks."
-  },
-  "bookmarksPanelRowSemantics": "{name}, {kind} {targetId}",
-  "@bookmarksPanelRowSemantics": {
-    "description": "What a screen reader reads for a bookmark row with no note: the bookmark's name, the kind of element it marks (Cell, Port, Net...) and the element's id.",
+  "annotationsPanelRowSemantics": "{heading}, {kind} {targetId}",
+  "@annotationsPanelRowSemantics": {
+    "description": "What a screen reader reads first for an annotation row: its heading (the title, or the first line of the body when it has no title), the kind of element it is on (Cell, Port, Net...) and the element's id.",
     "placeholders": {
-      "name": {
+      "heading": {
         "type": "String",
         "example": "State register"
       },
@@ -3166,41 +3134,25 @@
       }
     }
   },
-  "bookmarksPanelRowSemanticsWithNote": "{name}, {kind} {targetId}. Note: {note}",
-  "@bookmarksPanelRowSemanticsWithNote": {
-    "description": "What a screen reader reads for a bookmark row that has a note: the name, the kind and id of the element it marks, then the note itself, which sighted users read in a tooltip.",
+  "annotationsPanelRowAuthor": "Author: {author}",
+  "@annotationsPanelRowAuthor": {
+    "description": "Read by a screen reader after an annotation row's heading and element when the annotation names an author.",
     "placeholders": {
-      "name": {
+      "author": {
         "type": "String",
-        "example": "State register"
-      },
-      "kind": {
-        "type": "String",
-        "example": "Cell"
-      },
-      "targetId": {
-        "type": "String",
-        "example": "u_alu"
-      },
-      "note": {
-        "type": "String",
-        "example": "Check the reset value"
+        "example": "a.engineer"
       }
     }
   },
-  "bookmarksPanelTargetNotFound": "{name} is not in this design.",
-  "@bookmarksPanelTargetNotFound": {
-    "description": "Shown and announced when the user clicks a bookmark whose element the open design no longer has (it was renamed or removed since the bookmark was made).",
+  "annotationsPanelTargetNotFound": "{name} is not in this design.",
+  "@annotationsPanelTargetNotFound": {
+    "description": "Shown and announced when the user clicks an annotation whose element the open design no longer has (it was renamed or removed since the annotation was made). {name} is the annotation's title, or the first line of its body.",
     "placeholders": {
       "name": {
         "type": "String",
         "example": "State register"
       }
     }
-  },
-  "bookmarksPanelTitle": "Bookmarks",
-  "@bookmarksPanelTitle": {
-    "description": "Title of the Bookmarks panel listing all bookmarked schematic elements in the active session."
   },
   "inlineElementPickerCancel": "Cancel",
   "@inlineElementPickerCancel": {
@@ -3232,22 +3184,22 @@
   },
   "inlineElementPickerTitle": "Pick a schematic element",
   "@inlineElementPickerTitle": {
-    "description": "Title of the inline element picker dialog shown when an add-bookmark / add-annotation flow is invoked without an active selection."
+    "description": "Title of the inline element picker dialog shown when the Add Annotation flow is invoked without an active selection."
   },
-  "bookmarkAnnotationUnsavedChangesTitle": "Discard changes?",
-  "@bookmarkAnnotationUnsavedChangesTitle": {
-    "description": "Title of the unsaved-changes confirmation dialog shown when the user cancels the Symbol Editor with pending edits."
+  "annotationUnsavedChangesTitle": "Discard changes?",
+  "@annotationUnsavedChangesTitle": {
+    "description": "Title of the unsaved-changes confirmation shown when the user cancels the Add / Edit Annotation dialog with pending edits."
   },
-  "bookmarkAnnotationUnsavedChangesBody": "You have unsaved changes. Discard them?",
-  "@bookmarkAnnotationUnsavedChangesBody": {
+  "annotationUnsavedChangesBody": "You have unsaved changes. Discard them?",
+  "@annotationUnsavedChangesBody": {
     "description": "Body text of the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesDiscard": "Discard",
-  "@bookmarkAnnotationUnsavedChangesDiscard": {
+  "annotationUnsavedChangesDiscard": "Discard",
+  "@annotationUnsavedChangesDiscard": {
     "description": "Destructive button label on the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesKeep": "Keep editing",
-  "@bookmarkAnnotationUnsavedChangesKeep": {
+  "annotationUnsavedChangesKeep": "Keep editing",
+  "@annotationUnsavedChangesKeep": {
     "description": "Cancel button label on the unsaved-changes confirmation dialog."
   }
 }

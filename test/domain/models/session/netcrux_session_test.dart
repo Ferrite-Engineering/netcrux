@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/annotation.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/session/netcrux_session.dart';
 
 void main() {
@@ -67,9 +68,9 @@ void main() {
       expect(restored.overlayMode, isNull);
     });
 
-    test('default constructor produces empty bookmarks + annotations', () {
+    test('default constructor produces empty annotations', () {
       const s = NetcruxSession(
-        version: 1,
+        version: NetcruxSession.currentVersion,
         sourceFilePaths: <String>[],
         topModule: '',
         scopePath: <String>[],
@@ -80,23 +81,38 @@ void main() {
         overlayMode: null,
         expandedScopeKeys: <String>[],
       );
-      expect(s.bookmarks, isEmpty);
       expect(s.annotations, isEmpty);
     });
 
-    test('round-trips bookmarks + annotations through JSON', () {
-      const bookmark = Bookmark(
-        id: 'b1',
-        name: 'Clock root',
-        targetKind: BookmarkTargetKind.net,
+    test('reads version 1 and the current version, rejects others', () {
+      expect(NetcruxSession.currentVersion, 2);
+      expect(NetcruxSession.readableVersions, <int>{1, 2});
+      for (final v in NetcruxSession.readableVersions) {
+        expect(
+          NetcruxSession.fromJson(<String, Object?>{'version': v}).version,
+          v,
+        );
+      }
+      expect(
+        () => NetcruxSession.fromJson(const <String, Object?>{'version': 3}),
+        throwsA(isA<NetcruxSessionVersionException>()),
+      );
+    });
+
+    test('round-trips titled and untitled annotations through JSON', () {
+      const titled = Annotation(
+        id: 'a0',
+        targetKind: AnnotationTargetKind.net,
         targetId: 'e_clk',
+        title: 'Clock root',
+        body: '',
         createdAtMillis: 100,
-        note: 'CDC suspect',
+        updatedAtMillis: 100,
         moduleName: 'top',
       );
       const annotation = Annotation(
         id: 'a1',
-        targetKind: BookmarkTargetKind.cell,
+        targetKind: AnnotationTargetKind.cell,
         targetId: 'u_alu',
         body: '# Note\nALU output is glitchy at reset.',
         createdAtMillis: 200,
@@ -114,69 +130,137 @@ void main() {
         selectionJson: null,
         overlayMode: 'fanin',
         expandedScopeKeys: <String>['u_cpu'],
-        bookmarks: <Bookmark>[bookmark],
-        annotations: <Annotation>[annotation],
+        annotations: <Annotation>[titled, annotation],
       );
-      final restored = NetcruxSession.fromJson(richSession.toJson());
+      final json = richSession.toJson();
+      expect(json.containsKey('bookmarks'), isFalse);
+      final restored = NetcruxSession.fromJson(json);
       expect(restored, equals(richSession));
-      expect(restored.bookmarks.single, bookmark);
-      expect(restored.annotations.single, annotation);
+      expect(restored.annotations, <Annotation>[titled, annotation]);
     });
 
-    test(
-      'toJson omits bookmarks + annotations when empty (forward compat)',
-      () {
-        final json = session.toJson();
-        expect(json.containsKey('bookmarks'), isFalse);
-        expect(json.containsKey('annotations'), isFalse);
-      },
-    );
+    test('toJson omits annotations when empty and never writes bookmarks', () {
+      final json = session.toJson();
+      expect(json.containsKey('bookmarks'), isFalse);
+      expect(json.containsKey('annotations'), isFalse);
+    });
 
-    test(
-      'fromJson silently drops malformed bookmark / annotation entries',
-      () {
-        final json = <String, Object?>{
-          'version': NetcruxSession.currentVersion,
-          'sourceFiles': <String>[],
-          'topModule': '',
-          'scopePath': <String>[],
-          'zoom': 1,
-          'panX': 0,
-          'panY': 0,
-          'expandedScopes': <String>[],
-          'bookmarks': <Object?>[
-            <String, Object?>{
-              'id': 'b1',
-              'name': 'ok',
-              'targetKind': 'cell',
-              'targetId': 'u',
-              'createdAtMillis': 1,
-            },
-            'not-a-map',
-            <String, Object?>{'id': 'no-name-no-kind'},
-          ],
-          'annotations': <Object?>[
-            <String, Object?>{
-              'id': 'a1',
-              'targetKind': 'cell',
-              'targetId': 'u',
-              'body': 'ok',
-              'createdAtMillis': 1,
-              'updatedAtMillis': 1,
-            },
-            <String, Object?>{'id': 'no-body'},
-          ],
-        };
-        final restored = NetcruxSession.fromJson(json);
-        expect(restored.bookmarks, hasLength(1));
-        expect(restored.bookmarks.single.id, 'b1');
-        expect(restored.annotations, hasLength(1));
-        expect(restored.annotations.single.id, 'a1');
-      },
-    );
+    test('fromJson silently drops malformed entries', () {
+      final json = <String, Object?>{
+        'version': 1,
+        'sourceFiles': <String>[],
+        'topModule': '',
+        'scopePath': <String>[],
+        'zoom': 1,
+        'panX': 0,
+        'panY': 0,
+        'expandedScopes': <String>[],
+        'bookmarks': <Object?>[
+          <String, Object?>{
+            'id': 'b1',
+            'name': 'ok',
+            'targetKind': 'cell',
+            'targetId': 'u',
+            'createdAtMillis': 1,
+          },
+          'not-a-map',
+          <String, Object?>{'id': 'no-name-no-kind'},
+          <String, Object?>{
+            'id': 'b3',
+            'name': 'unknown kind',
+            'targetKind': 'transaction',
+            'targetId': 'u',
+            'createdAtMillis': 3,
+          },
+        ],
+        'annotations': <Object?>[
+          <String, Object?>{
+            'id': 'a1',
+            'targetKind': 'cell',
+            'targetId': 'u',
+            'body': 'ok',
+            'createdAtMillis': 2,
+            'updatedAtMillis': 2,
+          },
+          <String, Object?>{'id': 'no-body'},
+        ],
+      };
+      final restored = NetcruxSession.fromJson(json);
+      expect(restored.annotations.map((a) => a.id), <String>['b1', 'a1']);
+    });
 
-    test('a session whose bookmarks carry a colour loads, colour dropped', () {
-      // The shape a build with the bookmark Color field wrote.
+    group('a version-1 file with bookmarks', () {
+      late NetcruxSession restored;
+
+      setUp(() {
+        final text = File(
+          'test/fixtures/session/legacy_bookmarks_v1.netcrux',
+        ).readAsStringSync();
+        restored = NetcruxSession.fromJson(
+          jsonDecode(text) as Map<String, Object?>,
+        );
+      });
+
+      test('loads every bookmark as an annotation, in creation order', () {
+        expect(restored.version, 1);
+        expect(restored.annotations.map((a) => a.id), <String>[
+          'bm-1759780000000-0',
+          'bm-1759780000100-1',
+          'an-1759780000500-2',
+        ]);
+      });
+
+      test('name becomes the title, note the body, target kept', () {
+        final first = restored.annotations[0];
+        expect(first.title, 'State register');
+        expect(first.body, 'Check the reset value');
+        expect(first.targetKind, AnnotationTargetKind.cell);
+        expect(first.targetId, r'$procdff$17');
+        expect(first.moduleName, 'fsm_lock');
+        expect(first.createdAtMillis, 1759780000000);
+        expect(first.updatedAtMillis, 1759780000000);
+        expect(first.author, isNull);
+
+        final second = restored.annotations[1];
+        expect(second.title, 'Unlock input');
+        expect(second.body, isEmpty);
+        expect(second.targetKind, AnnotationTargetKind.boundaryPort);
+        expect(second.targetId, 'port:unlock');
+        expect(second.moduleName, isNull);
+      });
+
+      test("the file's own annotations load unchanged", () {
+        final note = restored.annotations[2];
+        expect(note.title, isNull);
+        expect(note.body, 'Resets to **IDLE**, not LOCKED.');
+        expect(note.author, 'me');
+      });
+
+      test('saving writes annotations only, at the current version', () {
+        final resaved = NetcruxSession(
+          version: NetcruxSession.currentVersion,
+          sourceFilePaths: restored.sourceFilePaths,
+          topModule: restored.topModule,
+          scopePath: restored.scopePath,
+          zoom: restored.zoom,
+          panX: restored.panX,
+          panY: restored.panY,
+          selectionJson: restored.selectionJson,
+          overlayMode: restored.overlayMode,
+          expandedScopeKeys: restored.expandedScopeKeys,
+          annotations: restored.annotations,
+        ).toJson();
+        expect(resaved['version'], 2);
+        expect(resaved.containsKey('bookmarks'), isFalse);
+        final again = NetcruxSession.fromJson(
+          jsonDecode(jsonEncode(resaved)) as Map<String, Object?>,
+        );
+        expect(again.annotations, restored.annotations);
+      });
+    });
+
+    test('a bookmark that carried a colour loads, colour dropped', () {
+      // The shape a build with a colour field on bookmarks wrote.
       final json =
           jsonDecode(r'''
 {
@@ -203,11 +287,12 @@ void main() {
 ''')
               as Map<String, Object?>;
       final restored = NetcruxSession.fromJson(json);
-      expect(restored.bookmarks.single.name, 'State register');
-      expect(restored.bookmarks.single.note, 'Check the reset value');
-      expect(restored.bookmarks.single.moduleName, isNull);
+      expect(restored.annotations.single.title, 'State register');
+      expect(restored.annotations.single.body, 'Check the reset value');
+      expect(restored.annotations.single.moduleName, isNull);
       final resaved = jsonEncode(restored.toJson());
       expect(resaved, isNot(contains('colorHex')));
+      expect(resaved, isNot(contains('"bookmarks"')));
       expect(resaved, contains(r'$procdff$17'));
     });
 

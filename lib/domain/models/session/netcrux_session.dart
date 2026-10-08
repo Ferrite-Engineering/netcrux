@@ -3,7 +3,6 @@
 
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/annotation.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
 
 /// On-disk representation of a NetCrux viewer session.
 ///
@@ -29,12 +28,15 @@ class NetcruxSession {
     required this.selectionJson,
     required this.overlayMode,
     required this.expandedScopeKeys,
-    this.bookmarks = const <Bookmark>[],
     this.annotations = const <Annotation>[],
   });
 
   /// Parses a session document. Rejects unknown versions with a
   /// [NetcruxSessionVersionException]; unknown fields are tolerated.
+  ///
+  /// Version-1 documents may carry a `bookmarks` array; each entry is read
+  /// as an annotation ([Annotation.fromLegacyBookmarkJson]) and merged with
+  /// the document's annotations in creation order.
   factory NetcruxSession.fromJson(Map<String, Object?> json) {
     final v = json['version'] as int?;
     if (v == null) {
@@ -42,7 +44,7 @@ class NetcruxSession {
         'missing "version" field',
       );
     }
-    if (v != currentVersion) {
+    if (!readableVersions.contains(v)) {
       throw NetcruxSessionVersionException(v);
     }
     final sources = json['sourceFiles'];
@@ -58,20 +60,31 @@ class NetcruxSession {
         ? expanded.whereType<String>().toList(growable: false)
         : const <String>[];
     final selectionRaw = json['selection'];
-    final bookmarksRaw = json['bookmarks'];
-    final bookmarks = bookmarksRaw is List
-        ? <Bookmark>[
-            for (final entry in bookmarksRaw)
-              if (entry is Map<String, Object?>) ?Bookmark.fromJson(entry),
-          ]
-        : const <Bookmark>[];
     final annotationsRaw = json['annotations'];
-    final annotations = annotationsRaw is List
-        ? <Annotation>[
-            for (final entry in annotationsRaw)
-              if (entry is Map<String, Object?>) ?Annotation.fromJson(entry),
-          ]
-        : const <Annotation>[];
+    final annotations = <Annotation>[
+      if (annotationsRaw is List)
+        for (final entry in annotationsRaw)
+          if (entry is Map<String, Object?>) ?Annotation.fromJson(entry),
+    ];
+    final legacyRaw = json['bookmarks'];
+    if (legacyRaw is List) {
+      final ids = {for (final a in annotations) a.id};
+      for (final entry in legacyRaw) {
+        if (entry is! Map<String, Object?>) continue;
+        final converted = Annotation.fromLegacyBookmarkJson(entry);
+        if (converted == null || !ids.add(converted.id)) continue;
+        annotations.add(converted);
+      }
+      // Creation order, stable: entries created in the same millisecond
+      // keep their file order.
+      final order = {for (final (i, a) in annotations.indexed) a.id: i};
+      annotations.sort((a, b) {
+        final byTime = a.createdAtMillis.compareTo(b.createdAtMillis);
+        return byTime != 0
+            ? byTime
+            : (order[a.id] ?? 0).compareTo(order[b.id] ?? 0);
+      });
+    }
     return NetcruxSession(
       version: v,
       sourceFilePaths: paths,
@@ -83,20 +96,23 @@ class NetcruxSession {
       selectionJson: selectionRaw is Map<String, Object?> ? selectionRaw : null,
       overlayMode: json['overlayMode'] as String?,
       expandedScopeKeys: expandedKeys,
-      bookmarks: bookmarks,
-      annotations: annotations,
+      annotations: List<Annotation>.unmodifiable(annotations),
     );
   }
 
-  /// Schema version, currently `1`. Unknown versions are rejected
-  /// at load with a snackbar (see SessionController).
-  static const int currentVersion = 1;
+  /// Schema version written by this build. Version 2 sessions carry
+  /// annotation titles and never a `bookmarks` array. Unknown versions are
+  /// rejected at load with a snackbar (see SessionController).
+  static const int currentVersion = 2;
+
+  /// The schema versions this build reads: the current one, and version 1,
+  /// whose `bookmarks` entries load as annotations.
+  static const Set<int> readableVersions = <int>{1, 2};
 
   /// File-extension used for session files (and the file picker filter).
   static const String fileExtension = 'netcrux';
 
-  /// Schema version of this session — must equal [currentVersion]
-  /// to load.
+  /// Schema version of this session — one of [readableVersions] to load.
   final int version;
 
   /// Absolute paths of the source files that produced the netlist.
@@ -138,9 +154,6 @@ class NetcruxSession {
   /// `/`).
   final List<String> expandedScopeKeys;
 
-  /// Bookmarks persisted in the session. Empty when the tab has none.
-  final List<Bookmark> bookmarks;
-
   /// Annotations persisted in the session. Empty when the tab has none.
   final List<Annotation> annotations;
 
@@ -156,8 +169,6 @@ class NetcruxSession {
     if (selectionJson != null) 'selection': selectionJson,
     if (overlayMode != null) 'overlayMode': overlayMode,
     'expandedScopes': expandedScopeKeys,
-    if (bookmarks.isNotEmpty)
-      'bookmarks': [for (final b in bookmarks) b.toJson()],
     if (annotations.isNotEmpty)
       'annotations': [for (final a in annotations) a.toJson()],
   };
@@ -176,7 +187,6 @@ class NetcruxSession {
     if (!_listEquals(other.scopePath, scopePath)) return false;
     if (!_listEquals(other.expandedScopeKeys, expandedScopeKeys)) return false;
     if (!_mapEquals(other.selectionJson, selectionJson)) return false;
-    if (!_listEquals(other.bookmarks, bookmarks)) return false;
     if (!_listEquals(other.annotations, annotations)) return false;
     return true;
   }
@@ -193,7 +203,6 @@ class NetcruxSession {
     Object.hashAll(scopePath),
     Object.hashAll(expandedScopeKeys),
     selectionJson == null ? 0 : selectionJson!.length,
-    Object.hashAll(bookmarks),
     Object.hashAll(annotations),
   );
 

@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/features/viewer/rendering/annotation_badge_layout.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
@@ -53,7 +53,7 @@ String _describe(List<RecordedInvocation> calls) => <String>[
 
 void main() {
   final cellOnly = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-    marker(BookmarkTargetKind.cell, 'u_and'),
+    marker(AnnotationTargetKind.cell, 'u_and'),
   ]);
 
   test('an annotated cell gets one badge, an unannotated one none', () {
@@ -75,8 +75,8 @@ void main() {
 
   test('an annotated pin and boundary port are badged beside themselves', () {
     final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-      marker(BookmarkTargetKind.port, 'u_and:Y'),
-      marker(BookmarkTargetKind.boundaryPort, 'port:y'),
+      marker(AnnotationTargetKind.port, 'u_and:Y'),
+      marker(AnnotationTargetKind.boundaryPort, 'port:y'),
     ]);
     expect(_badgeDiscs(_paint(badgeGraph(), markers)), <Offset>[
       const Offset(100, 58),
@@ -86,8 +86,8 @@ void main() {
 
   test('net and scope annotations put no badge on the canvas', () {
     final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-      marker(BookmarkTargetKind.net, 'e_4_0'),
-      marker(BookmarkTargetKind.scope, 'top'),
+      marker(AnnotationTargetKind.net, 'e_4_0'),
+      marker(AnnotationTargetKind.scope, 'top'),
     ]);
     expect(markers.isEmpty, isTrue);
     expect(_badgeDiscs(_paint(badgeGraph(), markers)), isEmpty);
@@ -106,7 +106,7 @@ void main() {
         _paint(
           badgeGraph(),
           SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
-            marker(BookmarkTargetKind.cell, 'u_elsewhere'),
+            marker(AnnotationTargetKind.cell, 'u_elsewhere'),
           ]),
         ),
       ),

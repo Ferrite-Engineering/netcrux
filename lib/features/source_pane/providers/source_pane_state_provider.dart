@@ -118,7 +118,7 @@ class SourcePaneState {
 /// Notifier owning the per-tab [SourcePaneState].
 ///
 /// Lives in a per-tab `ProviderContainer` (mirrors how
-/// [bookmarkAnnotationStateProvider] / [xTraceResultProvider] are
+/// [annotationStateProvider] / [xTraceResultProvider] are
 /// scoped) so each open tab keeps its own source-pane viewport,
 /// highlighted lines, and scroll position. The hosting [PaneHost]
 /// is responsible for routing schematic selection changes from the
@@ -203,7 +203,7 @@ class SourcePaneStateNotifier extends Notifier<SourcePaneState> {
 /// Riverpod provider exposing the per-tab [SourcePaneStateNotifier].
 ///
 /// Scoped per-tab via the workspace's [TabContainerManager], same
-/// pattern as bookmarks / X-trace.
+/// pattern as annotations / X-trace.
 final sourcePaneStateProvider =
     NotifierProvider<SourcePaneStateNotifier, SourcePaneState>(
       SourcePaneStateNotifier.new,

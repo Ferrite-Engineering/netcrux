@@ -105,7 +105,7 @@ class SelectedFsmState {
 /// Notifier owning the per-tab [SelectedFsmState].
 ///
 /// Lives in a per-tab `ProviderContainer` (mirrors source pane / diff
-/// pane / bookmarks scoping) so each open tab keeps its own focused
+/// pane / annotations scoping) so each open tab keeps its own focused
 /// FSM, highlighted state, and bubble-position layout. The hosting
 /// `FsmBubbleDiagramPanel` widget reads from and writes to this
 /// notifier.
@@ -188,7 +188,7 @@ class SelectedFsmNotifier extends Notifier<SelectedFsmState> {
 /// Per-tab provider exposing the [SelectedFsmNotifier].
 ///
 /// Scoped per-tab via the workspace's [TabContainerManager], same
-/// pattern as diff pane / source pane / bookmarks / X-trace.
+/// pattern as diff pane / source pane / annotations / X-trace.
 final selectedFsmProvider =
     NotifierProvider<SelectedFsmNotifier, SelectedFsmState>(
       SelectedFsmNotifier.new,

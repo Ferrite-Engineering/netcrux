@@ -9,15 +9,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/theme/collaborator_palette.dart';
 import 'package:netcrux/domain/interfaces/schematic_collaboration_service.dart';
 import 'package:netcrux/domain/models/annotation.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
-import 'package:netcrux/features/bookmarks/providers/annotation_writing_provider.dart';
+import 'package:netcrux/features/annotations/providers/annotation_writing_provider.dart';
 import 'package:netcrux/features/collaboration/collab_annotation_adoption.dart';
 import 'package:netcrux/features/collaboration/collab_annotation_sync.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
-import 'package:netcrux/services/session/bookmark_annotation_state.dart';
-import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
+import 'package:netcrux/services/session/annotation_state.dart';
+import 'package:netcrux/services/session/annotation_store_provider.dart';
 
 /// Records what the sync sends; the session stream is driven by the test.
 class _RecordingService implements SchematicCollaborationService {
@@ -51,7 +51,7 @@ Annotation _note(
   String? layer,
 }) => Annotation(
   id: id,
-  targetKind: BookmarkTargetKind.cell,
+  targetKind: AnnotationTargetKind.cell,
   targetId: 'u_alu',
   body: body,
   createdAtMillis: 1,
@@ -101,9 +101,7 @@ void main() {
     );
     addTearDown(() => unawaited(service.controller.close()));
     addTearDown(container.dispose);
-    container
-        .read(bookmarkAnnotationStateProvider.notifier)
-        .setAnnotations(existing);
+    container.read(annotationStateProvider.notifier).setAnnotations(existing);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -122,7 +120,7 @@ void main() {
   }
 
   List<Annotation> notes() =>
-      container.read(bookmarkAnnotationStateProvider).annotations;
+      container.read(annotationStateProvider).annotations;
 
   Annotation noteNamed(String id) => notes().singleWhere((n) => n.id == id);
 
@@ -133,7 +131,7 @@ void main() {
       await emit(tester, _session());
 
       container
-          .read(bookmarkAnnotationStoreProvider)
+          .read(annotationStoreProvider)
           .addAnnotation(_note('new', body: 'look here'));
       await tester.pump();
 
@@ -147,7 +145,7 @@ void main() {
 
       // Editing the private note changes nothing on the wire.
       container
-          .read(bookmarkAnnotationStoreProvider)
+          .read(annotationStoreProvider)
           .updateAnnotation(_note('private', body: 'still mine'));
       await tester.pump();
       expect(service.published.map((n) => n.id), ['new']);
@@ -156,7 +154,7 @@ void main() {
     testWidgets('an edit republishes; a delete withdraws', (tester) async {
       await pump(tester);
       await emit(tester, _session());
-      final store = container.read(bookmarkAnnotationStoreProvider)
+      final store = container.read(annotationStoreProvider)
         ..addAnnotation(_note('new'));
       await tester.pump();
 
@@ -211,7 +209,7 @@ void main() {
       await pump(tester);
       await emit(tester, _session(shared: [adas]));
       container
-          .read(bookmarkAnnotationStoreProvider)
+          .read(annotationStoreProvider)
           .updateAnnotation(adas.copyWith(body: 'tampered'));
       await tester.pump();
       expect(noteNamed('ada-1').body, 'clock gate');
@@ -222,7 +220,7 @@ void main() {
         'author changes it', (tester) async {
       await pump(tester);
       await emit(tester, _session(shared: [adas]));
-      container.read(bookmarkAnnotationStoreProvider).removeAnnotation('ada-1');
+      container.read(annotationStoreProvider).removeAnnotation('ada-1');
       await tester.pump();
       expect(service.withdrawn, isEmpty);
 
@@ -239,7 +237,7 @@ void main() {
       final graces = _note('g-1', authorId: 'grace', layer: _layer);
       await pump(tester);
       await emit(tester, _session(me: 'ada', shared: [graces]));
-      container.read(bookmarkAnnotationStoreProvider).removeAnnotation('g-1');
+      container.read(annotationStoreProvider).removeAnnotation('g-1');
       await tester.pump();
       expect(service.withdrawn, ['g-1']);
     });
@@ -249,7 +247,7 @@ void main() {
       await pump(tester);
       await emit(tester, _session());
       container
-          .read(bookmarkAnnotationStoreProvider)
+          .read(annotationStoreProvider)
           .addAnnotation(
             _note('mine'),
           );
@@ -272,7 +270,7 @@ void main() {
       await pump(tester, existing: [_note('private')]);
       await emit(tester, _session(shared: [adas]));
       container
-          .read(bookmarkAnnotationStoreProvider)
+          .read(annotationStoreProvider)
           .addAnnotation(
             _note('mine'),
           );

@@ -356,12 +356,12 @@ void main() {
       await pump(tester);
       container
           .read(analysisDockProvider.notifier)
-          .open(AnalysisPanelKind.bookmarks);
-      await emit(tester, _session(me: 'grace', view: showing('bookmarks')));
+          .open(AnalysisPanelKind.annotations);
+      await emit(tester, _session(me: 'grace', view: showing('annotations')));
       await emit(tester, _session(me: 'grace', view: showing(null)));
       await emit(tester, null);
       expect(container.read(analysisDockProvider), [
-        AnalysisPanelKind.bookmarks,
+        AnalysisPanelKind.annotations,
       ]);
     });
 

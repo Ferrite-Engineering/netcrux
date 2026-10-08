@@ -53,7 +53,7 @@ void toggleAnalysisDock(BuildContext context, AnalysisPanelKind kind) {
   openAnalysisDock(context, kind);
 }
 
-/// The bookmark and annotation "show panel" semantics: opens [kind] when it
+/// The Annotations "show panel" semantics: opens [kind] when it
 /// is closed, brings it to the front when it is open behind another tab,
 /// and closes it when it is already the tab on screen. So the View-menu
 /// entry works as a toggle without ever closing a panel the user cannot

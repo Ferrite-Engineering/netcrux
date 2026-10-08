@@ -3,13 +3,13 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 
 /// One annotated element on the scope the canvas shows: the element, and
 /// the annotations written on it.
 ///
-/// [kind] and [targetId] use the bookmark target taxonomy
-/// ([BookmarkTargetKind]), so a marker names the element the same way the
+/// [kind] and [targetId] use the annotation target taxonomy
+/// ([AnnotationTargetKind]), so a marker names the element the same way the
 /// annotation that produced it does.
 @immutable
 class SchematicAnnotationMarker {
@@ -21,7 +21,7 @@ class SchematicAnnotationMarker {
   });
 
   /// Which kind of element is annotated.
-  final BookmarkTargetKind kind;
+  final AnnotationTargetKind kind;
 
   /// The element's id on the canvas: a cell id, a `<cell>:<port>` pin id,
   /// or a `port:<name>` boundary-port id.
@@ -85,10 +85,10 @@ class SchematicAnnotationMarkers {
     for (final marker in markers) {
       if (marker.annotationIds.isEmpty) continue;
       final into = switch (marker.kind) {
-        BookmarkTargetKind.cell => cells,
-        BookmarkTargetKind.port => pins,
-        BookmarkTargetKind.boundaryPort => boundaryPorts,
-        BookmarkTargetKind.net || BookmarkTargetKind.scope => null,
+        AnnotationTargetKind.cell => cells,
+        AnnotationTargetKind.port => pins,
+        AnnotationTargetKind.boundaryPort => boundaryPorts,
+        AnnotationTargetKind.net || AnnotationTargetKind.scope => null,
       };
       if (into == null) continue;
       final existing = into[marker.targetId];

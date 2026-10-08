@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/providers/pro_overlay_installed_provider.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
-import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
+import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -147,8 +147,6 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.showXTracePanel: _Routing.inert,
   NetcruxAction.quit: _Routing.processExit,
 
-  NetcruxAction.addBookmark: _Routing.opener,
-  NetcruxAction.showBookmarksPanel: _Routing.opener,
   NetcruxAction.addAnnotation: _Routing.opener,
   NetcruxAction.showAnnotationsPanel: _Routing.opener,
   NetcruxAction.showSourcePane: _Routing.opener,
@@ -197,12 +195,6 @@ Iterable<NetcruxAction> _actionsRouted(_Routing routing) =>
 List<Override> _recordingOpeners(List<NetcruxAction> fired) {
   void record(NetcruxAction a) => fired.add(a);
   return <Override>[
-    addBookmarkDialogOpenerProvider.overrideWithValue(
-      (_, _, {target}) => record(NetcruxAction.addBookmark),
-    ),
-    bookmarksPanelOpenerProvider.overrideWithValue(
-      (_) => record(NetcruxAction.showBookmarksPanel),
-    ),
     addAnnotationDialogOpenerProvider.overrideWithValue(
       (_, _, {target}) => record(NetcruxAction.addAnnotation),
     ),

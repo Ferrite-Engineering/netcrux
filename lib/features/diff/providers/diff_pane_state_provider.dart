@@ -178,7 +178,7 @@ class DiffPaneState {
 /// Notifier owning the per-tab [DiffPaneState].
 ///
 /// Lives in a per-tab `ProviderContainer` (mirrors how
-/// [sourcePaneStateProvider] / [bookmarkAnnotationStateProvider] /
+/// [sourcePaneStateProvider] / [annotationStateProvider] /
 /// [xTraceResultProvider] are scoped) so each open tab keeps its
 /// own active comparison, filters, and selection. The hosting
 /// `DiffPanePanel` widget routes file-picker results and "next /
@@ -310,7 +310,7 @@ class DiffPaneStateNotifier extends Notifier<DiffPaneState> {
 /// Riverpod provider exposing the per-tab [DiffPaneStateNotifier].
 ///
 /// Scoped per-tab via the workspace's [TabContainerManager], same
-/// pattern as source pane / bookmarks / X-trace.
+/// pattern as source pane / annotations / X-trace.
 final diffPaneStateProvider =
     NotifierProvider<DiffPaneStateNotifier, DiffPaneState>(
       DiffPaneStateNotifier.new,

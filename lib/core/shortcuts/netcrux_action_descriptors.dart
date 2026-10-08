@@ -188,7 +188,7 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   // ── Browsable, requires an open tab ─────────────────────────────────
   // These mutate or read per-tab state resolved through the active
   // tab's container; with no tab the dispatch has nothing to target.
-  // The panel-show actions (bookmarks / annotations / source / diff /
+  // The panel-show actions (annotations / source / diff /
   // FSM / CDC / reset / activity) open onto their panel's empty-state
   // explainer once a tab exists, so a loaded design is deliberately NOT
   // required for them.
@@ -198,7 +198,6 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   // Tab Diagnostics (WaveCrux's chord) reveals the bottom dock's
   // Diagnostics tab — per-tab state, so it needs a tab like the toggle.
   NetcruxAction.openTabDiagnostics ||
-  NetcruxAction.showBookmarksPanel ||
   NetcruxAction.showAnnotationsPanel ||
   NetcruxAction.showSourcePane ||
   NetcruxAction.closeSourcePane ||
@@ -281,7 +280,6 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   // selection and silently returned before this gate existed.
   NetcruxAction.showConeOfInfluenceFanin ||
   NetcruxAction.showConeOfInfluenceFanout ||
-  NetcruxAction.addBookmark ||
   NetcruxAction.addAnnotation ||
   NetcruxAction.openSourceForElement ||
   NetcruxAction.editSymbolForCurrentInstance ||

@@ -133,13 +133,6 @@ enum NetcruxAction implements CruxAction {
   /// [NetcruxActionRequiredTier.requiredTier]).
   showXTrace,
 
-  /// Add a bookmark on the currently selected schematic element.
-  addBookmark,
-
-  /// Show / focus the Bookmarks panel, closing it when it is already on
-  /// screen.
-  showBookmarksPanel,
-
   /// Add an annotation on the currently selected schematic element.
   addAnnotation,
 
@@ -435,8 +428,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.toggleHierarchyTree:
       case NetcruxAction.toggleInspector:
       // Showing a panel is a View concern; *creating* the thing the panel
-      // lists (Add Bookmark / Add Annotation) stays in Tools.
-      case NetcruxAction.showBookmarksPanel:
+      // lists (Add Annotation) stays in Tools.
       case NetcruxAction.showAnnotationsPanel:
       case NetcruxAction.splitPaneRight:
       case NetcruxAction.closePane:
@@ -477,7 +469,6 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.navigateNextDiff:
       case NetcruxAction.navigatePrevDiff:
         return ActionCategory.navigate;
-      case NetcruxAction.addBookmark:
       case NetcruxAction.addAnnotation:
       case NetcruxAction.openSymbolManager:
       case NetcruxAction.importSymbolFromSvg:
@@ -595,10 +586,6 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionShowXTracePanel;
       case NetcruxAction.clearXTrace:
         return l10n.actionClearXTrace;
-      case NetcruxAction.addBookmark:
-        return l10n.actionAddBookmark;
-      case NetcruxAction.showBookmarksPanel:
-        return l10n.actionShowBookmarksPanel;
       case NetcruxAction.addAnnotation:
         return l10n.actionAddAnnotation;
       case NetcruxAction.showAnnotationsPanel:
@@ -779,8 +766,6 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.openSettings:
       case NetcruxAction.openAbout:
       case NetcruxAction.jumpToTop:
-      case NetcruxAction.addBookmark:
-      case NetcruxAction.showBookmarksPanel:
       case NetcruxAction.addAnnotation:
       case NetcruxAction.showAnnotationsPanel:
       case NetcruxAction.popOutScope:
@@ -880,8 +865,6 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.leaveSession:
       // Open-core actions. Their gate admits every tier, so no denial — and no
       // feature id — can ever be produced for them.
-      case NetcruxAction.addBookmark:
-      case NetcruxAction.showBookmarksPanel:
       case NetcruxAction.addAnnotation:
       case NetcruxAction.showAnnotationsPanel:
       case NetcruxAction.openProject:

@@ -383,7 +383,7 @@ class CdcAnalysisNotifier extends Notifier<CdcAnalysisState> {
 
 /// Per-tab provider exposing the [CdcAnalysisNotifier]. Scoped per-tab
 /// via the workspace's `TabContainerManager`, same pattern as FSM /
-/// diff / source pane / bookmarks / X-trace.
+/// diff / source pane / annotations / X-trace.
 final cdcAnalysisStateProvider =
     NotifierProvider<CdcAnalysisNotifier, CdcAnalysisState>(
       CdcAnalysisNotifier.new,

@@ -4,8 +4,8 @@
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
-import 'package:netcrux/features/bookmarks/providers/annotation_reveal_request.dart';
-import 'package:netcrux/features/bookmarks/providers/bookmark_schematic_annotation_markers.dart';
+import 'package:netcrux/features/annotations/providers/annotation_reveal_request.dart';
+import 'package:netcrux/features/annotations/providers/annotation_schematic_markers.dart';
 import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
 import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.dart';
 import 'package:netcrux/features/diagnostics/providers/netlist_footprint_provider.dart';
@@ -24,9 +24,9 @@ import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
-import 'package:netcrux/services/session/bookmark_annotation_state.dart';
-import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
-import 'package:netcrux/services/session/in_session_bookmark_annotation_store.dart';
+import 'package:netcrux/services/session/annotation_state.dart';
+import 'package:netcrux/services/session/annotation_store_provider.dart';
+import 'package:netcrux/services/session/in_session_annotation_store.dart';
 
 /// Per-tab override list applied on top of [`tabIdProvider`] when
 /// [`TabContainerManager`] creates a fresh `ProviderContainer` for a new
@@ -103,7 +103,7 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // hierarchy state it pulses.
     scopeFlashProvider.overrideWith(ScopeFlashNotifier.new),
     // Per-tab RTL source-pane state. Documented per-tab since the pane
-    // landed (mirrors bookmarks / X-trace scoping — see
+    // landed (mirrors annotations / X-trace scoping — see
     // source_pane_state_provider.dart's doc comment)
     // but, like the CDC state notifier before it, was only *documented*
     // per-tab, never actually re-bound here — so it hoisted to the ROOT
@@ -138,24 +138,24 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     selectedCdcCrossingProvider.overrideWith(selectedCdcCrossing),
     selectedClockDomainProvider.overrideWith(selectedClockDomain),
     cdcSeverityFilterProvider.overrideWith(cdcSeverityFilter),
-    // Bookmarks and annotations belong to the design in the tab they were
+    // Annotations belong to the design in the tab they were
     // made in. As root-only registrations, the keepAlive state notifier
-    // would be one app-wide list: a bookmark on one design's cell would
+    // would be one app-wide list: an annotation on one design's cell would
     // show in every tab's panel and be saved into every tab's session. The
     // store and the snapshot the panels watch read the state notifier
     // through their own `ref`, so they re-bind with it; the annotation
     // reveal request names an annotation of this tab, and the canvas markers
     // read the tab's annotations and its hierarchy.
-    bookmarkAnnotationStateProvider.overrideWith(BookmarkAnnotationState.new),
-    bookmarkAnnotationStoreProvider.overrideWith(
-      InSessionBookmarkAnnotationStore.new,
+    annotationStateProvider.overrideWith(AnnotationState.new),
+    annotationStoreProvider.overrideWith(
+      InSessionAnnotationStore.new,
     ),
-    bookmarkAnnotationSnapshotProvider.overrideWith(
-      (ref) => ref.watch(bookmarkAnnotationStateProvider),
+    annotationSnapshotProvider.overrideWith(
+      (ref) => ref.watch(annotationStateProvider),
     ),
     annotationRevealRequestProvider.overrideWith(AnnotationRevealRequest.new),
     schematicAnnotationMarkersProvider.overrideWith(
-      bookmarkSchematicAnnotationMarkers,
+      annotationSchematicMarkers,
     ),
   ];
 }

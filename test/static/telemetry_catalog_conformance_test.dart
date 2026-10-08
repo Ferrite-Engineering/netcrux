@@ -252,13 +252,6 @@ void main() {
       );
     });
 
-    test('annotation.added.kind covers every NetcruxAnnotationKind', () {
-      expect(
-        valuesFor('annotation.added', 'kind').toSet(),
-        NetcruxAnnotationKind.values.map(telemetryEnumToken).toSet(),
-      );
-    });
-
     test('tier.gate_hit.feature is NetcruxGatedFeature', () {
       // The gate-denial guard: the ONLY thing a denial may report as `feature`
       // is a constant of this enum. Adding a Pro action without extending the

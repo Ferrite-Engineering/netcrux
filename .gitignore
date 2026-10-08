@@ -52,14 +52,13 @@ app.*.map.json
 /android/app/release
 
 # Per-project NetCrux Pro runtime artifacts. Pro features (custom cell
-# symbols, bookmarks, annotations, …) write into directories sibling
+# symbols, annotations, …) write into directories sibling
 # to the user's project file (e.g. `<project>/.netcrux-symbols/`). The
 # rule lives in the open-core repo because fixture projects under
 # `test/fixtures/project/` are accessed in CI; Pro tests can create
 # these dirs at any time and they must not be committed.
 **/.netcrux/
 **/.netcrux-symbols/
-**/.netcrux-bookmarks.json
 **/.netcrux-annotations.json
 
 # Dart & Flutter DevTools local settings (per-developer, regenerated on demand)

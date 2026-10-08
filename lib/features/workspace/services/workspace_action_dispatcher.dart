@@ -24,7 +24,7 @@ import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/about/netcrux_about_dialog.dart';
-import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
+import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/command_palette/widgets/command_palette_dialog.dart';
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
 import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart';
@@ -230,10 +230,6 @@ class WorkspaceActionDispatcher {
         unawaited(_onMoveTabToOtherPane());
       case NetcruxAction.showCrossProbePanel:
         _onToggleCrossProbePanel();
-      case NetcruxAction.addBookmark:
-        _ref.read(addBookmarkDialogOpenerProvider)(context, _ref);
-      case NetcruxAction.showBookmarksPanel:
-        _ref.read(bookmarksPanelOpenerProvider)(context);
       case NetcruxAction.addAnnotation:
         _ref.read(addAnnotationDialogOpenerProvider)(context, _ref);
       case NetcruxAction.showAnnotationsPanel:

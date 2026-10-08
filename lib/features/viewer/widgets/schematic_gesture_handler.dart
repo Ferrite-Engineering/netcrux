@@ -8,14 +8,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
-import 'package:netcrux/domain/models/bookmark_annotation_target.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
-import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
+import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
@@ -454,7 +453,7 @@ class _SchematicGestureHandlerState
     ref.read(showAnnotationForTargetOpenerProvider)(
       context,
       ref,
-      BookmarkAnnotationTarget(kind: marker.kind, targetId: marker.targetId),
+      AnnotationTarget(kind: marker.kind, targetId: marker.targetId),
     );
     return true;
   }
@@ -466,9 +465,9 @@ class _SchematicGestureHandlerState
     SchematicAnnotationMarker marker,
   ) {
     switch (marker.kind) {
-      case BookmarkTargetKind.cell:
+      case AnnotationTargetKind.cell:
         return SelectedElement.cell(cellId: marker.targetId);
-      case BookmarkTargetKind.port:
+      case AnnotationTargetKind.port:
         final cellId = cellIdOfPinId(marker.targetId);
         if (cellId == null) return null;
         return SelectedElement.port(
@@ -476,7 +475,7 @@ class _SchematicGestureHandlerState
           portId: marker.targetId,
           portName: marker.targetId.substring(cellId.length + 1),
         );
-      case BookmarkTargetKind.boundaryPort:
+      case AnnotationTargetKind.boundaryPort:
         for (final port in laidOut.graph.boundaryPorts) {
           if (port.id == marker.targetId) {
             return SelectedElement.boundaryPort(
@@ -486,8 +485,8 @@ class _SchematicGestureHandlerState
           }
         }
         return null;
-      case BookmarkTargetKind.net:
-      case BookmarkTargetKind.scope:
+      case AnnotationTargetKind.net:
+      case AnnotationTargetKind.scope:
         return null;
     }
   }

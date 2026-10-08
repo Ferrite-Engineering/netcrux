@@ -202,6 +202,14 @@ const _exemptions = <_Exemption>[
     _Consumer.proOverlay,
     _overlayNetlistShim,
   ),
+  _Exemption(
+    'lib/services/telemetry/netcrux_telemetry_vocabulary.dart',
+    _Consumer.proOverlay,
+    'The closed vocabulary of a telemetry event whose call sites are all in '
+        'the Pro overlay (`analysis.run {kind}`). It is declared beside the '
+        'event catalog so the conformance test can hold the two together; '
+        'no open-core code records the event.',
+  ),
 
   // Support code for tests and tools.
   _Exemption(

@@ -1311,14 +1311,6 @@
   "@actionClearXTrace": {
     "description": "Command palette / menu label that clears any active X-trace result."
   },
-  "actionAddBookmark": "북마크 추가…",
-  "@actionAddBookmark": {
-    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
-  },
-  "actionShowBookmarksPanel": "북마크 패널 표시",
-  "@actionShowBookmarksPanel": {
-    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
-  },
   "actionAddAnnotation": "주석 추가…",
   "@actionAddAnnotation": {
     "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
@@ -2332,7 +2324,6 @@
   "dockTabActivity": "활동",
   "dockTabDiff": "차이",
   "dockTabSource": "소스",
-  "dockTabBookmarks": "북마크",
   "dockTabAnnotations": "주석",
   "dockCollapseTooltip": "패널 숨기기",
   "accessibilityRightDockRegion": "세부 정보 독",
@@ -2451,6 +2442,18 @@
   "@annotationDialogAuthorLabel": {
     "description": "Form field label for the optional author label on an annotation."
   },
+  "annotationDialogTitleLabel": "제목",
+  "@annotationDialogTitleLabel": {
+    "description": "Form field label for the optional one-line title of an annotation, shown above the Markdown body. An annotation needs a title, a body, or both."
+  },
+  "annotationDialogTitleHint": "한 줄로 입력하며 주석 패널에 표시됩니다",
+  "@annotationDialogTitleHint": {
+    "description": "Hint inside the empty Title field of the Add / Edit Annotation dialog: the title is a single line and is what the Annotations panel lists the annotation by."
+  },
+  "annotationDialogEmptyError": "제목 또는 본문을 입력하세요.",
+  "@annotationDialogEmptyError": {
+    "description": "Error shown under the Body field, and announced, when the user presses Save on the Add / Edit Annotation dialog with both the title and the body empty."
+  },
   "annotationDialogBodyLabel": "본문 (마크다운)",
   "@annotationDialogBodyLabel": {
     "description": "Form field label for the markdown body of an annotation."
@@ -2471,78 +2474,42 @@
   "@annotationsPanelTitle": {
     "description": "Title of the Annotations panel listing all annotations in the active session."
   },
-  "bookmarkContextMenuDelete": "북마크 삭제",
-  "@bookmarkContextMenuDelete": {
-    "description": "Context-menu item that deletes a bookmark."
+  "annotationDialogCancelButton": "취소",
+  "@annotationDialogCancelButton": {
+    "description": "Cancel button on the Add / Edit Annotation dialog."
   },
-  "bookmarkContextMenuEdit": "북마크 편집…",
-  "@bookmarkContextMenuEdit": {
-    "description": "Context-menu item that opens the Edit Bookmark dialog on a bookmark row."
+  "annotationDialogSaveButton": "저장",
+  "@annotationDialogSaveButton": {
+    "description": "Save button on the Add / Edit Annotation dialog."
   },
-  "bookmarkDialogCancelButton": "취소",
-  "@bookmarkDialogCancelButton": {
-    "description": "Cancel button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogEditTitle": "북마크 편집",
-  "@bookmarkDialogEditTitle": {
-    "description": "Title of the dialog when editing an existing bookmark."
-  },
-  "bookmarkDialogNameLabel": "이름",
-  "@bookmarkDialogNameLabel": {
-    "description": "Form field label for the bookmark display name."
-  },
-  "bookmarkDialogNoteLabel": "메모 (선택)",
-  "@bookmarkDialogNoteLabel": {
-    "description": "Form field label for the optional free-text note attached to a bookmark."
-  },
-  "bookmarkDialogSaveButton": "저장",
-  "@bookmarkDialogSaveButton": {
-    "description": "Save button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogTitle": "북마크 추가",
-  "@bookmarkDialogTitle": {
-    "description": "Title of the dialog for adding a bookmark on the currently selected schematic element."
-  },
-  "bookmarkMenuAddAnnotation": "주석 추가…",
-  "@bookmarkMenuAddAnnotation": {
+  "annotationMenuAdd": "주석 추가…",
+  "@annotationMenuAdd": {
     "description": "Schematic context-menu entry that opens the Add Annotation dialog pre-populated with the right-clicked element as the target."
   },
-  "bookmarkMenuAddBookmark": "북마크 추가…",
-  "@bookmarkMenuAddBookmark": {
-    "description": "Schematic context-menu entry that opens the Add Bookmark dialog pre-populated with the right-clicked element as the target."
+  "annotationMenuShow": "주석 표시",
+  "annotationTargetKindBoundaryPort": "경계 포트",
+  "@annotationTargetKindBoundaryPort": {
+    "description": "Human-readable label for AnnotationTargetKind.boundaryPort."
   },
-  "bookmarkMenuShowAnnotation": "주석 표시",
-  "bookmarkTargetKindBoundaryPort": "경계 포트",
-  "@bookmarkTargetKindBoundaryPort": {
-    "description": "Human-readable label for BookmarkTargetKind.boundaryPort."
+  "annotationTargetKindCell": "셀",
+  "@annotationTargetKindCell": {
+    "description": "Human-readable label for the AnnotationTargetKind.cell value (shown in the annotation row subtitle)."
   },
-  "bookmarkTargetKindCell": "셀",
-  "@bookmarkTargetKindCell": {
-    "description": "Human-readable label for the BookmarkTargetKind.cell value (shown in the bookmark row subtitle)."
+  "annotationTargetKindNet": "넷",
+  "@annotationTargetKindNet": {
+    "description": "Human-readable label for AnnotationTargetKind.net."
   },
-  "bookmarkTargetKindNet": "넷",
-  "@bookmarkTargetKindNet": {
-    "description": "Human-readable label for BookmarkTargetKind.net."
+  "annotationTargetKindPort": "포트",
+  "@annotationTargetKindPort": {
+    "description": "Human-readable label for AnnotationTargetKind.port."
   },
-  "bookmarkTargetKindPort": "포트",
-  "@bookmarkTargetKindPort": {
-    "description": "Human-readable label for BookmarkTargetKind.port."
+  "annotationTargetKindScope": "범위",
+  "@annotationTargetKindScope": {
+    "description": "Human-readable label for AnnotationTargetKind.scope."
   },
-  "bookmarkTargetKindScope": "범위",
-  "@bookmarkTargetKindScope": {
-    "description": "Human-readable label for BookmarkTargetKind.scope."
-  },
-  "bookmarksPanelEmpty": "아직 북마크가 없습니다. 셀, 와이어, 포트를 마우스 오른쪽 버튼으로 클릭하고 \"북마크 추가…\"를 선택하세요.",
-  "@bookmarksPanelEmpty": {
-    "description": "Placeholder shown in the Bookmarks panel when the session has no bookmarks."
-  },
-  "bookmarksPanelRowSemantics": "{name}, {kind} {targetId}",
-  "bookmarksPanelRowSemanticsWithNote": "{name}, {kind} {targetId}. 메모: {note}",
-  "bookmarksPanelTargetNotFound": "{name}이(가) 이 설계에 없습니다.",
-  "bookmarksPanelTitle": "북마크",
-  "@bookmarksPanelTitle": {
-    "description": "Title of the Bookmarks panel listing all bookmarked schematic elements in the active session."
-  },
+  "annotationsPanelRowSemantics": "{heading}, {kind} {targetId}",
+  "annotationsPanelRowAuthor": "작성자: {author}",
+  "annotationsPanelTargetNotFound": "{name}이(가) 이 설계에 없습니다.",
   "inlineElementPickerCancel": "취소",
   "@inlineElementPickerCancel": {
     "description": "Cancel button in the inline element picker dialog."
@@ -2573,22 +2540,22 @@
   },
   "inlineElementPickerTitle": "회로도 요소 선택",
   "@inlineElementPickerTitle": {
-    "description": "Title of the inline element picker dialog shown when an add-bookmark / add-annotation flow is invoked without an active selection."
+    "description": "Title of the inline element picker dialog shown when the Add Annotation flow is invoked without an active selection."
   },
-  "bookmarkAnnotationUnsavedChangesTitle": "변경 사항을 버리시겠습니까?",
-  "@bookmarkAnnotationUnsavedChangesTitle": {
-    "description": "Unsaved changes confirm title."
+  "annotationUnsavedChangesTitle": "변경 사항을 버리시겠습니까?",
+  "@annotationUnsavedChangesTitle": {
+    "description": "Title of the unsaved-changes confirmation shown when the user cancels the Add / Edit Annotation dialog with pending edits."
   },
-  "bookmarkAnnotationUnsavedChangesBody": "저장되지 않은 변경 사항이 있습니다. 버리시겠습니까?",
-  "@bookmarkAnnotationUnsavedChangesBody": {
-    "description": "Unsaved changes confirm body."
+  "annotationUnsavedChangesBody": "저장되지 않은 변경 사항이 있습니다. 버리시겠습니까?",
+  "@annotationUnsavedChangesBody": {
+    "description": "Body text of the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesDiscard": "버리기",
-  "@bookmarkAnnotationUnsavedChangesDiscard": {
-    "description": "Discard action."
+  "annotationUnsavedChangesDiscard": "버리기",
+  "@annotationUnsavedChangesDiscard": {
+    "description": "Destructive button label on the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesKeep": "편집 계속",
-  "@bookmarkAnnotationUnsavedChangesKeep": {
-    "description": "Keep editing action."
+  "annotationUnsavedChangesKeep": "편집 계속",
+  "@annotationUnsavedChangesKeep": {
+    "description": "Cancel button label on the unsaved-changes confirmation dialog."
   }
 }

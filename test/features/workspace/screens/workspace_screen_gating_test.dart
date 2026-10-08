@@ -17,7 +17,7 @@ import 'package:netcrux/core/shortcuts/netcrux_action_descriptors.dart';
 import 'package:netcrux/core/shortcuts/shortcut_manager_widget.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
-import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
+import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/services/activity/activity_heatmap_pane_openers.dart';
 import 'package:netcrux/services/cdc/cdc_pane_openers.dart';
@@ -41,7 +41,7 @@ import '../../../helpers/app_boot_overrides.dart';
 /// opener never fires for an insufficient license tier.
 ///
 /// This is the regression test for the 2026-07-16 review finding: nine
-/// Pro-tier actions (bookmark / annotation / source-pane / waveform /
+/// Pro-tier actions (annotation / source-pane / waveform /
 /// activity) dispatched their openers UNGUARDED, so post-beta an
 /// open-core-tier user could invoke the full Pro UI from the command
 /// palette. The fix collapsed the five duplicate `_xxxActionAllowed`
@@ -255,15 +255,13 @@ void main() {
   );
 
   testWidgets(
-    'bookmark and annotation actions reach their openers at every tier',
+    'annotation actions reach their openers at every tier',
     (tester) async {
-      // Bookmarks and annotations are free: post-beta, at the open-core
+      // Annotations are free: post-beta, at the open-core
       // tier, with no overlay installed, the dispatcher neither shows the
       // upgrade dialog nor says "requires NetCrux Pro".
       const freeActions = <NetcruxAction>[
-        NetcruxAction.addBookmark,
         NetcruxAction.addAnnotation,
-        NetcruxAction.showBookmarksPanel,
         NetcruxAction.showAnnotationsPanel,
       ];
       final fired = <NetcruxAction>{};
@@ -341,14 +339,8 @@ void _dispatchAll(WidgetTester tester, List<NetcruxAction> actions) {
 /// to. Each spy adds its action to [fired] so the tests can assert which
 /// openers the dispatcher actually reached.
 List<Override> _spyOpenerOverrides(Set<NetcruxAction> fired) => <Override>[
-  bookmarksPanelOpenerProvider.overrideWithValue(
-    (_) => fired.add(NetcruxAction.showBookmarksPanel),
-  ),
   annotationsPanelOpenerProvider.overrideWithValue(
     (_) => fired.add(NetcruxAction.showAnnotationsPanel),
-  ),
-  addBookmarkDialogOpenerProvider.overrideWithValue(
-    (_, _, {target}) => fired.add(NetcruxAction.addBookmark),
   ),
   addAnnotationDialogOpenerProvider.overrideWithValue(
     (_, _, {target}) => fired.add(NetcruxAction.addAnnotation),

@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    "fsm_lock.v"
+  ],
+  "topModule": "fsm_lock",
+  "scopePath": [],
+  "zoom": 1.0,
+  "panX": 0.0,
+  "panY": 0.0,
+  "expandedScopes": [
+    ""
+  ],
+  "bookmarks": [
+    {
+      "id": "bm-1759780000000-0",
+      "name": "State register",
+      "targetKind": "cell",
+      "targetId": "$procdff$17",
+      "createdAtMillis": 1759780000000,
+      "note": "Check the reset value",
+      "moduleName": "fsm_lock"
+    },
+    {
+      "id": "bm-1759780000100-1",
+      "name": "Unlock input",
+      "targetKind": "boundaryPort",
+      "targetId": "port:unlock",
+      "createdAtMillis": 1759780000100
+    }
+  ],
+  "annotations": [
+    {
+      "id": "an-1759780000500-2",
+      "targetKind": "cell",
+      "targetId": "$procdff$17",
+      "body": "Resets to **IDLE**, not LOCKED.",
+      "createdAtMillis": 1759780000500,
+      "updatedAtMillis": 1759780000500,
+      "author": "me",
+      "moduleName": "fsm_lock"
+    }
+  ]
+}

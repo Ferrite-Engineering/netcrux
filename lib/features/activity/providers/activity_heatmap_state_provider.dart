@@ -173,7 +173,7 @@ class ActivityHeatmapNotifier extends Notifier<ActivityHeatmapState> {
 
 /// Per-tab provider exposing the [ActivityHeatmapNotifier]. Scoped
 /// per-tab via the workspace's `TabContainerManager`, same pattern
-/// as CDC / reset domain / FSM / diff / source pane / bookmarks /
+/// as CDC / reset domain / FSM / diff / source pane / annotations /
 /// X-trace.
 final activityHeatmapStateProvider =
     NotifierProvider<ActivityHeatmapNotifier, ActivityHeatmapState>(

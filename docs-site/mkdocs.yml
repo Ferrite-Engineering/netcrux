@@ -46,6 +46,10 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.keys
+# Old page names kept as a link to their new home, so a saved link or an
+# older in-app help link still lands somewhere.
+not_in_nav: |
+  /bookmarks.md
 validation:
   omitted_files: warn
   absolute_links: info
@@ -71,7 +75,7 @@ nav:
       - Inspector & RTL source: source-and-inspection.md
   - Customize & integrate:
       - Custom cell symbols: customizing.md
-      - Bookmarks & annotations: bookmarks.md
+      - Annotations: annotations.md
       - Collaborative sessions: collaboration.md
       - Cross-probe & the suite: integrations.md
       - CXP integration reference: integrations/cxp.md

@@ -356,7 +356,7 @@ void main() {
     });
 
     testWidgets(
-      'open core adds Add Bookmark and Add Annotation below a divider',
+      'open core adds Add Annotation below a divider',
       (
         tester,
       ) async {
@@ -366,10 +366,9 @@ void main() {
         await tester.pumpAndSettle();
 
         final l10n = L10N.of(h.context);
-        expect(find.text(l10n.bookmarkMenuAddBookmark), findsOneWidget);
-        expect(find.text(l10n.bookmarkMenuAddAnnotation), findsOneWidget);
+        expect(find.text(l10n.annotationMenuAdd), findsOneWidget);
         expect(find.byType(PopupMenuDivider), findsOneWidget);
-        // Free: no tier chip beside either entry.
+        // Free: no tier chip beside the entry.
         expect(find.byType(NetCruxFeatureTierBadge), findsNothing);
       },
     );

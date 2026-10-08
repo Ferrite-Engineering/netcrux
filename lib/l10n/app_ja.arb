@@ -1311,14 +1311,6 @@
   "@actionClearXTrace": {
     "description": "Command palette / menu label that clears any active X-trace result."
   },
-  "actionAddBookmark": "ブックマークを追加…",
-  "@actionAddBookmark": {
-    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
-  },
-  "actionShowBookmarksPanel": "ブックマークパネルを表示",
-  "@actionShowBookmarksPanel": {
-    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
-  },
   "actionAddAnnotation": "注釈を追加…",
   "@actionAddAnnotation": {
     "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
@@ -2332,7 +2324,6 @@
   "dockTabActivity": "アクティビティ",
   "dockTabDiff": "差分",
   "dockTabSource": "ソース",
-  "dockTabBookmarks": "ブックマーク",
   "dockTabAnnotations": "注釈",
   "dockCollapseTooltip": "パネルを隠す",
   "accessibilityRightDockRegion": "詳細ドック",
@@ -2451,6 +2442,18 @@
   "@annotationDialogAuthorLabel": {
     "description": "Form field label for the optional author label on an annotation."
   },
+  "annotationDialogTitleLabel": "タイトル",
+  "@annotationDialogTitleLabel": {
+    "description": "Form field label for the optional one-line title of an annotation, shown above the Markdown body. An annotation needs a title, a body, or both."
+  },
+  "annotationDialogTitleHint": "1 行で入力。注釈パネルに表示されます",
+  "@annotationDialogTitleHint": {
+    "description": "Hint inside the empty Title field of the Add / Edit Annotation dialog: the title is a single line and is what the Annotations panel lists the annotation by."
+  },
+  "annotationDialogEmptyError": "タイトルまたは本文を入力してください。",
+  "@annotationDialogEmptyError": {
+    "description": "Error shown under the Body field, and announced, when the user presses Save on the Add / Edit Annotation dialog with both the title and the body empty."
+  },
   "annotationDialogBodyLabel": "本文（Markdown）",
   "@annotationDialogBodyLabel": {
     "description": "Form field label for the markdown body of an annotation."
@@ -2471,78 +2474,42 @@
   "@annotationsPanelTitle": {
     "description": "Title of the Annotations panel listing all annotations in the active session."
   },
-  "bookmarkContextMenuDelete": "ブックマークを削除",
-  "@bookmarkContextMenuDelete": {
-    "description": "Context-menu item that deletes a bookmark."
+  "annotationDialogCancelButton": "キャンセル",
+  "@annotationDialogCancelButton": {
+    "description": "Cancel button on the Add / Edit Annotation dialog."
   },
-  "bookmarkContextMenuEdit": "ブックマークを編集…",
-  "@bookmarkContextMenuEdit": {
-    "description": "Context-menu item that opens the Edit Bookmark dialog on a bookmark row."
+  "annotationDialogSaveButton": "保存",
+  "@annotationDialogSaveButton": {
+    "description": "Save button on the Add / Edit Annotation dialog."
   },
-  "bookmarkDialogCancelButton": "キャンセル",
-  "@bookmarkDialogCancelButton": {
-    "description": "Cancel button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogEditTitle": "ブックマークを編集",
-  "@bookmarkDialogEditTitle": {
-    "description": "Title of the dialog when editing an existing bookmark."
-  },
-  "bookmarkDialogNameLabel": "名前",
-  "@bookmarkDialogNameLabel": {
-    "description": "Form field label for the bookmark display name."
-  },
-  "bookmarkDialogNoteLabel": "ノート（任意）",
-  "@bookmarkDialogNoteLabel": {
-    "description": "Form field label for the optional free-text note attached to a bookmark."
-  },
-  "bookmarkDialogSaveButton": "保存",
-  "@bookmarkDialogSaveButton": {
-    "description": "Save button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogTitle": "ブックマークを追加",
-  "@bookmarkDialogTitle": {
-    "description": "Title of the dialog for adding a bookmark on the currently selected schematic element."
-  },
-  "bookmarkMenuAddAnnotation": "注釈を追加…",
-  "@bookmarkMenuAddAnnotation": {
+  "annotationMenuAdd": "注釈を追加…",
+  "@annotationMenuAdd": {
     "description": "Schematic context-menu entry that opens the Add Annotation dialog pre-populated with the right-clicked element as the target."
   },
-  "bookmarkMenuAddBookmark": "ブックマークを追加…",
-  "@bookmarkMenuAddBookmark": {
-    "description": "Schematic context-menu entry that opens the Add Bookmark dialog pre-populated with the right-clicked element as the target."
+  "annotationMenuShow": "注釈を表示",
+  "annotationTargetKindBoundaryPort": "境界ポート",
+  "@annotationTargetKindBoundaryPort": {
+    "description": "Human-readable label for AnnotationTargetKind.boundaryPort."
   },
-  "bookmarkMenuShowAnnotation": "注釈を表示",
-  "bookmarkTargetKindBoundaryPort": "境界ポート",
-  "@bookmarkTargetKindBoundaryPort": {
-    "description": "Human-readable label for BookmarkTargetKind.boundaryPort."
+  "annotationTargetKindCell": "セル",
+  "@annotationTargetKindCell": {
+    "description": "Human-readable label for the AnnotationTargetKind.cell value (shown in the annotation row subtitle)."
   },
-  "bookmarkTargetKindCell": "セル",
-  "@bookmarkTargetKindCell": {
-    "description": "Human-readable label for the BookmarkTargetKind.cell value (shown in the bookmark row subtitle)."
+  "annotationTargetKindNet": "ネット",
+  "@annotationTargetKindNet": {
+    "description": "Human-readable label for AnnotationTargetKind.net."
   },
-  "bookmarkTargetKindNet": "ネット",
-  "@bookmarkTargetKindNet": {
-    "description": "Human-readable label for BookmarkTargetKind.net."
+  "annotationTargetKindPort": "ポート",
+  "@annotationTargetKindPort": {
+    "description": "Human-readable label for AnnotationTargetKind.port."
   },
-  "bookmarkTargetKindPort": "ポート",
-  "@bookmarkTargetKindPort": {
-    "description": "Human-readable label for BookmarkTargetKind.port."
+  "annotationTargetKindScope": "スコープ",
+  "@annotationTargetKindScope": {
+    "description": "Human-readable label for AnnotationTargetKind.scope."
   },
-  "bookmarkTargetKindScope": "スコープ",
-  "@bookmarkTargetKindScope": {
-    "description": "Human-readable label for BookmarkTargetKind.scope."
-  },
-  "bookmarksPanelEmpty": "ブックマークはまだありません。セル / ワイヤ / ポートを右クリックして「ブックマークを追加…」を選択してください。",
-  "@bookmarksPanelEmpty": {
-    "description": "Placeholder shown in the Bookmarks panel when the session has no bookmarks."
-  },
-  "bookmarksPanelRowSemantics": "{name}、{kind} {targetId}",
-  "bookmarksPanelRowSemanticsWithNote": "{name}、{kind} {targetId}。ノート：{note}",
-  "bookmarksPanelTargetNotFound": "{name} はこの設計にありません。",
-  "bookmarksPanelTitle": "ブックマーク",
-  "@bookmarksPanelTitle": {
-    "description": "Title of the Bookmarks panel listing all bookmarked schematic elements in the active session."
-  },
+  "annotationsPanelRowSemantics": "{heading}、{kind} {targetId}",
+  "annotationsPanelRowAuthor": "著者: {author}",
+  "annotationsPanelTargetNotFound": "{name} はこの設計にありません。",
   "inlineElementPickerCancel": "キャンセル",
   "@inlineElementPickerCancel": {
     "description": "Cancel button in the inline element picker dialog."
@@ -2573,22 +2540,22 @@
   },
   "inlineElementPickerTitle": "回路図要素を選択",
   "@inlineElementPickerTitle": {
-    "description": "Title of the inline element picker dialog shown when an add-bookmark / add-annotation flow is invoked without an active selection."
+    "description": "Title of the inline element picker dialog shown when the Add Annotation flow is invoked without an active selection."
   },
-  "bookmarkAnnotationUnsavedChangesTitle": "変更を破棄しますか？",
-  "@bookmarkAnnotationUnsavedChangesTitle": {
-    "description": "Unsaved changes confirm title."
+  "annotationUnsavedChangesTitle": "変更を破棄しますか？",
+  "@annotationUnsavedChangesTitle": {
+    "description": "Title of the unsaved-changes confirmation shown when the user cancels the Add / Edit Annotation dialog with pending edits."
   },
-  "bookmarkAnnotationUnsavedChangesBody": "保存されていない変更があります。破棄しますか？",
-  "@bookmarkAnnotationUnsavedChangesBody": {
-    "description": "Unsaved changes confirm body."
+  "annotationUnsavedChangesBody": "保存されていない変更があります。破棄しますか？",
+  "@annotationUnsavedChangesBody": {
+    "description": "Body text of the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesDiscard": "破棄",
-  "@bookmarkAnnotationUnsavedChangesDiscard": {
-    "description": "Discard action."
+  "annotationUnsavedChangesDiscard": "破棄",
+  "@annotationUnsavedChangesDiscard": {
+    "description": "Destructive button label on the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesKeep": "編集を続ける",
-  "@bookmarkAnnotationUnsavedChangesKeep": {
-    "description": "Keep editing action."
+  "annotationUnsavedChangesKeep": "編集を続ける",
+  "@annotationUnsavedChangesKeep": {
+    "description": "Cancel button label on the unsaved-changes confirmation dialog."
   }
 }

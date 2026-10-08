@@ -20,7 +20,7 @@ import 'package:netcrux/domain/models/custom_cell_symbol/custom_cell_symbol.dart
 /// the build_runner generator dep. Matches the
 /// [netlistDiffServiceProvider] / [sourcePaneServiceProvider] /
 /// [coneOfInfluenceServiceProvider] / [xTraceServiceProvider] /
-/// [bookmarkAnnotationStoreProvider] pattern.
+/// [annotationStoreProvider] pattern.
 final customCellSymbolRegistryProvider = Provider<CustomCellSymbolRegistry>(
   (ref) => const NoopCustomCellSymbolRegistry(),
   name: 'customCellSymbolRegistryProvider',

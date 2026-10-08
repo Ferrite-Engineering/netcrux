@@ -26,7 +26,7 @@ import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 /// - **Navigate** — Scope | Trace overlays + Zoom to Selection | Cone of
 ///   influence | X-trace | Diff
 /// - **Search** — Find
-/// - **Tools** — Bookmarks/annotations | Symbols | FSM | CDC | Reset domain |
+/// - **Tools** — Annotations | Symbols | FSM | CDC | Reset domain |
 ///   Activity | Diagnostics (last)
 /// - **Help** — Documentation | Report Issue | Check for Updates | About
 ///
@@ -112,7 +112,6 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.toggleHierarchyTree,
       NetcruxAction.toggleInspector,
       NetcruxAction.showCrossProbePanel,
-      NetcruxAction.showBookmarksPanel,
       NetcruxAction.showAnnotationsPanel,
       NetcruxAction.showSourcePane,
       NetcruxAction.closeSourcePane,
@@ -184,7 +183,6 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
   // ── Tools ─────────────────────────────────────────────────────────────────
   ActionCategory.tools: [
     [
-      NetcruxAction.addBookmark,
       NetcruxAction.addAnnotation,
     ],
     [

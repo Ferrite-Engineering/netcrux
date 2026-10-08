@@ -24,7 +24,7 @@ NetCrux ships as a single application. The free **Open Core** browser is complet
 
 | Badge | Meaning |
 |---|---|
-| *(no badge)* | Open Core. Free and open. No account, no license key, no time limit. From NetCrux 1.1 that includes bookmarks and annotations, and joining a collaborative session somebody else is hosting. |
+| *(no badge)* | Open Core. Free and open. No account, no license key, no time limit. From NetCrux 1.1 that includes annotations, and joining a collaborative session somebody else is hosting. |
 | <span class="tier tier-pro">Pro</span> | Pro tier. Cone of influence, X-Trace, netlist diff, custom symbols, the RTL source pane, CDC, reset-domain and FSM analysis, and cross-probing from the schematic context menu. |
 | <span class="tier tier-enterprise">Enterprise</span> | Enterprise tier. Hosting collaborative schematic sessions (on your local network or over the internet; from NetCrux 1.1, joining a session is free, hosting is Enterprise), org-wide symbol libraries, org-wide policy from a signed configuration file, and the audit log. The centralized source server is not built; see [tiers & licensing](https://edacrux.app/licensing#editions). |
 | <span class="tier tier-edu">EDU</span> | Education tier. Every Pro feature, free for verified students and non-commercial use. |
@@ -49,7 +49,7 @@ The NetCrux download includes the Pro and Enterprise features; a build of the op
 - [Structural analysis](analysis.md) — Netlist diff, CDC and reset-domain analysis, FSM detection, and the switching-activity heatmap.
 - [Inspector & RTL source](source-and-inspection.md) — The inspector panel, the RTL source pane, and the elaboration diagnostics panel.
 - [Custom cell symbols](customizing.md) — The symbol manager, the three-tab symbol editor, the SVG sanitizer, and project versus user scope.
-- [Bookmarks & annotations](bookmarks.md) — Pin names and notes to cells, nets and ports, and save them with the session.
+- [Annotations](annotations.md) — Pin titled notes to cells, nets and ports, jump back to them from one list, and save them with the session.
 - [Cross-probe & the suite](integrations.md) — The CXP cross-probe protocol with WaveCrux, LintCrux and SimCrux, plus Enterprise services.
 - [Administration <span class="tier tier-enterprise">Enterprise</span>](administration.md) — For the person deploying NetCrux across a fleet: org-wide symbol libraries from your own share, the security model behind collaborative sessions and its limits, the audit events NetCrux records, and managed installs.
 - [Cookbook](cookbook.md) — Task-driven recipes: trace a signal to its source, diff two revisions, triage a CDC crossing, make a custom symbol, and more.

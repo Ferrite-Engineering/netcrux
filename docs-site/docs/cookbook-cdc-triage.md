@@ -35,9 +35,9 @@ Elaborate the design and make sure the clocks are real clocks — a CDC view is 
 
     With the destination register selected, use **Go to source** (or **Show Source for this Element**) to open the [RTL source pane](source-and-inspection.md#source-pane) at the `always_ff` that should be doing the synchronizing, and fix it there.
 
-!!! tip "Bookmark the bad ones"
+!!! tip "Annotate the bad ones"
 
-    Right-click each unsynchronized crossing's destination and choose **Add Bookmark…**, with a note on what is wrong, so you have a punch list in the **Bookmarks** tab. Hover a row to read its note; click it to select that register again. Save the session to keep it.
+    Right-click each unsynchronized crossing's destination and choose **Add Annotation…**, with a short title and a note on what is wrong, so you have a punch list in the [**Annotations**](annotations.md) tab. Click a row to select that register again. Save the session to keep it.
 
 ## Where to go next {#next}
 

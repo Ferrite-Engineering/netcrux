@@ -16,7 +16,7 @@ import 'package:netcrux/domain/interfaces/netlist_diff_service.dart';
 /// Pro overlay can override it with `.overrideWith` without taking
 /// the build_runner generator dep. Matches the
 /// [sourcePaneServiceProvider] / [coneOfInfluenceServiceProvider] /
-/// [xTraceServiceProvider] / [bookmarkAnnotationStoreProvider]
+/// [xTraceServiceProvider] / [annotationStoreProvider]
 /// pattern.
 final netlistDiffServiceProvider = Provider<NetlistDiffService>(
   (ref) => const NoopNetlistDiffService(),

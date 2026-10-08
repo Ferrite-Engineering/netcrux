@@ -72,12 +72,7 @@ void main() {
         NetcruxAction.showXTrace,
         NetcruxAction.showXTracePanel,
         NetcruxAction.clearXTrace,
-        // Bookmarks + annotations — same palette /
-        // context-menu only convention; default chord bindings come
-        // later (e.g. a future Ctrl+B for "add bookmark") once the
-        // panels are battle-tested.
-        NetcruxAction.addBookmark,
-        NetcruxAction.showBookmarksPanel,
+        // Annotations — same palette / context-menu only convention.
         NetcruxAction.addAnnotation,
         NetcruxAction.showAnnotationsPanel,
         // RTL source pane — palette / menu / context-
@@ -282,12 +277,10 @@ void main() {
       expect(NetcruxAction.closeSourcePane.requiredTier, LicenseTier.openCore);
     });
 
-    test('bookmark and annotation actions are Open Core and gate nothing', () {
-      // Bookmarks and annotations are free: the add actions and the panel
-      // toggles carry no tier and no feature id a denial could report.
+    test('annotation actions are Open Core and gate nothing', () {
+      // Annotations are free: the add action and the panel
+      // toggle carry no tier and no feature id a denial could report.
       for (final action in <NetcruxAction>[
-        NetcruxAction.addBookmark,
-        NetcruxAction.showBookmarksPanel,
         NetcruxAction.addAnnotation,
         NetcruxAction.showAnnotationsPanel,
       ]) {

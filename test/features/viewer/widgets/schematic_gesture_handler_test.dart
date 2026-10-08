@@ -7,8 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
-import 'package:netcrux/domain/models/bookmark_annotation_target.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -18,7 +17,7 @@ import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
-import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
+import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
@@ -613,11 +612,11 @@ void main() {
   group('SchematicGestureHandler — annotation badge', () {
     // The cell u_alu spans design (100, 100) to (180, 160); its badge is
     // centred on the top-right corner, (180, 100).
-    Future<(ProviderContainer, List<BookmarkAnnotationTarget>)> pumpBadged(
+    Future<(ProviderContainer, List<AnnotationTarget>)> pumpBadged(
       WidgetTester tester, {
       SchematicAnnotationMarkers? markers,
     }) async {
-      final opened = <BookmarkAnnotationTarget>[];
+      final opened = <AnnotationTarget>[];
       final container = ProviderContainer(
         overrides: [
           currentLaidOutGraphProvider.overrideWith(
@@ -628,7 +627,7 @@ void main() {
                 SchematicAnnotationMarkers.from(
                   const <SchematicAnnotationMarker>[
                     SchematicAnnotationMarker(
-                      kind: BookmarkTargetKind.cell,
+                      kind: AnnotationTargetKind.cell,
                       targetId: 'u_alu',
                       annotationIds: <String>['a1'],
                     ),
@@ -656,7 +655,7 @@ void main() {
       await tester.pump();
 
       expect(opened, hasLength(1));
-      expect(opened.single.kind, BookmarkTargetKind.cell);
+      expect(opened.single.kind, AnnotationTargetKind.cell);
       expect(opened.single.targetId, 'u_alu');
       expect(
         container.read(selectedElementProvider).primary,

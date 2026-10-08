@@ -1311,14 +1311,6 @@
   "@actionClearXTrace": {
     "description": "Command palette / menu label that clears any active X-trace result."
   },
-  "actionAddBookmark": "添加书签…",
-  "@actionAddBookmark": {
-    "description": "Command palette / menu / context-menu label that opens the Add Bookmark dialog for the current selection."
-  },
-  "actionShowBookmarksPanel": "显示书签面板",
-  "@actionShowBookmarksPanel": {
-    "description": "Command palette / menu label that opens or focuses the Bookmarks panel."
-  },
   "actionAddAnnotation": "添加注释…",
   "@actionAddAnnotation": {
     "description": "Command palette / menu / context-menu label that opens the Add Annotation dialog for the current selection."
@@ -2332,7 +2324,6 @@
   "dockTabActivity": "活动",
   "dockTabDiff": "差异",
   "dockTabSource": "源代码",
-  "dockTabBookmarks": "书签",
   "dockTabAnnotations": "注释",
   "dockCollapseTooltip": "隐藏面板",
   "accessibilityRightDockRegion": "详情停靠区",
@@ -2451,6 +2442,18 @@
   "@annotationDialogAuthorLabel": {
     "description": "Form field label for the optional author label on an annotation."
   },
+  "annotationDialogTitleLabel": "标题",
+  "@annotationDialogTitleLabel": {
+    "description": "Form field label for the optional one-line title of an annotation, shown above the Markdown body. An annotation needs a title, a body, or both."
+  },
+  "annotationDialogTitleHint": "单行，显示在注释面板中",
+  "@annotationDialogTitleHint": {
+    "description": "Hint inside the empty Title field of the Add / Edit Annotation dialog: the title is a single line and is what the Annotations panel lists the annotation by."
+  },
+  "annotationDialogEmptyError": "请输入标题或正文。",
+  "@annotationDialogEmptyError": {
+    "description": "Error shown under the Body field, and announced, when the user presses Save on the Add / Edit Annotation dialog with both the title and the body empty."
+  },
   "annotationDialogBodyLabel": "正文（Markdown）",
   "@annotationDialogBodyLabel": {
     "description": "Form field label for the markdown body of an annotation."
@@ -2471,78 +2474,42 @@
   "@annotationsPanelTitle": {
     "description": "Title of the Annotations panel listing all annotations in the active session."
   },
-  "bookmarkContextMenuDelete": "删除书签",
-  "@bookmarkContextMenuDelete": {
-    "description": "Context-menu item that deletes a bookmark."
+  "annotationDialogCancelButton": "取消",
+  "@annotationDialogCancelButton": {
+    "description": "Cancel button on the Add / Edit Annotation dialog."
   },
-  "bookmarkContextMenuEdit": "编辑书签…",
-  "@bookmarkContextMenuEdit": {
-    "description": "Context-menu item that opens the Edit Bookmark dialog on a bookmark row."
+  "annotationDialogSaveButton": "保存",
+  "@annotationDialogSaveButton": {
+    "description": "Save button on the Add / Edit Annotation dialog."
   },
-  "bookmarkDialogCancelButton": "取消",
-  "@bookmarkDialogCancelButton": {
-    "description": "Cancel button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogEditTitle": "编辑书签",
-  "@bookmarkDialogEditTitle": {
-    "description": "Title of the dialog when editing an existing bookmark."
-  },
-  "bookmarkDialogNameLabel": "名称",
-  "@bookmarkDialogNameLabel": {
-    "description": "Form field label for the bookmark display name."
-  },
-  "bookmarkDialogNoteLabel": "备注（可选）",
-  "@bookmarkDialogNoteLabel": {
-    "description": "Form field label for the optional free-text note attached to a bookmark."
-  },
-  "bookmarkDialogSaveButton": "保存",
-  "@bookmarkDialogSaveButton": {
-    "description": "Save button on the Add / Edit Bookmark dialog."
-  },
-  "bookmarkDialogTitle": "添加书签",
-  "@bookmarkDialogTitle": {
-    "description": "Title of the dialog for adding a bookmark on the currently selected schematic element."
-  },
-  "bookmarkMenuAddAnnotation": "添加注释…",
-  "@bookmarkMenuAddAnnotation": {
+  "annotationMenuAdd": "添加注释…",
+  "@annotationMenuAdd": {
     "description": "Schematic context-menu entry that opens the Add Annotation dialog pre-populated with the right-clicked element as the target."
   },
-  "bookmarkMenuAddBookmark": "添加书签…",
-  "@bookmarkMenuAddBookmark": {
-    "description": "Schematic context-menu entry that opens the Add Bookmark dialog pre-populated with the right-clicked element as the target."
+  "annotationMenuShow": "显示注释",
+  "annotationTargetKindBoundaryPort": "边界端口",
+  "@annotationTargetKindBoundaryPort": {
+    "description": "Human-readable label for AnnotationTargetKind.boundaryPort."
   },
-  "bookmarkMenuShowAnnotation": "显示注释",
-  "bookmarkTargetKindBoundaryPort": "边界端口",
-  "@bookmarkTargetKindBoundaryPort": {
-    "description": "Human-readable label for BookmarkTargetKind.boundaryPort."
+  "annotationTargetKindCell": "单元",
+  "@annotationTargetKindCell": {
+    "description": "Human-readable label for the AnnotationTargetKind.cell value (shown in the annotation row subtitle)."
   },
-  "bookmarkTargetKindCell": "单元",
-  "@bookmarkTargetKindCell": {
-    "description": "Human-readable label for the BookmarkTargetKind.cell value (shown in the bookmark row subtitle)."
+  "annotationTargetKindNet": "线网",
+  "@annotationTargetKindNet": {
+    "description": "Human-readable label for AnnotationTargetKind.net."
   },
-  "bookmarkTargetKindNet": "线网",
-  "@bookmarkTargetKindNet": {
-    "description": "Human-readable label for BookmarkTargetKind.net."
+  "annotationTargetKindPort": "端口",
+  "@annotationTargetKindPort": {
+    "description": "Human-readable label for AnnotationTargetKind.port."
   },
-  "bookmarkTargetKindPort": "端口",
-  "@bookmarkTargetKindPort": {
-    "description": "Human-readable label for BookmarkTargetKind.port."
+  "annotationTargetKindScope": "作用域",
+  "@annotationTargetKindScope": {
+    "description": "Human-readable label for AnnotationTargetKind.scope."
   },
-  "bookmarkTargetKindScope": "作用域",
-  "@bookmarkTargetKindScope": {
-    "description": "Human-readable label for BookmarkTargetKind.scope."
-  },
-  "bookmarksPanelEmpty": "暂无书签。右键单击单元、线网或端口并选择“添加书签…”。",
-  "@bookmarksPanelEmpty": {
-    "description": "Placeholder shown in the Bookmarks panel when the session has no bookmarks."
-  },
-  "bookmarksPanelRowSemantics": "{name}，{kind} {targetId}",
-  "bookmarksPanelRowSemanticsWithNote": "{name}，{kind} {targetId}。备注：{note}",
-  "bookmarksPanelTargetNotFound": "此设计中没有 {name}。",
-  "bookmarksPanelTitle": "书签",
-  "@bookmarksPanelTitle": {
-    "description": "Title of the Bookmarks panel listing all bookmarked schematic elements in the active session."
-  },
+  "annotationsPanelRowSemantics": "{heading}，{kind} {targetId}",
+  "annotationsPanelRowAuthor": "作者：{author}",
+  "annotationsPanelTargetNotFound": "此设计中没有 {name}。",
   "inlineElementPickerCancel": "取消",
   "@inlineElementPickerCancel": {
     "description": "Cancel button in the inline element picker dialog."
@@ -2573,22 +2540,22 @@
   },
   "inlineElementPickerTitle": "选择原理图元素",
   "@inlineElementPickerTitle": {
-    "description": "Title of the inline element picker dialog shown when an add-bookmark / add-annotation flow is invoked without an active selection."
+    "description": "Title of the inline element picker dialog shown when the Add Annotation flow is invoked without an active selection."
   },
-  "bookmarkAnnotationUnsavedChangesTitle": "放弃更改？",
-  "@bookmarkAnnotationUnsavedChangesTitle": {
-    "description": "Unsaved changes confirm title."
+  "annotationUnsavedChangesTitle": "放弃更改？",
+  "@annotationUnsavedChangesTitle": {
+    "description": "Title of the unsaved-changes confirmation shown when the user cancels the Add / Edit Annotation dialog with pending edits."
   },
-  "bookmarkAnnotationUnsavedChangesBody": "您有未保存的更改。是否放弃？",
-  "@bookmarkAnnotationUnsavedChangesBody": {
-    "description": "Unsaved changes confirm body."
+  "annotationUnsavedChangesBody": "您有未保存的更改。是否放弃？",
+  "@annotationUnsavedChangesBody": {
+    "description": "Body text of the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesDiscard": "放弃",
-  "@bookmarkAnnotationUnsavedChangesDiscard": {
-    "description": "Discard action."
+  "annotationUnsavedChangesDiscard": "放弃",
+  "@annotationUnsavedChangesDiscard": {
+    "description": "Destructive button label on the unsaved-changes confirmation dialog."
   },
-  "bookmarkAnnotationUnsavedChangesKeep": "继续编辑",
-  "@bookmarkAnnotationUnsavedChangesKeep": {
-    "description": "Keep editing action."
+  "annotationUnsavedChangesKeep": "继续编辑",
+  "@annotationUnsavedChangesKeep": {
+    "description": "Cancel button label on the unsaved-changes confirmation dialog."
   }
 }

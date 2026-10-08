@@ -85,7 +85,7 @@ class SchematicContextMenuController {
       overlay.size.width - globalPosition.dx,
       overlay.size.height - globalPosition.dy,
     );
-    // Gather the extension entries: the bookmark / annotation builder in
+    // Gather the extension entries: the annotation builder in
     // open core, plus whatever the Pro overlay's `proOverrides` registers
     // (cross-probe entries among them).
     final extensionBuilders = ref.read(schematicContextMenuExtensionsProvider);

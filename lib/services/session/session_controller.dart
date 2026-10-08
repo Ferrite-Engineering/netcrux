@@ -24,7 +24,7 @@ import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
-import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
+import 'package:netcrux/services/session/annotation_store_provider.dart';
 
 /// Bridges the file picker with the session model and the viewer
 /// providers.
@@ -181,10 +181,9 @@ class SessionController {
     final transform = container.read(viewportTransformProvider);
     final model = container.read(loadedNetlistProvider).value;
     final project = container.read(currentProjectProvider);
-    // Bookmarks + annotations live in the active store. With none, the
-    // fields stay empty and are omitted from the emitted JSON (readable by
-    // builds that predate bookmarks).
-    final marks = container.read(bookmarkAnnotationStoreProvider).snapshot();
+    // Annotations live in the active store. With none, the field stays
+    // empty and is omitted from the emitted JSON.
+    final marks = container.read(annotationStoreProvider).snapshot();
     return NetcruxSession(
       version: NetcruxSession.currentVersion,
       sourceFilePaths: project.sourceFiles,
@@ -199,7 +198,6 @@ class SessionController {
       selectionJson: _selectionToJson(selection),
       overlayMode: overlay.mode?.name,
       expandedScopeKeys: tree.expandedKeys.toList(),
-      bookmarks: marks.bookmarks,
       annotations: marks.annotations,
     );
   }
@@ -229,9 +227,8 @@ class SessionController {
             topModule: session.topModule,
           ),
         );
-    // Bookmarks + annotations name elements by path and need no model.
-    final store = container.read(bookmarkAnnotationStoreProvider)..clear();
-    session.bookmarks.forEach(store.addBookmark);
+    // Annotations name elements by path and need no model.
+    final store = container.read(annotationStoreProvider)..clear();
     session.annotations.forEach(store.addAnnotation);
 
     final camera = ViewportTransform(

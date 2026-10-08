@@ -4,12 +4,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/annotation.dart';
-import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/features/collaboration/collab_annotation_adoption.dart';
 
 Annotation _note(String id, {String? layer, String? authorId}) => Annotation(
   id: id,
-  targetKind: BookmarkTargetKind.cell,
+  targetKind: AnnotationTargetKind.cell,
   targetId: 'u',
   body: id,
   createdAtMillis: 1,
