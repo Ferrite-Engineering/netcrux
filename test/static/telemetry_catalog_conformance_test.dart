@@ -325,26 +325,20 @@ void main() {
     });
 
     test('every NetcruxGatedFeature is reachable from some denial site', () {
-      // Two exceptions, both for the same reason: their only gated activation
-      // lives in the Pro overlay rather than on a NetcruxAction, so the Pro
-      // repo's own tests cover that side.
+      // One exception: `crossProbe`'s only gated activation is the overlay's
+      // schematic context menu (`cross_probe_menu_entries.dart`), not a
+      // NetcruxAction, so the Pro repo's own tests cover that side. The
+      // open-core `showCrossProbePanel` action is open-core-tier.
       //
-      //  * `crossProbe` — the overlay's schematic context menu
-      //    (`cross_probe_menu_entries.dart`). The open-core
-      //    `showCrossProbePanel` action is open-core-tier.
-      //  * `collaboration` — the overlay's status-bar session chip
-      //    (`collab_session_chip.dart`), and the only value here whose
-      //    required tier is Enterprise. There is deliberately no open-core
-      //    action for it: hosting a session is not something an open-core
-      //    build can be asked to do and then refused.
+      // `collaboration` is reached from File > Share Session (hosting is the
+      // Enterprise step); joining is free and never denied.
       final fromActions = <NetcruxGatedFeature>{
         for (final action in NetcruxAction.values) ?action.gatedFeature,
       };
       expect(
         fromActions,
         NetcruxGatedFeature.values.toSet()
-          ..remove(NetcruxGatedFeature.crossProbe)
-          ..remove(NetcruxGatedFeature.collaboration),
+          ..remove(NetcruxGatedFeature.crossProbe),
       );
     });
   });

@@ -352,6 +352,23 @@ enum NetcruxAction implements CruxAction {
   /// so it confirms first.
   resetWorkspace,
 
+  // ── collaborative sessions ────────────────────────────────────────────────
+  // The same three File-menu entries WaveCrux has. The status-bar chip the
+  // collaboration overlay contributes is the second way in; both open the same
+  // dialogs.
+  /// Host a collaborative schematic session. Hosting is the Enterprise step:
+  /// the only collaboration action that carries a tier.
+  shareSession,
+
+  /// Join a collaborative schematic session somebody else is hosting. Free in
+  /// every edition, so it carries no tier; it is offered only where a real
+  /// collaboration service is bound on a desktop build (see
+  /// `NetcruxActionContext.collaborationAvailable`).
+  joinSession,
+
+  /// Leave the live collaborative session — or, for its host, end it.
+  leaveSession,
+
   /// Activate the next tab in the active pane, wrapping at the end.
   nextTab,
 
@@ -399,6 +416,9 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.closeTab:
       case NetcruxAction.closeProject:
       case NetcruxAction.resetWorkspace:
+      case NetcruxAction.shareSession:
+      case NetcruxAction.joinSession:
+      case NetcruxAction.leaveSession:
         return ActionCategory.file;
       // Settings and Quit live in the "App" category: on macOS the shared
       // menu bar renders them in the system application menu, and on
@@ -661,6 +681,12 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionSaveWorkspaceAs;
       case NetcruxAction.resetWorkspace:
         return l10n.actionResetWorkspace;
+      case NetcruxAction.shareSession:
+        return l10n.actionShareSession;
+      case NetcruxAction.joinSession:
+        return l10n.actionJoinSession;
+      case NetcruxAction.leaveSession:
+        return l10n.actionLeaveSession;
       case NetcruxAction.nextTab:
         return l10n.actionNextTab;
       case NetcruxAction.previousTab:
@@ -718,6 +744,13 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
         return LicenseTier.pro;
+      // Hosting a collaborative session is the one Enterprise action.
+      case NetcruxAction.shareSession:
+        return LicenseTier.enterprise;
+      // Joining and leaving are free in every edition: a guest without a
+      // licence is a full participant.
+      case NetcruxAction.joinSession:
+      case NetcruxAction.leaveSession:
       case NetcruxAction.openProject:
       case NetcruxAction.openSourceFiles:
       case NetcruxAction.openNetlistJson:
@@ -840,6 +873,11 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
         return NetcruxGatedFeature.activity;
+      // "Tried to host" — joining can never be denied, so it never reports.
+      case NetcruxAction.shareSession:
+        return NetcruxGatedFeature.collaboration;
+      case NetcruxAction.joinSession:
+      case NetcruxAction.leaveSession:
       // Open-core actions. Their gate admits every tier, so no denial — and no
       // feature id — can ever be produced for them.
       case NetcruxAction.addBookmark:

@@ -151,6 +151,11 @@ void main() {
         NetcruxAction.saveWorkspaceAs,
         NetcruxAction.resetWorkspace,
         NetcruxAction.toggleTheme,
+        // Collaborative sessions: File menu and palette, unbound by default,
+        // as in WaveCrux.
+        NetcruxAction.shareSession,
+        NetcruxAction.joinSession,
+        NetcruxAction.leaveSession,
         // openAppDiagnostics and openTabDiagnostics are not in this set:
         // they carry WaveCrux's
         // Cmd/Ctrl+Shift+M and Cmd/Ctrl+Shift+I defaults respectively.
@@ -311,6 +316,8 @@ void main() {
 
     test('every other action stays Open Core by default', () {
       const proActions = <NetcruxAction>{
+        // Hosting a collaborative session is the one Enterprise action.
+        NetcruxAction.shareSession,
         NetcruxAction.showConeOfInfluenceFanin,
         NetcruxAction.showConeOfInfluenceFanout,
         NetcruxAction.showXTrace,

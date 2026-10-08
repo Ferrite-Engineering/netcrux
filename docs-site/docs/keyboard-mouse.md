@@ -57,7 +57,7 @@ Zoom In answers to the modifier with `=` and with `+`, so it works on every keyb
 
 !!! note "Actions without a default binding"
 
-    A number of actions ship with no default key: **Close Pane**, **Focus Other Pane** and **Move Tab to Other Pane**; **New Workspace**, **Open Workspace…**, **Save Workspace As…** and **Reset Workspace…**; **Documentation**, **Check for Updates** and **Submit Issue…**; and every Pro action — cone of influence, X-Trace, the RTL source pane, the netlist diff (including **Next Diff** and **Previous Diff**), custom symbols, FSM, CDC, reset-domain and switching-activity analysis. All of them are reachable from the menu bar and the command palette, Pro actions also from the schematic context menu, and any of them can be given a binding of your own in `Settings → Keyboard Shortcuts`. The command palette opener also has a menu entry, so unbinding its key cannot lock you out of it.
+    A number of actions ship with no default key: **Close Pane**, **Focus Other Pane** and **Move Tab to Other Pane**; **New Workspace**, **Open Workspace…**, **Save Workspace As…** and **Reset Workspace…**; **Documentation**, **Check for Updates** and **Submit Issue…**; **Share Session…**, **Join Session…** and **Leave Session**; and every Pro action — cone of influence, X-Trace, the RTL source pane, the netlist diff (including **Next Diff** and **Previous Diff**), custom symbols, FSM, CDC, reset-domain and switching-activity analysis. All of them are reachable from the menu bar and the command palette, Pro actions also from the schematic context menu, and any of them can be given a binding of your own in `Settings → Keyboard Shortcuts`. The command palette opener also has a menu entry, so unbinding its key cannot lock you out of it.
 
 ## Schematic canvas keys {#canvas-keys}
 
@@ -113,7 +113,7 @@ Pointer gestures on the schematic canvas cover navigation and selection. Selecti
 | Middle-mouse drag | Pan. |
 | Left-click drag on the canvas | Pan. |
 | Left-click an element | Select it. Clicking empty canvas clears the selection. |
-| Left-click an annotation badge | Select the annotated element and open the **Annotations** tab at its note. The keyboard route is the element's context menu: **Show Annotation**. |
+| Left-click an annotation badge (free from NetCrux 1.1) | Select the annotated element and open the **Annotations** tab at its note. The keyboard route is the element's context menu: **Show Annotation**. |
 | ++shift++ + click | Add to the selection. |
 | ++cmd++ / ++ctrl++ + click | Toggle an element in or out of the selection. |
 | Right-click (secondary tap) | Make the element under the pointer the primary selection and open the context menu. |

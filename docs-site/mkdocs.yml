@@ -72,6 +72,7 @@ nav:
   - Customize & integrate:
       - Custom cell symbols: customizing.md
       - Bookmarks & annotations: bookmarks.md
+      - Collaborative sessions: collaboration.md
       - Cross-probe & the suite: integrations.md
       - CXP integration reference: integrations/cxp.md
       - Use in VS Code: vscode.md

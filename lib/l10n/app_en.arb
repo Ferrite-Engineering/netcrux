@@ -2373,6 +2373,18 @@
   "@actionSaveWorkspaceAs": {
     "description": "File menu label for saving the workspace to a path"
   },
+  "actionShareSession": "Share Session…",
+  "@actionShareSession": {
+    "description": "File menu and command palette label for hosting a collaborative schematic session (Enterprise). Opens the Share Session dialog. Same name as WaveCrux."
+  },
+  "actionJoinSession": "Join Session…",
+  "@actionJoinSession": {
+    "description": "File menu and command palette label for joining a collaborative schematic session somebody else is hosting. Free in every edition. Opens the Join Session dialog. Same name as WaveCrux."
+  },
+  "actionLeaveSession": "Leave Session",
+  "@actionLeaveSession": {
+    "description": "File menu and command palette label for leaving the live collaborative session (for its host, ending it). Same name as WaveCrux."
+  },
   "actionResetWorkspace": "Reset Workspace…",
   "@actionResetWorkspace": {
     "description": "File menu label for closing every tab and returning to the empty-canvas state"

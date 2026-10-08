@@ -54,6 +54,8 @@ import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/activity/activity_heatmap_pane_openers.dart';
 import 'package:netcrux/services/cdc/cdc_pane_openers.dart';
+import 'package:netcrux/services/collaboration/collaboration_session_openers.dart';
+import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/file_open/file_open_service.dart';
@@ -487,6 +489,21 @@ class WorkspaceActionDispatcher {
         unawaited(_saveWorkspaceAs(context));
       case NetcruxAction.resetWorkspace:
         unawaited(_resetWorkspace(context));
+      // Hosting is the Enterprise step, so Share goes through the Pro-action
+      // gate: post-beta an insufficient tier sees the upgrade dialog and
+      // records `tier.gate_hit {feature: collaboration}`, and an open-core
+      // build says it requires NetCrux Pro. Join and Leave are free and
+      // ungated — a guest without a licence is a full participant.
+      case NetcruxAction.shareSession:
+        if (_proActionAllowed(context, action)) {
+          _ref.read(shareSessionOpenerProvider)(context);
+        }
+      case NetcruxAction.joinSession:
+        _ref.read(joinSessionOpenerProvider)(context);
+      case NetcruxAction.leaveSession:
+        unawaited(
+          _ref.read(schematicCollaborationServiceProvider).leaveSession(),
+        );
       case NetcruxAction.nextTab:
         unawaited(_switchTabBy(1));
       case NetcruxAction.previousTab:

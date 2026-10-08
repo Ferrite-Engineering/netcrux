@@ -75,7 +75,9 @@ enum NetcruxGatedFeature {
   /// Originating a cross-probe toward a connected peer.
   crossProbe,
 
-  /// Hosting or joining a collaborative schematic session — Enterprise, and
-  /// the only value here whose required tier is not `pro`.
+  /// Hosting a collaborative schematic session (Share Session) — Enterprise,
+  /// and the only value here whose required tier is not `pro`. Joining is free
+  /// in every edition and can never be denied, so this means "tried to host"
+  /// and nothing else.
   collaboration,
 }

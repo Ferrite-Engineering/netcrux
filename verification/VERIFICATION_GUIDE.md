@@ -1969,6 +1969,54 @@ This section *is* the tier-gate scenario. Both phases are covered by steps 4 and
 | Release `.app` ships the entitlement | Partly | `codesign -d --entitlements -` in release CI, post-build |
 | Open panel actually appears | **No** | Requires a signed release build and a real window server — manual, per release |
 
+## 19. Collaborative sessions — the open-core seam
+
+- **What it does.** Collaborative schematic sessions run in the NetCrux Pro
+  overlay; the open core owns the seam and the entry points. **File > Share
+  Session…**, **File > Join Session…** and **File > Leave Session** are
+  `NetcruxAction`s with descriptors, so they are also in the command palette.
+  Hosting (Share Session…) is the Enterprise step and carries the ENT badge
+  before the click; joining and leaving are free in every edition and carry no
+  badge. The open-source build binds `NoopSchematicCollaborationService`, so
+  `collaborationAvailableProvider` is false there and Join / Leave are not
+  offered at all. Share stays discoverable, badged, and says it requires
+  NetCrux Pro when chosen.
+- **Setup.** An open-source desktop build, and for the second half the NetCrux
+  Pro build (see that overlay's verification guide for the session itself).
+- **Steps and expected behavior.**
+  1. Open-source build, open the **File** menu. Expected: **Share Session…**
+     with an `(ENT)` suffix in the last group; no Join Session… and no Leave
+     Session.
+  2. Choose **Share Session…** during the beta. Expected: a "requires NetCrux
+     Pro" notice; nothing opens.
+  3. Command palette, type "session". Expected: Share Session… with the ENT
+     badge; no Join or Leave.
+  4. Browser build. Expected: none of the three is offered anywhere.
+  5. Pro build, no session. Expected: File shows Share Session… `(ENT)`, Join
+     Session… (no suffix) and a greyed Leave Session. With a session live,
+     Share and Join grey out and Leave Session is enabled; choosing it ends the
+     session.
+- **Tier-gate scenarios.**
+  - `kBetaPeriod = true`: Share opens its dialog for every tier in the Pro
+    build; no `tier.gate_hit` is recorded.
+  - `kBetaPeriod = false`: Share with a Pro or open-core licence shows the
+    upgrade dialog naming Enterprise and records `tier.gate_hit` with
+    `feature: collaboration`, `required: enterprise`. Join and Leave never show
+    the upgrade dialog and never record a gate hit.
+- **Edge cases.** A session waiting for the host's decision counts as live:
+  Leave Session is enabled so the wait can be abandoned.
+
+### Automation Assessment
+
+| Capability | Assessment |
+|------------|------------|
+| Tier, gated feature, surfaces, visibility and enablement of the three actions | **Strong** — `test/core/shortcuts/netcrux_action_descriptors_test.dart` "collaborative sessions" group. `[Coverage: UNIT_TEST]` |
+| File-menu placement | **Strong** — `test/core/shortcuts/menu_layout_test.dart`. `[Coverage: UNIT_TEST]` |
+| Share routes through the Pro-action gate and its opener; Join through its opener; Leave calls the service | **Strong** — `test/features/workspace/services/workspace_action_dispatch_table_test.dart`. `[Coverage: WIDGET]` |
+| Share denial records `collaboration` / `enterprise`; Join and Leave record nothing | **Strong** — `test/services/telemetry/tier_gate_events_test.dart`. `[Coverage: WIDGET]` |
+| Join hidden without a real service; live-session flag follows the service | **Strong** — `test/services/collaboration/collaboration_available_provider_test.dart`. `[Coverage: UNIT_TEST]` |
+| Native menu rendering of the `(ENT)` suffix | **Manual** — `[Coverage: MANUAL]` |
+
 ## Adding a section
 
 Add a new top-level section the same day the corresponding feature ships. Do not pre-write speculative content — the section is created when an item is ready to be verified.

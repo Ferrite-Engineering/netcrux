@@ -111,6 +111,29 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isEnabled: _requiresTab,
   ),
 
+  // ── Collaborative sessions — browsable, gated on session state ───────
+  // Hosting (Share Session) is the only tier-gated step and the only one that
+  // carries a badge; it is hidden in the browser by the tier rule above every
+  // descriptor. Joining is free in every edition, so Join and Leave carry no
+  // badge, and are offered only where a real collaboration service is bound
+  // on a desktop build: the protocol is compiled out of the open-source build,
+  // and the browser has no sockets to run it on.
+  NetcruxAction.shareSession => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _desktopOnly,
+    isEnabled: _notInCollabSession,
+  ),
+  NetcruxAction.joinSession => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _collaborationAvailable,
+    isEnabled: _notInCollabSession,
+  ),
+  NetcruxAction.leaveSession => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _collaborationAvailable,
+    isEnabled: _inCollabSession,
+  ),
+
   // ── Close Tab — browsable, needs a tab to close ──────────────────────
   // Cmd/Ctrl+W's action (suite keyboard-parity pass). Menu + palette
   // only: the canonical common toolbar block's close slot stays with
@@ -441,6 +464,10 @@ const Set<NetcruxActionSurface> _menuOnly = {NetcruxActionSurface.menu};
 // ── enablement predicates (top-level for const tear-off) ─────────────────────
 
 bool _desktopOnly(NetcruxActionContext c) => !c.isBrowser;
+bool _collaborationAvailable(NetcruxActionContext c) =>
+    c.collaborationAvailable && !c.isBrowser;
+bool _inCollabSession(NetcruxActionContext c) => c.inCollabSession;
+bool _notInCollabSession(NetcruxActionContext c) => !c.inCollabSession;
 bool _requiresTab(NetcruxActionContext c) => c.hasOpenTab;
 bool _requiresMultipleTabs(NetcruxActionContext c) =>
     c.tabCountInActivePane > 1;

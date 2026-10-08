@@ -4,6 +4,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action_context.dart';
 import 'package:netcrux/features/workspace/providers/active_tab_action_flags_provider.dart';
+import 'package:netcrux/services/collaboration/collaboration_available_provider.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 
@@ -42,5 +43,9 @@ final netcruxActionContextProvider = Provider<NetcruxActionContext>((ref) {
     // The browser is the build that cannot elaborate; one seam decides both,
     // so a test that sets it gets the whole browser shape.
     isBrowser: !ref.watch(hdlElaborationSupportedProvider),
+    // Join Session is free, so no tier badge hides it where it cannot work:
+    // it needs a real collaboration service on a desktop build.
+    collaborationAvailable: ref.watch(collaborationAvailableProvider),
+    inCollabSession: ref.watch(collabSessionLiveProvider),
   );
 }, name: 'netcruxActionContextProvider');

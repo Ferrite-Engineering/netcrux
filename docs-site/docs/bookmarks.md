@@ -2,6 +2,8 @@
 
 Debugging a design is a process of building up context. Bookmarks and annotations let you pin that context to the schematic, a named marker on an element and a written note about what you found, and save it with the session.
 
+From NetCrux 1.1, bookmarks and annotations are free in every edition, Open Core included. In 1.0 they were part of Pro.
+
 ## Bookmark or annotation? {#which}
 
 A **bookmark** marks a place to return to: a named pointer you jump back to from a list. An **annotation** records what you found there: a Markdown note that stays on the element, with a badge on the schematic so you see it when you come back. Use a bookmark for "the FIFO full flag", and an annotation for "the full flag rises one cycle late when both pointers wrap".

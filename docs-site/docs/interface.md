@@ -49,7 +49,7 @@ The right panel is the **inspector**, showing the details of whatever is selecte
 
 The **Go to source** button above the details, badged <span class="tier tier-pro">Pro</span>, opens the RTL behind the selection in the Pro [RTL source pane](source-and-inspection.md#source-pane); in Open Core it says it requires NetCrux Pro. Toggle the inspector with ++cmd+2++ / ++ctrl+2++.
 
-The inspector is the pinned tab of the right dock. Other tabs open beside it on demand, each closed with the **×** on its tab: **Cross-Probe**, **X-Trace**, the [**Bookmarks** and **Annotations**](bookmarks.md) lists, and in Pro the analysis panels and the **Source** view.
+The inspector is the pinned tab of the right dock. Other tabs open beside it on demand, each closed with the **×** on its tab: **Cross-Probe**, **X-Trace**, the [**Bookmarks** and **Annotations**](bookmarks.md) lists (free from NetCrux 1.1), and in Pro the analysis panels and the **Source** view.
 
 ## Diagnostics panel {#diagnostics}
 
@@ -77,7 +77,7 @@ The **status bar** along the bottom of each tab shows the first source file, the
 - **CXP Cross-Probe** — the cross-probe server. See [Cross-probe & the suite](integrations.md#cxp-settings).
 - **Keyboard Shortcuts** — view, edit, reset, import and export key bindings. See [Keyboard & mouse reference](keyboard-mouse.md#customizing).
 
-The downloaded app adds **License** and **Collaboration** <span class="tier tier-enterprise">Enterprise</span>.
+The downloaded app adds **License** and **Collaboration**. From NetCrux 1.1, `Settings → Collaboration` is open to everyone, because a guest joining somebody else's session needs a display name and, where their organization runs its own relay, the relay address; hosting is gated where hosting happens, at **Share Session…**.
 
 The **About box** (++f1++) shows the name and tagline, version, build and commit, platform details, the edition, Ferrite Engineering branding, and the elkjs (EPL-2.0) attribution, plus **Visit Website**, **Documentation**, **Submit Issue…**, **Check for Updates**, **Privacy Policy**, **Terms of Service**, **Acknowledgments** (the full open-source license list) and **Copy Version Info** actions.
 

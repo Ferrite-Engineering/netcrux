@@ -38,6 +38,8 @@ class NetcruxActionContext {
     this.paneCount = 1,
     this.tabCountInActivePane = 0,
     this.isBrowser = false,
+    this.collaborationAvailable = false,
+    this.inCollabSession = false,
   });
 
   /// Whether the workspace has an active tab. Gates every action that
@@ -113,6 +115,21 @@ class NetcruxActionContext {
   /// checks, Quit — are hidden there rather than offered and broken.
   final bool isBrowser;
 
+  /// Whether this build can take part in a collaborative session: a real
+  /// collaboration service is bound (the open-source build binds a no-op) and
+  /// this is not the browser build.
+  ///
+  /// Gates Join Session and Leave Session. Join is free in every edition, so
+  /// it carries no tier badge, and the browser rule that hides tier-badged
+  /// actions does not cover it; without this, a build with no collaboration
+  /// protocol would offer a Join action that does nothing.
+  final bool collaborationAvailable;
+
+  /// Whether a collaborative session is live (including a join still waiting
+  /// for the host's decision). Share and Join grey out while one is; Leave
+  /// greys out while none is.
+  final bool inCollabSession;
+
   @override
   bool operator ==(Object other) =>
       other is NetcruxActionContext &&
@@ -130,7 +147,9 @@ class NetcruxActionContext {
       other.activityColoringActive == activityColoringActive &&
       other.paneCount == paneCount &&
       other.tabCountInActivePane == tabCountInActivePane &&
-      other.isBrowser == isBrowser;
+      other.isBrowser == isBrowser &&
+      other.collaborationAvailable == collaborationAvailable &&
+      other.inCollabSession == inCollabSession;
 
   @override
   int get hashCode => Object.hash(
@@ -149,5 +168,7 @@ class NetcruxActionContext {
     paneCount,
     tabCountInActivePane,
     isBrowser,
+    collaborationAvailable,
+    inCollabSession,
   );
 }

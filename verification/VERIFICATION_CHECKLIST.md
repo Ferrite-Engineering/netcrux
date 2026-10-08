@@ -438,6 +438,14 @@ flutter build windows --release --dart-define=TELEMETRY_DEV=true   # or: build l
 
 ---
 
+## Collaborative sessions — the open-core seam (§19)
+
+- [ ] Open-source desktop build: File shows **Share Session…** `(ENT)`; no Join Session… or Leave Session; choosing Share says it requires NetCrux Pro — `[Coverage: UNIT_TEST]` (descriptors) + `[Coverage: MANUAL]` (native menu).
+- [ ] Browser build offers none of the three — `[Coverage: UNIT_TEST]`.
+- [ ] Post-beta Share denial records `tier.gate_hit` `collaboration` / `enterprise`; Join and Leave never record one — `[Coverage: WIDGET]` (`tier_gate_events_test.dart`).
+
+---
+
 ## Adding a group
 
 Add a checklist group the same day the corresponding feature ships.

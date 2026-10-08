@@ -100,7 +100,9 @@ Pinning is **optional**, and its absence is not laxity: a house-style pack the t
 
 ## Collaborative schematic sessions {#collaboration}
 
-Several engineers viewing one schematic with synchronized pointers, selection and scope. Engineers start and join sessions from the **Collaborate** button in the status bar. The design is WaveCrux's, reused rather than reinvented, so the security properties and the limits are the same in both products.
+Several engineers viewing one schematic with synchronized pointers, selection and scope. Engineers start and join sessions from **File > Share Session…** and **File > Join Session…**, or from the **Collaborate** button in the status bar; [Collaborative sessions](collaboration.md) is the user guide. The design is WaveCrux's, and from NetCrux 1.1 the session engine is the same code in both products, so the security properties and the limits are the same.
+
+From NetCrux 1.1, joining a session is free; hosting is Enterprise. Only **Share Session…** asks for a license. A guest without one is admitted by the host and takes part fully, so an Enterprise customer can bring in a contractor or a colleague on another edition without buying them a seat.
 
 ### How a session starts {#collab-start}
 

@@ -3,6 +3,7 @@
 
 import 'package:crux_license/crux_license.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/core/license/netcrux_gated_feature.dart';
 import 'package:netcrux/core/shortcuts/action_category.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action_context.dart';
@@ -273,6 +274,9 @@ void main() {
     test('everything is enabled in the fully-loaded split-pane context', () {
       for (final action in NetcruxAction.values) {
         if (action == NetcruxAction.splitPaneRight) continue;
+        // Leave Session is gated on a live collaborative session, which the
+        // workspace context does not model; its own group covers it.
+        if (action == NetcruxAction.leaveSession) continue;
         expect(
           isActionEnabled(action, loaded),
           isTrue,
@@ -478,6 +482,85 @@ void main() {
         hasCrossingSelection: true,
       );
       expect(isActionEnabled(NetcruxAction.clearOverlay, crossing), isTrue);
+    });
+  });
+
+  group('collaborative sessions', () {
+    const overlay = NetcruxActionContext(collaborationAvailable: true);
+    const live = NetcruxActionContext(
+      collaborationAvailable: true,
+      inCollabSession: true,
+    );
+
+    test('Share, Join and Leave are File-menu and palette actions', () {
+      for (final action in const [
+        NetcruxAction.shareSession,
+        NetcruxAction.joinSession,
+        NetcruxAction.leaveSession,
+      ]) {
+        expect(action.category, ActionCategory.file, reason: '$action');
+        expect(descriptorFor(action).surfaces, {
+          NetcruxActionSurface.menu,
+          NetcruxActionSurface.palette,
+        });
+      }
+    });
+
+    test('only hosting carries a tier, and only it can report a denial', () {
+      expect(NetcruxAction.shareSession.requiredTier, LicenseTier.enterprise);
+      expect(
+        NetcruxAction.shareSession.gatedFeature,
+        NetcruxGatedFeature.collaboration,
+      );
+      for (final free in const [
+        NetcruxAction.joinSession,
+        NetcruxAction.leaveSession,
+      ]) {
+        expect(free.requiredTier, LicenseTier.openCore, reason: '$free');
+        expect(free.gatedFeature, isNull, reason: '$free');
+      }
+    });
+
+    test('Join and Leave exist only where a session can actually run', () {
+      // The open-source build binds the no-op service, so a free, unbadged
+      // Join would do nothing there.
+      for (final action in const [
+        NetcruxAction.joinSession,
+        NetcruxAction.leaveSession,
+      ]) {
+        expect(isActionVisible(action, empty), isFalse, reason: '$action');
+        expect(isActionVisible(action, overlay), isTrue, reason: '$action');
+        expect(
+          isActionVisible(
+            action,
+            const NetcruxActionContext(
+              collaborationAvailable: true,
+              isBrowser: true,
+            ),
+          ),
+          isFalse,
+          reason: '$action',
+        );
+      }
+      // Share stays discoverable and badged in a desktop open-core build,
+      // where activating it says the feature needs NetCrux Pro.
+      expect(isActionVisible(NetcruxAction.shareSession, empty), isTrue);
+    });
+
+    test('Share and Join grey out in a session; Leave only works in one', () {
+      expect(isActionEnabled(NetcruxAction.shareSession, overlay), isTrue);
+      expect(isActionEnabled(NetcruxAction.joinSession, overlay), isTrue);
+      expect(isActionEnabled(NetcruxAction.leaveSession, overlay), isFalse);
+
+      expect(isActionEnabled(NetcruxAction.shareSession, live), isFalse);
+      expect(isActionEnabled(NetcruxAction.joinSession, live), isFalse);
+      expect(isActionEnabled(NetcruxAction.leaveSession, live), isTrue);
+
+      expect(paletteActionsFor(live), contains(NetcruxAction.leaveSession));
+      expect(
+        paletteActionsFor(live),
+        isNot(contains(NetcruxAction.joinSession)),
+      );
     });
   });
 }

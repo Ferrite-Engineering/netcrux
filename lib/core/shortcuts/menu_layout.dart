@@ -20,7 +20,8 @@ import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 ///
 /// ## Canonical group order
 ///
-/// - **File** — New | Open/Import | Save | Export | Close | Reset
+/// - **File** — New | Open/Import | Save | Export | Close | Reset |
+///   Collaborative session
 /// - **View** — Command Palette | Zoom | Panels | Panes | Tabs | Appearance
 /// - **Navigate** — Scope | Trace overlays + Zoom to Selection | Cone of
 ///   influence | X-trace | Diff
@@ -87,6 +88,13 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
     ],
     [
       NetcruxAction.resetWorkspace,
+    ],
+    // The collaborative session, last in File as in WaveCrux. Leave Session
+    // greys out until a session is live.
+    [
+      NetcruxAction.shareSession,
+      NetcruxAction.joinSession,
+      NetcruxAction.leaveSession,
     ],
   ],
 

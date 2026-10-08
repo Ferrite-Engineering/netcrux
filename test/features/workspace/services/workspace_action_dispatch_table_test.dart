@@ -21,6 +21,7 @@ import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/activity/activity_heatmap_pane_openers.dart';
 import 'package:netcrux/services/cdc/cdc_pane_openers.dart';
+import 'package:netcrux/services/collaboration/collaboration_session_openers.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
@@ -62,6 +63,9 @@ enum _Routing {
 
   /// Terminates the process; never dispatched from a test.
   processExit,
+
+  /// Calls the collaboration service seam directly.
+  collaborationService,
 }
 
 const _routing = <NetcruxAction, _Routing>{
@@ -177,6 +181,10 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.runActivityAnalysis: _Routing.opener,
   NetcruxAction.clearActivityColoring: _Routing.opener,
   NetcruxAction.configureActivityScheme: _Routing.opener,
+  NetcruxAction.shareSession: _Routing.opener,
+  NetcruxAction.joinSession: _Routing.opener,
+
+  NetcruxAction.leaveSession: _Routing.collaborationService,
 };
 
 Iterable<NetcruxAction> _actionsRouted(_Routing routing) =>
@@ -296,6 +304,12 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
     configureActivitySchemeOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.configureActivityScheme),
     ),
+    shareSessionOpenerProvider.overrideWithValue(
+      (_) => record(NetcruxAction.shareSession),
+    ),
+    joinSessionOpenerProvider.overrideWithValue(
+      (_) => record(NetcruxAction.joinSession),
+    ),
   ];
 }
 
@@ -311,7 +325,7 @@ void main() {
   });
 
   test('the opener class covers every opener extension point', () {
-    // 34 opener providers, 34 opener-routed actions — the recorder list
+    // One opener provider per opener-routed action — the recorder list
     // and the routing table have to agree or the per-action assertions
     // below silently stop covering an opener.
     expect(

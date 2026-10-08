@@ -289,6 +289,45 @@ void main() {
       expect(telemetry.count('tier.gate_hit'), 0);
     });
 
+    testWidgets('a denied Share Session records "tried to host"', (
+      tester,
+    ) async {
+      // Hosting is Enterprise, so a Pro licence is still denied, and the hit
+      // names the collaboration feature and the Enterprise tier.
+      final (dispatcher, context) = await pumpDispatcher(
+        tester,
+        beta: false,
+        tier: LicenseTier.pro,
+      );
+
+      dispatcher.dispatch(context, NetcruxAction.shareSession);
+      await tester.pump();
+
+      final event = telemetry.all('tier.gate_hit').single;
+      expect(event.properties['feature'], 'collaboration');
+      expect(event.properties['required'], 'enterprise');
+      _assertInCatalog(event);
+    });
+
+    testWidgets('Join Session and Leave Session never record a gate hit', (
+      tester,
+    ) async {
+      // Joining is free in every edition: an unlicensed guest is a full
+      // participant, so there is no denial to count.
+      final (dispatcher, context) = await pumpDispatcher(
+        tester,
+        beta: false,
+      );
+
+      dispatcher
+        ..dispatch(context, NetcruxAction.joinSession)
+        ..dispatch(context, NetcruxAction.leaveSession);
+      await tester.pump();
+
+      expect(telemetry.count('tier.gate_hit'), 0);
+      expect(find.byType(CruxUpgradeDialog), findsNothing);
+    });
+
     testWidgets('an open-core action records nothing', (tester) async {
       final (dispatcher, context) = await pumpDispatcher(
         tester,
