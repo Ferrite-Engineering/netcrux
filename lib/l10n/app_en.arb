@@ -3013,6 +3013,45 @@
   "@annotationContextMenuDelete": {
     "description": "Context-menu item that deletes an annotation."
   },
+  "annotationSessionLayerLabel": "Session {code} · {date}",
+  "@annotationSessionLayerLabel": {
+    "description": "Label of a session layer: the notes written during one collaborative session, grouped in the Annotations panel. {code} is the session code, {date} the date it took place (YYYY-MM-DD).",
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "ABC123"
+      },
+      "date": {
+        "type": "String",
+        "example": "2026-10-08"
+      }
+    }
+  },
+  "annotationLayerHide": "Hide layer",
+  "@annotationLayerHide": {
+    "description": "Tooltip on the Annotations panel button that hides a session layer's notes from the schematic."
+  },
+  "annotationLayerShow": "Show layer",
+  "@annotationLayerShow": {
+    "description": "Tooltip on the Annotations panel button that shows a hidden session layer's notes on the schematic again."
+  },
+  "annotationLayerDelete": "Delete layer",
+  "@annotationLayerDelete": {
+    "description": "Tooltip on the Annotations panel button that deletes every note of a session layer at once."
+  },
+  "annotationLayerDeleteTitle": "Delete this layer?",
+  "@annotationLayerDeleteTitle": {
+    "description": "Title of the confirmation before deleting a session layer."
+  },
+  "annotationLayerDeleteBody": "{count, plural, =1{Its 1 note is removed from this design.} other{Its {count} notes are removed from this design.}}",
+  "@annotationLayerDeleteBody": {
+    "description": "Body of the confirmation before deleting a session layer; count is how many notes the layer holds.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "annotationContextMenuEdit": "Edit Annotation…",
   "@annotationContextMenuEdit": {
     "description": "Context-menu item that opens the Edit Annotation dialog on an annotation row."

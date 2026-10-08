@@ -2437,6 +2437,12 @@
   "@annotationContextMenuDelete": {
     "description": "Context-menu item that deletes an annotation."
   },
+  "annotationSessionLayerLabel": "会话 {code} · {date}",
+  "annotationLayerHide": "隐藏图层",
+  "annotationLayerShow": "显示图层",
+  "annotationLayerDelete": "删除图层",
+  "annotationLayerDeleteTitle": "删除此图层？",
+  "annotationLayerDeleteBody": "{count, plural, =1{其中的 1 条注释将从此设计中删除。} other{其中的 {count} 条注释将从此设计中删除。}}",
   "annotationContextMenuEdit": "编辑注释…",
   "@annotationContextMenuEdit": {
     "description": "Context-menu item that opens the Edit Annotation dialog on an annotation row."

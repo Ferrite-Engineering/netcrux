@@ -2437,6 +2437,12 @@
   "@annotationContextMenuDelete": {
     "description": "Context-menu item that deletes an annotation."
   },
+  "annotationSessionLayerLabel": "セッション {code} · {date}",
+  "annotationLayerHide": "レイヤーを非表示",
+  "annotationLayerShow": "レイヤーを表示",
+  "annotationLayerDelete": "レイヤーを削除",
+  "annotationLayerDeleteTitle": "このレイヤーを削除しますか？",
+  "annotationLayerDeleteBody": "{count, plural, =1{このレイヤーの注釈 1 件がこの設計から削除されます。} other{このレイヤーの注釈 {count} 件がこの設計から削除されます。}}",
   "annotationContextMenuEdit": "注釈を編集…",
   "@annotationContextMenuEdit": {
     "description": "Context-menu item that opens the Edit Annotation dialog on an annotation row."

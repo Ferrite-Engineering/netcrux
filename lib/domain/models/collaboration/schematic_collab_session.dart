@@ -17,6 +17,7 @@
 library;
 
 import 'package:meta/meta.dart';
+import 'package:netcrux/domain/models/annotation.dart';
 
 /// Network mode for a collaborative session.
 enum SchematicCollabMode {
@@ -423,6 +424,8 @@ final class SchematicCollabSessionState {
     this.presenterId,
     this.pendingControlRequests = const <String>[],
     this.presenterView,
+    this.sharedAnnotations = const <Annotation>[],
+    this.writingParticipantIds = const <String>[],
   });
 
   /// The room code (WAN) or host-minted session id (LAN).
@@ -471,6 +474,15 @@ final class SchematicCollabSessionState {
 
   /// What the presenter is showing, or `null` before they have published it.
   final SchematicCollabPresenterView? presenterView;
+
+  /// The notes written during the session, by everyone: each one's
+  /// [Annotation.authorId] is its author, its [Annotation.sessionLayerId] the
+  /// session's layer. Notes that existed before the session are never here.
+  final List<Annotation> sharedAnnotations;
+
+  /// Participants who are writing a note right now. Who, never what: the text
+  /// travels when the note is saved, not keystroke by keystroke.
+  final List<String> writingParticipantIds;
 
   /// Who is presenting, resolving the "defaults to the host" rule.
   String get effectivePresenterId => presenterId ?? hostId;
@@ -532,6 +544,8 @@ final class SchematicCollabSessionState {
     List<String>? pendingControlRequests,
     SchematicCollabPresenterView? presenterView,
     bool clearPresenterView = false,
+    List<Annotation>? sharedAnnotations,
+    List<String>? writingParticipantIds,
   }) => SchematicCollabSessionState(
     sessionId: sessionId ?? this.sessionId,
     myParticipantId: myParticipantId ?? this.myParticipantId,
@@ -550,6 +564,8 @@ final class SchematicCollabSessionState {
     presenterView: clearPresenterView
         ? null
         : (presenterView ?? this.presenterView),
+    sharedAnnotations: sharedAnnotations ?? this.sharedAnnotations,
+    writingParticipantIds: writingParticipantIds ?? this.writingParticipantIds,
   );
 
   @override
@@ -566,7 +582,9 @@ final class SchematicCollabSessionState {
       other.followTargetId == followTargetId &&
       other.presenterId == presenterId &&
       _sameList(other.pendingControlRequests, pendingControlRequests) &&
-      other.presenterView == presenterView;
+      other.presenterView == presenterView &&
+      _sameList(other.sharedAnnotations, sharedAnnotations) &&
+      _sameList(other.writingParticipantIds, writingParticipantIds);
 
   @override
   int get hashCode => Object.hash(
@@ -582,6 +600,8 @@ final class SchematicCollabSessionState {
     presenterId,
     Object.hashAll(pendingControlRequests),
     presenterView,
+    Object.hashAll(sharedAnnotations),
+    Object.hashAll(writingParticipantIds),
   );
 
   static bool _sameList<T>(List<T> a, List<T> b) {

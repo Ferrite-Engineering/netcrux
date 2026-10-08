@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/theme/collaborator_palette.dart';
 import 'package:netcrux/domain/interfaces/schematic_collaboration_service.dart';
+import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
@@ -92,6 +93,15 @@ class _StubCollaborationService implements SchematicCollaborationService {
 
   @override
   void updatePresenterView(SchematicCollabPresenterView view) {}
+
+  @override
+  void publishAnnotation(Annotation note) {}
+
+  @override
+  void withdrawAnnotation(String id) {}
+
+  @override
+  void setWritingNote({required bool writing}) {}
 
   @override
   void dismissUnreadableFramesNotice() {}

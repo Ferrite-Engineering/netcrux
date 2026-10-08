@@ -143,4 +143,48 @@ void main() {
       );
     });
   });
+
+  group('session fields', () {
+    const sessionNote = Annotation(
+      id: 'a9',
+      targetKind: BookmarkTargetKind.cell,
+      targetId: 'u_alu',
+      body: 'why is this here',
+      createdAtMillis: 1,
+      updatedAtMillis: 2,
+      author: 'Grace',
+      authorId: 'p-grace',
+      colorArgb: 0xFF00AA88,
+      sessionLayerId: 'session:ABC123',
+      sessionLayerLabel: 'Session ABC123 · 2026-10-08',
+      hidden: true,
+    );
+
+    test('round-trip through JSON', () {
+      expect(Annotation.fromJson(sessionNote.toJson()), sessionNote);
+    });
+
+    test('a note written outside a session writes none of them', () {
+      const plain = Annotation(
+        id: 'a1',
+        targetKind: BookmarkTargetKind.cell,
+        targetId: 'u',
+        body: 'x',
+        createdAtMillis: 1,
+        updatedAtMillis: 1,
+      );
+      expect(
+        plain.toJson().keys,
+        isNot(anyOf(contains('authorId'), contains('hidden'))),
+      );
+      expect(plain.hidden, isFalse);
+    });
+
+    test('keeping your own note clears its author id, nothing else', () {
+      final kept = sessionNote.copyWith(clearAuthorId: true);
+      expect(kept.authorId, isNull);
+      expect(kept.colorArgb, sessionNote.colorArgb);
+      expect(kept.sessionLayerId, sessionNote.sessionLayerId);
+    });
+  });
 }

@@ -28,6 +28,11 @@ class Annotation {
     required this.updatedAtMillis,
     this.author,
     this.moduleName,
+    this.authorId,
+    this.colorArgb,
+    this.sessionLayerId,
+    this.sessionLayerLabel,
+    this.hidden = false,
   });
 
   /// Reads an annotation back from its JSON shape produced by
@@ -53,6 +58,10 @@ class Annotation {
     if (kind == null) return null;
     final author = json['author'];
     final moduleName = json['moduleName'];
+    final authorId = json['authorId'];
+    final colorArgb = json['colorArgb'];
+    final layerId = json['sessionLayerId'];
+    final layerLabel = json['sessionLayerLabel'];
     return Annotation(
       id: id,
       targetKind: kind,
@@ -64,6 +73,11 @@ class Annotation {
       moduleName: moduleName is String && moduleName.isNotEmpty
           ? moduleName
           : null,
+      authorId: authorId is String && authorId.isNotEmpty ? authorId : null,
+      colorArgb: colorArgb is int ? colorArgb : null,
+      sessionLayerId: layerId is String && layerId.isNotEmpty ? layerId : null,
+      sessionLayerLabel: layerLabel is String ? layerLabel : null,
+      hidden: json['hidden'] == true,
     );
   }
 
@@ -101,6 +115,34 @@ class Annotation {
   /// so the schematic badges the element only in scopes of that module.
   final String? moduleName;
 
+  /// The collaborative-session participant who wrote this note, while the
+  /// note belongs to somebody else. `null` for a note of your own.
+  ///
+  /// It is what makes attribution read-only: a note that carries another
+  /// participant's id may be hidden or deleted, but not edited while their
+  /// name stays on it. A session clears it on the notes you wrote when you
+  /// keep them, so your own notes are yours to edit again.
+  final String? authorId;
+
+  /// The author's colour as an ARGB value, frozen when the note was written in
+  /// a session. Stored as a colour rather than a palette slot: slots are
+  /// reassigned every session, and a slot would recolour and misattribute last
+  /// week's notes the next time the room met. `null` for a note written
+  /// outside a session, which takes the theme's colour.
+  final int? colorArgb;
+
+  /// The session layer this note belongs to, or `null` for a note written
+  /// outside a session. A layer groups one meeting's notes so they can be
+  /// hidden or deleted as a unit.
+  final String? sessionLayerId;
+
+  /// The layer's human label (which session, and when), or `null`.
+  final String? sessionLayerLabel;
+
+  /// Whether the note is hidden from the canvas — set and cleared a layer at
+  /// a time.
+  final bool hidden;
+
   /// Returns a copy with selected fields replaced. [updatedAtMillis]
   /// must be supplied explicitly — `copyWith` does *not* auto-bump it
   /// because the caller (the store) knows when the change happened.
@@ -113,6 +155,12 @@ class Annotation {
     int? createdAtMillis,
     int? updatedAtMillis,
     String? moduleName,
+    String? authorId,
+    bool clearAuthorId = false,
+    int? colorArgb,
+    String? sessionLayerId,
+    String? sessionLayerLabel,
+    bool? hidden,
   }) {
     return Annotation(
       id: id ?? this.id,
@@ -123,6 +171,11 @@ class Annotation {
       createdAtMillis: createdAtMillis ?? this.createdAtMillis,
       updatedAtMillis: updatedAtMillis ?? this.updatedAtMillis,
       moduleName: moduleName ?? this.moduleName,
+      authorId: clearAuthorId ? null : (authorId ?? this.authorId),
+      colorArgb: colorArgb ?? this.colorArgb,
+      sessionLayerId: sessionLayerId ?? this.sessionLayerId,
+      sessionLayerLabel: sessionLayerLabel ?? this.sessionLayerLabel,
+      hidden: hidden ?? this.hidden,
     );
   }
 
@@ -136,6 +189,11 @@ class Annotation {
     'updatedAtMillis': updatedAtMillis,
     if (author != null) 'author': author,
     if (moduleName != null) 'moduleName': moduleName,
+    if (authorId != null) 'authorId': authorId,
+    if (colorArgb != null) 'colorArgb': colorArgb,
+    if (sessionLayerId != null) 'sessionLayerId': sessionLayerId,
+    if (sessionLayerLabel != null) 'sessionLayerLabel': sessionLayerLabel,
+    if (hidden) 'hidden': true,
   };
 
   @override
@@ -149,7 +207,12 @@ class Annotation {
         other.author == author &&
         other.createdAtMillis == createdAtMillis &&
         other.updatedAtMillis == updatedAtMillis &&
-        other.moduleName == moduleName;
+        other.moduleName == moduleName &&
+        other.authorId == authorId &&
+        other.colorArgb == colorArgb &&
+        other.sessionLayerId == sessionLayerId &&
+        other.sessionLayerLabel == sessionLayerLabel &&
+        other.hidden == hidden;
   }
 
   @override
@@ -162,6 +225,11 @@ class Annotation {
     createdAtMillis,
     updatedAtMillis,
     moduleName,
+    authorId,
+    colorArgb,
+    sessionLayerId,
+    sessionLayerLabel,
+    hidden,
   );
 
   @override

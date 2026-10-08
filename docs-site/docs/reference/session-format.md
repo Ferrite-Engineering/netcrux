@@ -85,6 +85,10 @@ Each entry names its element with a `targetKind` (`cell`, `port`, `boundaryPort`
 | `author` | An annotation's optional author; absent when unattributed. |
 | `createdAtMillis`, `updatedAtMillis` | Milliseconds since the Unix epoch. Bookmarks carry only `createdAtMillis`. |
 | `moduleName` | The module of the scope the element was marked in. Element ids are local to a module, so this says which module's `u_fifo` is meant. Absent in entries written before NetCrux recorded it; those are matched by id in whichever scope is open. |
+| `sessionLayerId`, `sessionLayerLabel` | From NetCrux 1.1: the collaborative session an annotation was written in, and that session's label. Annotations with the same layer are grouped in the Annotations panel and hidden or deleted together. Absent for a note written outside a session. |
+| `authorId` | From NetCrux 1.1: the session participant who wrote a note that belongs to somebody else. Such a note can be hidden or deleted but not edited. Absent for your own notes. |
+| `colorArgb` | From NetCrux 1.1: the author's colour when the note was written in a session, as a 32-bit ARGB integer, kept fixed so the note does not change colour in later sessions. |
+| `hidden` | From NetCrux 1.1: `true` while the note's layer is hidden from the schematic; absent otherwise. |
 
 An entry with a missing required field or an unknown `targetKind` is skipped and the rest of the session loads. A bookmark's `colorHex` key, written by NetCrux builds whose bookmarks had a colour, is ignored: the bookmark loads without it, and saving the session again leaves it out.
 

@@ -27,6 +27,7 @@
 /// the act of joining.
 library;
 
+import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 
 /// Runs collaborative schematic sessions.
@@ -149,6 +150,26 @@ abstract interface class SchematicCollaborationService {
   /// else unless the local participant holds the presenter token.
   void updatePresenterView(SchematicCollabPresenterView view);
 
+  // ── shared notes ───────────────────────────────────────────────────────────
+  //
+  // Notes written during a session travel; notes that predate it never do.
+  // Rights are derived on every frame from who sent it, never from what it
+  // says: only a note's author may publish or edit it, and its author or the
+  // host may withdraw it. No tier is consulted: a guest's notes travel like
+  // anyone's.
+
+  /// Publishes [note], written by the local participant during the session, or
+  /// its new version. Its [Annotation.authorId] must be ours.
+  void publishAnnotation(Annotation note);
+
+  /// Withdraws the note with [id] from the session: our own, or anyone's when
+  /// we host.
+  void withdrawAnnotation(String id);
+
+  /// Tells the room whether the local participant is writing a note. A
+  /// boolean, never the text.
+  void setWritingNote({required bool writing});
+
   /// Clears the "somebody in this room is holding the wrong invite" notice.
   void dismissUnreadableFramesNotice();
 
@@ -237,6 +258,15 @@ final class NoopSchematicCollaborationService
 
   @override
   void updatePresenterView(SchematicCollabPresenterView view) {}
+
+  @override
+  void publishAnnotation(Annotation note) {}
+
+  @override
+  void withdrawAnnotation(String id) {}
+
+  @override
+  void setWritingNote({required bool writing}) {}
 
   @override
   void dismissUnreadableFramesNotice() {}

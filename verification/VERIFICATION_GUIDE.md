@@ -2090,6 +2090,42 @@ This section *is* the tier-gate scenario. Both phases are covered by steps 4 and
 | Which panels degrade, for which tiers and builds | **Strong** — `test/features/collaboration/collab_view_degradation_provider_test.dart`. `[Coverage: UNIT_TEST]` |
 | Panel tier agrees with the action that shows it | **Strong** — `test/domain/models/analysis/analysis_panel_kind_test.dart`. `[Coverage: UNIT_TEST]` |
 
+### 19.3 Shared annotations — the open-core half
+
+- **What it does.** During a collaborative session, `CollabAnnotationSync`
+  (per tab, active tab only) takes a baseline of the tab's notes — those never
+  publish — then stamps every note written during the session with the
+  session's layer (`session:<code>`), the author's participant id and the
+  author's colour as an ARGB value, and publishes it; edits republish and
+  deletes withdraw. Others' notes arrive in the tab's own annotation store.
+  Somebody else's note is put back if edited here, and deleting it removes it
+  here only unless we host. The annotation dialog raises
+  `annotationWritingProvider` while open, which the session turns into
+  "…is writing a note…". At session end `collabAdoptionOfferProvider` offers
+  keep all / keep only mine / discard (`adoptSessionLayer`); kept notes of
+  your own lose their author id and become editable. The Annotations panel
+  groups a session's notes under the layer's label, with Hide layer / Show
+  layer (hidden notes leave the canvas) and Delete layer, and shows each
+  session note in its author's frozen colour; others' notes have no Edit.
+- **Steps and expected behavior.** The two-machine walk is in the
+  collaboration overlay's own verification guide; on one machine, verify the
+  layer UI by loading a `.netcrux` session containing annotations with
+  `sessionLayerId`: one heading per layer, Hide layer takes its notes off the
+  canvas, Delete layer asks and removes them all, and a note with another
+  participant's `authorId` has no Edit.
+- **Edge cases.** A note from before the session edited during it does not
+  publish. A state that predates our own just-published note does not remove
+  it. A note deleted here by a guest comes back only if its author changes it.
+
+### 19.3 Automation Assessment
+
+| Capability | Assessment |
+|------------|------------|
+| Baseline never published; stamping, publish, republish, withdraw; incoming add/edit/remove; read-only revert; guest vs host delete; stale-state guard; writing signal; adoption offer | **Strong** — `test/features/collaboration/collab_annotation_sync_test.dart`. `[Coverage: WIDGET]` |
+| Keep all / keep only mine / discard; offer answered once; unanswered offer keeps all | **Strong** — `test/features/collaboration/collab_annotation_adoption_test.dart`. `[Coverage: UNIT_TEST]` |
+| Layer grouping, hide/show (canvas markers), delete as a unit, read-only Edit | **Strong** — `test/features/bookmarks/widgets/annotations_panel_layers_test.dart`. `[Coverage: WIDGET]` |
+| Session fields round-trip `.netcrux`; edit keeps them; dialog raises the writing signal | **Strong** — `test/domain/models/annotation_test.dart`, `test/features/bookmarks/widgets/annotation_dialog_test.dart`. `[Coverage: UNIT_TEST + WIDGET]` |
+
 ## Adding a section
 
 Add a new top-level section the same day the corresponding feature ships. Do not pre-write speculative content — the section is created when an item is ready to be verified.

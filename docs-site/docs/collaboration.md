@@ -52,6 +52,17 @@ One person presents at a time, and everyone else sees what they show. The host p
 
 None of this needs a license: from NetCrux 1.1 a guest who joined for free can ask to present and present like anyone else.
 
+## Notes in a session {#notes}
+
+Annotations written during a session are the meeting's, and everyone in it sees them; annotations that existed before the session stay yours and are never sent.
+
+- **Writing.** Add an annotation as usual (**Add Annotation…**). While your dialog is open, the others see *name* **is writing a note…** in their status bar; the note itself arrives when you save it, never letter by letter.
+- **Who can change what.** Only the author can edit a note. The author or the host can delete it for everyone. Anyone can delete someone else's note from their own copy, which removes it for them alone. A note written in a session carries its author's colour.
+- **Layers.** A session's notes are grouped in the **Annotations** panel under one heading with the session code and date. The heading's buttons hide the whole layer from the schematic or delete it.
+- **When the session ends.** If it left notes, NetCrux asks what to keep: **Keep all**, **Keep only mine** or **Discard**. Closing the question keeps all. Kept notes stay in their layer, keep their author's colour as it was during the session, and notes by other people stay read-only; your own become editable again.
+
+Taking part in notes needs no license: from NetCrux 1.1 a guest who joined for free writes notes like anyone else.
+
 ## Security and its limits {#security}
 
 How the invite, the relay and admission work, and what none of it protects against, is in [Administration](administration.md#collaboration).

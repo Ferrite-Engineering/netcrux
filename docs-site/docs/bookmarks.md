@@ -2,7 +2,7 @@
 
 Debugging a design is a process of building up context. Bookmarks and annotations let you pin that context to the schematic, a named marker on an element and a written note about what you found, and save it with the session.
 
-From NetCrux 1.1, bookmarks and annotations are free in every edition, Open Core included. In 1.0 they were part of Pro.
+From NetCrux 1.1, bookmarks and annotations are free in every edition, Open Core included. In 1.0 they were part of Pro. Annotations written during a collaborative session are shared with everyone in it; see [Notes in a session](collaboration.md#notes).
 
 ## Bookmark or annotation? {#which}
 

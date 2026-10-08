@@ -18,7 +18,8 @@ SchematicAnnotationMarkers? bookmarkSchematicAnnotationMarkers(Ref ref) {
   final moduleName = ref.watch(hierarchyTreeProvider).selected?.moduleName;
   final markers = SchematicAnnotationMarkers.from(<SchematicAnnotationMarker>[
     for (final annotation in annotations)
-      if (annotationAppliesTo(annotation, moduleName))
+      // A hidden layer's notes stay in the panel but leave the canvas.
+      if (!annotation.hidden && annotationAppliesTo(annotation, moduleName))
         SchematicAnnotationMarker(
           kind: annotation.targetKind,
           targetId: annotation.targetId,

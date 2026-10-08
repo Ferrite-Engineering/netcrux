@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/providers/workspace_banner_widgets_provider.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
+import 'package:netcrux/features/collaboration/collab_annotation_sync.dart';
 import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
 import 'package:netcrux/features/collaboration/collab_presenter_bridge.dart';
@@ -235,49 +236,52 @@ class ProjectTabContent extends ConsumerWidget {
     // directly, and the zero-tabs empty canvas (handled one level up) stays
     // chrome-free.
     //
-    // Presenter mode rides the tab's own state, so it wraps the tab here,
-    // inside the per-tab scope. Inert outside a collaborative session.
+    // Presenter mode and shared notes ride the tab's own state, so they wrap
+    // the tab here, inside the per-tab scope. Inert outside a collaborative
+    // session.
     return CollabPresenterBridge(
-      child: Column(
-        children: <Widget>[
-          // Notices that need acting on, above everything. Empty in open core —
-          // and empty in a Pro build too, unless something is actually wrong.
-          ...ref.watch(workspaceBannerWidgetsProvider),
-          Expanded(
-            // Collapsed regions leave a slim restore bar along their edge
-            // (JetBrains tool-window model — the suite panel-reopen canon).
-            // Wrapped here in the workspace shell, which owns the dock
-            // widgets, keeping the viewer-layer layout free of lateral
-            // feature imports (`docs/ARCHITECTURE.md` §6.2).
-            child: NetcruxDockRestoreBars(
-              child: NetcruxIdeLayout(
-                // Each region is a CruxDock: Hierarchy (titled header), the
-                // tabbed Inspector / analysis / Cross-Probe dock, and the
-                // Diagnostics drawer (titled header).
-                hierarchyBuilder: (_, _) => const NetcruxLeftDock(),
-                centerBuilder: (_, _) => center,
-                inspectorBuilder: (_, _) => const NetcruxRightDock(),
-                diagnosticsBuilder: (_, _) => const NetcruxBottomDock(),
+      child: CollabAnnotationSync(
+        child: Column(
+          children: <Widget>[
+            // Notices that need acting on, above everything. Empty in open core —
+            // and empty in a Pro build too, unless something is actually wrong.
+            ...ref.watch(workspaceBannerWidgetsProvider),
+            Expanded(
+              // Collapsed regions leave a slim restore bar along their edge
+              // (JetBrains tool-window model — the suite panel-reopen canon).
+              // Wrapped here in the workspace shell, which owns the dock
+              // widgets, keeping the viewer-layer layout free of lateral
+              // feature imports (`docs/ARCHITECTURE.md` §6.2).
+              child: NetcruxDockRestoreBars(
+                child: NetcruxIdeLayout(
+                  // Each region is a CruxDock: Hierarchy (titled header), the
+                  // tabbed Inspector / analysis / Cross-Probe dock, and the
+                  // Diagnostics drawer (titled header).
+                  hierarchyBuilder: (_, _) => const NetcruxLeftDock(),
+                  centerBuilder: (_, _) => center,
+                  inspectorBuilder: (_, _) => const NetcruxRightDock(),
+                  diagnosticsBuilder: (_, _) => const NetcruxBottomDock(),
+                ),
               ),
             ),
-          ),
-          // The tab's bottom chrome is one keyboard region (an F6 stop). A
-          // sibling of the IDE layout, whose panes are regions of their own, so
-          // regions never nest.
-          const CruxFocusRegion(
-            child: Column(
-              children: <Widget>[
-                // Live statistics strip. Docks ABOVE the base status
-                // bar: the status bar carries design identity (source file, top
-                // module, cell count), the strip carries ambient telemetry, and
-                // identity belongs closest to the window edge. Collapsed by
-                // default, so it costs one 24 px disclosure row until asked for.
-                NetcruxStatsStrip(),
-                NetcruxStatusBar(),
-              ],
+            // The tab's bottom chrome is one keyboard region (an F6 stop). A
+            // sibling of the IDE layout, whose panes are regions of their own, so
+            // regions never nest.
+            const CruxFocusRegion(
+              child: Column(
+                children: <Widget>[
+                  // Live statistics strip. Docks ABOVE the base status
+                  // bar: the status bar carries design identity (source file, top
+                  // module, cell count), the strip carries ambient telemetry, and
+                  // identity belongs closest to the window edge. Collapsed by
+                  // default, so it costs one 24 px disclosure row until asked for.
+                  NetcruxStatsStrip(),
+                  NetcruxStatusBar(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

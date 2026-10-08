@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/features/bookmarks/providers/annotation_writing_provider.dart';
 import 'package:netcrux/features/bookmarks/widgets/annotation_dialog.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
@@ -133,6 +135,62 @@ void main() {
       await tester.tap(find.text(l10n.bookmarkDialogSaveButton));
       await tester.pumpAndSettle();
       expect((await edited)!.moduleName, 'cpu');
+    });
+
+    testWidgets('an edit keeps the session, colour, attribution and layer '
+        'visibility', (tester) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      final (ctx, ref) = await _pumpHost(tester);
+      const existing = Annotation(
+        id: 'n1',
+        targetKind: BookmarkTargetKind.cell,
+        targetId: 'u_alu',
+        body: 'before',
+        createdAtMillis: 1,
+        updatedAtMillis: 1,
+        authorId: 'p-grace',
+        colorArgb: 0xFF00AA88,
+        sessionLayerId: 'session:ABC123',
+        sessionLayerLabel: 'Session ABC123 · 2026-10-08',
+        hidden: true,
+      );
+      final edited = showAnnotationDialog(
+        context: ctx,
+        ref: ref,
+        targetKind: existing.targetKind,
+        targetId: existing.targetId,
+        existing: existing,
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'after');
+      await tester.tap(find.text(l10n.bookmarkDialogSaveButton));
+      await tester.pumpAndSettle();
+      final note = (await edited)!;
+      expect(note.body, 'after');
+      expect(note.authorId, existing.authorId);
+      expect(note.colorArgb, existing.colorArgb);
+      expect(note.sessionLayerId, existing.sessionLayerId);
+      expect(note.sessionLayerLabel, existing.sessionLayerLabel);
+      expect(note.hidden, isTrue);
+    });
+
+    testWidgets('the room is told a note is being written while the dialog '
+        'is open', (tester) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      final (ctx, ref) = await _pumpHost(tester);
+      final container = ProviderScope.containerOf(ctx);
+      final future = showAnnotationDialog(
+        context: ctx,
+        ref: ref,
+        targetKind: BookmarkTargetKind.cell,
+        targetId: 'u',
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(annotationWritingProvider), isTrue);
+      await tester.tap(find.text(l10n.bookmarkDialogCancelButton));
+      await tester.pumpAndSettle();
+      await future;
+      expect(container.read(annotationWritingProvider), isFalse);
     });
 
     testWidgets('Cancel returns null', (tester) async {

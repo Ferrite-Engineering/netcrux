@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/features/bookmarks/providers/annotation_writing_provider.dart';
 import 'package:netcrux/features/bookmarks/widgets/bookmark_dialog.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
@@ -23,6 +24,10 @@ Future<Annotation?> showAnnotationDialog({
   String? moduleName,
   Annotation? existing,
 }) {
+  // While the dialog is open the room is told somebody is writing a note —
+  // who, never what. Raised here, around the dialog, so every way of opening
+  // it says so and every way of closing it stops saying so.
+  final writing = ref.read(annotationWritingProvider.notifier)..start();
   return showDialog<Annotation>(
     context: context,
     // Editor dialogs hold in-progress user input: closing must be a
@@ -38,7 +43,7 @@ Future<Annotation?> showAnnotationDialog({
       moduleName: moduleName,
       existing: existing,
     ),
-  );
+  ).whenComplete(writing.stop);
 }
 
 class _AnnotationDialog extends StatefulWidget {
@@ -165,6 +170,9 @@ class _AnnotationDialogState extends State<_AnnotationDialog> {
     final now = DateTime.now().millisecondsSinceEpoch;
     // Same rationale as the bookmark dialog: construct explicitly to
     // express "user cleared the author field" → null.
+    // An edit keeps what the dialog does not show: the session the note was
+    // written in, its author's frozen colour and attribution, and whether its
+    // layer is hidden.
     final annotation = Annotation(
       id:
           existing?.id ??
@@ -176,6 +184,11 @@ class _AnnotationDialogState extends State<_AnnotationDialog> {
       updatedAtMillis: now,
       author: author,
       moduleName: existing == null ? widget.moduleName : existing.moduleName,
+      authorId: existing?.authorId,
+      colorArgb: existing?.colorArgb,
+      sessionLayerId: existing?.sessionLayerId,
+      sessionLayerLabel: existing?.sessionLayerLabel,
+      hidden: existing?.hidden ?? false,
     );
     Navigator.of(context).pop(annotation);
   }

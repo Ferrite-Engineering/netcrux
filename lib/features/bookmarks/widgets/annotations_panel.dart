@@ -1,3 +1,4 @@
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:netcrux/features/bookmarks/providers/annotation_reveal_request.d
 import 'package:netcrux/features/bookmarks/widgets/annotation_dialog.dart';
 import 'package:netcrux/features/bookmarks/widgets/bookmarks_panel.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
 import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
 import 'package:netcrux/shared/widgets/revealing_list_view.dart';
 
@@ -31,10 +33,11 @@ class AnnotationsPanel extends ConsumerWidget {
     final theme = Theme.of(context);
     final snapshot = ref.watch(bookmarkAnnotationSnapshotProvider);
     final annotations = snapshot.annotations;
+    final rows = annotationPanelRows(annotations);
     final revealId = ref.watch(annotationRevealRequestProvider);
     final revealIndex = revealId == null
         ? -1
-        : annotations.indexWhere((a) => a.id == revealId);
+        : rows.indexWhere((r) => r.annotation?.id == revealId);
     if (revealId != null && revealIndex < 0) {
       // A request for an annotation that is gone (deleted since) has no
       // row to answer it; drop it after this frame so it cannot fire
@@ -75,19 +78,169 @@ class AnnotationsPanel extends ConsumerWidget {
                     ),
                   )
                 : RevealingListView(
-                    itemCount: annotations.length,
+                    itemCount: rows.length,
                     revealIndex: revealIndex < 0 ? null : revealIndex,
                     onRevealed: revealId == null
                         ? null
                         : () => ref
                               .read(annotationRevealRequestProvider.notifier)
                               .acknowledge(revealId),
-                    itemBuilder: (context, i, {required flashing}) =>
-                        _AnnotationTile(
-                          annotation: annotations[i],
-                          flashing: flashing,
-                        ),
+                    itemBuilder: (context, i, {required flashing}) {
+                      final row = rows[i];
+                      final note = row.annotation;
+                      if (note == null) {
+                        return _LayerHeader(
+                          layerId: row.layerId!,
+                          label: row.layerLabel ?? '',
+                          notes: row.layerNotes,
+                        );
+                      }
+                      return _AnnotationTile(
+                        annotation: note,
+                        flashing: flashing,
+                      );
+                    },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One row of the Annotations panel: a note, or the header of a session
+/// layer.
+@immutable
+class AnnotationPanelRow {
+  /// A note row.
+  const AnnotationPanelRow.note(Annotation this.annotation)
+    : layerId = null,
+      layerLabel = null,
+      layerNotes = 0;
+
+  /// A layer header row, over [layerNotes] notes.
+  const AnnotationPanelRow.layer({
+    required String this.layerId,
+    required this.layerLabel,
+    required this.layerNotes,
+  }) : annotation = null;
+
+  /// The note, or `null` for a layer header.
+  final Annotation? annotation;
+
+  /// The layer a header heads, or `null` for a note.
+  final String? layerId;
+
+  /// The layer's label.
+  final String? layerLabel;
+
+  /// How many notes the layer holds.
+  final int layerNotes;
+}
+
+/// The panel's rows: notes written outside any session first, then each
+/// session layer under its own header, in the order the layers first appear.
+///
+/// A layer is one meeting's notes. Grouped, a week-old review reads as one
+/// named, collapsible thing with a date on it rather than as a dozen loose
+/// notes nobody remembers writing.
+List<AnnotationPanelRow> annotationPanelRows(List<Annotation> notes) {
+  final rows = <AnnotationPanelRow>[
+    for (final n in notes)
+      if (n.sessionLayerId == null) AnnotationPanelRow.note(n),
+  ];
+  final layers = <String, List<Annotation>>{};
+  for (final n in notes) {
+    final layer = n.sessionLayerId;
+    if (layer != null) layers.putIfAbsent(layer, () => []).add(n);
+  }
+  for (final MapEntry(key: layer, value: inLayer) in layers.entries) {
+    rows
+      ..add(
+        AnnotationPanelRow.layer(
+          layerId: layer,
+          layerLabel: inLayer.first.sessionLayerLabel,
+          layerNotes: inLayer.length,
+        ),
+      )
+      ..addAll(inLayer.map(AnnotationPanelRow.note));
+  }
+  return rows;
+}
+
+/// The header of a session layer: its label, and the two things a layer does
+/// as a unit — hide from the canvas, and delete.
+class _LayerHeader extends ConsumerWidget {
+  const _LayerHeader({
+    required this.layerId,
+    required this.label,
+    required this.notes,
+  });
+
+  final String layerId;
+  final String label;
+  final int notes;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10N.of(context);
+    final theme = Theme.of(context);
+    final inLayer = [
+      for (final n in ref.watch(bookmarkAnnotationSnapshotProvider).annotations)
+        if (n.sessionLayerId == layerId) n,
+    ];
+    final hidden = inLayer.isNotEmpty && inLayer.every((n) => n.hidden);
+    return Padding(
+      key: ValueKey<String>('annotationLayer-$layerId'),
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.layers_outlined, size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelMedium,
+            ),
+          ),
+          IconButton(
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            tooltip: hidden
+                ? l10n.annotationLayerShow
+                : l10n.annotationLayerHide,
+            icon: Icon(
+              hidden
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+            ),
+            onPressed: () {
+              final store = ref.read(bookmarkAnnotationStoreProvider);
+              for (final n in inLayer) {
+                store.updateAnnotation(n.copyWith(hidden: !hidden));
+              }
+            },
+          ),
+          IconButton(
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            tooltip: l10n.annotationLayerDelete,
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () async {
+              final confirmed = await confirmCruxDestructiveAction(
+                context,
+                title: l10n.annotationLayerDeleteTitle,
+                body: l10n.annotationLayerDeleteBody(notes),
+                confirmLabel: l10n.annotationLayerDelete,
+                cancelLabel: l10n.bookmarkDialogCancelButton,
+              );
+              if (!confirmed) return;
+              final store = ref.read(bookmarkAnnotationStoreProvider);
+              for (final n in inLayer) {
+                store.removeAnnotation(n.id);
+              }
+            },
           ),
         ],
       ),
@@ -107,6 +260,13 @@ class _AnnotationTile extends ConsumerWidget {
     final l10n = L10N.of(context);
     final theme = Theme.of(context);
     final author = annotation.author;
+    // Somebody else's note: hidden or deleted, never edited while their name
+    // is on it. In a session "somebody else" is anyone but the local
+    // participant; once a session's notes are kept, the local participant's
+    // own lose their author id and are editable again.
+    final me = ref.watch(schematicCollabSessionProvider).value?.myParticipantId;
+    final readOnly = annotation.authorId != null && annotation.authorId != me;
+    final color = annotation.colorArgb;
     return AnimatedContainer(
       key: ValueKey<String>('annotationRow-${annotation.id}'),
       duration: const Duration(milliseconds: 250),
@@ -114,7 +274,13 @@ class _AnnotationTile extends ConsumerWidget {
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         dense: true,
-        leading: const Icon(Icons.sticky_note_2_outlined, size: 18),
+        // A session note wears its author's colour, frozen when it was
+        // written.
+        leading: Icon(
+          Icons.sticky_note_2_outlined,
+          size: 18,
+          color: color == null ? null : Color(color),
+        ),
         title: MarkdownBody(
           data: annotation.body,
           selectable: true,
@@ -148,10 +314,11 @@ class _AnnotationTile extends ConsumerWidget {
             }
           },
           itemBuilder: (context) => <PopupMenuEntry<_AnnotationMenuAction>>[
-            PopupMenuItem<_AnnotationMenuAction>(
-              value: _AnnotationMenuAction.edit,
-              child: Text(l10n.annotationContextMenuEdit),
-            ),
+            if (!readOnly)
+              PopupMenuItem<_AnnotationMenuAction>(
+                value: _AnnotationMenuAction.edit,
+                child: Text(l10n.annotationContextMenuEdit),
+              ),
             PopupMenuItem<_AnnotationMenuAction>(
               value: _AnnotationMenuAction.delete,
               child: Text(l10n.annotationContextMenuDelete),

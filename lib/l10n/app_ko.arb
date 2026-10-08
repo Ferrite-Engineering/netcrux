@@ -2437,6 +2437,12 @@
   "@annotationContextMenuDelete": {
     "description": "Context-menu item that deletes an annotation."
   },
+  "annotationSessionLayerLabel": "세션 {code} · {date}",
+  "annotationLayerHide": "레이어 숨기기",
+  "annotationLayerShow": "레이어 표시",
+  "annotationLayerDelete": "레이어 삭제",
+  "annotationLayerDeleteTitle": "이 레이어를 삭제할까요?",
+  "annotationLayerDeleteBody": "{count, plural, =1{이 레이어의 주석 1개가 이 설계에서 삭제됩니다.} other{이 레이어의 주석 {count}개가 이 설계에서 삭제됩니다.}}",
   "annotationContextMenuEdit": "주석 편집…",
   "@annotationContextMenuEdit": {
     "description": "Context-menu item that opens the Edit Annotation dialog on an annotation row."
