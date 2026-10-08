@@ -168,8 +168,7 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   // The panel-show actions (bookmarks / annotations / source / diff /
   // FSM / CDC / reset / activity) open onto their panel's empty-state
   // explainer once a tab exists, so a loaded design is deliberately NOT
-  // required for them. The panels are the Pro overlay's; an open-core
-  // build refuses these actions with "requires NetCrux Pro".
+  // required for them.
   NetcruxAction.toggleHierarchyTree ||
   NetcruxAction.toggleInspector ||
   NetcruxAction.toggleDiagnosticsPanel ||

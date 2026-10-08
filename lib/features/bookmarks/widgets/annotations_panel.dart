@@ -9,11 +9,11 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
 import 'package:netcrux/shared/widgets/revealing_list_view.dart';
 
-/// Pro panel listing the annotations of the active tab's design, docked as
-/// the right dock's Annotations tab.
+/// Panel listing the annotations of the active tab's design, docked as the
+/// right dock's Annotations tab.
 ///
 /// Mirrors [BookmarksPanel] in shape. Markdown bodies render via
-/// `flutter_markdown_plus`'s [MarkdownBody] (Phase 4 §5.2.4): paragraphs,
+/// `flutter_markdown_plus`'s [MarkdownBody]: paragraphs,
 /// emphasis, links, code blocks, and lists all render natively. The edit
 /// dialog still shows the raw markdown source for editing.
 ///

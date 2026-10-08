@@ -181,10 +181,9 @@ class SessionController {
     final transform = container.read(viewportTransformProvider);
     final model = container.read(loadedNetlistProvider).value;
     final project = container.read(currentProjectProvider);
-    // Pro bookmarks + annotations live in the active store. Open-core
-    // resolves to NoopBookmarkAnnotationStore which yields an empty
-    // snapshot → bookmarks and annotations fields stay empty in the
-    // emitted JSON (readable by builds that predate bookmarks).
+    // Bookmarks + annotations live in the active store. With none, the
+    // fields stay empty and are omitted from the emitted JSON (readable by
+    // builds that predate bookmarks).
     final marks = container.read(bookmarkAnnotationStoreProvider).snapshot();
     return NetcruxSession(
       version: NetcruxSession.currentVersion,
@@ -230,9 +229,7 @@ class SessionController {
             topModule: session.topModule,
           ),
         );
-    // Pro bookmarks + annotations name elements by path and need no model.
-    // Open-core resolves to NoopBookmarkAnnotationStore, which silently
-    // ignores writes.
+    // Bookmarks + annotations name elements by path and need no model.
     final store = container.read(bookmarkAnnotationStoreProvider)..clear();
     session.bookmarks.forEach(store.addBookmark);
     session.annotations.forEach(store.addAnnotation);

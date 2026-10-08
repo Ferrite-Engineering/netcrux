@@ -26,8 +26,8 @@ Future<Annotation?> showAnnotationDialog({
   return showDialog<Annotation>(
     context: context,
     // Editor dialogs hold in-progress user input: closing must be a
-    // deliberate act (Cancel / Save), never a stray scrim click — the
-    // suite dialog canon (UI_CONSISTENCY_CHARTER.md §1.8). Note this
+    // deliberate act (Cancel / Save), never a stray scrim click, as in every
+    // other editor dialog in the suite. Note this
     // also disables Escape (Flutter routes DismissIntent through the
     // barrier flag).
     barrierDismissible: false,
@@ -91,8 +91,7 @@ class _AnnotationDialogState extends State<_AnnotationDialog> {
     // Suite-standard destructive confirm: "Keep editing" in the cancel
     // slot, error-colored "Discard" verb. Any non-button dismissal
     // (scrim, Escape) resolves false, i.e. keeps editing, so
-    // in-progress user input is never lost by a stray click
-    // (UI_CONSISTENCY_CHARTER.md §1.8).
+    // in-progress user input is never lost by a stray click.
     final confirmed = await confirmCruxDestructiveAction(
       context,
       title: l10n.bookmarkAnnotationUnsavedChangesTitle,

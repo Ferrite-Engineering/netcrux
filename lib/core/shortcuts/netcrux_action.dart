@@ -134,21 +134,17 @@ enum NetcruxAction implements CruxAction {
   showXTrace,
 
   /// Add a bookmark on the currently selected schematic element.
-  /// Pro feature — requires [LicenseTier.pro].
   addBookmark,
 
-  /// Show / focus the Bookmarks panel. The panel exists only in the Pro
-  /// overlay, so this carries the Pro tier; an open-core build refuses it
-  /// with a "requires NetCrux Pro" notice.
+  /// Show / focus the Bookmarks panel, closing it when it is already on
+  /// screen.
   showBookmarksPanel,
 
   /// Add an annotation on the currently selected schematic element.
-  /// Pro feature.
   addAnnotation,
 
-  /// Show / focus the Annotations panel. The panel exists only in the Pro
-  /// overlay, so this carries the Pro tier; an open-core build refuses it
-  /// with a "requires NetCrux Pro" notice.
+  /// Show / focus the Annotations panel, closing it when it is already on
+  /// screen.
   showAnnotationsPanel,
 
   /// Show / focus the RTL source pane (Pro). Always discoverable; an

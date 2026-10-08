@@ -60,15 +60,13 @@ class BookmarkAnnotationSnapshot {
 /// Extension-point service for persisting bookmarks + annotations
 /// associated with the active project.
 ///
-/// Open-core ships a [NoopBookmarkAnnotationStore] default that
-/// silently ignores writes and always returns
-/// [BookmarkAnnotationSnapshot.empty]. The Pro overlay registers an
-/// `InSessionBookmarkAnnotationStore` via `proOverrides` that mutates
-/// the active [`NetcruxSession`] so the data round-trips through
-/// `.netcrux` session save/load.
+/// `InSessionBookmarkAnnotationStore` is the default implementation: it
+/// holds the data in the tab's state so it round-trips through `.netcrux`
+/// session save/load. [NoopBookmarkAnnotationStore] silently ignores writes
+/// and always returns [BookmarkAnnotationSnapshot.empty].
 ///
 /// The interface is intentionally read-as-snapshot + imperative-writes
-/// rather than a CRUD provider. The Pro panel widgets call into the
+/// rather than a CRUD provider. The panel widgets call into the
 /// store imperatively (add / remove / update) and `ref.watch` the
 /// `bookmarkAnnotationSnapshotProvider` that surfaces the current
 /// snapshot. This keeps the open-core seam small (one interface, one

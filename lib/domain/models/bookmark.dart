@@ -34,10 +34,9 @@ enum BookmarkTargetKind {
 /// A persistent named pointer to a schematic element.
 ///
 /// Bookmarks are part of the [`NetcruxSession`] model and round-trip
-/// through `.netcrux` session JSON. They are the open-core data shape;
-/// the Pro overlay's [`BookmarkAnnotationStore`] implementation
-/// persists them into the active session, and the Pro UI surface
-/// renders them in a bookmarks panel.
+/// through `.netcrux` session JSON. The [`BookmarkAnnotationStore`]
+/// implementation persists them into the active session, and the bookmarks
+/// panel renders them.
 ///
 /// Pure data: no Flutter imports, no callbacks. The `id` is generated
 /// by the Pro overlay at creation time (millis-since-epoch + counter

@@ -1,6 +1,6 @@
 // integration_test/session/bookmark_annotation_session_round_trip_test.dart
 //
-// Verification driver for bookmarks + annotations (§7.5): seed a design into
+// Verification driver for bookmarks + annotations (Verification Guide §7.5): seed a design into
 // the active tab (Yosys-free, via the design-seed helper), add a bookmark and
 // an annotation through the real `InSessionBookmarkAnnotationStore` (the same
 // store the Bookmarks and Annotations panels call into), persist a `.netcrux`

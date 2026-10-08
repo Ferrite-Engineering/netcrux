@@ -197,9 +197,8 @@ class _Candidate {
 /// active tab) the picker renders its empty state.
 ///
 /// `barrierDismissible: false`: a searchable picker holding a typed query
-/// (`_searchController`) is the charter's "editors, pickers... anything
-/// holding in-progress user input" case (UI_CONSISTENCY_CHARTER.md §1.8),
-/// so closing must be a deliberate act rather than a stray scrim click —
+/// (`_searchController`) is an editor, picker or anything else holding
+/// in-progress user input, so closing must be a deliberate act rather than a stray scrim click —
 /// same treatment as the Symbol Manager's search field.
 ///
 /// Not independently `ModalGuard`-wrapped: this function is reachable

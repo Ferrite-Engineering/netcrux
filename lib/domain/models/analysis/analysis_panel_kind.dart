@@ -1,13 +1,14 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
-/// The Pro analysis surfaces that can dock into the workspace's right
-/// analysis dock (the pane that swaps in for the inspector).
+/// The surfaces that can dock into the workspace's right dock, beside the
+/// inspector.
 ///
 /// Open-core declares the vocabulary so the docking chrome (the right
 /// IDE pane, its visibility logic, and the View-menu toggles) can be
-/// built and tested without the Pro overlay; the overlay supplies the
-/// actual panel widgets through `analysisPanelBuilderProvider`.
+/// built and tested without the Pro overlay. Open core builds the
+/// [bookmarks] and [annotations] panels itself; the overlay supplies the
+/// widgets for the analyses through `analysisPanelBuilderProvider`.
 enum AnalysisPanelKind {
   /// Clock-domain-crossing analysis (Pro).
   cdc,
@@ -36,11 +37,11 @@ enum AnalysisPanelKind {
 
   /// The design's bookmarks: named places to return to. Docked beside the
   /// schematic so a row click lands on the element while the list stays in
-  /// view (Pro).
+  /// view.
   bookmarks,
 
   /// The design's annotations: Markdown notes on schematic elements. Docked
   /// beside the schematic, where the badge on an annotated cell opens it at
-  /// that cell's note (Pro).
+  /// that cell's note.
   annotations,
 }

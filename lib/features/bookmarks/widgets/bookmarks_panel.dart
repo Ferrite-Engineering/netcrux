@@ -7,14 +7,12 @@ import 'package:netcrux/features/bookmarks/widgets/bookmark_dialog.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
 
-/// Pro panel listing the bookmarks of the active tab's design, docked as
-/// the right dock's Bookmarks tab.
+/// Panel listing the bookmarks of the active tab's design, docked as the
+/// right dock's Bookmarks tab.
 ///
-/// Watches [bookmarkAnnotationSnapshotProvider], which the Pro overlay
-/// re-binds per tab, so the list rebuilds on every add / update / remove
-/// and shows only the bookmarks made in this tab. The open-core no-op
-/// store yields an empty snapshot, so its empty state is all a build
-/// without the overlay could show.
+/// Watches [bookmarkAnnotationSnapshotProvider], which the per-tab override
+/// list re-binds, so the list rebuilds on every add / update / remove and
+/// shows only the bookmarks made in this tab.
 ///
 /// Each row is one focusable, named control: it reads the bookmark's name,
 /// the kind and id of its element and, when it has one, the note, which

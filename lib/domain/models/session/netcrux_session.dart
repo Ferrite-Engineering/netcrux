@@ -138,13 +138,10 @@ class NetcruxSession {
   /// `/`).
   final List<String> expandedScopeKeys;
 
-  /// Pro-tier bookmarks persisted in the session. Empty for
-  /// open-core sessions (no Pro overlay loaded → the Pro panel
-  /// never writes here). Pro feature.
+  /// Bookmarks persisted in the session. Empty when the tab has none.
   final List<Bookmark> bookmarks;
 
-  /// Pro-tier annotations persisted in the session. Empty for
-  /// open-core sessions.
+  /// Annotations persisted in the session. Empty when the tab has none.
   final List<Annotation> annotations;
 
   /// Serializes to a forward-compatible JSON map.
