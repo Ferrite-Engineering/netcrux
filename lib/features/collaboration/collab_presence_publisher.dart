@@ -20,9 +20,11 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/interfaces/schematic_collaboration_service.dart';
+import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
+import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
 import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
@@ -58,6 +60,45 @@ Set<String> collabElementIds(Selection selection) => {
 /// The empty string means "no scope selected", which is what a participant
 /// with nothing open reports.
 String collabScopePath(HierarchyNode? node) => node?.path.join('/') ?? '';
+
+/// The instance-name path [scopePath] spells, for `selectByPath`.
+///
+/// The inverse of [collabScopePath]. Not a bare `split('/')`: the empty string
+/// (the top of the design) splits to one empty segment, which names an
+/// instance called "" and resolves to nothing.
+List<String> collabScopeSegments(String scopePath) =>
+    scopePath.isEmpty ? const <String>[] : scopePath.split('/');
+
+/// What the local participant is showing, as a presenter publishes it.
+///
+/// [center] is the design point at the middle of the canvas and [zoom] the
+/// camera's zoom; `null` [center] means the canvas has not laid out, and the
+/// view then carries no camera. An empty [trace] carries none either.
+SchematicCollabPresenterView collabPresenterView({
+  required HierarchyNode? scope,
+  required Offset? center,
+  required double zoom,
+  required TraceOverlay trace,
+}) => SchematicCollabPresenterView(
+  scopePath: collabScopePath(scope),
+  camera: center == null
+      ? null
+      : SchematicCollabCamera(
+          centerX: center.dx,
+          centerY: center.dy,
+          zoom: zoom,
+        ),
+  trace: trace.isEmpty
+      ? null
+      : SchematicCollabTrace(
+          mode: trace.mode?.name,
+          cellIds: Set<String>.unmodifiable(trace.highlightedCellIds),
+          edgeIds: Set<String>.unmodifiable(trace.highlightedEdgeIds),
+          boundaryPortIds: Set<String>.unmodifiable(
+            trace.highlightedBoundaryPortIds,
+          ),
+        ),
+);
 
 /// Converts a canvas-local pointer position into design space under
 /// [transform].

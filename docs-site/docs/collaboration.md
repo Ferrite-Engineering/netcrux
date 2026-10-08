@@ -33,11 +33,23 @@ When somebody asks to join, NetCrux shows **"{name} wants to join"** with **Appr
 
 ## While a session runs {#live}
 
-The **Collaborate** button in the status bar becomes the session chip, showing the number of people in the room. Open it for the roster and, on an internet session, to copy the invite again. Its **×** leaves the session; for the host it ends it for everyone.
+The **Collaborate** button in the status bar becomes the session chip, showing the number of people in the room and who is presenting. Open it for the roster and, on an internet session, to copy the invite again. Its **×** leaves the session; for the host it ends it for everyone.
 
 Everyone's pointer is drawn at screen size in their colour, and their selection as a dashed outline in the same colour. Both are shown only when they are looking at the same scope as you, since a position or an element in one module means nothing in another.
 
 NetCrux warns when not everyone in the room has the same design open.
+
+## Presenting and following {#presenter}
+
+One person presents at a time, and everyone else sees what they show. The host presents when the session starts.
+
+- **What follows.** Your schematic moves to the presenter's scope and frames the same part of the design they are looking at, whatever the size of your window. Their selection is outlined, and the elements their fanin, fanout or cone-of-influence trace lights glow in their colour, on top of your own schematic. Your own selection and trace overlay are never changed. The presenter's pointer has a ring around it.
+- **What the status bar says.** The presenter sees **You're presenting**. Everyone else sees **Presenting:** and the presenter's name, and **Following** *name*'**s view** while their schematic follows.
+- **Looking away.** Pan, zoom or change scope and you stop following, without leaving the session or changing who presents. The status bar offers **Resume following** *name*; leave the view alone for twelve seconds and it resumes on its own. The button beside **Following** *name*'**s view** does the same from the keyboard.
+- **Changing presenter.** Open the presenter menu (the presenter's name in the status bar). Anyone can choose **Request control**; the presenter and the host see *name* **wants to present** with **Approve** and **Deny**. The presenter, or the host at any time, can choose **Hand off to** *name* directly.
+- **When someone leaves.** If the presenter leaves, the host presents again. If the host leaves, the person who has been in the session longest becomes host and presenter.
+
+None of this needs a license: from NetCrux 1.1 a guest who joined for free can ask to present and present like anyone else.
 
 ## Security and its limits {#security}
 

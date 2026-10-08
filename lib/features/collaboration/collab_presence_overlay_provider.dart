@@ -20,6 +20,7 @@ class CollabPresenceCursor {
     required this.color,
     required this.x,
     required this.y,
+    this.isPresenter = false,
   });
 
   /// Who this cursor belongs to.
@@ -40,6 +41,10 @@ class CollabPresenceCursor {
   /// Design-space Y. See [x].
   final double y;
 
+  /// Whether this is the presenter's pointer, which the painter rings so the
+  /// room can tell who is driving.
+  final bool isPresenter;
+
   @override
   bool operator ==(Object other) =>
       other is CollabPresenceCursor &&
@@ -47,10 +52,12 @@ class CollabPresenceCursor {
       other.label == label &&
       other.color == color &&
       other.x == x &&
-      other.y == y;
+      other.y == y &&
+      other.isPresenter == isPresenter;
 
   @override
-  int get hashCode => Object.hash(participantId, label, color, x, y);
+  int get hashCode =>
+      Object.hash(participantId, label, color, x, y, isPresenter);
 }
 
 /// What the schematic painter draws for the other people in the room.
@@ -71,6 +78,8 @@ class CollabPresenceOverlay {
   const CollabPresenceOverlay({
     required this.cursors,
     required this.selectionColors,
+    this.presenterTraceIds = const <String>{},
+    this.presenterTraceColor,
   });
 
   /// Nothing to draw. `isEmpty` is true and the painter treats this exactly as
@@ -91,8 +100,19 @@ class CollabPresenceOverlay {
   /// flickering between two colours as snapshots arrive.
   final Map<String, Color> selectionColors;
 
+  /// The elements the presenter's trace overlay lights, when the presenter is
+  /// somebody else and is showing one in this scope. Drawn as a glow in
+  /// [presenterTraceColor] over the local schematic; the local trace overlay
+  /// is never touched.
+  final Set<String> presenterTraceIds;
+
+  /// The presenter's palette colour, set whenever [presenterTraceIds] is not
+  /// empty.
+  final Color? presenterTraceColor;
+
   /// True when there is nothing to paint.
-  bool get isEmpty => cursors.isEmpty && selectionColors.isEmpty;
+  bool get isEmpty =>
+      cursors.isEmpty && selectionColors.isEmpty && presenterTraceIds.isEmpty;
 
   @override
   bool operator ==(Object other) {
@@ -106,7 +126,11 @@ class CollabPresenceOverlay {
     for (final entry in selectionColors.entries) {
       if (other.selectionColors[entry.key] != entry.value) return false;
     }
-    return true;
+    if (other.presenterTraceColor != presenterTraceColor) return false;
+    if (other.presenterTraceIds.length != presenterTraceIds.length) {
+      return false;
+    }
+    return presenterTraceIds.every(other.presenterTraceIds.contains);
   }
 
   @override
@@ -115,6 +139,8 @@ class CollabPresenceOverlay {
     Object.hashAllUnordered(
       selectionColors.entries.map((e) => Object.hash(e.key, e.value)),
     ),
+    Object.hashAllUnordered(presenterTraceIds),
+    presenterTraceColor,
   );
 }
 
@@ -163,6 +189,7 @@ CollabPresenceOverlay? collabPresenceOverlay(Ref ref) {
   final cursors = <CollabPresenceCursor>[];
   final selectionColors = <String, Color>{};
   final claimedBy = <String, int>{};
+  final presenterId = session.effectivePresenterId;
 
   for (final p in session.participants) {
     if (p.id == session.myParticipantId) continue;
@@ -179,6 +206,7 @@ CollabPresenceOverlay? collabPresenceOverlay(Ref ref) {
           color: color,
           x: p.cursorX!,
           y: p.cursorY!,
+          isPresenter: p.id == presenterId,
         ),
       );
     }
@@ -190,9 +218,31 @@ CollabPresenceOverlay? collabPresenceOverlay(Ref ref) {
     }
   }
 
-  if (cursors.isEmpty && selectionColors.isEmpty) return null;
+  // The presenter's trace, drawn over this schematic when somebody else is
+  // presenting in the scope on screen. Ids only: what the presenter's trace
+  // lit, never a recomputation here.
+  var presenterTraceIds = const <String>{};
+  Color? presenterTraceColor;
+  final view = session.presenterView;
+  final presenter = session.presenter;
+  if (!session.isLocalPresenter &&
+      presenter != null &&
+      view != null &&
+      view.scopePath == scopePath) {
+    final trace = view.trace;
+    if (trace != null) {
+      presenterTraceIds = trace.allIds;
+      presenterTraceColor = collaboratorColor(presenter.colorIndex);
+    }
+  }
+
+  if (cursors.isEmpty && selectionColors.isEmpty && presenterTraceIds.isEmpty) {
+    return null;
+  }
   return CollabPresenceOverlay(
     cursors: cursors,
     selectionColors: selectionColors,
+    presenterTraceIds: presenterTraceIds,
+    presenterTraceColor: presenterTraceColor,
   );
 }

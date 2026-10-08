@@ -2017,6 +2017,49 @@ This section *is* the tier-gate scenario. Both phases are covered by steps 4 and
 | Join hidden without a real service; live-session flag follows the service | **Strong** — `test/services/collaboration/collaboration_available_provider_test.dart`. `[Coverage: UNIT_TEST]` |
 | Native menu rendering of the `(ENT)` suffix | **Manual** — `[Coverage: MANUAL]` |
 
+### 19.1 Presenter mode — the follow seam
+
+- **What it does.** One participant presents and the others follow what they
+  show. The open core owns the follower and presenter halves of it, per tab:
+  `CollabPresenterBridge` publishes the presenter's scope, camera (a
+  design-space centre and a zoom, so it frames the same place in any window)
+  and trace overlay, and has a follower's active tab navigate to the
+  presenter's scope and camera. The presenter's selection and trace are drawn
+  over the follower's own schematic (a dashed outline and a translucent glow
+  in the presenter's colour) and are never written into the follower's
+  selection or trace. A pan, a zoom or a change of scope by a follower
+  **detaches** them (`collabFollowDetachedProvider`); the presenter's view is
+  then not applied until they resume, or until 12 s pass without them
+  touching the view. The presenter's pointer is ringed.
+- **Setup.** The NetCrux Pro build, two machines, the same design open on
+  both. The open-source build never starts a session, so the bridge is inert.
+- **Steps and expected behavior.**
+  1. Host presents (default). Guest's tab moves to the host's scope and
+     framing; moving the host's camera moves the guest's within a fraction of
+     a second.
+  2. Host runs Show Fanout. Guest sees the lit elements glow in the host's
+     colour; the guest's own trace overlay is unchanged and Clear Overlay on
+     the guest does not remove the glow.
+  3. Guest pans. Guest is detached: host navigation no longer moves the
+     guest. After 12 s idle, or Resume following, the guest snaps back.
+  4. Guest double-clicks into another instance. Also detaches.
+  5. Window sizes differ between the two machines: the same design point is
+     at the centre of both canvases.
+- **Edge cases.** A follower with a different elaboration: a scope path that
+  does not resolve is ignored; ids that do not resolve are not drawn. A tab
+  that is not active does not follow until it becomes active.
+
+### 19.1 Automation Assessment
+
+| Capability | Assessment |
+|------------|------------|
+| Presenter publishes scope, trace at once and camera after a 100 ms settle; a follower publishes nothing | **Strong** — `test/features/collaboration/collab_presenter_bridge_test.dart`. `[Coverage: WIDGET]` |
+| Follower taken to scope and camera; same-scope framing; pan and scope change detach; resume re-applies; becoming presenter or session end resumes | **Strong** — same file. `[Coverage: WIDGET]` |
+| Camera as design centre + zoom frames the same place in any window size; gesture vs programmatic camera changes | **Strong** — `test/features/viewer/providers/viewport_transform_notifier_test.dart`. `[Coverage: UNIT_TEST]` |
+| Presenter trace glow, ringed presenter pointer, nothing drawn for another scope or for oneself | **Strong** — `test/services/collaboration/collab_presence_overlay_provider_test.dart`. `[Coverage: UNIT_TEST]` |
+| Idle auto-resume | **Strong** — `test/features/collaboration/collab_follow_detached_provider_test.dart`. `[Coverage: WIDGET]` |
+| Two machines, real canvases | **Manual** — `[Coverage: MANUAL]` |
+
 ## Adding a section
 
 Add a new top-level section the same day the corresponding feature ships. Do not pre-write speculative content — the section is created when an item is ready to be verified.

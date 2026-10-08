@@ -443,6 +443,7 @@ flutter build windows --release --dart-define=TELEMETRY_DEV=true   # or: build l
 - [ ] Open-source desktop build: File shows **Share Session…** `(ENT)`; no Join Session… or Leave Session; choosing Share says it requires NetCrux Pro — `[Coverage: UNIT_TEST]` (descriptors) + `[Coverage: MANUAL]` (native menu).
 - [ ] Browser build offers none of the three — `[Coverage: UNIT_TEST]`.
 - [ ] Post-beta Share denial records `tier.gate_hit` `collaboration` / `enterprise`; Join and Leave never record one — `[Coverage: WIDGET]` (`tier_gate_events_test.dart`).
+- [ ] Presenter mode seam (§19.1): follower follows scope and camera, presenter trace glows non-destructively, pan or scope change detaches, resume and 12 s idle snap back — `[Coverage: WIDGET]` (`collab_presenter_bridge_test.dart`) + `[Coverage: MANUAL]` two machines.
 
 ---
 

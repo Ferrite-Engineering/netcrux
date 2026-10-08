@@ -79,6 +79,21 @@ class _StubCollaborationService implements SchematicCollaborationService {
   void setFollowTarget(String? participantId) {}
 
   @override
+  void handoffPresenter(String participantId) {}
+
+  @override
+  void requestPresenter() {}
+
+  @override
+  void respondToPresenterRequest(
+    String participantId, {
+    required bool grant,
+  }) {}
+
+  @override
+  void updatePresenterView(SchematicCollabPresenterView view) {}
+
+  @override
   void dismissUnreadableFramesNotice() {}
 
   @override
@@ -253,4 +268,59 @@ void main() {
       expect(overlay, isNull);
     },
   );
+
+  group('presenter mode', () {
+    const trace = SchematicCollabTrace(
+      mode: 'fanin',
+      cellIds: {'u_alu'},
+      edgeIds: {'e_1'},
+      boundaryPortIds: {'port:clk'},
+    );
+
+    SchematicCollabSessionState presentedBy(
+      String presenter, {
+      String? scopePath,
+    }) => SchematicCollabSessionState(
+      sessionId: 'ROOM01',
+      myParticipantId: 'me',
+      hostId: 'me',
+      presenterId: presenter,
+      mode: SchematicCollabMode.wan,
+      participants: [
+        _peer(id: 'me', colorIndex: 0),
+        _peer(id: 'grace', colorIndex: 2, x: 4, y: 4),
+      ],
+      presenterView: SchematicCollabPresenterView(
+        scopePath: scopePath ?? localScope(),
+        trace: trace,
+      ),
+    );
+
+    test("the presenter's trace is drawn in their colour", () async {
+      final overlay = await overlayFor(presentedBy('grace'));
+      expect(overlay!.presenterTraceIds, {'u_alu', 'e_1', 'port:clk'});
+      expect(overlay.presenterTraceColor, collaboratorColor(2));
+    });
+
+    test("the presenter's pointer is the ringed one", () async {
+      final overlay = await overlayFor(presentedBy('grace'));
+      expect(overlay!.cursors.single.isPresenter, isTrue);
+    });
+
+    test('a presenter in another scope lights nothing here', () async {
+      final overlay = await overlayFor(
+        presentedBy('grace', scopePath: 'u_elsewhere'),
+      );
+      expect(overlay!.presenterTraceIds, isEmpty);
+    });
+
+    test(
+      'my own trace is never drawn back to me as a presenter glow',
+      () async {
+        final overlay = await overlayFor(presentedBy('me'));
+        expect(overlay!.presenterTraceIds, isEmpty);
+        expect(overlay.cursors.single.isPresenter, isFalse);
+      },
+    );
+  });
 }

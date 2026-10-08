@@ -257,6 +257,140 @@ final class SchematicParticipantInfo {
   }
 }
 
+/// The presenter's camera, in design space.
+///
+/// **A centre and a zoom, never a pixel offset.** Participants have different
+/// window sizes: the same pixel offset frames a different part of the design
+/// in every window, but the design point at the centre of the canvas, at a
+/// given zoom, frames the same place everywhere. Each follower converts it to
+/// its own offset against its own canvas size.
+@immutable
+final class SchematicCollabCamera {
+  /// Creates a camera centred on design point ([centerX], [centerY]).
+  const SchematicCollabCamera({
+    required this.centerX,
+    required this.centerY,
+    required this.zoom,
+  });
+
+  /// Design-space X at the centre of the presenter's canvas.
+  final double centerX;
+
+  /// Design-space Y at the centre of the presenter's canvas.
+  final double centerY;
+
+  /// The presenter's zoom.
+  final double zoom;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SchematicCollabCamera &&
+      other.centerX == centerX &&
+      other.centerY == centerY &&
+      other.zoom == zoom;
+
+  @override
+  int get hashCode => Object.hash(centerX, centerY, zoom);
+}
+
+/// The presenter's active trace overlay: which elements a fanin, fanout or
+/// cone-of-influence trace lit, by id.
+///
+/// Ids only. The follower draws them over its own schematic as the presenter's
+/// highlight; nothing here recomputes a trace, and the follower's own trace
+/// overlay is never touched.
+@immutable
+final class SchematicCollabTrace {
+  /// Creates a trace description.
+  const SchematicCollabTrace({
+    required this.cellIds,
+    required this.edgeIds,
+    required this.boundaryPortIds,
+    this.mode,
+  });
+
+  /// `fanin` or `fanout`, by the overlay's own mode name, or `null` when the
+  /// overlay carries none.
+  final String? mode;
+
+  /// Lit cell ids.
+  final Set<String> cellIds;
+
+  /// Lit edge ids.
+  final Set<String> edgeIds;
+
+  /// Lit boundary-port ids.
+  final Set<String> boundaryPortIds;
+
+  /// Every lit id, in the painter's vocabulary.
+  Set<String> get allIds => {...cellIds, ...edgeIds, ...boundaryPortIds};
+
+  @override
+  bool operator ==(Object other) =>
+      other is SchematicCollabTrace &&
+      other.mode == mode &&
+      _sameIds(other.cellIds, cellIds) &&
+      _sameIds(other.edgeIds, edgeIds) &&
+      _sameIds(other.boundaryPortIds, boundaryPortIds);
+
+  @override
+  int get hashCode => Object.hash(
+    mode,
+    Object.hashAllUnordered(cellIds),
+    Object.hashAllUnordered(edgeIds),
+    Object.hashAllUnordered(boundaryPortIds),
+  );
+}
+
+/// What the presenter is showing: the scope, the camera and the trace overlay.
+///
+/// The schematic counterpart of WaveCrux's shared viewport and view
+/// composition. Followers navigate to [scopePath] and frame [camera] (the
+/// ephemeral focus they soft-follow), and draw [trace] over their own
+/// schematic as a non-destructive overlay. The presenter's selection is not
+/// repeated here: it already travels as the presenter's presence, and every
+/// participant draws it.
+///
+/// Published only by the presenter; a frame from anyone else is dropped, and
+/// the value is cleared whenever the presenter token moves.
+@immutable
+final class SchematicCollabPresenterView {
+  /// Creates a presenter view.
+  const SchematicCollabPresenterView({
+    required this.scopePath,
+    this.camera,
+    this.trace,
+  });
+
+  /// The presenter's scope, as `collabScopePath` spells it. Empty for the top
+  /// of the design.
+  final String scopePath;
+
+  /// The presenter's camera, or `null` before their canvas has laid out.
+  final SchematicCollabCamera? camera;
+
+  /// The presenter's active trace overlay, or `null` when none is showing.
+  final SchematicCollabTrace? trace;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SchematicCollabPresenterView &&
+      other.scopePath == scopePath &&
+      other.camera == camera &&
+      other.trace == trace;
+
+  @override
+  int get hashCode => Object.hash(scopePath, camera, trace);
+}
+
+bool _sameIds(Set<String> a, Set<String> b) {
+  if (a.length != b.length) return false;
+  for (final id in a) {
+    if (!b.contains(id)) return false;
+  }
+  return true;
+}
+
 /// Complete state broadcast by the session on every roster, cursor or
 /// selection change.
 @immutable
@@ -272,6 +406,9 @@ final class SchematicCollabSessionState {
     this.admission = SchematicCollabAdmission.approved,
     this.hasUnreadableFrames = false,
     this.followTargetId,
+    this.presenterId,
+    this.pendingControlRequests = const <String>[],
+    this.presenterView,
   });
 
   /// The room code (WAN) or host-minted session id (LAN).
@@ -309,6 +446,26 @@ final class SchematicCollabSessionState {
   /// The participant whose scope changes this client follows, or `null` when
   /// not following anyone.
   final String? followTargetId;
+
+  /// Who holds the presenter token, or `null` for "the host" — presenter
+  /// defaults to host until the first handoff. Read [effectivePresenterId].
+  final String? presenterId;
+
+  /// Participants who have asked to present and are waiting for the host or
+  /// the presenter to decide.
+  final List<String> pendingControlRequests;
+
+  /// What the presenter is showing, or `null` before they have published it.
+  final SchematicCollabPresenterView? presenterView;
+
+  /// Who is presenting, resolving the "defaults to the host" rule.
+  String get effectivePresenterId => presenterId ?? hostId;
+
+  /// Whether the local participant holds the presenter token.
+  bool get isLocalPresenter => effectivePresenterId == myParticipantId;
+
+  /// The presenting participant, or `null` while the roster has not caught up.
+  SchematicParticipantInfo? get presenter => participant(effectivePresenterId);
 
   /// Whether the local participant is the session host.
   bool get isLocalHost => hostId == myParticipantId;
@@ -357,6 +514,10 @@ final class SchematicCollabSessionState {
     bool? hasUnreadableFrames,
     String? followTargetId,
     bool clearFollowTarget = false,
+    String? presenterId,
+    List<String>? pendingControlRequests,
+    SchematicCollabPresenterView? presenterView,
+    bool clearPresenterView = false,
   }) => SchematicCollabSessionState(
     sessionId: sessionId ?? this.sessionId,
     myParticipantId: myParticipantId ?? this.myParticipantId,
@@ -369,6 +530,12 @@ final class SchematicCollabSessionState {
     followTargetId: clearFollowTarget
         ? null
         : (followTargetId ?? this.followTargetId),
+    presenterId: presenterId ?? this.presenterId,
+    pendingControlRequests:
+        pendingControlRequests ?? this.pendingControlRequests,
+    presenterView: clearPresenterView
+        ? null
+        : (presenterView ?? this.presenterView),
   );
 
   @override
@@ -382,7 +549,10 @@ final class SchematicCollabSessionState {
       _sameList(other.pendingJoinRequests, pendingJoinRequests) &&
       other.admission == admission &&
       other.hasUnreadableFrames == hasUnreadableFrames &&
-      other.followTargetId == followTargetId;
+      other.followTargetId == followTargetId &&
+      other.presenterId == presenterId &&
+      _sameList(other.pendingControlRequests, pendingControlRequests) &&
+      other.presenterView == presenterView;
 
   @override
   int get hashCode => Object.hash(
@@ -395,6 +565,9 @@ final class SchematicCollabSessionState {
     admission,
     hasUnreadableFrames,
     followTargetId,
+    presenterId,
+    Object.hashAll(pendingControlRequests),
+    presenterView,
   );
 
   static bool _sameList<T>(List<T> a, List<T> b) {

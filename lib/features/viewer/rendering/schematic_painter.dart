@@ -1579,9 +1579,58 @@ class SchematicCanvasRenderObject extends RenderBox {
     // exception anything catches.
     final inverseZoom = zoom > 0 ? 1.0 / zoom : 1.0;
 
+    _paintPresenterTrace(canvas, presence, inverseZoom);
     _paintPresenceSelections(canvas, presence, inverseZoom);
     for (final cursor in presence.cursors) {
       _paintPresenceCursor(canvas, cursor, inverseZoom);
+    }
+  }
+
+  /// Draws the presenter's trace overlay as a translucent glow in their
+  /// colour, beneath the selection outlines.
+  ///
+  /// A glow rather than the local overlay's dimming: dimming is how *this*
+  /// user's own trace reads, and it must stay theirs. The presenter's trace is
+  /// what somebody else is showing, laid over the schematic without changing
+  /// what the local overlay lights or dims.
+  void _paintPresenterTrace(
+    Canvas canvas,
+    CollabPresenceOverlay presence,
+    double inverseZoom,
+  ) {
+    final color = presence.presenterTraceColor;
+    if (presence.presenterTraceIds.isEmpty || color == null) return;
+    final glow = Paint()
+      ..color = color.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0 * inverseZoom
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    for (final id in presence.presenterTraceIds) {
+      final node = _laidOut.layout.findNode(id);
+      if (node != null) {
+        canvas.drawRect(
+          Rect.fromLTWH(
+            node.bounds.x,
+            node.bounds.y,
+            node.bounds.width,
+            node.bounds.height,
+          ).inflate(2.0 * inverseZoom),
+          glow,
+        );
+        continue;
+      }
+      final edge = _laidOut.layout.findEdge(id);
+      if (edge != null && edge.points.length >= 2) {
+        final path = Path()..moveTo(edge.points.first.x, edge.points.first.y);
+        for (var i = 1; i < edge.points.length; i++) {
+          path.lineTo(edge.points[i].x, edge.points[i].y);
+        }
+        canvas.drawPath(path, glow);
+      }
+      // An id this layout does not have is dropped: a presenter on another
+      // elaboration names elements that are not here, which the netlist
+      // mismatch banner reports.
     }
   }
 
@@ -1730,6 +1779,18 @@ class SchematicCanvasRenderObject extends RenderBox {
     canvas
       ..drawPath(arrow, fill)
       ..drawPath(arrow, outline);
+    if (cursor.isPresenter) {
+      // The presenter's pointer is ringed, so the room can tell at a glance
+      // whose pointer is driving.
+      canvas.drawCircle(
+        Offset.zero,
+        9,
+        Paint()
+          ..color = cursor.color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
 
     final label = TextPainter(
       text: TextSpan(

@@ -475,6 +475,75 @@ void main() {
       expect(notifier.isFitted, isFalse);
     });
   });
+
+  group('camera in design space', () {
+    const box = BoundingBox(x: 0, y: 0, width: 400, height: 200);
+    const viewport = Size(800, 600);
+
+    test('has no centre before the canvas reports a size', () {
+      final notifier = makeContainer().read(viewportTransformProvider.notifier);
+      expect(notifier.viewportSize, isNull);
+      expect(notifier.designCenter, isNull);
+      expect(notifier.transformCenteredOn(Offset.zero, 1), isNull);
+    });
+
+    test('centring on a design point and reading it back agree', () {
+      final container = makeContainer();
+      final notifier = container.read(viewportTransformProvider.notifier)
+        ..fitToBounds(viewport, box);
+      expect(notifier.viewportSize, viewport);
+      final target = notifier.transformCenteredOn(const Offset(120, 40), 2);
+      notifier.restore(target!);
+      final centre = notifier.designCenter!;
+      expect(centre.dx, closeTo(120, 1e-9));
+      expect(centre.dy, closeTo(40, 1e-9));
+      expect(container.read(viewportTransformProvider).zoom, 2);
+    });
+
+    test('the same design centre frames the same place in any window', () {
+      // Two canvases of different sizes, one design point: each puts it at
+      // its own centre, which is what a pixel offset could not do.
+      final a = makeContainer().read(viewportTransformProvider.notifier)
+        ..fitToBounds(const Size(800, 600), box);
+      final b = makeContainer().read(viewportTransformProvider.notifier)
+        ..fitToBounds(const Size(1600, 900), box);
+      final ta = a.transformCenteredOn(const Offset(50, 50), 1.5)!;
+      final tb = b.transformCenteredOn(const Offset(50, 50), 1.5)!;
+      expect(const Offset(50, 50) * 1.5 + ta.offset, const Offset(400, 300));
+      expect(const Offset(50, 50) * 1.5 + tb.offset, const Offset(800, 450));
+    });
+  });
+
+  group('lastChangeWasGesture', () {
+    test('pans and zooms are gestures; fits and restores are not', () {
+      final container = makeContainer();
+      final notifier = container.read(viewportTransformProvider.notifier);
+      final seen = <bool>[];
+      container.listen(
+        viewportTransformProvider,
+        (_, _) => seen.add(notifier.lastChangeWasGesture),
+      );
+
+      notifier
+        ..fitToBounds(
+          const Size(800, 600),
+          const BoundingBox(x: 0, y: 0, width: 400, height: 200),
+        )
+        ..pan(const Offset(5, 5))
+        ..zoomAt(Offset.zero, 2)
+        ..setZoom(1)
+        ..restore(ViewportTransform.identity)
+        ..zoomAboutCenter(2)
+        ..handleViewportResize(const Size(800, 600), const Size(900, 600))
+        ..revealBounds(
+          const Size(900, 600),
+          const BoundingBox(x: 0, y: 0, width: 10, height: 10),
+        )
+        ..reset();
+
+      expect(seen, [false, true, true, true, false, true, false, false, false]);
+    });
+  });
 }
 
 /// Matches an [Offset] within a pixel-ish tolerance, so the assertions above

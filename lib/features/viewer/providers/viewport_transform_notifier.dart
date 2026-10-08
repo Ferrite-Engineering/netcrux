@@ -41,6 +41,48 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
   @visibleForTesting
   bool get isFitted => _fittedBounds != null;
 
+  /// Whether the most recent change was a navigation gesture — a pan or a
+  /// zoom — rather than the program placing the camera (a fit, a reveal, a
+  /// restore, a resize).
+  ///
+  /// Set before the new state is published, so a listener reading it in the
+  /// same notification sees the cause of the change it is being told about. A
+  /// collaborative session reads it to tell a follower glancing away from the
+  /// presenter's view from the view being placed for them.
+  bool get lastChangeWasGesture => _lastChangeWasGesture;
+  bool _lastChangeWasGesture = false;
+
+  /// The canvas size last reported, or `null` before the canvas has laid
+  /// out.
+  Size? get viewportSize => _viewport;
+
+  /// The design point at the centre of the canvas under the current camera,
+  /// or `null` before the canvas has reported a size.
+  Offset? get designCenter {
+    final viewport = _viewport;
+    final zoom = state.zoom;
+    if (viewport == null || zoom <= 0) return null;
+    return (Offset(viewport.width / 2, viewport.height / 2) - state.offset) /
+        zoom;
+  }
+
+  /// The transform that puts design point [center] at the centre of this
+  /// canvas at [zoom] (clamped), or `null` before the canvas has reported a
+  /// size.
+  ///
+  /// How a camera described in design space — the same on every screen —
+  /// becomes this screen's pixel offset.
+  ViewportTransform? transformCenteredOn(Offset center, double zoom) {
+    final viewport = _viewport;
+    if (viewport == null) return null;
+    final clamped = SchematicViewportLimits.clampZoom(zoom);
+    return ViewportTransform(
+      zoom: clamped,
+      offset:
+          Offset(viewport.width / 2, viewport.height / 2) - center * clamped,
+    );
+  }
+
   /// A camera waiting to be reinstated when the layout of the scope at the
   /// given path lands — a restored session's view. See [requestRestore].
   ({List<String> scopePath, ViewportTransform transform})? _pendingRestore;
@@ -75,6 +117,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
   /// then the user's, not a fit, so a resize keeps it rather than refitting.
   void restore(ViewportTransform transform) {
     _fittedBounds = null;
+    _lastChangeWasGesture = false;
     state = ViewportTransform(
       zoom: SchematicViewportLimits.clampZoom(transform.zoom),
       offset: transform.offset,
@@ -85,6 +128,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
   /// values move the design to the right / down).
   void pan(Offset delta) {
     _fittedBounds = null;
+    _lastChangeWasGesture = true;
     state = ViewportTransform(
       zoom: state.zoom,
       offset: state.offset + delta,
@@ -114,6 +158,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
     final clamped = SchematicViewportLimits.clampZoom(zoom);
     if (clamped == state.zoom) return;
     _fittedBounds = null;
+    _lastChangeWasGesture = true;
     state = ViewportTransform(zoom: clamped, offset: state.offset);
   }
 
@@ -134,6 +179,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
     _fittedBounds = null;
     final ratio = nextZoom / currentZoom;
     final newOffset = focalPoint - (focalPoint - state.offset) * ratio;
+    _lastChangeWasGesture = true;
     state = ViewportTransform(zoom: nextZoom, offset: newOffset);
   }
 
@@ -141,6 +187,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
   void reset() {
     _fittedBounds = null;
     if (state == ViewportTransform.identity) return;
+    _lastChangeWasGesture = false;
     state = ViewportTransform.identity;
   }
 
@@ -179,6 +226,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
     );
     _fittedBounds = bounds;
     _fitPadding = padding;
+    _lastChangeWasGesture = false;
     state = ViewportTransform(zoom: fit, offset: offset);
   }
 
@@ -217,6 +265,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
       (newViewport.width - oldViewport.width) / 2,
       (newViewport.height - oldViewport.height) / 2,
     );
+    _lastChangeWasGesture = false;
     state = ViewportTransform(
       zoom: state.zoom,
       offset: state.offset + recenter,
@@ -258,6 +307,7 @@ class ViewportTransformNotifier extends _$ViewportTransformNotifier {
     // A reveal frames one element, not the design — a later resize must keep
     // the user on that element rather than pulling back to the whole scope.
     _fittedBounds = null;
+    _lastChangeWasGesture = false;
     state = ViewportTransform(
       zoom: zoom,
       offset: Offset(

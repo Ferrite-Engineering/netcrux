@@ -123,6 +123,32 @@ abstract interface class SchematicCollaborationService {
   /// Follow [participantId]'s scope changes, or stop following when `null`.
   void setFollowTarget(String? participantId);
 
+  // ── presenter mode ─────────────────────────────────────────────────────────
+  //
+  // One presenter at a time, and everyone else follows what they show. The
+  // host starts as presenter; the token moves only by an explicit handoff or
+  // a granted request, and the host is the single arbiter, so two transfers
+  // can never race. When the presenter drops the host reclaims the token;
+  // when the host drops the longest-standing participant becomes host and
+  // presenter. None of this carries a tier: a guest without a licence asks to
+  // present, presents and follows like anyone else.
+
+  /// Hands the presenter token to [participantId]. Honoured from the current
+  /// presenter or the host.
+  void handoffPresenter(String participantId);
+
+  /// Asks the host (or the presenter) for the presenter token. A host simply
+  /// takes it back.
+  void requestPresenter();
+
+  /// Grants or denies [participantId]'s request to present. Honoured from the
+  /// current presenter or the host.
+  void respondToPresenterRequest(String participantId, {required bool grant});
+
+  /// Publishes what the local participant is showing. Ignored by everyone
+  /// else unless the local participant holds the presenter token.
+  void updatePresenterView(SchematicCollabPresenterView view);
+
   /// Clears the "somebody in this room is holding the wrong invite" notice.
   void dismissUnreadableFramesNotice();
 
@@ -196,6 +222,21 @@ final class NoopSchematicCollaborationService
 
   @override
   void setFollowTarget(String? participantId) {}
+
+  @override
+  void handoffPresenter(String participantId) {}
+
+  @override
+  void requestPresenter() {}
+
+  @override
+  void respondToPresenterRequest(
+    String participantId, {
+    required bool grant,
+  }) {}
+
+  @override
+  void updatePresenterView(SchematicCollabPresenterView view) {}
 
   @override
   void dismissUnreadableFramesNotice() {}
