@@ -444,6 +444,7 @@ flutter build windows --release --dart-define=TELEMETRY_DEV=true   # or: build l
 - [ ] Browser build offers none of the three — `[Coverage: UNIT_TEST]`.
 - [ ] Post-beta Share denial records `tier.gate_hit` `collaboration` / `enterprise`; Join and Leave never record one — `[Coverage: WIDGET]` (`tier_gate_events_test.dart`).
 - [ ] Presenter mode seam (§19.1): follower follows scope and camera, presenter trace glows non-destructively, pan or scope change detaches, resume and 12 s idle snap back — `[Coverage: WIDGET]` (`collab_presenter_bridge_test.dart`) + `[Coverage: MANUAL]` two machines.
+- [ ] View sync (§19.2): presenter's front panel opens on followers over their own state, closes when the presenter moves on; Pro panel withheld without Pro (degradation named) — `[Coverage: WIDGET + UNIT_TEST]` + `[Coverage: MANUAL]`.
 
 ---
 

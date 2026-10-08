@@ -6,11 +6,15 @@ import 'dart:async';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 import 'package:netcrux/features/collaboration/collab_follow_detached_provider.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
+import 'package:netcrux/features/collaboration/collab_view_degradation_provider.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/viewer/providers/analysis_dock_provider.dart';
+import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
@@ -33,14 +37,19 @@ const Duration kCollabPresenterCameraDebounce = Duration(milliseconds: 100);
 /// that becomes active joins in at once — it publishes, or catches up with the
 /// presenter.
 ///
-/// * **Presenter.** The scope and the trace overlay are published as they
-///   change; the camera after [kCollabPresenterCameraDebounce] of quiet. The
+/// * **Presenter.** The scope, the trace overlay and the analysis panel at
+///   the front of the right dock are published as they change; the camera
+///   after [kCollabPresenterCameraDebounce] of quiet. The
 ///   camera travels as a design-space centre and a zoom, so every follower
 ///   frames the same place whatever the size of their window.
 /// * **Follower.** The presenter's scope is navigated to and their camera
 ///   framed, on this tab's own state — the same soft-follow WaveCrux applies
 ///   to its viewport. The presenter's trace and selection are drawn as an
-///   overlay by `collabPresenceOverlay` and never written into this tab.
+///   overlay by `collabPresenceOverlay` and never written into this tab. The
+///   presenter's panel is brought to the front of the follower's dock, over
+///   the follower's own analysis state — a Pro panel only where the follower
+///   has Pro — and closed again when the presenter moves on or the session
+///   ends, if it was the session that opened it.
 /// * **Soft-follow.** A pan, a zoom or a change of scope by the follower is a
 ///   glance away, not a departure: it sets [collabFollowDetachedProvider],
 ///   which stops the presenter's view being applied until the follower
@@ -78,6 +87,11 @@ class _CollabPresenterBridgeState extends ConsumerState<CollabPresenterBridge> {
 
   /// Whether this tab has announced itself in the current session.
   bool _announced = false;
+
+  /// Panels this session opened on the follower's behalf. Closed again when
+  /// the presenter moves on from them or the session ends, so following leaves
+  /// the follower's own dock as it found it.
+  final Set<AnalysisPanelKind> _sessionOpenedPanels = {};
 
   @override
   void dispose() {
@@ -127,7 +141,8 @@ class _CollabPresenterBridgeState extends ConsumerState<CollabPresenterBridge> {
       })
       ..listen(hierarchyTreeProvider, (previous, next) => _onScope(next))
       ..listen(viewportTransformProvider, (previous, next) => _onCamera())
-      ..listen(traceOverlayProvider, (previous, next) => _onTrace());
+      ..listen(traceOverlayProvider, (previous, next) => _onTrace())
+      ..listen(effectiveRightDockTabProvider, (previous, next) => _onTrace());
     return widget.child;
   }
 
@@ -142,6 +157,7 @@ class _CollabPresenterBridgeState extends ConsumerState<CollabPresenterBridge> {
       _lastApplied = null;
       _lastPublished = null;
       _cameraDebounce?.cancel();
+      _closeSessionPanels(except: null);
       ref.read(collabFollowDetachedProvider.notifier).resume();
       return;
     }
@@ -217,6 +233,7 @@ class _CollabPresenterBridgeState extends ConsumerState<CollabPresenterBridge> {
       center: camera.designCenter,
       zoom: ref.read(viewportTransformProvider).zoom,
       trace: ref.read(traceOverlayProvider),
+      analysisPanel: _frontPanel(),
     );
     if (view == _lastPublished) return;
     _lastPublished = view;
@@ -268,6 +285,7 @@ class _CollabPresenterBridgeState extends ConsumerState<CollabPresenterBridge> {
     if (ref.read(collabFollowDetachedProvider)) return;
     final view = session.presenterView;
     if (view == null) return;
+    _applyPanel(analysisPanelKindNamed(view.analysisPanel));
     final tree = ref.read(hierarchyTreeProvider);
     if (tree.model == null) return;
     _lastApplied = view;
@@ -290,6 +308,44 @@ class _CollabPresenterBridgeState extends ConsumerState<CollabPresenterBridge> {
     }
     if (target != null && target != ref.read(viewportTransformProvider)) {
       cameraNotifier.restore(target);
+    }
+  }
+
+  // ── the analysis panel ─────────────────────────────────────────────────────
+
+  /// The analysis panel at the front of the right dock, or `null`.
+  AnalysisPanelKind? _frontPanel() {
+    final tab = ref.read(effectiveRightDockTabProvider);
+    if (!tab.startsWith(kRightDockAnalysisPrefix)) return null;
+    return analysisPanelKindNamed(
+      tab.substring(kRightDockAnalysisPrefix.length),
+    );
+  }
+
+  /// Brings the presenter's panel to the front of this follower's dock, over
+  /// the follower's own analysis state.
+  ///
+  /// A Pro panel opens only where this build and licence include Pro:
+  /// following a presenter is not a way to get a panel your edition does not
+  /// have, and `collabDegradedPanelProvider` tells the follower what they are
+  /// missing instead.
+  void _applyPanel(AnalysisPanelKind? kind) {
+    _closeSessionPanels(except: kind);
+    if (kind == null) return;
+    if (kind.requiresPro && !ref.read(collabProPanelsAvailableProvider)) {
+      return;
+    }
+    final dock = ref.read(analysisDockProvider.notifier);
+    if (!dock.isOpen(kind)) _sessionOpenedPanels.add(kind);
+    dock.open(kind);
+  }
+
+  void _closeSessionPanels({required AnalysisPanelKind? except}) {
+    final dock = ref.read(analysisDockProvider.notifier);
+    for (final kind in _sessionOpenedPanels.toList()) {
+      if (kind == except) continue;
+      _sessionOpenedPanels.remove(kind);
+      dock.close(kind);
     }
   }
 }

@@ -2060,6 +2060,36 @@ This section *is* the tier-gate scenario. Both phases are covered by steps 4 and
 | Idle auto-resume | **Strong** — `test/features/collaboration/collab_follow_detached_provider_test.dart`. `[Coverage: WIDGET]` |
 | Two machines, real canvases | **Manual** — `[Coverage: MANUAL]` |
 
+### 19.2 View sync — the presenter's analysis panel
+
+- **What it does.** The panel at the front of the presenter's right dock is
+  part of what the presenter shows (`SchematicCollabPresenterView.analysisPanel`,
+  by kind name). A follower's dock opens the same panel over the follower's
+  own analysis state — nothing the presenter computed crosses — and closes it
+  again when the presenter moves on or the session ends, if the session
+  opened it. A Pro panel opens only where `collabProPanelsAvailableProvider`
+  holds (Pro overlay installed, and Pro, EDU, Enterprise or the beta);
+  otherwise `collabDegradedPanelProvider` names it so the overlay can say it
+  requires NetCrux Pro. Never unlocked by following.
+- **Steps and expected behavior.**
+  1. Presenter opens Annotations: every follower's dock shows Annotations.
+  2. Presenter runs CDC and brings its tab to the front. A follower with Pro
+     sees an empty CDC panel to run their own analysis in; a follower on an
+     Open Core licence (post-beta) gets no panel and the overlay's notice.
+  3. Presenter closes the panel: the follower's session-opened tab closes; a
+     tab the follower opened before stays.
+- **Tier-gate scenarios.** `kBetaPeriod = true`: every follower gets every
+  panel. `kBetaPeriod = false`: Pro panels need Pro (or EDU / Enterprise) on
+  the follower's side.
+
+### 19.2 Automation Assessment
+
+| Capability | Assessment |
+|------------|------------|
+| Presenter publishes the front panel; follower opens and later closes session-opened panels; Pro panel withheld without Pro; follower's own tabs kept | **Strong** — `test/features/collaboration/collab_presenter_bridge_test.dart` "the analysis panel" group. `[Coverage: WIDGET]` |
+| Which panels degrade, for which tiers and builds | **Strong** — `test/features/collaboration/collab_view_degradation_provider_test.dart`. `[Coverage: UNIT_TEST]` |
+| Panel tier agrees with the action that shows it | **Strong** — `test/domain/models/analysis/analysis_panel_kind_test.dart`. `[Coverage: UNIT_TEST]` |
+
 ## Adding a section
 
 Add a new top-level section the same day the corresponding feature ships. Do not pre-write speculative content — the section is created when an item is ready to be verified.

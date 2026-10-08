@@ -20,6 +20,7 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/interfaces/schematic_collaboration_service.dart';
+import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
@@ -74,12 +75,15 @@ List<String> collabScopeSegments(String scopePath) =>
 /// [center] is the design point at the middle of the canvas and [zoom] the
 /// camera's zoom; `null` [center] means the canvas has not laid out, and the
 /// view then carries no camera. An empty [trace] carries none either.
+/// [analysisPanel] is the panel at the front of the right dock, if any.
 SchematicCollabPresenterView collabPresenterView({
   required HierarchyNode? scope,
   required Offset? center,
   required double zoom,
   required TraceOverlay trace,
+  AnalysisPanelKind? analysisPanel,
 }) => SchematicCollabPresenterView(
+  analysisPanel: analysisPanel?.name,
   scopePath: collabScopePath(scope),
   camera: center == null
       ? null

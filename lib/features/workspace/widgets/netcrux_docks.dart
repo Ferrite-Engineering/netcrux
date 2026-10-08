@@ -92,18 +92,23 @@ class NetcruxRightDock extends ConsumerWidget {
   };
 
   static String _analysisLabel(L10N l10n, AnalysisPanelKind kind) =>
-      switch (kind) {
-        AnalysisPanelKind.cdc => l10n.dockTabCdc,
-        AnalysisPanelKind.resetDomain => l10n.dockTabResetDomain,
-        AnalysisPanelKind.fsm => l10n.dockTabFsm,
-        AnalysisPanelKind.fsmResults => l10n.dockTabFsmResults,
-        AnalysisPanelKind.activity => l10n.dockTabActivity,
-        AnalysisPanelKind.diff => l10n.dockTabDiff,
-        AnalysisPanelKind.source => l10n.dockTabSource,
-        AnalysisPanelKind.bookmarks => l10n.dockTabBookmarks,
-        AnalysisPanelKind.annotations => l10n.dockTabAnnotations,
-      };
+      analysisPanelLabel(l10n, kind);
 }
+
+/// The dock-tab title of [kind]: what the panel is called wherever it is
+/// named, the dock and a collaborative session's "requires NetCrux Pro"
+/// notice alike.
+String analysisPanelLabel(L10N l10n, AnalysisPanelKind kind) => switch (kind) {
+  AnalysisPanelKind.cdc => l10n.dockTabCdc,
+  AnalysisPanelKind.resetDomain => l10n.dockTabResetDomain,
+  AnalysisPanelKind.fsm => l10n.dockTabFsm,
+  AnalysisPanelKind.fsmResults => l10n.dockTabFsmResults,
+  AnalysisPanelKind.activity => l10n.dockTabActivity,
+  AnalysisPanelKind.diff => l10n.dockTabDiff,
+  AnalysisPanelKind.source => l10n.dockTabSource,
+  AnalysisPanelKind.bookmarks => l10n.dockTabBookmarks,
+  AnalysisPanelKind.annotations => l10n.dockTabAnnotations,
+};
 
 /// NetCrux's left dock: the hierarchy tree, alone and pinned — so the
 /// auto-hiding strip renders as a plain "Hierarchy" titled header with the

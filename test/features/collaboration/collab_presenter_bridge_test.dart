@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/interfaces/schematic_collaboration_service.dart';
+import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
@@ -15,7 +16,9 @@ import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/collaboration/collab_follow_detached_provider.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
 import 'package:netcrux/features/collaboration/collab_presenter_bridge.dart';
+import 'package:netcrux/features/collaboration/collab_view_degradation_provider.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/viewer/providers/analysis_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
@@ -105,14 +108,28 @@ SchematicCollabSessionState _session({
   presenterView: view,
 );
 
+/// The dock without the reveal: opening a panel here lists it and nothing
+/// else, so these tests need no persisted layout.
+class _BareDock extends AnalysisDockNotifier {
+  @override
+  void open(AnalysisPanelKind kind) {
+    if (!state.contains(kind)) state = [...state, kind];
+  }
+}
+
 void main() {
   late _RecordingService service;
   late ProviderContainer container;
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    bool pro = true,
+  }) async {
     service = _RecordingService();
     container = ProviderContainer(
       overrides: [
+        analysisDockProvider.overrideWith(_BareDock.new),
+        collabProPanelsAvailableProvider.overrideWithValue(pro),
         schematicCollaborationServiceProvider.overrideWithValue(service),
         // Idle resume has its own tests; here it would only leave a timer.
         collabFollowIdleResumeProvider.overrideWithValue(null),
@@ -289,6 +306,72 @@ void main() {
       container.read(collabFollowDetachedProvider.notifier).detach();
       await emit(tester, null);
       expect(container.read(collabFollowDetachedProvider), isFalse);
+    });
+  });
+
+  group('the analysis panel', () {
+    SchematicCollabPresenterView showing(String? panel) =>
+        SchematicCollabPresenterView(scopePath: '', analysisPanel: panel);
+
+    testWidgets('the presenter publishes the panel at the front of the dock', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, _session(me: 'ada'));
+      container
+          .read(analysisDockProvider.notifier)
+          .open(AnalysisPanelKind.annotations);
+      await tester.pump();
+      expect(service.published.last.analysisPanel, 'annotations');
+    });
+
+    testWidgets('a follower with Pro gets the Pro panel, and loses it again '
+        'when the presenter moves on', (tester) async {
+      await pump(tester);
+      await emit(tester, _session(me: 'grace', view: showing('cdc')));
+      expect(container.read(analysisDockProvider), [AnalysisPanelKind.cdc]);
+
+      await emit(tester, _session(me: 'grace', view: showing(null)));
+      expect(container.read(analysisDockProvider), isEmpty);
+    });
+
+    testWidgets('a follower without Pro is not given a Pro panel', (
+      tester,
+    ) async {
+      await pump(tester, pro: false);
+      await emit(tester, _session(me: 'grace', view: showing('cdc')));
+      expect(container.read(analysisDockProvider), isEmpty);
+
+      await emit(tester, _session(me: 'grace', view: showing('annotations')));
+      expect(
+        container.read(analysisDockProvider),
+        [AnalysisPanelKind.annotations],
+        reason: 'open-core panels open for everyone',
+      );
+    });
+
+    testWidgets("a panel the follower had open is the follower's to close", (
+      tester,
+    ) async {
+      await pump(tester);
+      container
+          .read(analysisDockProvider.notifier)
+          .open(AnalysisPanelKind.bookmarks);
+      await emit(tester, _session(me: 'grace', view: showing('bookmarks')));
+      await emit(tester, _session(me: 'grace', view: showing(null)));
+      await emit(tester, null);
+      expect(container.read(analysisDockProvider), [
+        AnalysisPanelKind.bookmarks,
+      ]);
+    });
+
+    testWidgets('the session closes what it opened when it ends', (
+      tester,
+    ) async {
+      await pump(tester);
+      await emit(tester, _session(me: 'grace', view: showing('fsm')));
+      await emit(tester, null);
+      expect(container.read(analysisDockProvider), isEmpty);
     });
   });
 }

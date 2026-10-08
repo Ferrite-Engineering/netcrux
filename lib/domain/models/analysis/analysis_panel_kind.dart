@@ -45,3 +45,34 @@ enum AnalysisPanelKind {
   /// that cell's note.
   annotations,
 }
+
+/// Which analysis panels are Pro.
+extension AnalysisPanelKindTier on AnalysisPanelKind {
+  /// Whether this panel is a NetCrux Pro surface. Bookmarks and annotations
+  /// are open core; every analysis and the source view are Pro.
+  ///
+  /// A collaborative session uses it to decide what a follower is shown when
+  /// the presenter has a panel open: an open-core panel opens for everyone, a
+  /// Pro one only where this build and licence include Pro, and otherwise the
+  /// follower is told it requires NetCrux Pro rather than given it.
+  bool get requiresPro => switch (this) {
+    AnalysisPanelKind.bookmarks || AnalysisPanelKind.annotations => false,
+    AnalysisPanelKind.cdc ||
+    AnalysisPanelKind.resetDomain ||
+    AnalysisPanelKind.fsm ||
+    AnalysisPanelKind.fsmResults ||
+    AnalysisPanelKind.activity ||
+    AnalysisPanelKind.diff ||
+    AnalysisPanelKind.source => true,
+  };
+}
+
+/// The panel named [name], or `null` when no panel has that name — a peer on
+/// a later build may name one this build does not have.
+AnalysisPanelKind? analysisPanelKindNamed(String? name) {
+  if (name == null) return null;
+  for (final kind in AnalysisPanelKind.values) {
+    if (kind.name == name) return kind;
+  }
+  return null;
+}

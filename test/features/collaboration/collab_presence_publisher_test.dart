@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
 import 'package:netcrux/domain/models/collaboration/schematic_collab_session.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
@@ -57,6 +58,18 @@ void main() {
       expect(view.scopePath, '');
       expect(view.camera, isNull);
       expect(view.trace, isNull);
+      expect(view.analysisPanel, isNull);
+    });
+
+    test('names the front analysis panel by its kind', () {
+      final view = collabPresenterView(
+        scope: null,
+        center: null,
+        zoom: 1,
+        trace: TraceOverlay.empty,
+        analysisPanel: AnalysisPanelKind.resetDomain,
+      );
+      expect(view.analysisPanel, 'resetDomain');
     });
   });
 }

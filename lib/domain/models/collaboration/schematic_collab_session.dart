@@ -342,7 +342,8 @@ final class SchematicCollabTrace {
   );
 }
 
-/// What the presenter is showing: the scope, the camera and the trace overlay.
+/// What the presenter is showing: the scope, the camera, the trace overlay and
+/// the analysis panel in front.
 ///
 /// The schematic counterpart of WaveCrux's shared viewport and view
 /// composition. Followers navigate to [scopePath] and frame [camera] (the
@@ -360,6 +361,7 @@ final class SchematicCollabPresenterView {
     required this.scopePath,
     this.camera,
     this.trace,
+    this.analysisPanel,
   });
 
   /// The presenter's scope, as `collabScopePath` spells it. Empty for the top
@@ -372,15 +374,27 @@ final class SchematicCollabPresenterView {
   /// The presenter's active trace overlay, or `null` when none is showing.
   final SchematicCollabTrace? trace;
 
+  /// The analysis panel at the front of the presenter's right dock, by its
+  /// `AnalysisPanelKind` name, or `null` when none is. A name, not the enum,
+  /// so a panel a later build adds degrades to "unknown" rather than failing.
+  ///
+  /// A follower opens the same panel over its own analysis state, which is
+  /// recomputed locally, never received. A Pro panel opens only where the
+  /// follower's build and licence include Pro; otherwise the follower is told
+  /// it requires NetCrux Pro. Joining a session gives you the session, not the
+  /// presenter's tier.
+  final String? analysisPanel;
+
   @override
   bool operator ==(Object other) =>
       other is SchematicCollabPresenterView &&
       other.scopePath == scopePath &&
       other.camera == camera &&
-      other.trace == trace;
+      other.trace == trace &&
+      other.analysisPanel == analysisPanel;
 
   @override
-  int get hashCode => Object.hash(scopePath, camera, trace);
+  int get hashCode => Object.hash(scopePath, camera, trace, analysisPanel);
 }
 
 bool _sameIds(Set<String> a, Set<String> b) {
