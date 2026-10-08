@@ -1308,6 +1308,112 @@ void main() {
     );
   });
 
+  group('framing the selection (netcrux#19)', () {
+    // Sends [message], waits for it to be applied, and returns how many times
+    // the tab was framed and what was selected when it was.
+    Future<List<Object?>> run(
+      Object message, {
+      required bool acked,
+      NetlistModel? model,
+    }) async {
+      final boot = await _setup(model: model);
+      addTearDown(() async {
+        await boot.client.dispose();
+        await boot.server.stop();
+        boot.tabContainer.dispose();
+        boot.rootContainer.dispose();
+        try {
+          boot.tmp.deleteSync(recursive: true);
+        } on FileSystemException {
+          /* best */
+        }
+      });
+      final framed = <Object?>[];
+      final handler = CxpInboundHandler(
+        server: boot.server.server!,
+        rootContainer: boot.rootContainer,
+        activeTabContainerLookup: () => boot.tabContainer,
+        selectionFramer: (tab) {
+          expect(tab, same(boot.tabContainer));
+          framed.add(tab.read(selectedElementProvider).primary);
+          return true;
+        },
+      );
+      addTearDown(handler.dispose);
+      if (acked) {
+        final ack = boot.client.inbound.firstWhere(
+          (m) => m.message is RequestHighlightAck,
+        );
+        boot.client.send(message as RequestHighlight);
+        final inbound = await ack.timeout(const Duration(seconds: 2));
+        expect((inbound.message as RequestHighlightAck).honored, isTrue);
+      } else {
+        boot.client.send(message as NotifySelection);
+        for (var i = 0; i < 100; i++) {
+          if (boot.tabContainer.read(selectedElementProvider).isNotEmpty) break;
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+        expect(
+          boot.tabContainer.read(selectedElementProvider).isNotEmpty,
+          true,
+        );
+      }
+      return framed;
+    }
+
+    test('request_highlight on a net frames the wire', () async {
+      final framed = await run(
+        const RequestHighlight(
+          element: ElementId(kind: ElementKind.net, path: 'top.data'),
+        ),
+        acked: true,
+        model: _modelWithNet(),
+      );
+      expect(framed, hasLength(1));
+      expect(framed.single, isA<SelectedElementWire>());
+    });
+
+    test('request_highlight on a cell frames the cell', () async {
+      final framed = await run(
+        const RequestHighlight(
+          element: ElementId(
+            kind: ElementKind.instance,
+            path: 'top.u_cpu:cell',
+          ),
+        ),
+        acked: true,
+      );
+      expect(framed, hasLength(1));
+      expect(framed.single, isA<SelectedElementCell>());
+    });
+
+    test('request_highlight on a boundary port frames the port', () async {
+      final framed = await run(
+        const RequestHighlight(
+          element: ElementId(kind: ElementKind.port, path: 'top.q'),
+        ),
+        acked: true,
+        model: _modelWithNet(),
+      );
+      expect(framed, hasLength(1));
+      expect(framed.single, isA<SelectedElementBoundaryPort>());
+    });
+
+    test('notify_selection selects without framing', () async {
+      final framed = await run(
+        const NotifySelection(
+          elements: <ElementId>[
+            ElementId(kind: ElementKind.net, path: 'top.data'),
+          ],
+          displayName: 'data',
+        ),
+        acked: false,
+        model: _modelWithNet(),
+      );
+      expect(framed, isEmpty);
+    });
+  });
+
   group('EditorOpenService', () {
     test('substitutes {file}, {line}, {column}', () async {
       String? exe;

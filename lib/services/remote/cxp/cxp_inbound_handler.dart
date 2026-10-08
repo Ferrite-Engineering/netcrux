@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_window_chrome/crux_window_chrome.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
@@ -14,10 +15,12 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
+import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/editor_open_service.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_name_resolver.dart';
@@ -31,6 +34,14 @@ import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 /// whatever tab the user has focused — same behaviour the outbound
 /// emitter has.
 typedef ActiveTabContainerLookup = ProviderContainer? Function();
+
+/// Frames the selection of a tab the way Zoom to Selection does. Returns false
+/// when it could not (no layout yet, canvas not mounted), so the caller can
+/// retry once layout exists.
+typedef SelectionFramer = bool Function(ProviderContainer tab);
+
+bool _zoomToSelection(ProviderContainer tab) =>
+    ZoomToSelectionController(tab).run();
 
 /// Subscribes to a [`LocalCxpServer`]'s inbound stream and dispatches
 /// the v1 request messages NetCrux honours:
@@ -59,7 +70,9 @@ class CxpInboundHandler {
     required this.activeTabContainerLookup,
     EditorOpenService? editorService,
     NameResolver? nameResolver,
+    SelectionFramer? selectionFramer,
   }) : _editorService = editorService ?? EditorOpenService(),
+       _frame = selectionFramer ?? _zoomToSelection,
        _nameResolver = nameResolver ?? const NetcruxNameResolver() {
     _subscription = server.inbound.listen(_onInbound);
   }
@@ -90,6 +103,7 @@ class CxpInboundHandler {
 
   final EditorOpenService _editorService;
   final NameResolver _nameResolver;
+  final SelectionFramer _frame;
   late final StreamSubscription<InboundCxpMessage> _subscription;
 
   /// Deferred post-open highlight subscriptions/timers. A shared-workspace open
@@ -137,7 +151,11 @@ class CxpInboundHandler {
     InboundCxpMessage message,
     RequestHighlight request,
   ) async {
-    final result = await _resolveAndAct(request.element, request.metadata);
+    final result = await _resolveAndAct(
+      request.element,
+      request.metadata,
+      frame: true,
+    );
     _replyHighlight(
       from: message.from.peerId,
       replyTo: message.envelope.messageId,
@@ -159,7 +177,11 @@ class CxpInboundHandler {
   Future<void> _handleNotifySelection(NotifySelection message) async {
     for (final element in message.elements) {
       if (!_isSignalLikeKind(element.kind)) continue;
-      final result = await _resolveAndAct(element, message.metadata);
+      final result = await _resolveAndAct(
+        element,
+        message.metadata,
+        frame: false,
+      );
       if (result.honored) {
         unawaited(requestUserAttention());
         return;
@@ -173,10 +195,22 @@ class CxpInboundHandler {
   /// (fire-and-forget) inbound paths so both behave identically.
   Future<({bool honored, String? reason})> _resolveAndAct(
     ElementId element,
-    Map<String, Object?> metadata,
-  ) async {
+    Map<String, Object?> metadata, {
+    required bool frame,
+  }) async {
+    final tab = activeTabContainerLookup();
     final result = await _applyHighlight(element);
     if (result.honored) {
+      // An explicit request_highlight frames what it selected, as Zoom to
+      // Selection does (netcrux#19). Scope and source select nothing on the
+      // canvas, so there is nothing to frame; notify_selection gossip never
+      // zooms.
+      if (frame &&
+          tab != null &&
+          element.kind != ElementKind.scope &&
+          element.kind != ElementKind.source) {
+        _frameWhenReady(tab);
+      }
       _recordCrossProbe(honored: true);
       return result;
     }
@@ -186,7 +220,7 @@ class CxpInboundHandler {
     // — once elaboration completes — select the element there. The join is
     // one-directional: the consumer trusts the sender's design id and never
     // re-derives one from the file it opens.
-    if (_openDesignFromWorkspace(element, metadata)) {
+    if (_openDesignFromWorkspace(element, metadata, frame: frame)) {
       _recordCrossProbe(honored: true);
       return (
         honored: true,
@@ -390,6 +424,49 @@ class CxpInboundHandler {
     return false;
   }
 
+  /// Frames [tab]'s selection now, or, when layout is not there yet (a design
+  /// just loaded for a deferred select), as soon as it is. The retry waits two
+  /// frames after the layout lands so the canvas' own fit-to-view for a new
+  /// layout runs first and does not undo the framing. Bounded like the
+  /// deferred select; [dispose] tears it down.
+  void _frameWhenReady(ProviderContainer tab) {
+    if (_frame(tab)) return;
+    ProviderSubscription<Object?>? sub;
+    Timer? timer;
+    var done = false;
+
+    void cleanup() {
+      if (done) return;
+      done = true;
+      final localSub = sub;
+      if (localSub != null) {
+        _deferredSubs.remove(localSub);
+        localSub.close();
+      }
+      final localTimer = timer;
+      if (localTimer != null) {
+        _deferredTimers.remove(localTimer);
+        localTimer.cancel();
+      }
+    }
+
+    void attempt() {
+      if (done) return;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (done) return;
+          if (_frame(tab)) cleanup();
+        });
+      });
+      SchedulerBinding.instance.scheduleFrame();
+    }
+
+    sub = tab.listen<Object?>(currentLaidOutGraphProvider, (_, _) => attempt());
+    _deferredSubs.add(sub);
+    timer = Timer(const Duration(seconds: 15), cleanup);
+    _deferredTimers.add(timer);
+  }
+
   /// Reveals the cell a resolved [element] lives on, when it names one. Nets and
   /// boundary ports have no single cell to centre on, so the selection highlight
   /// is their only cue (the reveal notifier is cell-keyed).
@@ -413,8 +490,9 @@ class CxpInboundHandler {
   /// whether a design was opened or activated.
   bool _openDesignFromWorkspace(
     ElementId element,
-    Map<String, Object?> metadata,
-  ) {
+    Map<String, Object?> metadata, {
+    required bool frame,
+  }) {
     final designId = metadata[cxpDesignIdMetadataKey];
     if (designId is! String || designId.isEmpty) return false;
     final path = resolveDesignSourceArtifactPath(rootContainer, designId);
@@ -451,7 +529,7 @@ class CxpInboundHandler {
     final tab = activeTabContainerLookup();
     if (tab == null) return false;
     tab.read(currentProjectProvider.notifier).setSourceFiles(<String>[path]);
-    _deferHighlightUntilLoaded(tab, element);
+    _deferHighlightUntilLoaded(tab, element, frame: frame);
     return true;
   }
 
@@ -463,8 +541,9 @@ class CxpInboundHandler {
   /// wait); [dispose] tears down any still-pending deferral.
   void _deferHighlightUntilLoaded(
     ProviderContainer tabContainer,
-    ElementId element,
-  ) {
+    ElementId element, {
+    required bool frame,
+  }) {
     final local = _nameResolver.toLocal(element);
     if (local == null || local.isEmpty) return;
 
@@ -490,8 +569,11 @@ class CxpInboundHandler {
     void tryApply() {
       final tree = tabContainer.read(hierarchyTreeProvider);
       if (tree.model == null || tree.selected == null) return;
-      _applySignalLike(tabContainer, element.kind, local);
+      final result = _applySignalLike(tabContainer, element.kind, local);
       cleanup();
+      // The select is applied; the layout for the freshly loaded design may
+      // not exist yet, so framing waits for it.
+      if (frame && result.honored) _frameWhenReady(tabContainer);
     }
 
     sub = tabContainer.listen<HierarchyTreeState>(

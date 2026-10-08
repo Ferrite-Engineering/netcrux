@@ -10,7 +10,7 @@ Right-click an identifier in a Verilog, SystemVerilog or VHDL file and choose **
 
 1. The extension takes your selection, or the word under the cursor.
 2. It resolves the name to a hierarchical path through the design's stems index. When a bare name matches more than one path, it asks you which one you mean.
-3. It sends the path to a running NetCrux desktop app, which highlights it on the schematic — see [Cross-probe & the suite](integrations.md#receive).
+3. It sends the path to a running NetCrux desktop app, which highlights it on the schematic — see [Cross-probe & the suite](integrations.md#receive). NetCrux selects and frames the element, so a net that is off-screen or only a few pixels wide at fit zoom is brought into view.
 
 If NetCrux is installed but not running, the extension offers to launch it. If it is not installed, the extension says so and links to the download.
 
