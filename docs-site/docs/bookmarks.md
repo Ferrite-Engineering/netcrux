@@ -1,4 +1,4 @@
-# Bookmarks & annotations <span class="tier tier-pro">Pro</span>
+# Bookmarks & annotations
 
 Debugging a design is a process of building up context. Bookmarks and annotations let you pin that context to the schematic, a named marker on an element and a written note about what you found, and save it with the session.
 

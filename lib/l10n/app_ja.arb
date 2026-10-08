@@ -2429,5 +2429,157 @@
   "xTracePanelStepCell": "セル {cell} 内",
   "xTracePanelStepBoundary": "境界ポート {port}",
   "xTracePanelStepValue": "= {value}",
-  "xTracePanelStepCount": "{count, plural, =1{1 ステップ} other{{count} ステップ}}"
+  "xTracePanelStepCount": "{count, plural, =1{1 ステップ} other{{count} ステップ}}",
+  "annotationContextMenuDelete": "注釈を削除",
+  "@annotationContextMenuDelete": {
+    "description": "Context-menu item that deletes an annotation."
+  },
+  "annotationContextMenuEdit": "注釈を編集…",
+  "@annotationContextMenuEdit": {
+    "description": "Context-menu item that opens the Edit Annotation dialog on an annotation row."
+  },
+  "annotationDialogAuthorLabel": "著者（任意）",
+  "@annotationDialogAuthorLabel": {
+    "description": "Form field label for the optional author label on an annotation."
+  },
+  "annotationDialogBodyLabel": "本文（Markdown）",
+  "@annotationDialogBodyLabel": {
+    "description": "Form field label for the markdown body of an annotation."
+  },
+  "annotationDialogEditTitle": "注釈を編集",
+  "@annotationDialogEditTitle": {
+    "description": "Title of the dialog when editing an existing annotation."
+  },
+  "annotationDialogTitle": "注釈を追加",
+  "@annotationDialogTitle": {
+    "description": "Title of the dialog for adding an annotation on the currently selected schematic element."
+  },
+  "annotationsPanelEmpty": "注釈はまだありません。セル / ワイヤ / ポートを右クリックして「注釈を追加…」を選択してください。",
+  "@annotationsPanelEmpty": {
+    "description": "Placeholder shown in the Annotations panel when the session has no annotations."
+  },
+  "annotationsPanelTitle": "注釈",
+  "@annotationsPanelTitle": {
+    "description": "Title of the Annotations panel listing all annotations in the active session."
+  },
+  "bookmarkContextMenuDelete": "ブックマークを削除",
+  "@bookmarkContextMenuDelete": {
+    "description": "Context-menu item that deletes a bookmark."
+  },
+  "bookmarkContextMenuEdit": "ブックマークを編集…",
+  "@bookmarkContextMenuEdit": {
+    "description": "Context-menu item that opens the Edit Bookmark dialog on a bookmark row."
+  },
+  "bookmarkDialogCancelButton": "キャンセル",
+  "@bookmarkDialogCancelButton": {
+    "description": "Cancel button on the Add / Edit Bookmark dialog."
+  },
+  "bookmarkDialogEditTitle": "ブックマークを編集",
+  "@bookmarkDialogEditTitle": {
+    "description": "Title of the dialog when editing an existing bookmark."
+  },
+  "bookmarkDialogNameLabel": "名前",
+  "@bookmarkDialogNameLabel": {
+    "description": "Form field label for the bookmark display name."
+  },
+  "bookmarkDialogNoteLabel": "ノート（任意）",
+  "@bookmarkDialogNoteLabel": {
+    "description": "Form field label for the optional free-text note attached to a bookmark."
+  },
+  "bookmarkDialogSaveButton": "保存",
+  "@bookmarkDialogSaveButton": {
+    "description": "Save button on the Add / Edit Bookmark dialog."
+  },
+  "bookmarkDialogTitle": "ブックマークを追加",
+  "@bookmarkDialogTitle": {
+    "description": "Title of the dialog for adding a bookmark on the currently selected schematic element."
+  },
+  "bookmarkMenuAddAnnotation": "注釈を追加…",
+  "@bookmarkMenuAddAnnotation": {
+    "description": "Schematic context-menu entry that opens the Add Annotation dialog pre-populated with the right-clicked element as the target."
+  },
+  "bookmarkMenuAddBookmark": "ブックマークを追加…",
+  "@bookmarkMenuAddBookmark": {
+    "description": "Schematic context-menu entry that opens the Add Bookmark dialog pre-populated with the right-clicked element as the target."
+  },
+  "bookmarkMenuShowAnnotation": "注釈を表示",
+  "bookmarkTargetKindBoundaryPort": "境界ポート",
+  "@bookmarkTargetKindBoundaryPort": {
+    "description": "Human-readable label for BookmarkTargetKind.boundaryPort."
+  },
+  "bookmarkTargetKindCell": "セル",
+  "@bookmarkTargetKindCell": {
+    "description": "Human-readable label for the BookmarkTargetKind.cell value (shown in the bookmark row subtitle)."
+  },
+  "bookmarkTargetKindNet": "ネット",
+  "@bookmarkTargetKindNet": {
+    "description": "Human-readable label for BookmarkTargetKind.net."
+  },
+  "bookmarkTargetKindPort": "ポート",
+  "@bookmarkTargetKindPort": {
+    "description": "Human-readable label for BookmarkTargetKind.port."
+  },
+  "bookmarkTargetKindScope": "スコープ",
+  "@bookmarkTargetKindScope": {
+    "description": "Human-readable label for BookmarkTargetKind.scope."
+  },
+  "bookmarksPanelEmpty": "ブックマークはまだありません。セル / ワイヤ / ポートを右クリックして「ブックマークを追加…」を選択してください。",
+  "@bookmarksPanelEmpty": {
+    "description": "Placeholder shown in the Bookmarks panel when the session has no bookmarks."
+  },
+  "bookmarksPanelRowSemantics": "{name}、{kind} {targetId}",
+  "bookmarksPanelRowSemanticsWithNote": "{name}、{kind} {targetId}。ノート：{note}",
+  "bookmarksPanelTargetNotFound": "{name} はこの設計にありません。",
+  "bookmarksPanelTitle": "ブックマーク",
+  "@bookmarksPanelTitle": {
+    "description": "Title of the Bookmarks panel listing all bookmarked schematic elements in the active session."
+  },
+  "inlineElementPickerCancel": "キャンセル",
+  "@inlineElementPickerCancel": {
+    "description": "Cancel button in the inline element picker dialog."
+  },
+  "inlineElementPickerKindCell": "セル",
+  "@inlineElementPickerKindCell": {
+    "description": "Subtitle text in the inline element picker identifying a cell candidate."
+  },
+  "inlineElementPickerKindNet": "ネット",
+  "@inlineElementPickerKindNet": {
+    "description": "Subtitle text in the inline element picker identifying a net / wire candidate."
+  },
+  "inlineElementPickerKindPort": "ポート",
+  "@inlineElementPickerKindPort": {
+    "description": "Subtitle text in the inline element picker identifying a port / boundary-port candidate."
+  },
+  "inlineElementPickerKindScope": "スコープ",
+  "@inlineElementPickerKindScope": {
+    "description": "Subtitle text in the inline element picker identifying a scope candidate."
+  },
+  "inlineElementPickerNoResults": "現在のスコープに一致する要素はありません。",
+  "@inlineElementPickerNoResults": {
+    "description": "Placeholder shown in the inline element picker when the search filter matches no candidates."
+  },
+  "inlineElementPickerSearchHint": "名前で検索…",
+  "@inlineElementPickerSearchHint": {
+    "description": "Hint text in the inline element picker's search field."
+  },
+  "inlineElementPickerTitle": "回路図要素を選択",
+  "@inlineElementPickerTitle": {
+    "description": "Title of the inline element picker dialog shown when an add-bookmark / add-annotation flow is invoked without an active selection."
+  },
+  "bookmarkAnnotationUnsavedChangesTitle": "変更を破棄しますか？",
+  "@bookmarkAnnotationUnsavedChangesTitle": {
+    "description": "Unsaved changes confirm title."
+  },
+  "bookmarkAnnotationUnsavedChangesBody": "保存されていない変更があります。破棄しますか？",
+  "@bookmarkAnnotationUnsavedChangesBody": {
+    "description": "Unsaved changes confirm body."
+  },
+  "bookmarkAnnotationUnsavedChangesDiscard": "破棄",
+  "@bookmarkAnnotationUnsavedChangesDiscard": {
+    "description": "Discard action."
+  },
+  "bookmarkAnnotationUnsavedChangesKeep": "編集を続ける",
+  "@bookmarkAnnotationUnsavedChangesKeep": {
+    "description": "Keep editing action."
+  }
 }

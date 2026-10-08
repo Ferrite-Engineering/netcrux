@@ -29,7 +29,7 @@ A NetCrux session is a JSON document capturing one tab's view state. It is writt
 | `selection` | The primary selected element; absent when nothing was selected. See below. |
 | `overlayMode` | `fanin` or `fanout`; absent when no trace overlay was showing. |
 | `expandedScopes` | Expanded hierarchy-tree nodes, each an instance-name path joined with `/`. `""` is the root. |
-| `bookmarks`, `annotations` | This tab's bookmarks and annotations, written only when non-empty. Authoring them is a Pro feature; Open Core builds keep them empty. See below and [Bookmarks & annotations](../bookmarks.md). |
+| `bookmarks`, `annotations` | This tab's bookmarks and annotations, written only when non-empty. See below and [Bookmarks & annotations](../bookmarks.md). |
 
 ## Selection
 

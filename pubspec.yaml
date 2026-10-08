@@ -234,6 +234,11 @@ dependencies:
   flutter_js: ^0.8.7
   flutter_localizations:
     sdk: flutter
+  # Markdown renderer for annotation bodies in the Annotations panel (BSD-3).
+  # `flutter_markdown_plus` rather than `flutter_markdown`: the latter was
+  # discontinued upstream on pub.dev, which names this as its successor. The
+  # annotation domain model stays markdown-agnostic; only the panel renders.
+  flutter_markdown_plus: ^1.0.12
   flutter_riverpod: ^3.3.2
   go_router: ^18.0.2
   # Log records: SEVERE and above are written to stderr alongside the issue

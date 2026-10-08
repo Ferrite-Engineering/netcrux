@@ -697,13 +697,6 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.showConeOfInfluenceFanin:
       case NetcruxAction.showConeOfInfluenceFanout:
       case NetcruxAction.showXTrace:
-      case NetcruxAction.addBookmark:
-      // The panels exist only in the Pro overlay; open core has nothing to
-      // show, so they carry the tier and its badge like the actions that fill
-      // them.
-      case NetcruxAction.showBookmarksPanel:
-      case NetcruxAction.showAnnotationsPanel:
-      case NetcruxAction.addAnnotation:
       case NetcruxAction.showSourcePane:
       case NetcruxAction.openSourceForElement:
       case NetcruxAction.showDiffPane:
@@ -757,6 +750,10 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.openSettings:
       case NetcruxAction.openAbout:
       case NetcruxAction.jumpToTop:
+      case NetcruxAction.addBookmark:
+      case NetcruxAction.showBookmarksPanel:
+      case NetcruxAction.addAnnotation:
+      case NetcruxAction.showAnnotationsPanel:
       case NetcruxAction.popOutScope:
       case NetcruxAction.showFanin:
       case NetcruxAction.showFanout:
@@ -815,12 +812,6 @@ extension NetcruxActionGatedFeature on NetcruxAction {
         return NetcruxGatedFeature.coi;
       case NetcruxAction.showXTrace:
         return NetcruxGatedFeature.xTrace;
-      case NetcruxAction.addBookmark:
-      case NetcruxAction.showBookmarksPanel:
-        return NetcruxGatedFeature.bookmark;
-      case NetcruxAction.addAnnotation:
-      case NetcruxAction.showAnnotationsPanel:
-        return NetcruxGatedFeature.annotation;
       case NetcruxAction.showSourcePane:
       case NetcruxAction.openSourceForElement:
         return NetcruxGatedFeature.sourcePane;
@@ -855,6 +846,10 @@ extension NetcruxActionGatedFeature on NetcruxAction {
         return NetcruxGatedFeature.activity;
       // Open-core actions. Their gate admits every tier, so no denial — and no
       // feature id — can ever be produced for them.
+      case NetcruxAction.addBookmark:
+      case NetcruxAction.showBookmarksPanel:
+      case NetcruxAction.addAnnotation:
+      case NetcruxAction.showAnnotationsPanel:
       case NetcruxAction.openProject:
       case NetcruxAction.openSourceFiles:
       case NetcruxAction.openNetlistJson:

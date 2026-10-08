@@ -25,16 +25,18 @@ void main() {
     test('lists an override for every per-tab provider', () {
       final tabId = TabId.generate();
       final overrides = netcruxTabOverridesFactory(tabId);
-      // The factory wires 25 per-tab providers (project + elaboration
+      // The factory wires 30 per-tab providers (project + elaboration
       // pipeline including the two derived diagnostics views and the
       // netlist-footprint view + laid-out graph with its layout-timing
       // history + hierarchy + viewer state + the collaboration-presence
       // projection + the reveal-request seam + the scope-flash seam +
       // source-pane state + file watcher + schematic-canvas RepaintBoundary
-      // key + CDC analysis state with its four derived views). When that
+      // key + CDC analysis state with its four derived views + the
+      // bookmark / annotation state with its store, snapshot, reveal request
+      // and canvas markers). When that
       // count changes, update the `docs/ARCHITECTURE.md` inventory and the
       // verification doc.
-      expect(overrides, hasLength(25));
+      expect(overrides, hasLength(30));
     });
 
     test('two per-tab containers hold independent state', () {

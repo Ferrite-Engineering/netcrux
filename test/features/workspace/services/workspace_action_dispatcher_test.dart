@@ -18,8 +18,8 @@ import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/netcrux_color_theme_bootstrap.dart';
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
-import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
+import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../helpers/telemetry_test_overrides.dart';
@@ -100,13 +100,13 @@ void main() {
       overrides: [
         betaPeriodProvider.overrideWithValue(false),
         licenseTierProvider.overrideWith((_) => LicenseTier.openCore),
-        addBookmarkDialogOpenerProvider.overrideWithValue(
-          (context, ref, {target}) => openerCalls++,
+        showSourcePaneOpenerProvider.overrideWithValue(
+          (_) => openerCalls++,
         ),
       ],
     );
 
-    dispatcher.dispatch(context, NetcruxAction.addBookmark);
+    dispatcher.dispatch(context, NetcruxAction.showSourcePane);
     await tester.pumpAndSettle();
 
     expect(openerCalls, 0, reason: 'insufficient tier must not dispatch');
@@ -127,13 +127,11 @@ void main() {
         betaPeriodProvider.overrideWithValue(true),
         licenseTierProvider.overrideWith((_) => LicenseTier.openCore),
         proOverlayInstalledProvider.overrideWithValue(true),
-        addBookmarkDialogOpenerProvider.overrideWithValue(
-          (context, ref, {target}) {},
-        ),
+        showSourcePaneOpenerProvider.overrideWithValue((_) {}),
       ],
     );
 
-    dispatcher.dispatch(context, NetcruxAction.addBookmark);
+    dispatcher.dispatch(context, NetcruxAction.showSourcePane);
     await tester.pumpAndSettle();
 
     expect(find.byType(CruxUpgradeDialog), findsNothing);
@@ -150,13 +148,13 @@ void main() {
         betaPeriodProvider.overrideWithValue(true),
         licenseTierProvider.overrideWith((_) => LicenseTier.openCore),
         proOverlayInstalledProvider.overrideWithValue(true),
-        addBookmarkDialogOpenerProvider.overrideWithValue(
-          (context, ref, {target}) => openerCalls++,
+        showSourcePaneOpenerProvider.overrideWithValue(
+          (_) => openerCalls++,
         ),
       ],
     );
 
-    dispatcher.dispatch(context, NetcruxAction.addBookmark);
+    dispatcher.dispatch(context, NetcruxAction.showSourcePane);
     await tester.pump();
 
     expect(openerCalls, 1, reason: 'beta admits every tier');

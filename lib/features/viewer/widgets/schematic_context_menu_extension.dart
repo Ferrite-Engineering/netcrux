@@ -74,24 +74,3 @@ typedef SchematicContextMenuExtensionBuilder =
       WidgetRef ref,
       SelectedElement target,
     );
-
-/// Open-core extension-point provider — list of builders the Pro
-/// overlay registers to inject extra entries into the schematic
-/// right-click / long-press context menu.
-///
-/// Open-core resolves this to an empty list so the dispatch path
-/// (controller → builder → entries → showMenu) is exercised in tests
-/// without the Pro overlay present. The Pro overlay's `proOverrides`
-/// registers a builder that emits one entry per (connected peer,
-/// supported element kind) for cross-probe origination.
-///
-/// Declared as a manual `Provider` (not `@Riverpod`-codegen) so the
-/// Pro overlay can override with `.overrideWith` without taking the
-/// build_runner generator dep. Matches the
-/// [coneOfInfluenceServiceProvider] / [xTraceServiceProvider] /
-/// [bookmarkAnnotationStoreProvider] pattern.
-final schematicContextMenuExtensionsProvider =
-    Provider<List<SchematicContextMenuExtensionBuilder>>(
-      (ref) => const <SchematicContextMenuExtensionBuilder>[],
-      name: 'schematicContextMenuExtensionsProvider',
-    );

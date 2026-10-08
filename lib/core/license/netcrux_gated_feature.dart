@@ -31,8 +31,8 @@ library;
 /// **Granularity is the priced feature, not the menu item.** Fanin and fanout
 /// are one purchase decision, and so are the three CDC entry points; a user who
 /// hits the gate from any of them wanted the same thing. The tokens deliberately
-/// coincide with `NetcruxAnalysisKind` and `NetcruxAnnotationKind` where the
-/// same feature appears in both vocabularies, so
+/// coincide with `NetcruxAnalysisKind` where the same feature appears in both
+/// vocabularies, so
 /// `tier.gate_hit {feature: cdc}` and `analysis.run {kind: cdc}` join directly —
 /// wanted-but-locked over used-when-owned, per feature, is the whole point of
 /// the commercial group.
@@ -46,12 +46,6 @@ enum NetcruxGatedFeature {
 
   /// X-propagation causal-chain walk.
   xTrace,
-
-  /// Named position markers.
-  bookmark,
-
-  /// Markers carrying user commentary.
-  annotation,
 
   /// Read-only RTL source pane, including "show source for this element".
   sourcePane,

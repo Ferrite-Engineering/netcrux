@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/providers/pro_overlay_installed_provider.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
+import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -24,13 +25,13 @@ import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
-import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/shared/widgets/workspace_managers_scope.dart';
+
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// How the dispatcher routes an action. Every [NetcruxAction] belongs to

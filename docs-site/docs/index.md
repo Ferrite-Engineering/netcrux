@@ -25,7 +25,7 @@ NetCrux ships as a single application. The free **Open Core** browser is complet
 | Badge | Meaning |
 |---|---|
 | *(no badge)* | Open Core. Free and open. No account, no license key, no time limit. |
-| <span class="tier tier-pro">Pro</span> | Pro tier. Cone of influence, X-Trace, netlist diff, custom symbols, bookmarks and annotations, the RTL source pane, CDC, reset-domain and FSM analysis, and cross-probing from the schematic context menu. |
+| <span class="tier tier-pro">Pro</span> | Pro tier. Cone of influence, X-Trace, netlist diff, custom symbols, the RTL source pane, CDC, reset-domain and FSM analysis, and cross-probing from the schematic context menu. |
 | <span class="tier tier-enterprise">Enterprise</span> | Enterprise tier. Collaborative schematic sessions (on your local network or over the internet), org-wide symbol libraries, org-wide policy from a signed configuration file, and the audit log. The centralized source server is not built; see [tiers & licensing](https://edacrux.app/licensing#editions). |
 | <span class="tier tier-edu">EDU</span> | Education tier. Every Pro feature, free for verified students and non-commercial use. |
 

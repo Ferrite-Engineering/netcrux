@@ -6,7 +6,6 @@ import 'package:crux_shortcut_action/crux_shortcut_action.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/core/license/netcrux_gated_feature.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/shortcut_bindings.dart';
 
@@ -238,14 +237,6 @@ void main() {
       expect(NetcruxAction.showXTrace.requiredTier, LicenseTier.pro);
     });
 
-    test(
-      'Pro bookmark / annotation creation actions require LicenseTier.pro',
-      () {
-        expect(NetcruxAction.addBookmark.requiredTier, LicenseTier.pro);
-        expect(NetcruxAction.addAnnotation.requiredTier, LicenseTier.pro);
-      },
-    );
-
     test('Pro RTL source pane actions require LicenseTier.pro', () {
       expect(NetcruxAction.showSourcePane.requiredTier, LicenseTier.pro);
       expect(
@@ -286,19 +277,18 @@ void main() {
       expect(NetcruxAction.closeSourcePane.requiredTier, LicenseTier.openCore);
     });
 
-    test('showBookmarksPanel + showAnnotationsPanel are Pro', () {
-      // The panels exist only in the Pro overlay; an open-core badge-less
-      // entry that opened nothing was a silent no-op.
-      expect(NetcruxAction.showBookmarksPanel.requiredTier, LicenseTier.pro);
-      expect(NetcruxAction.showAnnotationsPanel.requiredTier, LicenseTier.pro);
-      expect(
-        NetcruxAction.showBookmarksPanel.gatedFeature,
-        NetcruxGatedFeature.bookmark,
-      );
-      expect(
-        NetcruxAction.showAnnotationsPanel.gatedFeature,
-        NetcruxGatedFeature.annotation,
-      );
+    test('bookmark and annotation actions are Open Core and gate nothing', () {
+      // Bookmarks and annotations are free: the add actions and the panel
+      // toggles carry no tier and no feature id a denial could report.
+      for (final action in <NetcruxAction>[
+        NetcruxAction.addBookmark,
+        NetcruxAction.showBookmarksPanel,
+        NetcruxAction.addAnnotation,
+        NetcruxAction.showAnnotationsPanel,
+      ]) {
+        expect(action.requiredTier, LicenseTier.openCore, reason: '$action');
+        expect(action.gatedFeature, isNull, reason: '$action');
+      }
     });
 
     test('clearConeOfInfluence is Open Core (clearing is always allowed)', () {
@@ -324,10 +314,6 @@ void main() {
         NetcruxAction.showConeOfInfluenceFanin,
         NetcruxAction.showConeOfInfluenceFanout,
         NetcruxAction.showXTrace,
-        NetcruxAction.addBookmark,
-        NetcruxAction.showBookmarksPanel,
-        NetcruxAction.addAnnotation,
-        NetcruxAction.showAnnotationsPanel,
         NetcruxAction.showSourcePane,
         NetcruxAction.openSourceForElement,
         NetcruxAction.showDiffPane,

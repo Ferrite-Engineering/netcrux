@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
 import 'package:crux_license/crux_license.dart';
@@ -23,6 +24,7 @@ import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/about/netcrux_about_dialog.dart';
+import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
 import 'package:netcrux/features/command_palette/widgets/command_palette_dialog.dart';
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
 import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart';
@@ -46,8 +48,8 @@ import 'package:netcrux/features/viewer/services/schematic_export_controller.dar
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/services/x_trace_controller.dart';
 import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.dart';
+import 'package:netcrux/features/workspace/services/active_tab_container.dart';
 import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
-import 'package:netcrux/features/workspace/widgets/active_tab_scope.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/activity/activity_heatmap_pane_openers.dart';
@@ -61,7 +63,6 @@ import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
 import 'package:netcrux/services/schematic/cone_of_influence_service_provider.dart';
 import 'package:netcrux/services/schematic/x_trace_service_provider.dart';
-import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 import 'package:netcrux/services/session/session_controller.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
@@ -228,21 +229,13 @@ class WorkspaceActionDispatcher {
       case NetcruxAction.showCrossProbePanel:
         _onToggleCrossProbePanel();
       case NetcruxAction.addBookmark:
-        if (_proActionAllowed(context, action)) {
-          _ref.read(addBookmarkDialogOpenerProvider)(context, _ref);
-        }
+        _ref.read(addBookmarkDialogOpenerProvider)(context, _ref);
       case NetcruxAction.showBookmarksPanel:
-        if (_proActionAllowed(context, action)) {
-          _ref.read(bookmarksPanelOpenerProvider)(context);
-        }
+        _ref.read(bookmarksPanelOpenerProvider)(context);
       case NetcruxAction.addAnnotation:
-        if (_proActionAllowed(context, action)) {
-          _ref.read(addAnnotationDialogOpenerProvider)(context, _ref);
-        }
+        _ref.read(addAnnotationDialogOpenerProvider)(context, _ref);
       case NetcruxAction.showAnnotationsPanel:
-        if (_proActionAllowed(context, action)) {
-          _ref.read(annotationsPanelOpenerProvider)(context);
-        }
+        _ref.read(annotationsPanelOpenerProvider)(context);
       case NetcruxAction.showSourcePane:
         if (_proActionAllowed(context, action)) {
           _ref.read(showSourcePaneOpenerProvider)(context);

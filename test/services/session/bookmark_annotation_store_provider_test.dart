@@ -7,6 +7,7 @@ import 'package:netcrux/domain/interfaces/bookmark_annotation_store.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/bookmark.dart';
 import 'package:netcrux/services/session/bookmark_annotation_store_provider.dart';
+import 'package:netcrux/services/session/in_session_bookmark_annotation_store.dart';
 
 class _FakeBookmarkStore implements BookmarkAnnotationStore {
   _FakeBookmarkStore();
@@ -53,15 +54,15 @@ class _FakeBookmarkStore implements BookmarkAnnotationStore {
 
 void main() {
   group('bookmarkAnnotationStoreProvider', () {
-    test('open-core default returns a NoopBookmarkAnnotationStore', () {
+    test('the default is the in-session store', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       final store = container.read(bookmarkAnnotationStoreProvider);
-      expect(store, isA<NoopBookmarkAnnotationStore>());
+      expect(store, isA<InSessionBookmarkAnnotationStore>());
     });
 
-    test('override replaces the default (Pro overlay pattern)', () {
+    test('override replaces the default', () {
       final fake = _FakeBookmarkStore();
       final container = ProviderContainer(
         overrides: [
@@ -76,7 +77,7 @@ void main() {
   });
 
   group('bookmarkAnnotationSnapshotProvider', () {
-    test('open-core default snapshot is empty', () {
+    test('the default snapshot starts empty', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -84,42 +85,32 @@ void main() {
       expect(snap, BookmarkAnnotationSnapshot.empty);
     });
 
-    test('with overridden store, snapshot reflects writes', () {
-      final fake = _FakeBookmarkStore();
-      final container = ProviderContainer(
-        overrides: [
-          bookmarkAnnotationStoreProvider.overrideWith((_) => fake),
-        ],
-      );
+    test('the snapshot follows the default store without an invalidate', () {
+      final container = ProviderContainer();
       addTearDown(container.dispose);
-
-      // Initially empty.
-      expect(
-        container.read(bookmarkAnnotationSnapshotProvider).isEmpty,
-        isTrue,
+      final seen = <int>[];
+      container.listen(
+        bookmarkAnnotationSnapshotProvider,
+        (_, next) => seen.add(next.bookmarks.length),
       );
 
-      fake.addBookmark(
-        const Bookmark(
-          id: 'b1',
-          name: 'one',
-          targetKind: BookmarkTargetKind.cell,
-          targetId: 'u',
-          createdAtMillis: 1,
-        ),
-      );
+      container
+          .read(bookmarkAnnotationStoreProvider)
+          .addBookmark(
+            const Bookmark(
+              id: 'b1',
+              name: 'one',
+              targetKind: BookmarkTargetKind.cell,
+              targetId: 'u',
+              createdAtMillis: 1,
+            ),
+          );
 
-      // The snapshot is computed on each read — verify the next read
-      // reflects the new bookmark. Whether widget watchers rebuild
-      // automatically is a Pro-overlay concern (the
-      // InSessionBookmarkAnnotationStore wraps mutations in a
-      // notifier); the open-core provider contract is simply
-      // "read returns the current snapshot."
-      container.invalidate(bookmarkAnnotationSnapshotProvider);
       expect(
         container.read(bookmarkAnnotationSnapshotProvider).bookmarks,
         hasLength(1),
       );
+      expect(seen, <int>[1], reason: 'watchers are notified of the write');
     });
   });
 }

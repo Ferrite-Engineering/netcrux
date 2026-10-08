@@ -162,16 +162,16 @@ class SchematicAnnotationMarkers {
   }
 }
 
-/// Open-core extension point through which the Pro annotations feature
-/// publishes the annotated elements of the scope on the canvas.
+/// The annotated elements of the scope on the canvas, published by the
+/// annotations feature for the painter and the gesture handler.
 ///
-/// Open-core resolves to `null`, so the painter skips the badge pass and
-/// the gesture handler never finds a badge under a click. The Pro overlay
-/// overrides it, at root and per tab, with a provider derived from the
-/// tab's annotations and the scope its hierarchy shows, the same shape as
-/// `schematicCrossingOverlayProvider`.
+/// The root-scope instance resolves to `null`: the root has no design on
+/// screen, so the painter skips the badge pass and the gesture handler never
+/// finds a badge under a click. The per-tab override list re-binds it with a
+/// provider derived from the tab's annotations and the scope its hierarchy
+/// shows, the same shape as `schematicCrossingOverlayProvider`.
 ///
-/// Declared as a manual `Provider` so the Pro overlay overrides it with
+/// Declared as a manual `Provider` so the tab override list overrides it with
 /// `.overrideWith` without a codegen dependency.
 final schematicAnnotationMarkersProvider =
     Provider<SchematicAnnotationMarkers?>(

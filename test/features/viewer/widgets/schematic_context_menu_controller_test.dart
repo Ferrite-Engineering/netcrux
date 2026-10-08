@@ -20,6 +20,7 @@ import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
+import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extensions_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
@@ -333,7 +334,14 @@ void main() {
     });
 
     testWidgets('renders the five built-in entries', (tester) async {
-      final h = await pumpController(tester);
+      final h = await pumpController(
+        tester,
+        overrides: [
+          schematicContextMenuExtensionsProvider.overrideWithValue(
+            const <SchematicContextMenuExtensionBuilder>[],
+          ),
+        ],
+      );
 
       unawaitedShow(h.controller, h.context);
       await tester.pumpAndSettle();
@@ -346,6 +354,25 @@ void main() {
       expect(find.text(l10n.contextMenuOpenInInspector), findsOneWidget);
       expect(find.byType(PopupMenuDivider), findsNothing);
     });
+
+    testWidgets(
+      'open core adds Add Bookmark and Add Annotation below a divider',
+      (
+        tester,
+      ) async {
+        final h = await pumpController(tester);
+
+        unawaitedShow(h.controller, h.context);
+        await tester.pumpAndSettle();
+
+        final l10n = L10N.of(h.context);
+        expect(find.text(l10n.bookmarkMenuAddBookmark), findsOneWidget);
+        expect(find.text(l10n.bookmarkMenuAddAnnotation), findsOneWidget);
+        expect(find.byType(PopupMenuDivider), findsOneWidget);
+        // Free: no tier chip beside either entry.
+        expect(find.byType(NetCruxFeatureTierBadge), findsNothing);
+      },
+    );
 
     testWidgets('selecting a built-in entry dispatches it', (tester) async {
       final h = await pumpController(tester);
@@ -513,7 +540,13 @@ void main() {
         Locale('ja'),
         Locale('ko'),
       ]) {
-        final container = ProviderContainer();
+        final container = ProviderContainer(
+          overrides: [
+            schematicContextMenuExtensionsProvider.overrideWithValue(
+              const <SchematicContextMenuExtensionBuilder>[],
+            ),
+          ],
+        );
         addTearDown(container.dispose);
         container.read(hierarchyTreeProvider.notifier).setModel(_model());
         late SchematicContextMenuController controller;

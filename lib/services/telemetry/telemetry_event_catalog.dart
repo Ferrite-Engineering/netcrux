@@ -205,8 +205,6 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
       'feature': <String>[
         'coi',
         'x_trace',
-        'bookmark',
-        'annotation',
         'source_pane',
         'diff',
         'symbol',
@@ -226,6 +224,16 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
     },
   ),
 
+  // A bookmark or annotation added from the dialog. Recorded in open core,
+  // where both are free; `kind` says which of the two it was.
+  TelemetryCatalogEvent(
+    'annotation.added',
+    enumeratedValues: <String, List<String>>{
+      // `NetcruxAnnotationKind.values`.
+      'kind': <String>['bookmark', 'annotation'],
+    },
+  ),
+
   // ── Pro overlay ────────────────────────────────────────────────────────
   // Recorded from the Pro overlay's code, through the open-core
   // `telemetryServiceProvider`. They are Pro-side rather than at the
@@ -238,13 +246,6 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
       // `NetcruxAnalysisKind.values` under `telemetryEnumToken`, declared
       // in open core so the catalog and the Pro call sites cannot drift.
       'kind': <String>['coi', 'x_trace', 'fsm', 'cdc', 'reset', 'activity'],
-    },
-  ),
-  TelemetryCatalogEvent(
-    'annotation.added',
-    enumeratedValues: <String, List<String>>{
-      // `NetcruxAnnotationKind.values`.
-      'kind': <String>['bookmark', 'annotation'],
     },
   ),
   TelemetryCatalogEvent('diff.loaded'),

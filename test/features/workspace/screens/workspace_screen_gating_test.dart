@@ -17,6 +17,7 @@ import 'package:netcrux/core/shortcuts/netcrux_action_descriptors.dart';
 import 'package:netcrux/core/shortcuts/shortcut_manager_widget.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
+import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/services/activity/activity_heatmap_pane_openers.dart';
 import 'package:netcrux/services/cdc/cdc_pane_openers.dart';
@@ -24,7 +25,6 @@ import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
-import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
@@ -71,13 +71,8 @@ void main() {
   // These are exactly the actions `_dispatchAction` wraps in
   // `if (_proActionAllowed(action))`.
   const gatedOpenerActions = <NetcruxAction>[
-    // The nine that shipped UNGATED (the review finding).
-    NetcruxAction.addBookmark,
-    NetcruxAction.addAnnotation,
+    // The seven that shipped UNGATED (the review finding).
     NetcruxAction.showSourcePane,
-    // The two panels only the Pro overlay provides.
-    NetcruxAction.showBookmarksPanel,
-    NetcruxAction.showAnnotationsPanel,
     NetcruxAction.openSourceForElement,
     NetcruxAction.openWaveformFile,
     NetcruxAction.closeWaveformFile,
@@ -178,8 +173,8 @@ void main() {
 
       expect(fired, isEmpty);
       // Each denial surfaces the upgrade dialog (one per dispatched
-      // action here — the dialogs stack because the harness fires all 26
-      // without dismissing).
+      // action here — the dialogs stack because the harness fires every
+      // gated action without dismissing).
       expect(find.byType(CruxUpgradeDialog), findsWidgets);
       expect(tester.takeException(), isNull);
     },
@@ -255,6 +250,46 @@ void main() {
       }
       expect(fired, isEmpty);
       expect(find.byType(CruxUpgradeDialog), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'bookmark and annotation actions reach their openers at every tier',
+    (tester) async {
+      // Bookmarks and annotations are free: post-beta, at the open-core
+      // tier, with no overlay installed, the dispatcher neither shows the
+      // upgrade dialog nor says "requires NetCrux Pro".
+      const freeActions = <NetcruxAction>[
+        NetcruxAction.addBookmark,
+        NetcruxAction.addAnnotation,
+        NetcruxAction.showBookmarksPanel,
+        NetcruxAction.showAnnotationsPanel,
+      ];
+      final fired = <NetcruxAction>{};
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        await _bootApp(
+          extraOverrides: <Override>[
+            licenseTierProvider.overrideWithValue(LicenseTier.openCore),
+            betaPeriodProvider.overrideWithValue(false),
+            ..._spyOpenerOverrides(fired),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final action in freeActions) {
+        expect(action.requiredTier, LicenseTier.openCore, reason: '$action');
+      }
+      _dispatchAll(tester, freeActions);
+      await tester.pump();
+
+      expect(fired, freeActions.toSet());
+      expect(find.byType(CruxUpgradeDialog), findsNothing);
+      expect(find.textContaining('requires NetCrux Pro'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

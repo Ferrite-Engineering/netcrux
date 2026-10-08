@@ -6,17 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/features/viewer/widgets/bookmark_annotation_menu_entries.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
+import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extensions_provider.dart';
 
 void main() {
   group('schematicContextMenuExtensionsProvider', () {
-    test('open-core default returns an empty list', () {
+    test('open-core default is the bookmark / annotation builder alone', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       expect(
         container.read(schematicContextMenuExtensionsProvider),
-        isEmpty,
+        <SchematicContextMenuExtensionBuilder>[
+          buildBookmarkAnnotationMenuEntries,
+        ],
       );
     });
 

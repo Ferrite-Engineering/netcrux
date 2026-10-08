@@ -97,7 +97,6 @@ const String _indirectConstructionSite =
 /// the two gate-denial helpers, so open core must find its own call site.
 const Set<String> _proOnlyEvents = <String>{
   'analysis.run',
-  'annotation.added',
   'diff.loaded',
   'symbol.imported',
   'symbol.edited',

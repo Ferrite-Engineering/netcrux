@@ -284,7 +284,7 @@ class _AppDiagnosticsDialogState extends ConsumerState<AppDiagnosticsDialog> {
   /// Reads each open tab's footprint out of that tab's own container.
   ///
   /// Deliberately imperative rather than a second `UncontrolledProviderScope`
-  /// over the per-tab containers — see the note atop `active_tab_scope.dart`
+  /// over the per-tab containers — see the note atop `active_tab_container.dart`
   /// for why mounting one from outside `PaneHost` produced
   /// markNeedsBuild-during-build errors on launch.
   ///

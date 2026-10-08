@@ -51,8 +51,8 @@ device-mode runs are wired into CI.
       `schematic/cone_of_influence_seam_test.dart`
 - [x] §7.4 X-trace seam dispatch (empty result in open-core) —
       `schematic/x_trace_seam_test.dart`
-- [x] §7.5 Bookmarks/annotations seam dispatch (no-op store in open-core) —
-      `session/bookmark_annotation_seam_test.dart`
+- [x] §7.5 Bookmarks/annotations session round trip (in-session store) —
+      `session/bookmark_annotation_session_round_trip_test.dart`
 - [x] §7.7 Custom cell symbols seam dispatch (built-in painters in
       open-core) — `custom_cell_symbols/custom_cell_symbol_seam_test.dart`
 - [x] §6.2 notify_selection emission on canvas selection —

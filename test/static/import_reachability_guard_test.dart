@@ -166,13 +166,6 @@ const _exemptions = <_Exemption>[
     _overlayPane,
   ),
   _Exemption(
-    'lib/shared/widgets/revealing_list_view.dart',
-    _Consumer.proOverlay,
-    'The scroll-to-row list the CDC and reset-domain pane bodies are built '
-        'on, so it is reachable only through those panes, which only the Pro '
-        'overlay mounts.',
-  ),
-  _Exemption(
     'lib/features/source_pane/widgets/source_pane.dart',
     _Consumer.proOverlay,
     _overlayPane,
@@ -180,23 +173,10 @@ const _exemptions = <_Exemption>[
 
   // Other open-core API only the Pro overlay calls.
   _Exemption(
-    'lib/features/viewer/services/analysis_selection_probe.dart',
-    _Consumer.proOverlay,
-    'The row-click bridge from an analysis panel to the schematic '
-        'selection. Every analysis panel that has rows is a Pro panel.',
-  ),
-  _Exemption(
     'lib/domain/models/diff/diff_element_address.dart',
     _Consumer.proOverlay,
     'Parses a diff row path into module and element name for the diff '
         'pane and the Pro diff panel that routes Show in Schematic.',
-  ),
-  _Exemption(
-    'lib/services/telemetry/netcrux_telemetry_vocabulary.dart',
-    _Consumer.proOverlay,
-    'Closed vocabularies for events recorded by Pro call sites. Declared in '
-        'the open core so the event catalog and its conformance test, which '
-        'cannot see the overlay, own the one declaration both sides use.',
   ),
   _Exemption(
     'lib/services/workspace/active_project_file_path_provider.dart',

@@ -20,10 +20,11 @@ import 'package:netcrux/features/viewer/providers/x_trace_panel_visible_provider
 import 'package:netcrux/features/viewer/providers/x_trace_result_notifier.dart';
 import 'package:netcrux/features/viewer/services/x_trace_controller.dart';
 import 'package:netcrux/features/viewer/widgets/x_trace_result_panel.dart';
+import 'package:netcrux/features/workspace/widgets/open_core_analysis_panels.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
 /// NetCrux's right dock: Inspector (pinned) · one tab per open analysis
-/// panel (on-demand, Pro, multi-open) · Cross-Probe (on-demand) · X-Trace
+/// panel (on-demand, multi-open) · Cross-Probe (on-demand) · X-Trace
 /// (on-demand).
 ///
 /// Replaces `AnalysisDockHost`'s priority chain (Cross-Probe > analysis dock
@@ -54,10 +55,11 @@ class NetcruxRightDock extends ConsumerWidget {
         label: l10n.dockTabInspector,
         builder: (_) => const InspectorPanel(),
       ),
-      // The docked Pro analysis panels — one tab per open analysis, in the
-      // order opened (CDC beside the diff is what the strip is for).
-      // Open-core never lists them: every analysis opener is a no-op there
-      // and the Pro builder seam is null.
+      // The docked panels — one tab per open panel, in the order opened
+      // (CDC beside the diff is what the strip is for). Bookmarks and
+      // Annotations are open core's; the analyses are the Pro overlay's, and
+      // a build without its builder never lists them, because every
+      // analysis opener is a no-op there.
       ..._movableEntries(context, ref, region: kDockRegionRight),
     ];
 
@@ -209,18 +211,24 @@ List<CruxDockEntry> _movableEntries(
 
   bool placedHere(String id) => (placements[id] ?? kDockRegionRight) == region;
 
+  // Open core builds the Bookmarks and Annotations panels itself; every other
+  // analysis panel comes from the overlay's builder, so a build without one
+  // never lists a tab it cannot fill.
+  AnalysisPanelBuilder? builderFor(AnalysisPanelKind kind) =>
+      isOpenCoreAnalysisPanel(kind) ? buildOpenCoreAnalysisPanel : proBuilder;
+
   return <CruxDockEntry>[
-    if (proBuilder != null)
-      for (final kind in openKinds)
-        if (placedHere(analysisDockTabId(kind)))
-          CruxDockEntry(
-            id: analysisDockTabId(kind),
-            icon: NetcruxRightDock._analysisIcon(kind),
-            label: NetcruxRightDock._analysisLabel(l10n, kind),
-            movable: true,
-            builder: (context) => proBuilder(context, kind),
-            onClose: () => ref.read(analysisDockProvider.notifier).close(kind),
-          ),
+    for (final kind in openKinds)
+      if (builderFor(kind) case final builder?
+          when placedHere(analysisDockTabId(kind)))
+        CruxDockEntry(
+          id: analysisDockTabId(kind),
+          icon: NetcruxRightDock._analysisIcon(kind),
+          label: NetcruxRightDock._analysisLabel(l10n, kind),
+          movable: true,
+          builder: (context) => builder(context, kind),
+          onClose: () => ref.read(analysisDockProvider.notifier).close(kind),
+        ),
     if (crossProbeVisible && placedHere(kRightDockTabCrossProbe))
       CruxDockEntry(
         id: kRightDockTabCrossProbe,

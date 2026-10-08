@@ -28,9 +28,9 @@ import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_status_bar.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_toolbar.dart';
 import 'package:netcrux/features/workspace/providers/netcrux_action_context_provider.dart';
+import 'package:netcrux/features/workspace/services/active_tab_container.dart';
 import 'package:netcrux/features/workspace/services/web_deep_link.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
-import 'package:netcrux/features/workspace/widgets/active_tab_scope.dart';
 import 'package:netcrux/features/workspace/widgets/browser_empty_canvas_content.dart';
 import 'package:netcrux/features/workspace/widgets/empty_canvas_content.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_viewer_tab_bar_strings.dart';
@@ -342,7 +342,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 // lose its bottom edge — while WaveCrux and LintCrux kept
                 // theirs on the same empty canvas. The idle bar reads nothing,
                 // so it stays clear of the per-tab-scope hazard
-                // `active_tab_scope.dart` documents. It is the bottom-chrome
+                // `active_tab_container.dart` documents. It is the bottom-chrome
                 // keyboard region while no tab is open.
                 if (ref.watch(
                   netcruxWorkspaceProvider.select(

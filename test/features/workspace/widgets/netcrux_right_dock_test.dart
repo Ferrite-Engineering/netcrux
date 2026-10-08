@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
+import 'package:netcrux/features/bookmarks/widgets/annotations_panel.dart';
+import 'package:netcrux/features/bookmarks/widgets/bookmarks_panel.dart';
 import 'package:netcrux/features/inspector/widgets/inspector_panel.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
 import 'package:netcrux/features/viewer/providers/analysis_dock_provider.dart';
@@ -152,25 +154,26 @@ void main() {
       expect(find.byType(InspectorPanel), findsOneWidget);
     });
 
-    for (final (kind, label) in <(AnalysisPanelKind, String)>[
-      (AnalysisPanelKind.bookmarks, 'Bookmarks'),
-      (AnalysisPanelKind.annotations, 'Annotations'),
+    // Open core builds these two panels itself, so they dock with no
+    // `analysisPanelBuilderProvider` registered at all.
+    for (final (kind, label, panel) in <(AnalysisPanelKind, String, Type)>[
+      (AnalysisPanelKind.bookmarks, 'Bookmarks', BookmarksPanel),
+      (AnalysisPanelKind.annotations, 'Annotations', AnnotationsPanel),
     ]) {
       testWidgets('the ${kind.name} kind docks as its own closable tab', (
         tester,
       ) async {
-        final container = makeContainer(
-          overrides: [analysisPanelBuilderProvider.overrideWithValue(marker)],
-        );
+        final container = makeContainer();
         await tester.pumpWidget(harness(container));
         container.read(analysisDockProvider.notifier).open(kind);
         await tester.pumpAndSettle();
-        expect(find.text('panel:${kind.name}'), findsOneWidget);
+        expect(find.byType(panel), findsOneWidget);
+        final tab = find.byKey(ValueKey('cruxDockTab-analysis:${kind.name}'));
+        expect(tab, findsOneWidget);
         expect(
-          find.byKey(ValueKey('cruxDockTab-analysis:${kind.name}')),
+          find.descendant(of: tab, matching: find.text(label)),
           findsOneWidget,
         );
-        expect(find.text(label), findsOneWidget);
 
         await tester.tap(
           find.byKey(ValueKey('cruxDockClose-analysis:${kind.name}')),
@@ -435,8 +438,19 @@ void main() {
         final l10n = await L10N.delegate.load(locale);
         expect(find.text(l10n.dockTabSource), findsOneWidget);
         expect(l10n.dockTabSource, isNotEmpty);
-        expect(find.text(l10n.dockTabBookmarks), findsOneWidget);
-        expect(find.text(l10n.dockTabAnnotations), findsOneWidget);
+        for (final (kind, label) in <(AnalysisPanelKind, String)>[
+          (AnalysisPanelKind.bookmarks, l10n.dockTabBookmarks),
+          (AnalysisPanelKind.annotations, l10n.dockTabAnnotations),
+        ]) {
+          expect(
+            find.descendant(
+              of: find.byKey(ValueKey('cruxDockTab-analysis:${kind.name}')),
+              matching: find.text(label),
+            ),
+            findsOneWidget,
+            reason: kind.name,
+          );
+        }
       });
     }
   });

@@ -54,7 +54,7 @@ enum NetcruxAnalysisKind {
 
 /// Which kind of user annotation was added (`annotation.added {kind}`).
 ///
-/// The two share one Pro store and one panel family, and the question is
+/// The two share one store and one panel family, and the question is
 /// whether the lightweight marker or the commented one carries the value.
 enum NetcruxAnnotationKind {
   /// A named position marker.

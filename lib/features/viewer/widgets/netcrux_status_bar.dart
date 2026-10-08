@@ -107,7 +107,7 @@ class NetcruxStatusBar extends ConsumerWidget {
   /// there is nothing to mount it in and the window's bottom edge used to
   /// simply lose 24 dp — while WaveCrux and LintCrux kept theirs. Rather than
   /// hoist the real bar above `PaneHost` and feed it the active tab's
-  /// container, which `active_tab_scope.dart` documents as the cause of the
+  /// container, which `active_tab_container.dart` documents as the cause of the
   /// "markNeedsBuild during build" crashes on launch, the empty state gets its
   /// own stateless bar. It reads nothing, so it cannot reintroduce that hazard.
   /// The Pro extension slot is carried here too. It is the ONLY provider this

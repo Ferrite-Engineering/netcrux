@@ -9,11 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/bookmark.dart';
+import 'package:netcrux/domain/models/bookmark_annotation_target.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/features/bookmarks/services/bookmark_annotation_openers.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
@@ -33,7 +35,6 @@ import 'package:netcrux/features/viewer/widgets/schematic_context_menu_controlle
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/schematic/net_name_lookup.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
-import 'package:netcrux/services/session/bookmark_annotation_openers.dart';
 
 /// Wraps [child] with pointer and keyboard handling for the schematic
 /// canvas.

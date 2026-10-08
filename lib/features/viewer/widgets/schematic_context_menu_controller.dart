@@ -12,6 +12,7 @@ import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart'
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
+import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extensions_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
@@ -84,10 +85,9 @@ class SchematicContextMenuController {
       overlay.size.width - globalPosition.dx,
       overlay.size.height - globalPosition.dy,
     );
-    // Gather Pro / future extension entries via the open-core seam.
-    // Open-core resolves to an empty list; the Pro overlay's
-    // proOverrides registers a builder that emits Cross-probe entries
-    // for the schematic context menu.
+    // Gather the extension entries: the bookmark / annotation builder in
+    // open core, plus whatever the Pro overlay's `proOverrides` registers
+    // (cross-probe entries among them).
     final extensionBuilders = ref.read(schematicContextMenuExtensionsProvider);
     final extensions = <SchematicContextMenuExtensionEntry>[
       for (final builder in extensionBuilders) ...builder(ref, target),

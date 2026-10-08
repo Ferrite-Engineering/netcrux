@@ -2429,5 +2429,157 @@
   "xTracePanelStepCell": "位于 {cell}",
   "xTracePanelStepBoundary": "边界端口 {port}",
   "xTracePanelStepValue": "= {value}",
-  "xTracePanelStepCount": "{count, plural, =1{1 个步骤} other{{count} 个步骤}}"
+  "xTracePanelStepCount": "{count, plural, =1{1 个步骤} other{{count} 个步骤}}",
+  "annotationContextMenuDelete": "删除注释",
+  "@annotationContextMenuDelete": {
+    "description": "Context-menu item that deletes an annotation."
+  },
+  "annotationContextMenuEdit": "编辑注释…",
+  "@annotationContextMenuEdit": {
+    "description": "Context-menu item that opens the Edit Annotation dialog on an annotation row."
+  },
+  "annotationDialogAuthorLabel": "作者（可选）",
+  "@annotationDialogAuthorLabel": {
+    "description": "Form field label for the optional author label on an annotation."
+  },
+  "annotationDialogBodyLabel": "正文（Markdown）",
+  "@annotationDialogBodyLabel": {
+    "description": "Form field label for the markdown body of an annotation."
+  },
+  "annotationDialogEditTitle": "编辑注释",
+  "@annotationDialogEditTitle": {
+    "description": "Title of the dialog when editing an existing annotation."
+  },
+  "annotationDialogTitle": "添加注释",
+  "@annotationDialogTitle": {
+    "description": "Title of the dialog for adding an annotation on the currently selected schematic element."
+  },
+  "annotationsPanelEmpty": "暂无注释。右键单击单元、线网或端口并选择“添加注释…”。",
+  "@annotationsPanelEmpty": {
+    "description": "Placeholder shown in the Annotations panel when the session has no annotations."
+  },
+  "annotationsPanelTitle": "注释",
+  "@annotationsPanelTitle": {
+    "description": "Title of the Annotations panel listing all annotations in the active session."
+  },
+  "bookmarkContextMenuDelete": "删除书签",
+  "@bookmarkContextMenuDelete": {
+    "description": "Context-menu item that deletes a bookmark."
+  },
+  "bookmarkContextMenuEdit": "编辑书签…",
+  "@bookmarkContextMenuEdit": {
+    "description": "Context-menu item that opens the Edit Bookmark dialog on a bookmark row."
+  },
+  "bookmarkDialogCancelButton": "取消",
+  "@bookmarkDialogCancelButton": {
+    "description": "Cancel button on the Add / Edit Bookmark dialog."
+  },
+  "bookmarkDialogEditTitle": "编辑书签",
+  "@bookmarkDialogEditTitle": {
+    "description": "Title of the dialog when editing an existing bookmark."
+  },
+  "bookmarkDialogNameLabel": "名称",
+  "@bookmarkDialogNameLabel": {
+    "description": "Form field label for the bookmark display name."
+  },
+  "bookmarkDialogNoteLabel": "备注（可选）",
+  "@bookmarkDialogNoteLabel": {
+    "description": "Form field label for the optional free-text note attached to a bookmark."
+  },
+  "bookmarkDialogSaveButton": "保存",
+  "@bookmarkDialogSaveButton": {
+    "description": "Save button on the Add / Edit Bookmark dialog."
+  },
+  "bookmarkDialogTitle": "添加书签",
+  "@bookmarkDialogTitle": {
+    "description": "Title of the dialog for adding a bookmark on the currently selected schematic element."
+  },
+  "bookmarkMenuAddAnnotation": "添加注释…",
+  "@bookmarkMenuAddAnnotation": {
+    "description": "Schematic context-menu entry that opens the Add Annotation dialog pre-populated with the right-clicked element as the target."
+  },
+  "bookmarkMenuAddBookmark": "添加书签…",
+  "@bookmarkMenuAddBookmark": {
+    "description": "Schematic context-menu entry that opens the Add Bookmark dialog pre-populated with the right-clicked element as the target."
+  },
+  "bookmarkMenuShowAnnotation": "显示注释",
+  "bookmarkTargetKindBoundaryPort": "边界端口",
+  "@bookmarkTargetKindBoundaryPort": {
+    "description": "Human-readable label for BookmarkTargetKind.boundaryPort."
+  },
+  "bookmarkTargetKindCell": "单元",
+  "@bookmarkTargetKindCell": {
+    "description": "Human-readable label for the BookmarkTargetKind.cell value (shown in the bookmark row subtitle)."
+  },
+  "bookmarkTargetKindNet": "线网",
+  "@bookmarkTargetKindNet": {
+    "description": "Human-readable label for BookmarkTargetKind.net."
+  },
+  "bookmarkTargetKindPort": "端口",
+  "@bookmarkTargetKindPort": {
+    "description": "Human-readable label for BookmarkTargetKind.port."
+  },
+  "bookmarkTargetKindScope": "作用域",
+  "@bookmarkTargetKindScope": {
+    "description": "Human-readable label for BookmarkTargetKind.scope."
+  },
+  "bookmarksPanelEmpty": "暂无书签。右键单击单元、线网或端口并选择“添加书签…”。",
+  "@bookmarksPanelEmpty": {
+    "description": "Placeholder shown in the Bookmarks panel when the session has no bookmarks."
+  },
+  "bookmarksPanelRowSemantics": "{name}，{kind} {targetId}",
+  "bookmarksPanelRowSemanticsWithNote": "{name}，{kind} {targetId}。备注：{note}",
+  "bookmarksPanelTargetNotFound": "此设计中没有 {name}。",
+  "bookmarksPanelTitle": "书签",
+  "@bookmarksPanelTitle": {
+    "description": "Title of the Bookmarks panel listing all bookmarked schematic elements in the active session."
+  },
+  "inlineElementPickerCancel": "取消",
+  "@inlineElementPickerCancel": {
+    "description": "Cancel button in the inline element picker dialog."
+  },
+  "inlineElementPickerKindCell": "单元",
+  "@inlineElementPickerKindCell": {
+    "description": "Subtitle text in the inline element picker identifying a cell candidate."
+  },
+  "inlineElementPickerKindNet": "线网",
+  "@inlineElementPickerKindNet": {
+    "description": "Subtitle text in the inline element picker identifying a net / wire candidate."
+  },
+  "inlineElementPickerKindPort": "端口",
+  "@inlineElementPickerKindPort": {
+    "description": "Subtitle text in the inline element picker identifying a port / boundary-port candidate."
+  },
+  "inlineElementPickerKindScope": "作用域",
+  "@inlineElementPickerKindScope": {
+    "description": "Subtitle text in the inline element picker identifying a scope candidate."
+  },
+  "inlineElementPickerNoResults": "当前作用域中没有匹配的元素。",
+  "@inlineElementPickerNoResults": {
+    "description": "Placeholder shown in the inline element picker when the search filter matches no candidates."
+  },
+  "inlineElementPickerSearchHint": "按名称搜索…",
+  "@inlineElementPickerSearchHint": {
+    "description": "Hint text in the inline element picker's search field."
+  },
+  "inlineElementPickerTitle": "选择原理图元素",
+  "@inlineElementPickerTitle": {
+    "description": "Title of the inline element picker dialog shown when an add-bookmark / add-annotation flow is invoked without an active selection."
+  },
+  "bookmarkAnnotationUnsavedChangesTitle": "放弃更改？",
+  "@bookmarkAnnotationUnsavedChangesTitle": {
+    "description": "Unsaved changes confirm title."
+  },
+  "bookmarkAnnotationUnsavedChangesBody": "您有未保存的更改。是否放弃？",
+  "@bookmarkAnnotationUnsavedChangesBody": {
+    "description": "Unsaved changes confirm body."
+  },
+  "bookmarkAnnotationUnsavedChangesDiscard": "放弃",
+  "@bookmarkAnnotationUnsavedChangesDiscard": {
+    "description": "Discard action."
+  },
+  "bookmarkAnnotationUnsavedChangesKeep": "继续编辑",
+  "@bookmarkAnnotationUnsavedChangesKeep": {
+    "description": "Keep editing action."
+  }
 }

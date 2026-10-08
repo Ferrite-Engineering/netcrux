@@ -4,8 +4,8 @@ Licensing terms are the same for all four EDACrux products, so they live in one 
 
 What is specific to NetCrux:
 
-- **Open Core** is the free, open-source schematic browser: elaboration, navigation, search, one-step tracing, sessions, projects, workspaces, export and cross-probe.
-- **Pro** <span class="tier tier-pro">Pro</span> adds the Cone of Influence, X-Trace, netlist diff, custom cell symbols, bookmarks and annotations, the RTL source pane, CDC, reset-domain and FSM analysis, the switching-activity heatmap, and cross-probing from the schematic context menu.
+- **Open Core** is the free, open-source schematic browser: elaboration, navigation, search, one-step tracing, bookmarks and annotations, sessions, projects, workspaces, export and cross-probe.
+- **Pro** <span class="tier tier-pro">Pro</span> adds the Cone of Influence, X-Trace, netlist diff, custom cell symbols, the RTL source pane, CDC, reset-domain and FSM analysis, the switching-activity heatmap, and cross-probing from the schematic context menu.
 - **Enterprise** <span class="tier tier-enterprise">Enterprise</span> adds collaborative schematic sessions, org-wide symbol libraries, org-wide policy and the audit log. See [Administration](administration.md).
 - **Education** <span class="tier tier-edu">EDU</span> grants the Pro feature set to verified students and educators for non-commercial use.
 
