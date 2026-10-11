@@ -8,7 +8,7 @@
 // upgrade dialog, and therefore the suite's gate-denial convention as it exists
 // in this repository.
 //
-// Two things this suite is here to hold:
+// Three things this suite is here to hold:
 //
 //  1. **The denial is the seam, not the gate.** `FeatureGate.satisfiesTier` /
 //     `isAvailable` are pure predicates called from `build()`; instrumenting
@@ -21,8 +21,7 @@
 //     could not be.
 //  3. **One event per dialog shown.** A held chord re-dispatches the denial on
 //     every key repeat and the dialog's guard shows one dialog, so the event is
-//     recorded when a dialog opens, not when a denial happens. The docked
-//     cross-probe panel's send gate is held to the same rule.
+//     recorded when a dialog opens, not when a denial happens.
 //
 // Every test overrides `betaPeriodProvider` to false. During the beta the gate
 // short-circuits to allow and this event cannot fire at all — which is correct,
@@ -43,7 +42,6 @@ import 'package:netcrux/core/providers/pro_overlay_installed_provider.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/shortcut_bindings_provider.dart';
 import 'package:netcrux/core/shortcuts/shortcut_manager_widget.dart';
-import 'package:netcrux/features/remote/providers/cross_probe_originate_gate_provider.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/telemetry/telemetry_event_catalog.dart';
@@ -384,35 +382,6 @@ void main() {
           contains(event.properties['required']),
         );
       }
-    });
-
-    testWidgets('the cross-probe send gate records one hit per dialog shown', (
-      tester,
-    ) async {
-      // The panel's send is the other open-core gate-hit site, and it counts
-      // the same way: a denial while the dialog is up records nothing.
-      // MUTATION: recording before `NetcruxUpgradeDialog.show` in
-      // `crossProbeOriginateGateProvider` makes the first count 3.
-      final (_, context) = await pumpDispatcher(tester, beta: false);
-      final gate = ProviderScope.containerOf(
-        context,
-      ).read(crossProbeOriginateGateProvider);
-
-      for (var i = 0; i < 3; i++) {
-        expect(gate(context), isFalse);
-      }
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CruxUpgradeDialog), findsOneWidget);
-      expect(telemetry.count('tier.gate_hit'), 1);
-      final event = telemetry.all('tier.gate_hit').single;
-      expect(event.properties['feature'], 'cross_probe');
-      _assertInCatalog(event);
-
-      await dismissUpgradeDialog(tester);
-      expect(gate(context), isFalse);
-      await tester.pumpAndSettle();
-      expect(telemetry.count('tier.gate_hit'), 2);
     });
   });
 }

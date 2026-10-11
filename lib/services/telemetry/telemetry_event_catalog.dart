@@ -182,12 +182,12 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
   ),
 
   // ── the commercial group ──────────────────────────────────────────────
-  // Recorded from BOTH repositories, by three gate-denial sites covering
+  // Recorded from BOTH repositories, by two gate-denial sites covering
   // disjoint activation surfaces: open core's `allowProAction` (the
-  // workspace action dispatcher and the inspector's Go to source), open
-  // core's `crossProbeOriginateGateProvider` (the docked cross-probe
-  // panel's per-peer send), and the overlay's `proFeatureGateAllows`
-  // (schematic context-menu entries). Each call site is real and none
+  // workspace action dispatcher and the inspector's Go to source) and the
+  // overlay's `proFeatureGateAllows` (schematic context-menu entries).
+  // Cross-probing, sending as well as receiving, is free in every edition
+  // and has no gate. Each call site is real and none
   // double-counts another. It is the one catalog entry the two conformance
   // scans both expect to find.
   //
@@ -213,7 +213,6 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
         'reset',
         'waveform',
         'activity',
-        'cross_probe',
         'collaboration',
       ],
       // `LicenseTier.name` for the tier the FEATURE needs. Only two values

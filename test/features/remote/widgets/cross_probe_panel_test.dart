@@ -20,7 +20,6 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
-import 'package:netcrux/features/remote/providers/cross_probe_originate_gate_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_dial_failures_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_event_log_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
@@ -193,9 +192,9 @@ void main() {
   group('per-peer direct send', () {
     late _RecordingCxpServer wire;
 
-    /// A panel with one peer to send to. Sending is Pro, and the beta is
-    /// over, so the seat holds Pro unless [tier] says otherwise; the tier
-    /// gate's own cases set both sides explicitly.
+    /// A panel with one peer to send to. The seat holds Pro unless [tier]
+    /// says otherwise; the free-in-every-edition cases set the tier and the
+    /// beta flag explicitly.
     ProviderContainer boot({
       bool serverRunning = true,
       bool deliver = true,
@@ -321,23 +320,17 @@ void main() {
       expect(wire.sent, isEmpty);
     });
 
-    group('the send button is a route to a Pro capability', () {
-      // Origination is sold as Pro. The Pro overlay gates its own route (the
-      // schematic context menu's "Send to …" entries); this panel ships in
-      // open core and its send button reaches the same capability, so it has
-      // to gate too. Every case selects a cell so that, absent a gate, the
-      // send WOULD go through — which is what made the button a bypass.
-      ProviderContainer gated({
-        required bool beta,
-        required LicenseTier tier,
-        List<Override> extra = const <Override>[],
-      }) {
+    group('sending is free in every edition', () {
+      // Cross-probing is free across the board, sending as well as
+      // receiving: the panel's send button carries no tier chip and never
+      // raises an upgrade dialog. Every case selects a cell so the send has
+      // something to carry.
+      ProviderContainer seat({required bool beta, required LicenseTier tier}) {
         final container = boot(
           tier: null,
           extra: [
             betaPeriodProvider.overrideWithValue(beta),
             licenseTierProvider.overrideWithValue(tier),
-            ...extra,
           ],
         );
         addTearDown(container.dispose);
@@ -347,29 +340,6 @@ void main() {
             .select(const SelectedElement.cell(cellId: 'u_cpu'));
         return container;
       }
-
-      testWidgets('post-beta at Open Core: nothing is sent, and the upgrade '
-          'dialog says why', (tester) async {
-        final container = gated(beta: false, tier: LicenseTier.openCore);
-        await tester.pumpWidget(_wrap(container));
-        await tester.pump();
-        await tester.tap(find.byKey(_sendKey));
-        await tester.pumpAndSettle();
-
-        expect(
-          wire.sent,
-          isEmpty,
-          reason:
-              'the panel is open core and the send button reaches a Pro '
-              'capability; without a gate here the overlay menu gate is a '
-              'paywall with a second door',
-        );
-        expect(
-          find.byType(CruxUpgradeDialog),
-          findsOneWidget,
-          reason: 'a denied press is never silent',
-        );
-      });
 
       // Admitted sends complete on the wire's real async reply and then
       // mirror into the event log; waiting on the mirror, as every other
@@ -388,91 +358,35 @@ void main() {
               .any((e) => e.direction == CxpEventDirection.outbound),
           description: 'the outbound row reaching the CXP event log',
         );
+        await tester.pumpAndSettle();
       }
 
-      testWidgets('post-beta at Pro: the send goes through', (tester) async {
-        await sendAndSettle(tester, gated(beta: false, tier: LicenseTier.pro));
-        expect(wire.sent, hasLength(1));
-        expect(find.byType(CruxUpgradeDialog), findsNothing);
-      });
+      for (final (beta, tier) in <(bool, LicenseTier)>[
+        (false, LicenseTier.openCore),
+        (false, LicenseTier.pro),
+        (true, LicenseTier.openCore),
+      ]) {
+        testWidgets('beta=$beta at ${tier.name}: the send goes through with '
+            'no upgrade dialog', (tester) async {
+          await sendAndSettle(tester, seat(beta: beta, tier: tier));
+          expect(wire.sent, hasLength(1));
+          expect(find.byType(CruxUpgradeDialog), findsNothing);
+        });
+      }
 
-      testWidgets('during the beta every tier sends', (tester) async {
-        await sendAndSettle(
-          tester,
-          gated(beta: true, tier: LicenseTier.openCore),
-        );
-        expect(wire.sent, hasLength(1));
-        expect(find.byType(CruxUpgradeDialog), findsNothing);
-      });
-
-      testWidgets('the panel asks the gate seam', (tester) async {
-        // A tier the default gate would ADMIT, so a send that still gets
-        // through can only mean the seam was bypassed.
-        var asked = 0;
-        final container = gated(
-          beta: true,
-          tier: LicenseTier.pro,
-          extra: [
-            crossProbeOriginateGateProvider.overrideWith(
-              (ref) => (_) {
-                asked++;
-                return false;
-              },
-            ),
-          ],
-        );
-        await tester.pumpWidget(_wrap(container));
-        await tester.pump();
-        await tester.tap(find.byKey(_sendKey));
-        await tester.pump();
-        expect(asked, 1);
-        expect(wire.sent, isEmpty);
-      });
-
-      // Badge before the click (crux-shared#8): the gate above only speaks
-      // once the button is pressed, and every other gated control in the
-      // suite is labelled before that.
-      Finder sendBadge() => find.descendant(
-        of: find.byKey(const Key('cross_probe_send_badge_wavecrux-panel-peer')),
-        matching: find.byType(FeatureTierBadge),
-      );
-
-      testWidgets('post-beta at Open Core: the send button wears its PRO '
-          'badge before it is pressed', (tester) async {
-        final container = gated(beta: false, tier: LicenseTier.openCore);
+      testWidgets('the send button wears no tier chip', (tester) async {
+        final container = seat(beta: false, tier: LicenseTier.openCore);
         await tester.pumpWidget(_wrap(container));
         await tester.pump();
 
-        expect(wire.sent, isEmpty, reason: 'nothing has been pressed');
-        expect(sendBadge(), findsOneWidget);
-        final badge = tester.widget<FeatureTierBadge>(sendBadge());
-        expect(badge.requiredTier, kCrossProbeOriginateRequiredTier);
-        final l10n = await L10N.delegate.load(const Locale('en'));
+        expect(find.byKey(_sendKey), findsOneWidget);
+        expect(find.byType(FeatureTierBadge), findsNothing);
         expect(
-          find.descendant(
-            of: sendBadge(),
-            matching: find.text(l10n.tierBadgePro),
+          find.byKey(
+            const Key('cross_probe_send_badge_wavecrux-panel-peer'),
           ),
-          findsOneWidget,
+          findsNothing,
         );
-        expect(
-          tester.getCenter(sendBadge()).dx,
-          lessThan(tester.getCenter(find.byKey(_sendKey)).dx),
-          reason: 'the badge leads the button it labels',
-        );
-      });
-
-      testWidgets('the badge names the feature, not the seat: it shows at '
-          'Pro and during the beta too', (tester) async {
-        for (final (beta, tier) in <(bool, LicenseTier)>[
-          (false, LicenseTier.pro),
-          (true, LicenseTier.openCore),
-        ]) {
-          final container = gated(beta: beta, tier: tier);
-          await tester.pumpWidget(_wrap(container));
-          await tester.pump();
-          expect(sendBadge(), findsOneWidget, reason: 'beta=$beta tier=$tier');
-        }
       });
     });
 

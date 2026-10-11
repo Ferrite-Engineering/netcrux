@@ -318,21 +318,12 @@ void main() {
     });
 
     test('every NetcruxGatedFeature is reachable from some denial site', () {
-      // One exception: `crossProbe`'s only gated activation is the overlay's
-      // schematic context menu (`cross_probe_menu_entries.dart`), not a
-      // NetcruxAction, so the Pro repo's own tests cover that side. The
-      // open-core `showCrossProbePanel` action is open-core-tier.
-      //
       // `collaboration` is reached from File > Share Session (hosting is the
       // Enterprise step); joining is free and never denied.
       final fromActions = <NetcruxGatedFeature>{
         for (final action in NetcruxAction.values) ?action.gatedFeature,
       };
-      expect(
-        fromActions,
-        NetcruxGatedFeature.values.toSet()
-          ..remove(NetcruxGatedFeature.crossProbe),
-      );
+      expect(fromActions, NetcruxGatedFeature.values.toSet());
     });
   });
 

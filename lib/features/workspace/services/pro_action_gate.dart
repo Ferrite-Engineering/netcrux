@@ -43,10 +43,8 @@ import 'package:netcrux/shared/widgets/netcrux_upgrade_dialog.dart';
 /// dispatcher wraps only the Pro-tier cases (the "clear / dismiss" actions
 /// stay unconditional by design). Surfaces outside the dispatcher that run
 /// a Pro action directly — the inspector's Go to source — call it too. The
-/// docked cross-probe panel's per-peer send does not: it is not an action,
-/// and its send is implemented in open core, so it dispatches with or without
-/// an overlay. It asks `crossProbeOriginateGateProvider`, which applies the
-/// same tier gate without the "requires NetCrux Pro" refusal.
+/// docked cross-probe panel's per-peer send does not: cross-probing is free
+/// in every edition, so it has no gate.
 bool allowProAction(
   BuildContext context,
   WidgetRef ref,

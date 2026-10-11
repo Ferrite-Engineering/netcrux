@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
-import 'package:netcrux/features/remote/providers/cross_probe_originate_gate_provider.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_dial_failures_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_event_log_provider.dart';
@@ -22,7 +21,6 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/remote/cxp/cxp_selection_resolver.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
-import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
 /// NetCrux's docked cross-probe panel.
 ///
@@ -70,14 +68,6 @@ class _NetCruxCrossProbePanelState
       // label and the ×, so the panel's own header would duplicate all
       // three directly underneath.
       showHeader: false,
-      // Badge before the click: the send button reaches a Pro capability,
-      // so it wears the suite's feature-tier chip like every other gated
-      // control. The chip names what the FEATURE needs, not what the seat
-      // holds, so it shows at every tier and during the beta; the gate in
-      // the controller's send decides, and explains a denial.
-      sendBadgeBuilder: (_, _) => const NetCruxFeatureTierBadge(
-        requiredTier: kCrossProbeOriginateRequiredTier,
-      ),
       strings: cxp_ui.CrossProbePanelStrings(
         title: l10n.crossProbePanelTitle,
         closeTooltip: l10n.crossProbeCloseTooltip,
@@ -197,14 +187,9 @@ class NetCruxCrossProbePanelController
   /// broadcasts fire-and-forget `notify_selection`; the explicit panel send is
   /// directed and wants confirmation, so it uses the acked form.
   ///
-  /// Origination is a Pro capability, and this button is a route to it that
-  /// ships in open core — so the tier is checked HERE, first, before the
-  /// server or the selection is resolved. A denied press has already been
-  /// explained by the gate; an empty selection after an admitted press is
-  /// the existing quiet no-op, which is a different situation from a
-  /// refusal.
+  /// Sending is free in every edition, like receiving, so there is no tier
+  /// check here. An empty selection is a quiet no-op.
   Future<void> _sendTo(PeerIdentity peer) async {
-    if (!_ref.read(crossProbeOriginateGateProvider)(_ref.context)) return;
     final host = _ref.read(cxpServerHostProvider).value;
     if (host == null) return;
     final tree = _ref.read(hierarchyTreeProvider);

@@ -180,10 +180,9 @@ toggles the **Cross-Probe** dock tab. It shows:
 - **Cross-probe server is offline.** when the server is not running.
 - **Peers** — every discovered peer as product name and version over its
   peer id, each with a **Send selection to this peer** button that sends a
-  `request_highlight` for whatever is selected right now. The button wears a
-  **PRO** badge on its left in every edition: the targeted send is a Pro
-  feature, and in Open Core pressing it opens the upgrade dialog and sends
-  nothing.
+  `request_highlight` for whatever is selected right now. From NetCrux 1.1
+  the targeted send is free in every edition and the button carries no tier
+  badge.
 - **Unreachable peers** — persistent warnings for peers that could not be
   reached.
 - **Recent events** — a rolling log of the last 50 events: inbound messages,

@@ -73,7 +73,7 @@ The canvas handles a small set of keys directly whenever it has keyboard focus. 
 | ++alt+arrow-right++ / ++alt+arrow-left++ | Step through the pins of that cell, each followed by the net on it (on a module port, its net). A net shared by two pins is visited once. |
 | ++shift++ with either of the above | Add to the selection instead of replacing it — what a shift-click does. |
 | ++enter++ | Push into the selected instance — what a double-click does. |
-| ++shift+f10++ / ++menu++ | Open the context menu for the selected element: Copy Path, the traces, Find in Hierarchy, and in Pro the cross-probe and analysis entries. |
+| ++shift+f10++ / ++menu++ | Open the context menu for the selected element: Copy Path, the traces, Find in Hierarchy, the cross-probe entries, and in Pro the analysis entries. |
 | ++backspace++ | Pop out of the scope, clearing the selection and trace overlay. |
 | ++cmd+bracket-left++ / ++ctrl+bracket-left++ | Pop out of the scope. |
 | ++escape++ | Clear the selection, the trace overlay, and a selected CDC or reset crossing, in one press. |
