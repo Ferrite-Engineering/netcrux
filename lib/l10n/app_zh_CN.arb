@@ -2562,5 +2562,9 @@
   "annotationUnsavedChangesKeep": "继续编辑",
   "@annotationUnsavedChangesKeep": {
     "description": "Cancel button label on the unsaved-changes confirmation dialog."
+  },
+  "fileWatcherIgnore": "忽略",
+  "@fileWatcherIgnore": {
+    "description": "Button on the source-changed prompt that dismisses it without reloading. Same key and meaning as WaveCrux."
   }
 }

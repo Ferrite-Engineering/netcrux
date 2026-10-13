@@ -4,8 +4,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/cli/cli_launch_intent.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
@@ -69,7 +69,7 @@ void main() {
   final prompt = find.textContaining('source file changed');
 
   /// Runs `touch` on [path] the way a user does from Terminal, then gives the
-  /// watcher, its poll and the snackbar time to act.
+  /// watcher, its poll and the prompt time to act.
   Future<void> touch(WidgetTester tester, String path) async {
     await tester.runAsync(() async {
       if (Platform.isWindows) {
@@ -128,11 +128,9 @@ void main() {
   }
 
   for (final layout in _Layout.values) {
-    for (final tapReload in <bool>[false, true]) {
+    for (final choice in _Choice.values) {
       testWidgets('${layout.name}: every touch raises the reload prompt '
-          '(${tapReload ? 'Reload tapped' : 'prompt left alone'})', (
-        tester,
-      ) async {
+          '(${choice.label})', (tester) async {
         final back = source('vexriscv');
         final front = source('picorv32');
         Directory? wsDir;
@@ -189,22 +187,23 @@ void main() {
         ]);
         expect(prompt, findsNothing);
 
-        SnackBar? previous;
         for (var round = 1; round <= 3; round++) {
           await touch(tester, front.path);
+          // After a choice the banner is gone, so a prompt on screen now was
+          // raised by this touch: the watcher is still hearing changes.
+          // Left alone, the one banner stays and nothing stacks behind it.
           expect(prompt, findsOneWidget, reason: 'touch $round');
-          final shown = tester.widget<SnackBar>(find.byType(SnackBar));
-          expect(
-            shown,
-            isNot(same(previous)),
-            reason: 'touch $round raised a prompt of its own',
-          );
-          previous = shown;
-          if (tapReload) {
-            await tester.tap(find.text('Reload'));
+          expect(find.byKey(kCruxReloadPromptKey), findsOneWidget);
+          final button = switch (choice) {
+            _Choice.reload => kCruxReloadPromptReloadKey,
+            _Choice.ignore => kCruxReloadPromptIgnoreKey,
+            _Choice.leftAlone => null,
+          };
+          if (button != null) {
+            await tester.tap(find.byKey(button));
             await WorkspaceAppHarness.settle(tester);
             await tester.pump(const Duration(seconds: 2));
-            expect(prompt, findsNothing, reason: 'Reload dismisses the prompt');
+            expect(prompt, findsNothing, reason: '${choice.label} closes it');
           }
         }
 
@@ -219,4 +218,15 @@ void main() {
       });
     }
   }
+}
+
+/// What the user does with each prompt.
+enum _Choice {
+  reload('Reload tapped'),
+  ignore('Ignore tapped'),
+  leftAlone('prompt left alone');
+
+  const _Choice(this.label);
+
+  final String label;
 }

@@ -88,7 +88,7 @@ NetCrux watches the source files behind the current schematic. What happens when
 
 | Mode | Behavior |
 |---|---|
-| **Prompt me** *(default)* | Notify you that the source changed and offer to re-elaborate. |
+| **Prompt me** *(default)* | Notify you that the source changed and offer to re-elaborate. From 1.1 this is a banner across the top with **Ignore** and **Reload**, which stays until you choose. |
 | **Reload automatically** | Re-elaborate on save — the file-watching pattern of a modern editor. |
 | **Don't reload** | Ignore changes; re-elaborate only when you reopen. |
 

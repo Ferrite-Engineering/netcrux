@@ -152,18 +152,17 @@ class ProjectTabContent extends ConsumerWidget {
       ..watch(sourceFileWatcherProvider)
       ..listen<int?>(sourceReloadEventsProvider, (previous, next) {
         if (next == null) return;
-        ScaffoldMessenger.of(context)
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.fileChangedSnackbar(next)),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                label: l10n.autoReloadPromptAction,
-                onPressed: () => ref.invalidate(loadedNetlistProvider),
-              ),
-            ),
-          );
+        // The suite's source-changed prompt, the same banner in every
+        // product. The event is consumed here, so Ignore has nothing left to
+        // clear; it only closes the banner.
+        showCruxReloadPrompt(
+          context,
+          message: l10n.fileChangedSnackbar(next),
+          reloadLabel: l10n.autoReloadPromptAction,
+          ignoreLabel: l10n.fileWatcherIgnore,
+          onReload: () => ref.invalidate(loadedNetlistProvider),
+          onIgnore: () {},
+        );
         ref.read(sourceReloadEventsProvider.notifier).clear();
       });
 

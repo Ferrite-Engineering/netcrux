@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:flutter/material.dart';
@@ -102,6 +103,63 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+  });
+
+  group('the source-changed prompt', () {
+    testWidgets('is the shared banner, and Ignore closes it without a reload', (
+      tester,
+    ) async {
+      final root = ProviderContainer(
+        overrides: [
+          yosysAvailabilityProvider.overrideWith(
+            (ref) async => const YosysAvailability.available(
+              executablePath: 'yosys',
+              versionString: 'test stub',
+            ),
+          ),
+        ],
+      );
+      addTearDown(root.dispose);
+      final manager = TabContainerManager(
+        rootContainer: root,
+        overridesFactory: netcruxTabOverridesFactory,
+      );
+      addTearDown(manager.dispose);
+      final container = manager.containerFor(TabId.generate());
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            localizationsDelegates: [
+              L10N.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: L10N.supportedLocales,
+            home: Scaffold(body: ProjectTabContent()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // It used to be a snackbar whose only button was Reload, which never
+      // timed out and could not be declined.
+      container.read(sourceReloadEventsProvider.notifier).publish(1);
+      await tester.pumpAndSettle();
+      expect(find.byKey(kCruxReloadPromptKey), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+
+      // A second change while it is up does not stack another banner.
+      container.read(sourceReloadEventsProvider.notifier).publish(2);
+      await tester.pumpAndSettle();
+      expect(find.byKey(kCruxReloadPromptKey), findsOneWidget);
+
+      await tester.tap(find.byKey(kCruxReloadPromptIgnoreKey));
+      await tester.pumpAndSettle();
+      expect(find.byKey(kCruxReloadPromptKey), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('the netlist reaches the hierarchy tree', () {
