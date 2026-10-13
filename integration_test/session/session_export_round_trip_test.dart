@@ -62,8 +62,9 @@ void main() {
       final seeded = await seedNetlistDocumentIntoNewTab(tester);
       final tab = seeded.tab;
 
-      // Wait for the top scope to lay out (elkjs is async), mirroring
-      // `design/seeded_design_journey_test.dart`.
+      // Wait for the top scope to lay out (layout is async), mirroring
+      // `design/seeded_design_journey_test.dart`. The first layout in the
+      // process pays the engine's cold start, hence the longer bound.
       bool graphHasCell(String id) {
         final graph = tab.read(currentLaidOutGraphProvider).value;
         if (graph == null) return false;
@@ -73,7 +74,7 @@ void main() {
       final topLaidOut = await pumpUntil(
         tester,
         () => graphHasCell('u_cpu'),
-        timeout: const Duration(seconds: 30),
+        timeout: kFirstLayoutTimeout,
       );
       expect(topLaidOut, isTrue, reason: 'top scope never laid out');
 

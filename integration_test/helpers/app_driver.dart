@@ -80,6 +80,18 @@ void suppressPlatformSemanticsLeak() {
 /// device class via `setSurfaceSize`.
 bool get skipOnMobileDevice => Platform.isAndroid || Platform.isIOS;
 
+/// How long a journey waits for the first layout of a seeded design.
+///
+/// The first layout in a process pays the layout engine's cold start: the
+/// worker isolate, the native library load and, on the elkjs escape hatch,
+/// the bundle's parse on a JavaScript interpreter. On a cold CI runner that
+/// has exceeded 30 s when a journey ran first in its own `subdirs` selection,
+/// while the same journey passed tenth in a full run. Every journey's
+/// first-layout wait takes this bound so the order the files run in cannot
+/// decide the outcome; later layouts in the same process keep their own
+/// shorter bounds, since the engine is warm by then.
+const Duration kFirstLayoutTimeout = Duration(seconds: 90);
+
 /// Pumps the live tree in [interval] steps until [condition] returns true or
 /// [timeout] elapses, then returns whether [condition] held.
 ///

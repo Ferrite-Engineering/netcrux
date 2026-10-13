@@ -51,7 +51,7 @@ void main() {
       final topLaidOut = await pumpUntil(
         tester,
         () => graphHasCell('u_cpu'),
-        timeout: const Duration(seconds: 30),
+        timeout: kFirstLayoutTimeout,
       );
       expect(
         topLaidOut,

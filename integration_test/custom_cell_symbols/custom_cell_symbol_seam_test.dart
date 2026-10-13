@@ -56,7 +56,7 @@ void main() {
           if (graph == null) return false;
           return graph.graph.cells.any((c) => c.id == 'u_cpu');
         },
-        timeout: const Duration(seconds: 30),
+        timeout: kFirstLayoutTimeout,
       );
       expect(topLaidOut, isTrue, reason: 'top scope never laid out');
 
