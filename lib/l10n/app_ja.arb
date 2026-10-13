@@ -2309,6 +2309,7 @@
   "toolbarOverflowActions": "アクション",
   "toolbarToggleCrossProbe": "クロスプローブパネル",
   "toolbarTraceCluster": "トレース",
+  "toolbarTraceClusterFace": "トレース（既定は{action}）",
   "actionOpenTabDiagnostics": "タブ診断…",
   "actionOpenAppDiagnostics": "アプリ診断…",
   "diagnosticsAppDialogTitle": "アプリ診断",

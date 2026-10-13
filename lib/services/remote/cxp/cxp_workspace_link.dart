@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_project/crux_project.dart' show kCruxProjectExtension;
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
@@ -219,26 +220,81 @@ Future<void> publishDesignSourceArtifact(
   }
 }
 
+/// The file extensions a `source` record may carry for NetCrux to open it:
+/// the HDL NetCrux elaborates and the Yosys JSON netlist it reads directly,
+/// as the source and design file dialogs offer them.
+const Set<String> kNetcruxSourceArtifactExtensions = <String>{
+  'v',
+  'vh',
+  'sv',
+  'svh',
+  'vhd',
+  'vhdl',
+  'json',
+};
+
+/// The file extensions a `project` record may carry for NetCrux to open it:
+/// the three forms `request_open_artifact` reads, which are the ones Open
+/// Project… and the command line accept.
+const Set<String> kNetcruxProjectArtifactExtensions = <String>{
+  kNetcruxProjectExtension,
+  kCruxProjectExtension,
+  'f',
+};
+
+/// Whether a `source` record names a file NetCrux loads as a design.
+///
+/// Every product publishes the kind for its own files: `source` names an HDL
+/// file here, a lint project in LintCrux and a simulation config in SimCrux,
+/// all under the one design id of the directory they share. Without the
+/// filter the store's resolution hands NetCrux whichever record was upserted
+/// last, and a lint project would be loaded as HDL.
+bool netcruxAcceptsSourceArtifact(String path) =>
+    _hasExtensionIn(path, kNetcruxSourceArtifactExtensions);
+
+/// Whether a `project` record names a project NetCrux can read; see
+/// [netcruxAcceptsSourceArtifact] for why the kind alone does not decide.
+bool netcruxAcceptsProjectArtifact(String path) =>
+    _hasExtensionIn(path, kNetcruxProjectArtifactExtensions);
+
+/// The `accepts` filter for records of [kind], or null for a kind NetCrux
+/// does not open (the caller refuses those before resolving).
+bool Function(String path)? netcruxAcceptsArtifactOfKind(String kind) =>
+    switch (kind) {
+      kCxpSourceArtifactKind => netcruxAcceptsSourceArtifact,
+      kCxpProjectArtifactKind => netcruxAcceptsProjectArtifact,
+      _ => null,
+    };
+
+bool _hasExtensionIn(String path, Set<String> extensions) {
+  final lower = path.toLowerCase();
+  return extensions.any((e) => lower.endsWith('.$e'));
+}
+
 /// Resolves the shared-workspace `source` artifact for the design named by
 /// [designId] (consumer-side resolution), preferring an exact `design_id`+kind
 /// match and falling back to the descriptive [topModule]/[basename] hints.
+/// Only records NetCrux can open are considered
+/// ([netcruxAcceptsSourceArtifact]).
 ///
 /// Returns the absolute path NetCrux should open, or null when the design has
-/// no source artifact recorded.
-String? resolveDesignSourceArtifactPath(
+/// no source artifact recorded. The store's read is asynchronous, so a slow
+/// workspace directory never stalls the inbound handler.
+Future<String?> resolveDesignSourceArtifactPath(
   ProviderContainer container,
   String designId, {
   String? topModule,
   String? basename,
-}) {
+}) async {
   if (designId.isEmpty) return null;
-  final artifact = container
+  final artifact = await container
       .read(cxpWorkspaceStoreProvider)
-      .resolveArtifact(
+      .resolveArtifactAsync(
         designId,
         kCxpSourceArtifactKind,
         topModule: topModule,
         basename: basename,
+        accepts: netcruxAcceptsSourceArtifact,
       );
   return artifact?.path;
 }
@@ -255,23 +311,30 @@ String? resolveDesignSourceArtifactPath(
 /// directory costs nothing.
 ///
 /// Returns the absolute path NetCrux should open, or null when the design has
-/// no artifact of that kind recorded.
-String? resolveOpenArtifactPath(
+/// no artifact of that kind recorded that NetCrux can open
+/// ([netcruxAcceptsArtifactOfKind]).
+Future<String?> resolveOpenArtifactPath(
   ProviderContainer container,
   String designId, {
   required String kind,
-}) {
+}) async {
   if (designId.isEmpty) return null;
   final store = container.read(cxpWorkspaceStoreProvider);
-  return CxpWorkspaceStore(
-    workspaceDirectory: store.workspaceDirectory,
-    ttl: store.ttl,
-    containment: kCxpOpenArtifactContainment,
-  ).resolveArtifact(designId, kind)?.path;
+  final artifact =
+      await CxpWorkspaceStore(
+        workspaceDirectory: store.workspaceDirectory,
+        ttl: store.ttl,
+        containment: kCxpOpenArtifactContainment,
+      ).resolveArtifactAsync(
+        designId,
+        kind,
+        accepts: netcruxAcceptsArtifactOfKind(kind),
+      );
+  return artifact?.path;
 }
 
 /// [resolveOpenArtifactPath] for the `source` artifact.
-String? resolveOpenArtifactSourcePath(
+Future<String?> resolveOpenArtifactSourcePath(
   ProviderContainer container,
   String designId,
 ) => resolveOpenArtifactPath(

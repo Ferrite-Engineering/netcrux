@@ -212,6 +212,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  crux_collections:
+    dependency: "direct main"
+    description:
+      path: "crux-shared/packages/crux_collections"
+      relative: true
+    source: path
+    version: "0.1.0"
   crux_command_palette:
     dependency: "direct main"
     description:
@@ -225,7 +232,7 @@ packages:
       path: "crux-shared/packages/crux_cxp"
       relative: true
     source: path
-    version: "0.8.1"
+    version: "0.10.0"
   crux_cxp_ui:
     dependency: "direct main"
     description:
@@ -254,6 +261,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  crux_guards:
+    dependency: "direct dev"
+    description:
+      path: "crux-shared/packages/crux_guards"
+      relative: true
+    source: path
+    version: "0.1.0"
   crux_ide_layout:
     dependency: "direct main"
     description:

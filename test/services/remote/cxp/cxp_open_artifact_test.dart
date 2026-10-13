@@ -818,8 +818,14 @@ design:
       final never = design(neverDir, 'dropped.v');
       await record('d-kept', inTab.path);
       await record('d-dropped', never.path);
-      expect(resolveDesignSourceArtifactPath(env.root, 'd-kept'), inTab.path);
-      expect(resolveDesignSourceArtifactPath(env.root, 'd-dropped'), isNull);
+      expect(
+        await resolveDesignSourceArtifactPath(env.root, 'd-kept'),
+        inTab.path,
+      );
+      expect(
+        await resolveDesignSourceArtifactPath(env.root, 'd-dropped'),
+        isNull,
+      );
     });
 
     group('request_open_artifact', () {

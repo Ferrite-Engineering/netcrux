@@ -25,6 +25,10 @@ dependencies:
   # rapid input through (the Settings custom Yosys path probe).
   crux_async:
     path: ./crux-shared/packages/crux_async
+  # Cross-suite bounded collections: the schematic painter's text-layout
+  # cache is an `LruCache` that disposes the `TextPainter` it evicts.
+  crux_collections:
+    path: ./crux-shared/packages/crux_collections
   # Cross-suite command palette widget (CommandPalette<T extends CruxAction>).
   # NetCrux's CommandPaletteDialog is a thin Consumer wrapper that reads
   # netcrux providers, applies netcrux-specific filtering, and delegates to
@@ -275,6 +279,11 @@ dev_dependencies:
   # `CruxAuditRecorder`, so the runtime dependency stays where the binding is.
   crux_audit:
     path: ./crux-shared/packages/crux_audit
+  # The suite's static-guard scanners (outline-token text, unused ARB keys,
+  # `ref` after `await`); the thin tests under `test/static/` feed them this
+  # repository's sources and exemptions.
+  crux_guards:
+    path: ./crux-shared/packages/crux_guards
   flutter_test:
     sdk: flutter
   # `MockClient` for the telemetry gating tests: the beta-inert guarantee is

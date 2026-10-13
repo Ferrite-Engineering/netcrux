@@ -588,6 +588,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         await _openSessionByPath(path);
       case NotAManifest(:final path)
           when _hasSuffix(path, kNetcruxProjectExtension):
+        if (!mounted) return;
         await ref.read(appSettingsProvider.notifier).recordRecentProject(path);
         final NetcruxProject project;
         try {

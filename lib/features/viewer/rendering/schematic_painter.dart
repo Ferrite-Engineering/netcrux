@@ -11,6 +11,7 @@
 
 import 'dart:math' as math;
 
+import 'package:crux_collections/crux_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:netcrux/core/theme/netcrux_colors.dart';
 import 'package:netcrux/domain/models/activity/activity_color_scheme.dart';
@@ -323,9 +324,13 @@ class SchematicCanvasRenderObject extends RenderBox {
   /// again, so the cap keeps the retained set proportional to what the
   /// user can actually see rather than to design size.
   ///
-  /// `Map` preserves insertion order; the LRU ordering is maintained by
-  /// removing and re-inserting an entry on read.
-  final Map<String, TextPainter> _textLayoutCache = <String, TextPainter>{};
+  /// The cache disposes what it evicts, and [LruCache.clear] runs the same
+  /// callback for every entry, so invalidation is one call.
+  final LruCache<String, TextPainter> _textLayoutCache =
+      LruCache<String, TextPainter>(
+        maxEntries: _maxTextLayoutCacheEntries,
+        onEvict: (_, painter) => painter.dispose(),
+      );
 
   /// Maximum laid-out label painters retained at once. Comfortably above
   /// the number of labels a detail-band viewport can show, so a normal
@@ -345,11 +350,9 @@ class SchematicCanvasRenderObject extends RenderBox {
     double maxWidth, {
     bool elideStart = false,
   }) {
-    final cached = _textLayoutCache.remove(key);
-    if (cached != null) {
-      _textLayoutCache[key] = cached;
-      return cached;
-    }
+    // A read promotes the entry, so a label drawn every frame stays resident.
+    final cached = _textLayoutCache[key];
+    if (cached != null) return cached;
     final shown = elideStart
         ? startElidedText(text, style: style, maxWidth: maxWidth)
         : text;
@@ -360,19 +363,10 @@ class SchematicCanvasRenderObject extends RenderBox {
       ellipsis: '…',
     )..layout(maxWidth: maxWidth);
     _textLayoutCache[key] = painter;
-    while (_textLayoutCache.length > _maxTextLayoutCacheEntries) {
-      final oldest = _textLayoutCache.keys.first;
-      _textLayoutCache.remove(oldest)?.dispose();
-    }
     return painter;
   }
 
-  void _clearTextLayoutCache() {
-    for (final painter in _textLayoutCache.values) {
-      painter.dispose();
-    }
-    _textLayoutCache.clear();
-  }
+  void _clearTextLayoutCache() => _textLayoutCache.clear();
 
   @override
   void dispose() {

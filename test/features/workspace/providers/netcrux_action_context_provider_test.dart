@@ -69,6 +69,17 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(sub.read().hasSelection, isTrue);
 
+    // A split needs a second tab to leave behind; with one it is a no-op and
+    // the action is disabled on the same count.
+    expect(sub.read().tabCountInActivePane, 1);
+    await root.read(netcruxWorkspaceProvider.notifier).splitPaneRight();
+    expect(sub.read().paneCount, 1);
+
+    await root
+        .read(netcruxWorkspaceProvider.notifier)
+        .openTab(displayName: 'b', payload: NetcruxTabPayload.empty);
+    await root.read(netcruxWorkspaceProvider.future);
+    expect(sub.read().tabCountInActivePane, 2);
     await root.read(netcruxWorkspaceProvider.notifier).splitPaneRight();
     expect(sub.read().paneCount, 2);
   });

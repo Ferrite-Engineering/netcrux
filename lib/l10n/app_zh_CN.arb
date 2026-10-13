@@ -2309,6 +2309,7 @@
   "toolbarOverflowActions": "操作",
   "toolbarToggleCrossProbe": "交叉探测面板",
   "toolbarTraceCluster": "追踪",
+  "toolbarTraceClusterFace": "追踪（默认为{action}）",
   "actionOpenTabDiagnostics": "标签页诊断…",
   "actionOpenAppDiagnostics": "应用诊断…",
   "diagnosticsAppDialogTitle": "应用诊断",

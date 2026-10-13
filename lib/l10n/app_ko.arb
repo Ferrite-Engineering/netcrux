@@ -2309,6 +2309,7 @@
   "toolbarOverflowActions": "동작",
   "toolbarToggleCrossProbe": "크로스프로브 패널",
   "toolbarTraceCluster": "추적",
+  "toolbarTraceClusterFace": "추적 ({action} 기본)",
   "actionOpenTabDiagnostics": "탭 진단…",
   "actionOpenAppDiagnostics": "앱 진단…",
   "diagnosticsAppDialogTitle": "앱 진단",

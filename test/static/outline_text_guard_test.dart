@@ -9,170 +9,70 @@
 // `onSurfaceVariant` instead: `outline` was never chosen against WCAG
 // text-contrast minimums, only against adjacent surface colors, so using it
 // to color text reads as a contrast failure. A paid accessibility re-check
-// is the reason this sweep happened now; this guard is what keeps a new
+// is the reason this sweep happened; this guard is what keeps a new
 // violation from shipping quietly afterward.
 //
-// A 2026-09 sweep of this repository found the token used as a text color
-// in one place — a settings status label that read "stopped" in a border
-// color instead of a text color — now fixed to `onSurfaceVariant`. What
-// remains, and is pinned in `_exemptions`, is a scrollbar thumb fill, which
-// is not text.
+// The scanner is `crux_guards`' `cruxAuditOutlineText`, shared by the four
+// products: every `.outline` member access under any receiver is a finding
+// unless pinned below to its file, line and trimmed text with the reason it
+// is not a text color. An edit around a pinned line re-flags whatever sits
+// there now instead of carrying the exemption forward, and an exemption that
+// matches nothing is a finding too, so the list cannot outlive the code.
 //
-// ## Heuristic, and why
-//
-// A precise "does this feed a `TextStyle.color`?" check needs a type-aware
-// analysis this guard doesn't have. Instead it scans for the bare,
-// word-bounded token `.outline` (so `.outlineVariant` never matches — there
-// is no word boundary between "e" and "V" — and neither does an `Icons.*`
-// name like `help_outline`, since nothing precedes "outline" there with a
-// literal `.`) under any receiver: `colorScheme.outline`, `theme.colorScheme
-// .outline`, a local `scheme.outline`, `cs.outline`, and so on — the token
-// match is deliberately receiver-agnostic, because the sweep that produced
-// this guard found more than one spelling in use across the suite.
-//
-// Every surviving occurrence must be pinned in `_exemptions` with the exact
-// file, line, and trimmed line content, plus a reason it is NOT a text-color
-// use. If the file changes around that line, the recorded content stops
-// matching and the guard re-flags whatever now sits there instead of
-// silently carrying the exemption forward — a new, unreviewed use of the
-// token (text or not) always fails until someone looks at it.
-//
-// ## Scope
-//
-// `lib/` only, this repository. Each of the suite's open cores keeps its
-// own copy of this guard, scoped to its own `lib/`.
+// Scope: this repository's `lib/`.
 
 import 'dart:io';
 
+import 'package:crux_guards/crux_guards.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() {
-  final exemptions = <_Exemption>[
-    const _Exemption(
-      file: 'lib/features/viewer/widgets/schematic_scrollbars.dart',
-      line: 253,
-      expectedTrimmed: 'color: theme.colorScheme.outline,',
-      reason:
-          'DecoratedBox fill color for the schematic scrollbar thumb — a '
-          'fill, not text.',
-    ),
-  ];
+const _exemptions = <CruxOutlineExemption>[
+  CruxOutlineExemption(
+    file: 'lib/features/viewer/widgets/schematic_scrollbars.dart',
+    line: 253,
+    expectedTrimmed: 'color: theme.colorScheme.outline,',
+    reason:
+        'DecoratedBox fill color for the schematic scrollbar thumb: a fill, '
+        'not text.',
+  ),
+];
 
+void main() {
   test('the outline token is never used to color text', () {
     final root = Directory('lib');
     expect(
       root.existsSync(),
       isTrue,
-      reason:
-          'lib/ must exist for this guard to mean anything — run from the '
-          'repository root',
+      reason: 'lib/ must exist; run from the repository root',
+    );
+    final sources = <CruxGuardSource>[
+      for (final entity in root.listSync(recursive: true))
+        if (entity is File && entity.path.endsWith('.dart'))
+          CruxGuardSource(
+            path: entity.path.replaceAll(r'\', '/'),
+            source: entity.readAsStringSync(),
+          ),
+    ];
+
+    final result = cruxAuditOutlineText(
+      sources: sources,
+      exemptions: _exemptions,
     );
 
-    // Word-bounded, receiver-agnostic: matches `colorScheme.outline`,
-    // `theme.colorScheme.outline`, `scheme.outline`, `cs.outline`, ... but
-    // never `.outlineVariant` (no boundary between "e" and "V") and never an
-    // `Icons.*_outline` name (no literal "." precedes "outline" there).
-    final tokenPattern = RegExp(r'\.outline\b(?!Variant)');
-
-    final exemptByFile = <String, List<_Exemption>>{};
-    for (final e in exemptions) {
-      exemptByFile.putIfAbsent(e.file, () => []).add(e);
-    }
-
-    final offenders = <String>[];
-    var filesScanned = 0;
-    var tokensSeen = 0;
-
-    for (final entity in root.listSync(recursive: true)) {
-      if (entity is! File || !entity.path.endsWith('.dart')) continue;
-      final relPath = entity.path.replaceAll(r'\', '/');
-      filesScanned++;
-
-      final lines = entity.readAsStringSync().split('\n');
-      final fileExemptions = exemptByFile[relPath] ?? const [];
-      for (var i = 0; i < lines.length; i++) {
-        if (!tokenPattern.hasMatch(lines[i])) continue;
-        tokensSeen++;
-
-        final lineNo = i + 1;
-        final trimmed = lines[i].trim();
-        final isExempt = fileExemptions.any(
-          (e) => e.line == lineNo && e.expectedTrimmed == trimmed,
-        );
-        if (isExempt) continue;
-
-        offenders.add('$relPath:$lineNo: $trimmed');
-      }
-    }
-
-    // Non-vacuity: a broken regex or a wrong working directory would make
-    // this guard pass by finding nothing at all.
+    // Non-vacuity: a wrong working directory would make this pass by
+    // scanning nothing.
     expect(
-      filesScanned,
+      result.filesScanned,
       greaterThan(100),
-      reason:
-          'the source walk collected implausibly few files — check the '
-          'working directory (must run from the repository root)',
+      reason: 'the source walk collected implausibly few files',
     );
     expect(
-      tokensSeen,
-      greaterThanOrEqualTo(exemptions.length),
+      result.isClean,
+      isTrue,
       reason:
-          'expected to see at least the ${exemptions.length} known '
-          'exempted outline sites; the scan found $tokensSeen — is the '
-          'regex or the file walk broken?',
-    );
-
-    expect(
-      offenders,
-      isEmpty,
-      reason:
-          'the outline token is used where onSurfaceVariant belongs (or an '
-          "unreviewed new use that needs an entry in this guard's "
-          'exemption list, with a reason):\n\n${offenders.join('\n')}',
+          'the outline token is used where onSurfaceVariant belongs, or an '
+          'unreviewed new use needs an exemption here with its reason:\n'
+          '${result.describe()}',
     );
   });
-
-  test('the token pattern matches the shapes it must and none it must not', () {
-    final tokenPattern = RegExp(r'\.outline\b(?!Variant)');
-    for (final positive in <String>[
-      'color: theme.colorScheme.outline,',
-      'color: colorScheme.outline,',
-      'color: cs.outline,',
-      'color: scheme.outline,',
-    ]) {
-      expect(
-        tokenPattern.hasMatch(positive),
-        isTrue,
-        reason: 'should have matched: $positive',
-      );
-    }
-    for (final negative in <String>[
-      'theme.colorScheme.outlineVariant',
-      'icon: Icons.help_outline,',
-      'border: const OutlineInputBorder()',
-    ]) {
-      expect(
-        tokenPattern.hasMatch(negative),
-        isFalse,
-        reason: 'should not have matched: $negative',
-      );
-    }
-  });
-}
-
-class _Exemption {
-  const _Exemption({
-    required this.file,
-    required this.line,
-    required this.expectedTrimmed,
-    required this.reason,
-  });
-
-  final String file;
-  final int line;
-  final String expectedTrimmed;
-
-  /// Not read by the check itself — kept for a human auditing the list.
-  final String reason;
 }

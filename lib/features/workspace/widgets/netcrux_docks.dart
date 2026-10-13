@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:crux_dock/crux_dock.dart';
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
@@ -340,97 +341,87 @@ class NetcruxDockRestoreBars extends ConsumerWidget {
     final showRight = !layout.inspectorVisible;
     final showBottom = !layout.diagnosticsVisible;
 
-    // One tree shape whatever is collapsed -- picking the wrapper widget by
-    // which regions were collapsed (the bare child, a Column, a Row, a Row
-    // around a Column) changed the widget type directly above the IDE
-    // layout on every dock toggle, so Flutter discarded and rebuilt the
-    // whole layout: every dock, the pane scope, the show/hide animation,
-    // and dock scroll positions. See WaveCrux's dock_restore_bars.dart for
-    // the incident this mirrors. The bars are keyed so one appearing or
-    // vanishing is matched by identity and touches nothing but itself.
-    return Row(
-      children: [
-        if (showLeft)
-          CruxDockRestoreBar(
-            key: const ValueKey('dockRestoreBar.left'),
-            edge: CruxDockCollapseDirection.left,
-            entries: [
-              CruxDockRestoreEntry(
-                id: 'hierarchy',
-                icon: Icons.account_tree_outlined,
-                label: l10n.dockTabHierarchy,
-                onRestore: () =>
-                    notifier.setHierarchyTreeVisible(visible: true),
-              ),
-            ],
-            semanticsLabel: l10n.accessibilityLeftDockRegion,
-          ),
-        Expanded(
-          key: const ValueKey('dockRestoreBars.center'),
-          child: Column(
-            children: [
-              Expanded(child: child),
-              if (showBottom)
-                CruxDockRestoreBar(
-                  key: const ValueKey('dockRestoreBar.bottom'),
-                  edge: CruxDockCollapseDirection.down,
-                  entries: [
-                    CruxDockRestoreEntry(
-                      id: kBottomDockTabDiagnostics,
-                      icon: Icons.rule,
-                      label: l10n.dockTabDiagnostics,
-                      onRestore: () => unawaited(
-                        notifier.setDiagnosticsVisible(visible: true),
-                      ),
-                    ),
-                    for (final entry in _movableEntries(
-                      context,
-                      ref,
-                      region: kDockRegionBottom,
-                    ))
-                      CruxDockRestoreEntry(
-                        id: entry.id,
-                        icon: entry.icon,
-                        label: entry.label,
-                        onRestore: () => ref
-                            .read(bottomDockTabProvider.notifier)
-                            .reveal(entry.id),
-                      ),
-                  ],
-                  semanticsLabel: l10n.accessibilityBottomDockRegion,
-                ),
-            ],
-          ),
-        ),
-        if (showRight)
-          CruxDockRestoreBar(
-            key: const ValueKey('dockRestoreBar.right'),
-            edge: CruxDockCollapseDirection.right,
-            entries: [
-              CruxDockRestoreEntry(
-                id: kRightDockTabInspector,
-                icon: Icons.info_outline,
-                label: l10n.dockTabInspector,
-                onRestore: () => ref
-                    .read(rightDockTabProvider.notifier)
-                    .reveal(kRightDockTabInspector),
-              ),
-              for (final entry in _movableEntries(
-                context,
-                ref,
-                region: kDockRegionRight,
-              ))
+    // One tree shape whatever is collapsed: the shared frame keeps the IDE
+    // layout's element across every dock toggle and keys each bar's slot, so
+    // a bar appearing or vanishing touches nothing but itself. Picking the
+    // wrapper widget by what was collapsed used to rebuild the whole layout
+    // (every dock, the pane scope, the show/hide animation, dock scroll
+    // positions) on each toggle.
+    return CruxDockRestoreFrame(
+      leftBar: showLeft
+          ? CruxDockRestoreBar(
+              edge: CruxDockCollapseDirection.left,
+              entries: [
                 CruxDockRestoreEntry(
-                  id: entry.id,
-                  icon: entry.icon,
-                  label: entry.label,
+                  id: 'hierarchy',
+                  icon: Icons.account_tree_outlined,
+                  label: l10n.dockTabHierarchy,
                   onRestore: () =>
-                      ref.read(rightDockTabProvider.notifier).reveal(entry.id),
+                      notifier.setHierarchyTreeVisible(visible: true),
                 ),
-            ],
-            semanticsLabel: l10n.accessibilityRightDockRegion,
-          ),
-      ],
+              ],
+              semanticsLabel: l10n.accessibilityLeftDockRegion,
+            )
+          : null,
+      bottomBar: showBottom
+          ? CruxDockRestoreBar(
+              edge: CruxDockCollapseDirection.down,
+              entries: [
+                CruxDockRestoreEntry(
+                  id: kBottomDockTabDiagnostics,
+                  icon: Icons.rule,
+                  label: l10n.dockTabDiagnostics,
+                  onRestore: () => unawaited(
+                    notifier.setDiagnosticsVisible(visible: true),
+                  ),
+                ),
+                for (final entry in _movableEntries(
+                  context,
+                  ref,
+                  region: kDockRegionBottom,
+                ))
+                  CruxDockRestoreEntry(
+                    id: entry.id,
+                    icon: entry.icon,
+                    label: entry.label,
+                    onRestore: () => ref
+                        .read(bottomDockTabProvider.notifier)
+                        .reveal(entry.id),
+                  ),
+              ],
+              semanticsLabel: l10n.accessibilityBottomDockRegion,
+            )
+          : null,
+      rightBar: showRight
+          ? CruxDockRestoreBar(
+              edge: CruxDockCollapseDirection.right,
+              entries: [
+                CruxDockRestoreEntry(
+                  id: kRightDockTabInspector,
+                  icon: Icons.info_outline,
+                  label: l10n.dockTabInspector,
+                  onRestore: () => ref
+                      .read(rightDockTabProvider.notifier)
+                      .reveal(kRightDockTabInspector),
+                ),
+                for (final entry in _movableEntries(
+                  context,
+                  ref,
+                  region: kDockRegionRight,
+                ))
+                  CruxDockRestoreEntry(
+                    id: entry.id,
+                    icon: entry.icon,
+                    label: entry.label,
+                    onRestore: () => ref
+                        .read(rightDockTabProvider.notifier)
+                        .reveal(entry.id),
+                  ),
+              ],
+              semanticsLabel: l10n.accessibilityRightDockRegion,
+            )
+          : null,
+      child: child,
     );
   }
 }

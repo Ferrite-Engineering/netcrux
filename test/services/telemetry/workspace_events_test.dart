@@ -115,6 +115,7 @@ void main() {
         final first = makeContainer();
         final ws = await boot(first);
         await openTab(ws, '/tmp/top.v');
+        await openTab(ws, '/tmp/alu.v');
         await ws.splitPaneRight();
         await ws.flushPendingSave();
         first.dispose();
@@ -125,7 +126,7 @@ void main() {
 
         expect(
           telemetry.named('workspace.restored').properties,
-          <String, Object?>{'tabs': 1, 'panes': 2},
+          <String, Object?>{'tabs': 2, 'panes': 2},
         );
       },
     );
@@ -178,9 +179,17 @@ void main() {
   });
 
   group('pane.split / pane.closed', () {
+    /// Two tabs in the one pane: the least a split needs, since an empty
+    /// pane never exists and each side keeps a tab.
+    Future<void> openTwoTabs(NetcruxWorkspaceNotifier ws) async {
+      await openTab(ws, '/tmp/a.v');
+      await openTab(ws, '/tmp/b.v');
+    }
+
     test('splitting emits pane.split', () async {
       final container = makeContainer();
       final ws = await boot(container);
+      await openTwoTabs(ws);
       await ws.splitPaneRight();
 
       expect(telemetry.count('pane.split'), 1);
@@ -192,6 +201,7 @@ void main() {
       () async {
         final container = makeContainer();
         final ws = await boot(container);
+        await openTwoTabs(ws);
         await ws.splitPaneRight();
         await ws.splitPaneRight();
 
@@ -199,9 +209,24 @@ void main() {
       },
     );
 
+    test('a split with fewer than two tabs counts nothing', () async {
+      // The package leaves the workspace as it was (`canSplitPaneRight`
+      // fails), and the action is disabled on the same rule; a pane.split
+      // here would count a split that never happened.
+      final container = makeContainer();
+      final ws = await boot(container);
+      await ws.splitPaneRight();
+      await openTab(ws, '/tmp/a.v');
+      await ws.splitPaneRight();
+
+      expect((await ws.future).panes, hasLength(1));
+      expect(telemetry.count('pane.split'), 0);
+    });
+
     test('closing a pane emits pane.closed', () async {
       final container = makeContainer();
       final ws = await boot(container);
+      await openTwoTabs(ws);
       final paneId = await ws.splitPaneRight();
       await ws.closePane(paneId);
 
@@ -224,6 +249,8 @@ void main() {
       final container = makeContainer();
       final ws = await boot(container);
       final tabId = await openTab(ws, '/tmp/a.v');
+      await openTab(ws, '/tmp/b.v');
+      // The split takes the active tab (b) to the new pane; a stays behind.
       final other = await ws.splitPaneRight();
 
       await ws.moveTabToPane(tabId, other);
@@ -268,6 +295,7 @@ void main() {
       final container = makeContainer();
       final ws = await boot(container);
       await openTab(ws, '/tmp/a.v');
+      await openTab(ws, '/tmp/b.v');
       await ws.splitPaneRight();
       final path = p.join(tmp.path, 'my.netcrux-workspace');
       await ws.saveAs(path);
@@ -278,7 +306,7 @@ void main() {
       expect(telemetry.count('workspace.named.opened'), 1);
       expect(
         telemetry.named('workspace.named.opened').properties,
-        <String, Object?>{'tabs': 1, 'panes': 2},
+        <String, Object?>{'tabs': 2, 'panes': 2},
       );
     });
   });
@@ -289,14 +317,20 @@ void main() {
     // *running* notifier produced.
     final container = makeContainer();
     final ws = await boot(container);
+    await openTab(ws, '/tmp/a.v');
+    await openTab(ws, '/tmp/b.v');
     // Split-then-close first: `moveTabToPane` collapses a source pane it
     // empties, so doing the move first would leave `closePane` nothing to do.
+    // Closing merges both tabs back into one pane, so the second split has
+    // its two tabs again.
     final firstSplit = await ws.splitPaneRight();
     await ws.closePane(firstSplit);
-    final tabId = await openTab(ws, '/tmp/a.v');
-    await openTab(ws, '/tmp/b.v');
     final other = await ws.splitPaneRight();
-    await ws.moveTabToPane(tabId, other);
+    // The split took the active tab along; drag the one it left behind.
+    final leftBehind = (await ws.future).tabs
+        .firstWhere((t) => t.paneId != other)
+        .id;
+    await ws.moveTabToPane(leftBehind, other);
     final path = p.join(tmp.path, 'w.netcrux-workspace');
     await ws.saveAs(path);
     await ws.loadFrom(path);

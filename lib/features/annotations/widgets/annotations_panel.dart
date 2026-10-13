@@ -236,6 +236,9 @@ class _LayerHeader extends ConsumerWidget {
             tooltip: l10n.annotationLayerDelete,
             icon: const Icon(Icons.delete_outline),
             onPressed: () async {
+              // Read before the dialog: the panel may be gone by the time it
+              // closes, and the tab's store is not.
+              final store = ref.read(annotationStoreProvider);
               final confirmed = await confirmCruxDestructiveAction(
                 context,
                 title: l10n.annotationLayerDeleteTitle,
@@ -244,7 +247,6 @@ class _LayerHeader extends ConsumerWidget {
                 cancelLabel: l10n.annotationDialogCancelButton,
               );
               if (!confirmed) return;
-              final store = ref.read(annotationStoreProvider);
               for (final n in inLayer) {
                 store.removeAnnotation(n.id);
               }

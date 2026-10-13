@@ -227,7 +227,7 @@ class CxpInboundHandler {
     // — once elaboration completes — select the element there. The join is
     // one-directional: the consumer trusts the sender's design id and never
     // re-derives one from the file it opens.
-    if (_openDesignFromWorkspace(element, metadata, frame: frame)) {
+    if (await _openDesignFromWorkspace(element, metadata, frame: frame)) {
       _recordCrossProbe(honored: true);
       return (
         honored: true,
@@ -495,14 +495,14 @@ class CxpInboundHandler {
   /// (mirroring WaveCrux's dedup). After a fresh open the element is selected
   /// once elaboration completes (deferred — elaboration is async). Returns
   /// whether a design was opened or activated.
-  bool _openDesignFromWorkspace(
+  Future<bool> _openDesignFromWorkspace(
     ElementId element,
     Map<String, Object?> metadata, {
     required bool frame,
-  }) {
+  }) async {
     final designId = metadata[cxpDesignIdMetadataKey];
     if (designId is! String || designId.isEmpty) return false;
-    final path = resolveDesignSourceArtifactPath(rootContainer, designId);
+    final path = await resolveDesignSourceArtifactPath(rootContainer, designId);
     if (path == null) return false;
     // CXP §11's rule, rooted in the directories the user has opened. Unlike
     // `request_open_artifact`, where the user asked for the design, nobody
@@ -679,7 +679,11 @@ class CxpInboundHandler {
       );
     }
     final path =
-        resolveOpenArtifactPath(rootContainer, request.designId, kind: kind) ??
+        await resolveOpenArtifactPath(
+          rootContainer,
+          request.designId,
+          kind: kind,
+        ) ??
         request.path;
     if (path == null) {
       return (

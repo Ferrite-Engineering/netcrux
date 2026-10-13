@@ -41,6 +41,9 @@ void main() {
               hasOpenTab: true,
               hasNetlist: true,
               hasSelection: true,
+              // The target below is Split Pane Right, enabled only with a
+              // second tab to leave behind.
+              tabCountInActivePane: 2,
             ),
           ),
         ],

@@ -8,7 +8,6 @@ import 'package:crux_license/crux_license.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/updates/netcrux_update_config.dart';
-import 'package:netcrux/features/beta_expiry/widgets/beta_expiry_blocking_overlay.dart';
 import 'package:netcrux/features/beta_expiry/widgets/netcrux_beta_expiry_strings.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -34,7 +33,7 @@ void Function() betaExpiryExitApp = () => exit(0);
 /// - `BetaExpiryStatus.expiringSoon` → a dismissible [CruxBetaExpiryBanner]
 ///   above [child].
 /// - `BetaExpiryStatus.expired` → the blocking, non-dismissable
-///   [BetaExpiryBlockingOverlay] over [child].
+///   [CruxBetaExpiredOverlay] over [child].
 /// - `BetaExpiryStatus.active` / `BetaExpiryStatus.notApplicable` → [child]
 ///   unchanged. That is every developer build and every post-beta build:
 ///   expiry applies only while `kBetaPeriod` is on and only when a release
@@ -108,9 +107,10 @@ class _BetaExpiryGateState extends ConsumerState<BetaExpiryGate>
   Widget build(BuildContext context) {
     switch (ref.watch(betaExpiryStatusProvider)) {
       case BetaExpiryStatus.expired:
-        return BetaExpiryBlockingOverlay(
+        return CruxBetaExpiredOverlay(
           onDownload: _download,
           onQuit: betaExpiryExitApp,
+          strings: NetcruxBetaExpiredStrings(L10N.of(context)),
           child: widget.child,
         );
       case BetaExpiryStatus.expiringSoon:

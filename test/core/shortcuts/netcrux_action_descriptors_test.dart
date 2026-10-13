@@ -284,6 +284,22 @@ void main() {
       // Split is the one action gated on NOT being split already.
       expect(isActionEnabled(NetcruxAction.splitPaneRight, loaded), isFalse);
     });
+
+    test('splitPaneRight needs two tabs in the one pane', () {
+      // `Workspace.canSplitPaneRight`: an empty pane never exists, so a split
+      // needs a second tab to leave behind, and the package's splitPaneRight
+      // changes nothing with fewer. The action is disabled, not inert.
+      const oneTab = NetcruxActionContext(
+        hasOpenTab: true,
+        tabCountInActivePane: 1,
+      );
+      const twoTabs = NetcruxActionContext(
+        hasOpenTab: true,
+        tabCountInActivePane: 2,
+      );
+      expect(isActionEnabled(NetcruxAction.splitPaneRight, oneTab), isFalse);
+      expect(isActionEnabled(NetcruxAction.splitPaneRight, twoTabs), isTrue);
+    });
   });
 
   group('table invariants', () {

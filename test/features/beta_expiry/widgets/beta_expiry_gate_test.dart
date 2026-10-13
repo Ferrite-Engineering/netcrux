@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/updates/netcrux_update_config.dart';
-import 'package:netcrux/features/beta_expiry/widgets/beta_expiry_blocking_overlay.dart';
 import 'package:netcrux/features/beta_expiry/widgets/beta_expiry_gate.dart';
 import 'package:netcrux/features/beta_expiry/widgets/netcrux_beta_expiry_strings.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -68,7 +67,7 @@ void main() {
       );
       expect(find.byKey(childKey), findsOneWidget);
       expect(find.byType(CruxBetaExpiryBanner), findsNothing);
-      expect(find.byType(BetaExpiryBlockingOverlay), findsNothing);
+      expect(find.byType(CruxBetaExpiredOverlay), findsNothing);
     });
 
     testWidgets('active renders the child untouched', (tester) async {
@@ -90,7 +89,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(buildGate(status: BetaExpiryStatus.expired));
-      expect(find.byType(BetaExpiryBlockingOverlay), findsOneWidget);
+      expect(find.byType(CruxBetaExpiredOverlay), findsOneWidget);
       // The content is still mounted behind the barrier — the modal blocks
       // input, it does not tear down the app.
       expect(find.byKey(childKey), findsOneWidget);
@@ -164,11 +163,11 @@ void main() {
       // and leaves the app usable.
       expect(find.byKey(CruxBetaExpiryBanner.dismissButtonKey), findsNothing);
       expect(
-        find.byKey(BetaExpiryBlockingOverlay.downloadButtonKey),
+        find.byKey(CruxBetaExpiredOverlay.downloadButtonKey),
         findsOneWidget,
       );
       expect(
-        find.byKey(BetaExpiryBlockingOverlay.quitButtonKey),
+        find.byKey(CruxBetaExpiredOverlay.quitButtonKey),
         findsOneWidget,
       );
     });
@@ -177,7 +176,7 @@ void main() {
       await tester.pumpWidget(buildGate(status: BetaExpiryStatus.expired));
       final popScope = tester.widget<PopScope<dynamic>>(
         find.descendant(
-          of: find.byType(BetaExpiryBlockingOverlay),
+          of: find.byType(CruxBetaExpiredOverlay),
           matching: find.byWidgetPredicate((w) => w is PopScope),
         ),
       );
@@ -187,11 +186,11 @@ void main() {
     testWidgets('download and quit are both wired', (tester) async {
       await tester.pumpWidget(buildGate(status: BetaExpiryStatus.expired));
 
-      await tester.tap(find.byKey(BetaExpiryBlockingOverlay.downloadButtonKey));
+      await tester.tap(find.byKey(CruxBetaExpiredOverlay.downloadButtonKey));
       await tester.pump();
       expect(launched, [Uri.parse(netcruxDownloadPageUrl)]);
 
-      await tester.tap(find.byKey(BetaExpiryBlockingOverlay.quitButtonKey));
+      await tester.tap(find.byKey(CruxBetaExpiredOverlay.quitButtonKey));
       await tester.pump();
       // The quit action is load-bearing on Windows/Linux, where the in-app
       // close caption button sits behind the modal barrier.
@@ -217,8 +216,8 @@ void main() {
     testWidgets('every expired-modal control clears 44 dp', (tester) async {
       await tester.pumpWidget(buildGate(status: BetaExpiryStatus.expired));
       for (final key in [
-        BetaExpiryBlockingOverlay.downloadButtonKey,
-        BetaExpiryBlockingOverlay.quitButtonKey,
+        CruxBetaExpiredOverlay.downloadButtonKey,
+        CruxBetaExpiredOverlay.quitButtonKey,
       ]) {
         expect(
           tester.getSize(find.byKey(key)).height,

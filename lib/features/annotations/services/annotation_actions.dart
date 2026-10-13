@@ -47,6 +47,9 @@ void openAddAnnotationDialog(
       // and skips both fallbacks.
       final tabContainer = ref.activeTabContainerOrNull(context);
       final store = _storeOf(tabContainer, context);
+      // Read before the picker and the dialog: the widget that owns `ref`
+      // may be gone by the time the dialog closes, and the service is not.
+      final telemetry = ref.read(telemetryServiceProvider);
       final resolved =
           target ??
           _targetFromContainer(tabContainer) ??
@@ -65,7 +68,7 @@ void openAddAnnotationDialog(
       // to that tab's store. The command palette and menu bar pass the
       // root ref, whose store no tab reads.
       store.addAnnotation(created);
-      recordAnnotationAdded(ref.read(telemetryServiceProvider));
+      recordAnnotationAdded(telemetry);
     }),
   );
 }

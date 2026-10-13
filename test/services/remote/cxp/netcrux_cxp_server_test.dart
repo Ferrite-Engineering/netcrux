@@ -315,6 +315,13 @@ void main() {
       'regression)',
       () async {
         final manifestDir = p.join(tmp.path, 'peers');
+        // The manifest NetCrux discovers announces wire 1.3, so the dialler
+        // presents a proof of this token and expects one back; the fake peer
+        // holds the same token to answer it.
+        final writer = CxpManifestWriter(
+          manifestDirectory: manifestDir,
+          heartbeatInterval: null,
+        );
         final peer = _CountingCxpPeer(
           // Non-numeric pid segment so discovery's pid-liveness probe reads
           // "indeterminate" and does NOT reap this synthetic peer's manifest.
@@ -323,15 +330,12 @@ void main() {
             productName: 'wavecrux',
             productVersion: '1.0.0',
           ),
+          authToken: writer.authToken,
         );
         await peer.start();
         addTearDown(peer.stop);
 
         // Publish the peer's manifest so NetCrux discovers and dials it.
-        final writer = CxpManifestWriter(
-          manifestDirectory: manifestDir,
-          heartbeatInterval: null,
-        );
         await writer.write(
           identity: peer.identity,
           host: '127.0.0.1',
@@ -394,9 +398,15 @@ void main() {
 /// exposing [totalAccepted] / [liveConnections] so a test can assert the
 /// dialer opened exactly one socket rather than a growing pile.
 class _CountingCxpPeer {
-  _CountingCxpPeer(this.identity);
+  _CountingCxpPeer(this.identity, {required this.authToken});
 
   final PeerIdentity identity;
+
+  /// The token the peer's manifest publishes. A wire-1.3 dialler proves it
+  /// with a nonce and expects the listener's proof back (CXP §7.4); the
+  /// handshake fails without it.
+  final String authToken;
+
   ServerSocket? _socket;
 
   /// Total inbound sockets accepted over this peer's lifetime.
@@ -427,9 +437,19 @@ class _CountingCxpPeer {
                 jsonDecode(line) as Map<String, Object?>,
               );
               if (env.kind != CxpMessageKind.hello) return;
+              final nonce = Hello.fromJson(env.payload).nonce;
               final ack = HelloAck(
                 identity: identity,
                 inReplyTo: env.messageId,
+                // A dialler that proved the token gets it proved back; a
+                // pre-1.3 dialler sent the token itself and expects none.
+                proof: nonce == null
+                    ? null
+                    : cxpAuthProof(
+                        token: authToken,
+                        nonce: nonce,
+                        label: cxpHelloAckProofLabel,
+                      ),
               );
               sock.write(
                 CxpEnvelope(

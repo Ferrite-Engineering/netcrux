@@ -494,8 +494,11 @@ bool _requiresComparison(NetcruxActionContext c) => c.comparisonActive;
 bool _requiresWaveform(NetcruxActionContext c) => c.waveformLoaded;
 bool _requiresNetlistAndWaveform(NetcruxActionContext c) =>
     c.hasNetlist && c.waveformLoaded;
+// Mirrors `Workspace.canSplitPaneRight`: an empty pane never exists, so a
+// split needs a second tab to leave behind, and the package's
+// `splitPaneRight` changes nothing with fewer. Disabled rather than inert.
 bool _requiresTabSinglePane(NetcruxActionContext c) =>
-    c.hasOpenTab && c.paneCount == 1;
+    c.hasOpenTab && c.paneCount == 1 && c.tabCountInActivePane >= 2;
 bool _requiresMultiPane(NetcruxActionContext c) => c.paneCount >= 2;
 bool _requiresTabMultiPane(NetcruxActionContext c) =>
     c.hasOpenTab && c.paneCount >= 2;

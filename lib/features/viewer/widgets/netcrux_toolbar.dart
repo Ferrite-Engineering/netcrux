@@ -131,6 +131,11 @@ class NetcruxToolbar extends ConsumerWidget {
         CruxToolbarSplitItem(
           id: 'trace',
           tooltip: l10n.toolbarTraceCluster,
+          // The face stands for the cluster, so the hover names the group
+          // and says which sibling a plain click runs; the menu changes it.
+          faceTooltip: (faced) => l10n.toolbarTraceClusterFace(
+            faced.label(l10n),
+          ),
           variants: [
             CruxToolbarButtonItem(
               action: NetcruxAction.showFanin,

@@ -704,6 +704,17 @@ void main() {
         tester,
         withTab: true,
       );
+      // A split needs a second tab to leave behind (`canSplitPaneRight`);
+      // with one tab the package changes nothing, pinned below.
+      await root
+          .read(netcruxWorkspaceProvider.notifier)
+          .openTab(
+            displayName: 'alu',
+            payload: const NetcruxTabPayload(
+              sourceFiles: <String>[],
+              topModule: 'alu',
+            ),
+          );
 
       dispatcher.dispatch(context, NetcruxAction.splitPaneRight);
       await tester.pump();
@@ -727,6 +738,22 @@ void main() {
       dispatcher.dispatch(context, NetcruxAction.closePane);
       await tester.pump();
       expect(root.read(netcruxWorkspaceProvider).value!.panes, hasLength(1));
+    });
+
+    testWidgets('splitPaneRight with a single tab leaves one pane', (
+      tester,
+    ) async {
+      final (dispatcher, context, root) = await pumpDispatcher(
+        tester,
+        withTab: true,
+      );
+
+      dispatcher.dispatch(context, NetcruxAction.splitPaneRight);
+      await tester.pump();
+
+      // An empty pane never exists: nothing to split with one tab.
+      expect(root.read(netcruxWorkspaceProvider).value!.panes, hasLength(1));
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('single-pane closePane / moveTabToOtherPane are no-ops', (

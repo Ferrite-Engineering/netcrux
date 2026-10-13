@@ -2497,6 +2497,16 @@
   "@toolbarTraceCluster": {
     "description": "Tooltip on the toolbar's grouped trace button, whose siblings are Show Fanin / Show Fanout / Clear Overlay"
   },
+  "toolbarTraceClusterFace": "Trace ({action} is default)",
+  "@toolbarTraceClusterFace": {
+    "description": "Hover tooltip on the toolbar's grouped trace button: the group name, then which sibling a plain click runs. {action} is that sibling's menu label (Show Fanin / Show Fanout / Clear Overlay).",
+    "placeholders": {
+      "action": {
+        "type": "String",
+        "example": "Show Fanin"
+      }
+    }
+  },
   "actionOpenTabDiagnostics": "Tab Diagnostics…",
   "@actionOpenTabDiagnostics": {
     "description": "Tools menu / command palette label for the per-tab Tab Diagnostics surface (reveals the bottom dock's Diagnostics tab). Matches the WaveCrux label exactly — it is the same command in every product."
