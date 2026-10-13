@@ -3,6 +3,7 @@
 
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/fsm/fsm.dart';
@@ -170,6 +171,131 @@ void main() {
       await tester.tap(find.text('RUN'));
       await tester.pump();
       expect(captured?.id, 's1');
+    });
+
+    group('keyboard and screen reader', () {
+      Future<List<FsmState>> pumpList(
+        WidgetTester tester, {
+        String? highlighted,
+      }) async {
+        final picked = <FsmState>[];
+        late ProviderContainer container;
+        await tester.pumpWidget(
+          ProviderScope(
+            child: Consumer(
+              builder: (context, ref, _) {
+                container = ProviderScope.containerOf(context, listen: false);
+                return MaterialApp(
+                  localizationsDelegates: L10N.localizationsDelegates,
+                  supportedLocales: L10N.supportedLocales,
+                  home: Scaffold(
+                    body: FsmBubbleDiagramPane(onSelectState: picked.add),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        final notifier = container.read(selectedFsmProvider.notifier)
+          ..focusFsm(_fsmFixture);
+        if (highlighted != null) notifier.highlightState(highlighted);
+        await tester.pumpAndSettle();
+        return picked;
+      }
+
+      String? focusedLabel() {
+        final node = FocusManager.instance.primaryFocus;
+        final context = node?.context;
+        if (context == null) return null;
+        final semantics = context.findAncestorWidgetOfExactType<Semantics>();
+        return semantics?.properties.label;
+      }
+
+      testWidgets('each state is one named row', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpList(tester);
+        expect(
+          find.bySemanticsLabel('IDLE, value: 0x00, RESET'),
+          findsOneWidget,
+        );
+        expect(find.bySemanticsLabel('RUN, value: 0x01'), findsOneWidget);
+        expect(
+          find.bySemanticsLabel('DEAD, value: 0x02, UNREACHABLE, TERMINAL'),
+          findsOneWidget,
+        );
+        handle.dispose();
+      });
+
+      testWidgets('the list is one Tab stop', (tester) async {
+        await pumpList(tester);
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        expect(focusedLabel(), 'IDLE, value: 0x00, RESET');
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        expect(focusedLabel(), isNot(startsWith('RUN')));
+        expect(focusedLabel(), isNot(startsWith('DEAD')));
+      });
+
+      testWidgets('Tab lands on the highlighted state', (tester) async {
+        await pumpList(tester, highlighted: 's2');
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        expect(focusedLabel(), startsWith('DEAD'));
+      });
+
+      testWidgets('Up and Down move between rows; Enter selects', (
+        tester,
+      ) async {
+        final picked = await pumpList(tester);
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+        expect(focusedLabel(), startsWith('RUN'));
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+        expect(focusedLabel(), startsWith('DEAD'));
+        // Down at the last row stays put.
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+        expect(focusedLabel(), startsWith('DEAD'));
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pump();
+        expect(focusedLabel(), startsWith('RUN'));
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pump();
+        expect(picked.map((s) => s.id), <String>['s1']);
+        await tester.sendKeyEvent(LogicalKeyboardKey.home);
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.space);
+        await tester.pump();
+        expect(picked.map((s) => s.id), <String>['s1', 's0']);
+        await tester.sendKeyEvent(LogicalKeyboardKey.end);
+        await tester.pump();
+        expect(focusedLabel(), startsWith('DEAD'));
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('the highlighted row is exposed as selected', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        await pumpList(tester, highlighted: 's1');
+        expect(
+          tester.getSemantics(find.bySemanticsLabel('RUN, value: 0x01')),
+          matchesSemantics(
+            label: 'RUN, value: 0x01',
+            isButton: true,
+            isSelected: true,
+            hasSelectedState: true,
+            isFocusable: true,
+            hasFocusAction: true,
+            hasTapAction: true,
+          ),
+        );
+        handle.dispose();
+      });
     });
 
     testWidgets('highlight footer renders the highlighted state name', (
