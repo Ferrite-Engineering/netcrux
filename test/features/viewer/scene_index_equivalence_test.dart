@@ -8,9 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
-import 'package:netcrux/features/viewer/rendering/schematic_scene_index.dart';
 import 'package:netcrux/features/viewer/selection/schematic_hit_test.dart';
 import 'package:netcrux/features/viewer/selection/schematic_keyboard_navigator.dart';
+import 'package:netcrux/features/viewer/services/schematic_scene_index.dart';
 
 import '../../helpers/flattened_scope.dart';
 import 'scene_reference.dart';
@@ -75,6 +75,103 @@ void main() {
     ]) {
       expect(kinds[kind] ?? 0, greaterThan(300), reason: '$kind: $kinds');
     }
+  });
+
+  // The provider warms the index before the canvas sees a graph, with the
+  // grids built on another isolate for a large scope; a section the warm
+  // produced must answer exactly as the one a frame or a click would have
+  // built on first use.
+  void expectSameAnswers(
+    SchematicSceneIndex warmed,
+    SchematicSceneIndex lazy,
+    LaidOutGraph laidOut,
+    Random rng,
+  ) {
+    expect(warmed.cells, lazy.cells);
+    expect(warmed.boundaryPorts, lazy.boundaryPorts);
+    expect(warmed.wires, lazy.wires);
+    expect(warmed.pins, lazy.pins);
+    expect(warmed.pinCell, lazy.pinCell);
+    expect(warmed.readingOrder, lazy.readingOrder);
+    for (final element in lazy.readingOrder.take(50)) {
+      expect(warmed.readingIndexOf(element), lazy.readingIndexOf(element));
+    }
+    for (var i = 0; i < lazy.wires.length; i++) {
+      // By text: a wire with a NaN point has NaN bounds, which never compare
+      // equal to themselves, and the random scenes contain such wires.
+      expect(
+        warmed.wireBounds(i).toString(),
+        lazy.wireBounds(i).toString(),
+        reason: 'bounds of wire $i',
+      );
+    }
+    for (var q = 0; q < 200; q++) {
+      final a = randomClick(rng, laidOut);
+      final b = randomClick(rng, laidOut);
+      final rect = Rect.fromPoints(a, b);
+      expect(warmed.cellsIn(rect), lazy.cellsIn(rect), reason: 'cells $rect');
+      expect(
+        warmed.boundaryPortsIn(rect),
+        lazy.boundaryPortsIn(rect),
+        reason: 'ports $rect',
+      );
+      expect(warmed.pinsIn(rect), lazy.pinsIn(rect), reason: 'pins $rect');
+      expect(warmed.wiresIn(rect), lazy.wiresIn(rect), reason: 'wires $rect');
+      final slop = <double>[6, 0, 12.5][rng.nextInt(3)];
+      expect(
+        warmed.wiresNear(a, slop),
+        lazy.wiresNear(a, slop),
+        reason: 'near $a within $slop',
+      );
+    }
+  }
+
+  test('a warmed index answers exactly as one built on first use, on random '
+      'scenes', () async {
+    final rng = Random(20261012);
+    for (var s = 0; s < 60; s++) {
+      final shared = randomScene(rng);
+      // Two graph identities over one scene: the index is cached per
+      // identity, so each gets its own, built the two ways.
+      final warmed = LaidOutGraph(graph: shared.graph, layout: shared.layout);
+      final lazy = LaidOutGraph(graph: shared.graph, layout: shared.layout);
+      await SchematicSceneIndex.warm(warmed);
+      expectSameAnswers(
+        SchematicSceneIndex.of(warmed),
+        SchematicSceneIndex.of(lazy),
+        shared,
+        rng,
+      );
+    }
+  });
+
+  test('a warmed index answers exactly as one built on first use, on '
+      'picorv32, whose grids are built off this isolate', () async {
+    final shared = laidOutFixture(
+      'test/fixtures/netlist/picorv32/captured/picorv32.netlist.json.gz',
+    );
+    // Cells, module ports, wires, pins and wire segments all count toward
+    // the threshold; the wires and their segments alone clear it here, so
+    // this is the isolate path, not the inline one.
+    var segments = 0;
+    for (final edge in shared.layout.edges) {
+      segments += edge.points.length - 1;
+    }
+    expect(
+      shared.layout.edges.length + segments,
+      greaterThanOrEqualTo(SchematicSceneIndex.offIsolateThreshold),
+    );
+    final warmed = LaidOutGraph(graph: shared.graph, layout: shared.layout);
+    final lazy = LaidOutGraph(graph: shared.graph, layout: shared.layout);
+    await SchematicSceneIndex.warm(warmed);
+    // Warming twice is one build.
+    await SchematicSceneIndex.warm(warmed);
+    expectSameAnswers(
+      SchematicSceneIndex.of(warmed),
+      SchematicSceneIndex.of(lazy),
+      shared,
+      Random(11),
+    );
   });
 
   test('hit-test answers exactly as the full scan did, on picorv32', () {

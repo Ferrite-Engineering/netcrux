@@ -10,9 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
-import 'package:netcrux/features/viewer/rendering/schematic_scene_index.dart';
 import 'package:netcrux/features/viewer/selection/schematic_hit_test.dart';
 import 'package:netcrux/features/viewer/selection/schematic_keyboard_navigator.dart';
+import 'package:netcrux/features/viewer/services/schematic_scene_index.dart';
 
 import '../helpers/flattened_scope.dart';
 

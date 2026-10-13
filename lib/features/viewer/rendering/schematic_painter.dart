@@ -28,7 +28,8 @@ import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
 import 'package:netcrux/features/viewer/rendering/annotation_badge_layout.dart';
 import 'package:netcrux/features/viewer/rendering/lod_band.dart';
-import 'package:netcrux/features/viewer/rendering/schematic_scene_index.dart';
+import 'package:netcrux/features/viewer/rendering/overview_batch.dart';
+import 'package:netcrux/features/viewer/services/schematic_scene_index.dart';
 import 'package:netcrux/features/viewer/symbols/cell_body_painter_factory.dart';
 import 'package:netcrux/features/viewer/symbols/symbol_painters.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
@@ -687,6 +688,9 @@ class SchematicCanvasRenderObject extends RenderBox {
 
   int _paintCells(Canvas canvas, LodBand band, Rect visibleRect) {
     _pendingOutsideLabels.clear();
+    if (band == LodBand.overview) {
+      return _paintOverviewCells(canvas, visibleRect);
+    }
     final symbolCtx = SymbolPaintContext.fromTheme(_theme);
     final labelStyle = (_theme.textTheme.labelSmall ?? const TextStyle())
         .copyWith(color: _theme.colorScheme.onSurface);
@@ -740,35 +744,26 @@ class SchematicCanvasRenderObject extends RenderBox {
       // without a positive accent the cone cells were barely distinguishable
       // from the dimmed rest at normal zoom.
       final isConeCell = !_overlay.isEmpty && isHighlighted;
-      switch (band) {
-        case LodBand.overview:
-          _paintOverviewCell(
+      // The overview band returned above; this loop draws the mid and
+      // detail bands, which share the symbol body and differ in labels.
+      _cellBodyPainterFactory(cell)(canvas, rect.size, symbolCtx);
+      if (band == LodBand.detail) {
+        final anchoredPins = _laidOut.symbolCells[cell.id];
+        if (anchoredPins == null) {
+          _paintCellLabel(canvas, rect.size, cell, labelStyle, band);
+        } else {
+          _paintSymbolPinNames(
             canvas,
-            rect.size,
             cell,
-            isHighlighted,
-            _transform.zoom,
+            position,
+            anchoredPins,
+            labelStyle,
+            band,
           );
-        case LodBand.mid:
-          _cellBodyPainterFactory(cell)(canvas, rect.size, symbolCtx);
-        case LodBand.detail:
-          _cellBodyPainterFactory(cell)(canvas, rect.size, symbolCtx);
-          final anchoredPins = _laidOut.symbolCells[cell.id];
-          if (anchoredPins == null) {
-            _paintCellLabel(canvas, rect.size, cell, labelStyle, band);
-          } else {
-            _paintSymbolPinNames(
-              canvas,
-              cell,
-              position,
-              anchoredPins,
-              labelStyle,
-              band,
-            );
-            _pendingOutsideLabels.add(
-              _OutsideLabel(cell, rect, isHighlighted: isHighlighted),
-            );
-          }
+          _pendingOutsideLabels.add(
+            _OutsideLabel(cell, rect, isHighlighted: isHighlighted),
+          );
+        }
       }
       // Accent the cone cell in ALL bands (drawn under any selection
       // overlay so a selected cone cell still reads as selected).
@@ -779,16 +774,14 @@ class SchematicCanvasRenderObject extends RenderBox {
         _paintCellSelectionOverlay(canvas, rect.size);
       }
       canvas.restore();
-      if (band != LodBand.overview) {
-        _paintCellPinStubs(
-          canvas,
-          cell,
-          position,
-          isHighlighted,
-          selectedPortIds,
-          band,
-        );
-      }
+      _paintCellPinStubs(
+        canvas,
+        cell,
+        position,
+        isHighlighted,
+        selectedPortIds,
+        band,
+      );
       if (!isHighlighted) {
         _paintDimVeil(canvas, rect);
       }
@@ -797,27 +790,75 @@ class SchematicCanvasRenderObject extends RenderBox {
     return count;
   }
 
-  void _paintOverviewCell(
-    Canvas canvas,
-    Size size,
-    SchematicCell cell,
-    bool isHighlighted,
-    double zoom,
-  ) {
-    final fill = Paint()
-      ..color = _overviewColorFor(cell.kind, isHighlighted)
-      ..style = PaintingStyle.fill;
-    // Never let a cell fall below its device-pixel floor: the canvas is
-    // scaled by [zoom], so the floor in design units is the pixel count
-    // divided by it (see [SchematicViewportLimits.overviewMinCellPx]).
+  /// The overview band's cells: solid rectangles coloured by cell family,
+  /// every one on screen filled with one `drawVertices` call, the dim veils
+  /// of an active overlay with a second, and the few cone or selection
+  /// accents drawn on their own between the two. The per-cell sequence the
+  /// other bands issue (save, translate, fill, accents, restore, veil) cost
+  /// four engine calls a cell, and at this zoom tens of thousands of cells
+  /// are on screen; the batches turn that into Dart arithmetic over typed
+  /// arrays and a handful of calls. Layering is unchanged: cells do not
+  /// overlap, so fills under accents under veils composites per cell as
+  /// before.
+  ///
+  /// Never lets a cell fall below its device-pixel floor: the canvas is
+  /// scaled by the zoom, so the floor in design units is the pixel count
+  /// divided by it (see [SchematicViewportLimits.overviewMinCellPx]).
+  int _paintOverviewCells(Canvas canvas, Rect visibleRect) {
+    final zoom = _transform.zoom;
     final floor = zoom > 0
         ? SchematicViewportLimits.overviewMinCellPx / zoom
         : 0.0;
-    final drawn = Size(
-      math.max(size.width, floor),
-      math.max(size.height, floor),
-    );
-    canvas.drawRect(Offset.zero & drawn, fill);
+    final selectedCellIds = _selectedCellIds();
+    final scene = SchematicSceneIndex.of(_laidOut);
+    final cells = scene.cells;
+    final nodes = scene.cellNodes;
+    final candidates = scene.cellsIn(visibleRect);
+    final candidateCount = candidates?.length ?? cells.length;
+    final fills = OverviewRectBatch(candidateCount);
+    final veils = OverviewRectBatch();
+    final accented = <int>[];
+    var count = 0;
+    for (var k = 0; k < candidateCount; k++) {
+      final i = candidates == null ? k : candidates[k];
+      final cell = cells[i];
+      final rect = _nodeRect(nodes[i]);
+      if (!visibleRect.overlaps(rect)) continue;
+      final isHighlighted =
+          _overlay.isEmpty || _overlay.highlightsCell(cell.id);
+      final isSelected = selectedCellIds.contains(cell.id);
+      if (_filterViewMode &&
+          !_overlay.isEmpty &&
+          !isHighlighted &&
+          !isSelected) {
+        continue;
+      }
+      fills.add(
+        rect,
+        _overviewColorFor(cell.kind, isHighlighted),
+        floor: floor,
+      );
+      if ((!_overlay.isEmpty && isHighlighted) || isSelected) accented.add(i);
+      if (!isHighlighted) veils.add(rect, NetcruxColors.overlayDimVeil);
+      count++;
+    }
+    fills.paint(canvas);
+    for (final i in accented) {
+      final cell = cells[i];
+      final rect = _nodeRect(nodes[i]);
+      canvas
+        ..save()
+        ..translate(rect.left, rect.top);
+      if (!_overlay.isEmpty && _overlay.highlightsCell(cell.id)) {
+        _paintCellConeAccent(canvas, rect.size);
+      }
+      if (selectedCellIds.contains(cell.id)) {
+        _paintCellSelectionOverlay(canvas, rect.size);
+      }
+      canvas.restore();
+    }
+    veils.paint(canvas);
+    return count;
   }
 
   Color _overviewColorFor(CellKind kind, bool isHighlighted) {
@@ -1270,6 +1311,14 @@ class SchematicCanvasRenderObject extends RenderBox {
     final wires = scene.wires;
     final candidates = scene.wiresIn(visibleRect);
     final candidateCount = candidates?.length ?? wires.length;
+    // The overview band strokes its wires in batches, one call per paint;
+    // see [_paintOverviewEdges].
+    final overview = band == LodBand.overview
+        ? _OverviewWireBatches(
+            capacity: candidateCount,
+            withActivity: activityOverride != null,
+          )
+        : null;
     var count = 0;
     for (var k = 0; k < candidateCount; k++) {
       final i = candidates == null ? k : candidates[k];
@@ -1292,6 +1341,33 @@ class SchematicCanvasRenderObject extends RenderBox {
           !_overlay.isEmpty &&
           !isHighlighted &&
           !isSelected) {
+        continue;
+      }
+      if (overview != null) {
+        // Overview: file the polyline under its paint; the batches are
+        // stroked after the loop, in the same classes as the per-wire
+        // branches below.
+        final activityBatches = overview.activity;
+        final activityColor = activityBatches == null
+            ? null
+            : activityOverride?[edge.id];
+        final OverviewLineBatch batch;
+        if (isSelected) {
+          batch = overview.selected;
+        } else if (!isHighlighted) {
+          batch = overview.dim;
+        } else if (activityBatches != null && activityColor != null) {
+          batch = activityBatches.putIfAbsent(
+            activityColor,
+            OverviewLineBatch.new,
+          );
+        } else if (!_overlay.isEmpty) {
+          batch = overview.cone;
+        } else {
+          batch = overview.base;
+        }
+        batch.addPolyline(edge.points);
+        count++;
         continue;
       }
       final path = Path()..moveTo(edge.points.first.x, edge.points.first.y);
@@ -1336,7 +1412,54 @@ class SchematicCanvasRenderObject extends RenderBox {
       canvas.drawPath(path, paint);
       count++;
     }
+    if (overview != null) {
+      _paintOverviewEdges(
+        canvas,
+        overview,
+        base: uncoloredPaint,
+        dim: dimPaint,
+        cone: conePaint,
+        activityWidth: _strokeWidth(band, overview: 1, other: 2),
+        selectedGlow: selectedGlowPaint,
+        selectedCore: selectedCorePaint,
+      );
+    }
     return count;
+  }
+
+  /// Strokes the overview band's wire [batches]: one `drawRawPoints` call
+  /// per paint instead of a `Path` and a `drawPath` per wire, which at this
+  /// zoom is tens of thousands of wires a frame. Selected wires are stroked
+  /// last, glow then core, so the selection reads over everything else.
+  void _paintOverviewEdges(
+    Canvas canvas,
+    _OverviewWireBatches batches, {
+    required Paint base,
+    required Paint dim,
+    required Paint cone,
+    required double activityWidth,
+    required Paint selectedGlow,
+    required Paint selectedCore,
+  }) {
+    batches.base.paint(canvas, base);
+    batches.dim.paint(canvas, dim);
+    batches.cone.paint(canvas, cone);
+    final activity = batches.activity;
+    if (activity != null) {
+      for (final entry in activity.entries) {
+        entry.value.paint(
+          canvas,
+          Paint()
+            ..color = entry.key
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = activityWidth
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+    }
+    batches.selected
+      ..paint(canvas, selectedGlow)
+      ..paint(canvas, selectedCore);
   }
 
   // ── Boundary port painting ──────────────────────────────────────
@@ -1851,6 +1974,31 @@ class SchematicCanvasRenderObject extends RenderBox {
     );
     painter.paint(canvas, origin);
   }
+}
+
+/// The overview band's wire batches, one per paint: filled while the wires
+/// are walked, each stroked once after the walk.
+class _OverviewWireBatches {
+  _OverviewWireBatches({required int capacity, required bool withActivity})
+    : base = OverviewLineBatch(capacity),
+      activity = withActivity ? <Color, OverviewLineBatch>{} : null;
+
+  /// Wires in the default (or, under activity colouring, the uncoloured)
+  /// paint: most of them, so sized for the candidates.
+  final OverviewLineBatch base;
+
+  /// Wires an active overlay dims.
+  final OverviewLineBatch dim = OverviewLineBatch();
+
+  /// Wires an active overlay highlights, in the cone accent.
+  final OverviewLineBatch cone = OverviewLineBatch();
+
+  /// Selected wires, stroked last as glow then core.
+  final OverviewLineBatch selected = OverviewLineBatch();
+
+  /// Activity-coloured wires, one batch per colour; `null` when no activity
+  /// colouring is shown.
+  final Map<Color, OverviewLineBatch>? activity;
 }
 
 /// Hard limits applied to viewport zoom.

@@ -5,6 +5,7 @@ import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
+import 'package:netcrux/features/viewer/services/schematic_scene_index.dart';
 import 'package:netcrux/services/custom_cell_symbols/cell_symbol_geometry_provider.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
@@ -83,11 +84,18 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
     final patched = withDeclaredCellPorts(model, module);
     final layout = await service.layout(patched, symbols: symbols);
     ref.read(layoutTimingProvider.notifier).completed(stopwatch.elapsed);
-    return LaidOutGraph(
+    final laidOut = LaidOutGraph(
       graph: graph,
       layout: layout,
       symbolCells: symbolCellAnchoredPorts(patched, symbols),
     );
+    // The scene index the painter, the hit-tester and the keyboard
+    // navigator read is built here, before the graph reaches the canvas, and
+    // on another isolate for a large scope. Built on first use instead, a
+    // 100,000-cell scope spent its first frame and its first click building
+    // grids on the UI thread.
+    await SchematicSceneIndex.warm(laidOut);
+    return laidOut;
   } on LayoutException {
     // Deliberately not recorded: a failed layout measures how long the
     // failure took to detect, not what laying this scope out costs, and

@@ -126,9 +126,15 @@ LaidOutGraph _rowGraph(int cellCount) {
   );
 }
 
-/// The rectangles the overview band drew for cells when [graph] is painted
-/// at [zoom], in design units on the already-scaled canvas.
-List<Rect> _overviewCellRects(LaidOutGraph graph, double zoom) {
+/// What the cell pass issued when [graph] is painted at [zoom]: how many
+/// batched fills (`drawVertices`, the overview band's one call for every
+/// cell on screen) and how many per-cell rectangles anchored at a translated
+/// origin (the other bands' body painters; the one other origin-anchored
+/// rect is the viewport background fill).
+({int batchedFills, int perCellRects}) _cellPassOps(
+  LaidOutGraph graph,
+  double zoom,
+) {
   final renderObject = SchematicCanvasRenderObject(
     laidOut: graph,
     transform: ViewportTransform(zoom: zoom, offset: Offset.zero),
@@ -137,18 +143,20 @@ List<Rect> _overviewCellRects(LaidOutGraph graph, double zoom) {
   )..layout(BoxConstraints.tight(const Size(1400, 900)));
   final context = TestRecordingPaintingContext(TestRecordingCanvas());
   renderObject.paint(context, Offset.zero);
-  return <Rect>[
-    for (final recorded in (context.canvas as TestRecordingCanvas).invocations)
-      // Cells paint at their own translated origin; the one other
-      // origin-anchored rect is the viewport background fill.
-      if (recorded.invocation.memberName == #drawRect &&
-          recorded.invocation.positionalArguments.first is Rect &&
-          (recorded.invocation.positionalArguments.first as Rect).topLeft ==
-              Offset.zero &&
-          (recorded.invocation.positionalArguments.first as Rect).size !=
-              const Size(1400, 900))
-        recorded.invocation.positionalArguments.first as Rect,
-  ];
+  var batchedFills = 0;
+  var perCellRects = 0;
+  for (final recorded in (context.canvas as TestRecordingCanvas).invocations) {
+    final call = recorded.invocation;
+    if (call.memberName == #drawVertices) batchedFills++;
+    if (call.memberName == #drawRect &&
+        call.positionalArguments.first is Rect &&
+        (call.positionalArguments.first as Rect).topLeft == Offset.zero &&
+        (call.positionalArguments.first as Rect).size !=
+            const Size(1400, 900)) {
+      perCellRects++;
+    }
+  }
+  return (batchedFills: batchedFills, perCellRects: perCellRects);
 }
 
 /// Paints [graph] with [overlay] active and returns how many canvas
@@ -167,26 +175,30 @@ int _paintOpCount(LaidOutGraph graph, SchematicCrossingOverlay? overlay) {
 }
 
 void main() {
-  group('overview band device-pixel floor', () {
-    test('cells never paint smaller than the floor at a far-out zoom', () {
-      // At 0.002 the helper's 8 px cells would be 0.016 device pixels.
-      const zoom = 0.002;
-      final rects = _overviewCellRects(_rowGraph(3), zoom);
-      expect(rects, hasLength(3));
-      const floor = SchematicViewportLimits.overviewMinCellPx / zoom;
-      for (final rect in rects) {
-        expect(rect.width, closeTo(floor, 1e-9));
-        expect(rect.height, closeTo(floor, 1e-9));
-      }
+  group('overview band cell pass', () {
+    test('fills every cell on screen with one batched call at a far-out '
+        'zoom, and none per cell', () {
+      // At 0.002 the helper's 8 px cells would be 0.016 device pixels; the
+      // batch grows each to the device-pixel floor
+      // (`overview_batch_test.dart` holds the floor arithmetic).
+      final ops = _cellPassOps(_rowGraph(3), 0.002);
+      expect(ops.batchedFills, 1);
+      expect(ops.perCellRects, 0);
     });
 
-    test('cells above the floor keep their own size', () {
-      // At 0.5 (mid band) the same cells are 4 device pixels: no overview
-      // painting, and nothing is inflated.
-      final rects = _overviewCellRects(_rowGraph(3), 0.5);
-      expect(rects.where((r) => r.width == 8 && r.height == 8), isEmpty);
-      final overview = _overviewCellRects(_rowGraph(3), 0.3);
-      expect(overview, isEmpty);
+    test('the mid band paints cells one at a time, with no batch', () {
+      // At 0.5 and 0.3 (mid band) the same cells are symbol bodies.
+      expect(_cellPassOps(_rowGraph(3), 0.5).batchedFills, 0);
+      expect(_cellPassOps(_rowGraph(3), 0.3).batchedFills, 0);
+    });
+
+    test('the overview floor in design units is the pixel floor over the '
+        'zoom', () {
+      const zoom = 0.002;
+      expect(
+        SchematicViewportLimits.overviewMinCellPx / zoom,
+        closeTo(1000, 1e-9),
+      );
     });
   });
 

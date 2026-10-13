@@ -4,7 +4,7 @@
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
-import 'package:netcrux/features/viewer/rendering/schematic_scene_index.dart';
+import 'package:netcrux/features/viewer/services/schematic_scene_index.dart';
 
 /// Keyboard selection over the elements drawn in one scope.
 ///

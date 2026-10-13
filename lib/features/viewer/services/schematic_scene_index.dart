@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' show Offset, Rect;
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
@@ -16,11 +17,21 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 /// hit-tester and the keyboard navigator.
 ///
 /// A [LaidOutGraph] is immutable, so everything here is built at most once
-/// per graph — on first use, one section at a time — and every later frame,
-/// click and keypress reads it. Before this existed, each of those scanned
-/// the whole scope: on a 100,000-cell design a frame spent ~15 ms walking
-/// cells and edges it then culled, a click ~34 ms, and a keyboard step
-/// ~55 ms re-sorting every element into reading order.
+/// per graph and every later frame, click and keypress reads it. Before this
+/// existed, each of those scanned the whole scope: on a 100,000-cell design
+/// a frame spent ~15 ms walking cells and edges it then culled, a click
+/// ~34 ms, and a keyboard step ~55 ms re-sorting every element into reading
+/// order.
+///
+/// Each section is built in two steps. *Collecting* walks the graph and the
+/// layout on the calling isolate and keeps the objects a query answers with
+/// (cells, nodes, pins, routes) beside one flat array of their boxes.
+/// *Gridding* turns those arrays into bucket grids, which is the expensive
+/// half and touches nothing but numbers, so [warm] runs it on another
+/// isolate for a large scope, when the laid-out graph is produced, and the
+/// first frame and the first click find the grids ready. A section nothing
+/// warmed is still built on first use, one section at a time, on the thread
+/// that asked.
 ///
 /// The spatial sections answer "which items might touch this rectangle" as
 /// a list of item indices **in the scope's own order**, so a caller that
@@ -40,8 +51,84 @@ class SchematicSceneIndex {
   static final Expando<SchematicSceneIndex> _cache =
       Expando<SchematicSceneIndex>('SchematicSceneIndex');
 
+  /// Builds every section of [laidOut]'s index ahead of its first use.
+  ///
+  /// The boxes are collected on this isolate; the grids are built from them
+  /// on another isolate when the scope has at least [offIsolateThreshold]
+  /// boxes, and inline below it, where spawning an isolate would cost more
+  /// than the grids. Completes when the index is ready. Calling it again for
+  /// the same graph returns the same future; a section a frame or a click
+  /// built meanwhile is kept, since both are built from the same immutable
+  /// graph and answer alike.
+  static Future<void> warm(LaidOutGraph laidOut) =>
+      SchematicSceneIndex.of(laidOut)._warm();
+
+  /// Boxes, across every section, from which [warm] grids on another
+  /// isolate rather than inline. An isolate costs a few milliseconds to
+  /// start and to copy the arrays into; below this the grids cost less.
+  static const int offIsolateThreshold = 1 << 15;
+
   /// The scope this indexes.
   final LaidOutGraph laidOut;
+
+  Future<void>? _warming;
+
+  Future<void> _warm() => _warming ??= _buildAhead();
+
+  Future<void> _buildAhead() async {
+    final cells = _Placed.collect<SchematicCell>(
+      laidOut.graph.cells,
+      (cell) => laidOut.layout.findNode(cell.id),
+    );
+    final boundary = _Placed.collect<SchematicBoundaryPort>(
+      laidOut.graph.boundaryPorts,
+      (port) => laidOut.layout.findNode(port.id),
+    );
+    final wires = _Wires.collect(laidOut);
+    final pins = _Pins.collect(cells.items, cells.nodes);
+    final segments = _Segments.collect(wires.routes);
+    final reading = _ReadingOrder.collect(laidOut);
+    final arrays = _SceneArrays(
+      cells: cells.boxes,
+      boundary: boundary.boxes,
+      wires: wires.bounds,
+      pins: pins.boxes,
+      segments: segments.boxes,
+      readingKeys: reading.keys,
+    );
+    final grids = arrays.boxCount >= offIsolateThreshold
+        ? await compute(_buildSceneGrids, arrays)
+        : _buildSceneGrids(arrays);
+    _cellsOrNull ??= _Placed<SchematicCell>(
+      cells.items,
+      cells.nodes,
+      _Grid.fromArrays(grids.cells),
+    );
+    _boundaryOrNull ??= _Placed<SchematicBoundaryPort>(
+      boundary.items,
+      boundary.nodes,
+      _Grid.fromArrays(grids.boundary),
+    );
+    _wiresOrNull ??= _Wires(
+      wires.routes,
+      wires.bounds,
+      _Grid.fromArrays(grids.wires),
+    );
+    _pinsOrNull ??= _Pins(
+      pins.cell,
+      pins.port,
+      pins.box,
+      _Grid.fromArrays(grids.pins),
+    );
+    _segmentsOrNull ??= _Segments(
+      segments.owner,
+      _Grid.fromArrays(grids.segments),
+    );
+    _readingOrNull ??= _ReadingOrder.fromPermutation(
+      reading.elements,
+      grids.readingOrder,
+    );
+  }
 
   // ── Cells ─────────────────────────────────────────────────────────
 
@@ -55,7 +142,8 @@ class SchematicSceneIndex {
   /// `null` for all of them.
   List<int>? cellsIn(Rect rect) => _cells.grid.query(rect);
 
-  late final _Placed<SchematicCell> _cells = _Placed<SchematicCell>(
+  _Placed<SchematicCell>? _cellsOrNull;
+  _Placed<SchematicCell> get _cells => _cellsOrNull ??= _Placed.build(
     laidOut.graph.cells,
     (cell) => laidOut.layout.findNode(cell.id),
   );
@@ -73,8 +161,9 @@ class SchematicSceneIndex {
   /// or `null` for all of them.
   List<int>? boundaryPortsIn(Rect rect) => _boundary.grid.query(rect);
 
-  late final _Placed<SchematicBoundaryPort> _boundary =
-      _Placed<SchematicBoundaryPort>(
+  _Placed<SchematicBoundaryPort>? _boundaryOrNull;
+  _Placed<SchematicBoundaryPort> get _boundary =>
+      _boundaryOrNull ??= _Placed.build(
         laidOut.graph.boundaryPorts,
         (port) => laidOut.layout.findNode(port.id),
       );
@@ -95,7 +184,8 @@ class SchematicSceneIndex {
   /// for all of them.
   List<int>? pinsIn(Rect rect) => _pins.grid.query(rect);
 
-  late final _Pins _pins = _Pins.build(this);
+  _Pins? _pinsOrNull;
+  _Pins get _pins => _pinsOrNull ??= _Pins.build(cells, cellNodes);
 
   // ── Wires ─────────────────────────────────────────────────────────
 
@@ -127,8 +217,11 @@ class SchematicSceneIndex {
     return owners;
   }
 
-  late final _Wires _wires = _Wires.build(laidOut);
-  late final _Segments _segments = _Segments.build(_wires);
+  _Wires? _wiresOrNull;
+  _Wires get _wires => _wiresOrNull ??= _Wires.build(laidOut);
+
+  _Segments? _segmentsOrNull;
+  _Segments get _segments => _segmentsOrNull ??= _Segments.build(_wires);
 
   // ── Keyboard navigation ───────────────────────────────────────────
 
@@ -141,7 +234,8 @@ class SchematicSceneIndex {
   int readingIndexOf(SelectedElement element) =>
       _reading.firstIndex[element] ?? -1;
 
-  late final _ReadingOrder _reading = _ReadingOrder.build(laidOut);
+  _ReadingOrder? _readingOrNull;
+  _ReadingOrder get _reading => _readingOrNull ??= _ReadingOrder.build(laidOut);
 
   /// The rectangle to query for a click at [point] against targets that
   /// count as hit within [slop]: the slop plus a margin, so floating-point
@@ -158,10 +252,86 @@ class SchematicSceneIndex {
   }
 }
 
+/// The box arrays of every section, the only thing [SchematicSceneIndex.warm]
+/// sends to the gridding isolate: typed data copies in one block, where the
+/// graph's objects would be walked and rebuilt.
+class _SceneArrays {
+  const _SceneArrays({
+    required this.cells,
+    required this.boundary,
+    required this.wires,
+    required this.pins,
+    required this.segments,
+    required this.readingKeys,
+  });
+
+  final Float64List cells;
+  final Float64List boundary;
+  final Float64List wires;
+  final Float64List pins;
+  final Float64List segments;
+
+  /// `y, x` per reading-order candidate.
+  final Float64List readingKeys;
+
+  int get boxCount =>
+      (cells.length +
+          boundary.length +
+          wires.length +
+          pins.length +
+          segments.length) ~/
+      4;
+}
+
+/// What the gridding isolate sends back: one grid per spatial section and
+/// the reading-order permutation.
+class _SceneGrids {
+  const _SceneGrids({
+    required this.cells,
+    required this.boundary,
+    required this.wires,
+    required this.pins,
+    required this.segments,
+    required this.readingOrder,
+  });
+
+  final _GridArrays cells;
+  final _GridArrays boundary;
+  final _GridArrays wires;
+  final _GridArrays pins;
+  final _GridArrays segments;
+  final Int32List readingOrder;
+}
+
+/// Grids every section of [arrays]. Pure: runs on any isolate.
+_SceneGrids _buildSceneGrids(_SceneArrays arrays) => _SceneGrids(
+  cells: _GridArrays.build(arrays.cells),
+  boundary: _GridArrays.build(arrays.boundary),
+  wires: _GridArrays.build(arrays.wires),
+  pins: _GridArrays.build(arrays.pins),
+  segments: _GridArrays.build(arrays.segments),
+  readingOrder: _ReadingOrder.permutation(arrays.readingKeys),
+);
+
 /// Items of a scope that have a laid-out node, with their nodes and a grid
 /// over the nodes' bounds.
 class _Placed<T> {
-  factory _Placed(List<T> all, NodePosition? Function(T item) nodeOf) {
+  _Placed(this.items, this.nodes, this.grid);
+
+  /// Collects and grids in one step, for a section built on first use.
+  factory _Placed.build(List<T> all, NodePosition? Function(T item) nodeOf) {
+    final collected = _Placed.collect(all, nodeOf);
+    return _Placed(
+      collected.items,
+      collected.nodes,
+      _Grid.build(collected.boxes),
+    );
+  }
+
+  /// The items of [all] that have a node, their nodes, and the nodes' bounds
+  /// as a flat box array.
+  static ({List<T> items, List<NodePosition> nodes, Float64List boxes})
+  collect<T>(List<T> all, NodePosition? Function(T item) nodeOf) {
     final items = <T>[];
     final nodes = <NodePosition>[];
     for (final item in all) {
@@ -177,10 +347,8 @@ class _Placed<T> {
       // exactly the rectangle their tests see.
       _putRect(boxes, i, Rect.fromLTWH(b.x, b.y, b.width, b.height));
     }
-    return _Placed._(items, nodes, _Grid.build(boxes));
+    return (items: items, nodes: nodes, boxes: boxes);
   }
-
-  _Placed._(this.items, this.nodes, this.grid);
 
   final List<T> items;
   final List<NodePosition> nodes;
@@ -190,9 +358,25 @@ class _Placed<T> {
 class _Pins {
   _Pins(this.cell, this.port, this.box, this.grid);
 
-  factory _Pins.build(SchematicSceneIndex index) {
-    final cells = index.cells;
-    final nodes = index.cellNodes;
+  factory _Pins.build(List<SchematicCell> cells, List<NodePosition> nodes) {
+    final collected = _Pins.collect(cells, nodes);
+    return _Pins(
+      collected.cell,
+      collected.port,
+      collected.box,
+      _Grid.build(collected.boxes),
+    );
+  }
+
+  /// Every pin with a box on its cell's node, and the boxes in design
+  /// coordinates as a flat array.
+  static ({
+    Int32List cell,
+    List<SchematicPort> port,
+    List<BoundingBox> box,
+    Float64List boxes,
+  })
+  collect(List<SchematicCell> cells, List<NodePosition> nodes) {
     final cell = <int>[];
     final port = <SchematicPort>[];
     final box = <BoundingBox>[];
@@ -219,7 +403,12 @@ class _Pins {
         ..[i * 4 + 2] = left + box[i].width
         ..[i * 4 + 3] = top + box[i].height;
     }
-    return _Pins(Int32List.fromList(cell), port, box, _Grid.build(boxes));
+    return (
+      cell: Int32List.fromList(cell),
+      port: port,
+      box: box,
+      boxes: boxes,
+    );
   }
 
   final Int32List cell;
@@ -232,6 +421,18 @@ class _Wires {
   _Wires(this.routes, this._bounds, this.grid);
 
   factory _Wires.build(LaidOutGraph laidOut) {
+    final collected = _Wires.collect(laidOut);
+    return _Wires(
+      collected.routes,
+      collected.bounds,
+      _Grid.build(collected.bounds),
+    );
+  }
+
+  /// The drawable routes and each one's polyline bounds as a flat array.
+  static ({List<EdgeRoute> routes, Float64List bounds}) collect(
+    LaidOutGraph laidOut,
+  ) {
     final routes = <EdgeRoute>[
       for (final edge in laidOut.layout.edges)
         if (edge.points.length >= 2) edge,
@@ -258,7 +459,7 @@ class _Wires {
         ..[i * 4 + 2] = maxX
         ..[i * 4 + 3] = maxY;
     }
-    return _Wires(routes, bounds, _Grid.build(bounds));
+    return (routes: routes, bounds: bounds);
   }
 
   final List<EdgeRoute> routes;
@@ -277,15 +478,24 @@ class _Segments {
   _Segments(this.owner, this.grid);
 
   factory _Segments.build(_Wires wires) {
+    final collected = _Segments.collect(wires.routes);
+    return _Segments(collected.owner, _Grid.build(collected.boxes));
+  }
+
+  /// Every segment of every route, numbered wire by wire: the wire each
+  /// belongs to, and the segment boxes as a flat array.
+  static ({Int32List owner, Float64List boxes}) collect(
+    List<EdgeRoute> routes,
+  ) {
     var count = 0;
-    for (final route in wires.routes) {
+    for (final route in routes) {
       count += route.points.length - 1;
     }
     final owner = Int32List(count);
     final boxes = Float64List(count * 4);
     var s = 0;
-    for (var w = 0; w < wires.routes.length; w++) {
-      final points = wires.routes[w].points;
+    for (var w = 0; w < routes.length; w++) {
+      final points = routes[w].points;
       for (var i = 0; i + 1 < points.length; i++) {
         final a = points[i];
         final b = points[i + 1];
@@ -298,7 +508,7 @@ class _Segments {
         s++;
       }
     }
-    return _Segments(owner, _Grid.build(boxes));
+    return (owner: owner, boxes: boxes);
   }
 
   final Int32List owner;
@@ -309,35 +519,70 @@ class _ReadingOrder {
   _ReadingOrder(this.order, this.firstIndex);
 
   factory _ReadingOrder.build(LaidOutGraph laidOut) {
-    // Verbatim the navigator's former per-keypress construction, now run
-    // once: the same input order through the same comparator gives the same
-    // order, ties included.
-    final placed =
-        <(BoundingBox, SelectedElement)>[
-          for (final cell in laidOut.graph.cells)
-            if (laidOut.layout.findNode(cell.id) case final node?)
-              (node.bounds, SelectedElement.cell(cellId: cell.id)),
-          for (final port in laidOut.graph.boundaryPorts)
-            if (laidOut.layout.findNode(port.id) case final node?)
-              (
-                node.bounds,
-                SelectedElement.boundaryPort(
-                  portId: port.id,
-                  portName: port.name,
-                ),
-              ),
-        ]..sort((a, b) {
-          final byRow = a.$1.y.compareTo(b.$1.y);
-          return byRow != 0 ? byRow : a.$1.x.compareTo(b.$1.x);
-        });
+    final collected = _ReadingOrder.collect(laidOut);
+    return _ReadingOrder.fromPermutation(
+      collected.elements,
+      _ReadingOrder.permutation(collected.keys),
+    );
+  }
+
+  /// [elements] in the order [permutation] gives, with each element's first
+  /// position.
+  factory _ReadingOrder.fromPermutation(
+    List<SelectedElement> elements,
+    Int32List permutation,
+  ) {
     final order = List<SelectedElement>.unmodifiable(<SelectedElement>[
-      for (final (_, element) in placed) element,
+      for (final i in permutation) elements[i],
     ]);
     final firstIndex = <SelectedElement, int>{};
     for (var i = 0; i < order.length; i++) {
       firstIndex.putIfAbsent(order[i], () => i);
     }
     return _ReadingOrder(order, firstIndex);
+  }
+
+  /// The placed cells, then the placed module ports, as the navigator has
+  /// always gathered them, with each one's `y, x` sort key.
+  static ({List<SelectedElement> elements, Float64List keys}) collect(
+    LaidOutGraph laidOut,
+  ) {
+    final elements = <SelectedElement>[];
+    final boxes = <BoundingBox>[];
+    for (final cell in laidOut.graph.cells) {
+      if (laidOut.layout.findNode(cell.id) case final node?) {
+        elements.add(SelectedElement.cell(cellId: cell.id));
+        boxes.add(node.bounds);
+      }
+    }
+    for (final port in laidOut.graph.boundaryPorts) {
+      if (laidOut.layout.findNode(port.id) case final node?) {
+        elements.add(
+          SelectedElement.boundaryPort(portId: port.id, portName: port.name),
+        );
+        boxes.add(node.bounds);
+      }
+    }
+    final keys = Float64List(boxes.length * 2);
+    for (var i = 0; i < boxes.length; i++) {
+      keys
+        ..[i * 2] = boxes[i].y
+        ..[i * 2 + 1] = boxes[i].x;
+    }
+    return (elements: elements, keys: keys);
+  }
+
+  /// The indices of [keys]' entries sorted by row and then column: the same
+  /// comparator, over the same input order, the navigator's former
+  /// per-keypress sort applied to the elements themselves, so the order it
+  /// yields is the same, ties included.
+  static Int32List permutation(Float64List keys) {
+    final order = List<int>.generate(keys.length ~/ 2, (i) => i)
+      ..sort((a, b) {
+        final byRow = keys[a * 2].compareTo(keys[b * 2]);
+        return byRow != 0 ? byRow : keys[a * 2 + 1].compareTo(keys[b * 2 + 1]);
+      });
+    return Int32List.fromList(order);
   }
 
   final List<SelectedElement> order;
@@ -352,17 +597,10 @@ void _putRect(Float64List boxes, int i, Rect r) {
     ..[i * 4 + 3] = r.bottom;
 }
 
-/// A uniform bucket grid over item boxes (`left, top, right, bottom` per
-/// item, in a flat list; either pair may be inverted).
-///
-/// An item is filed in every bucket its box touches, so a query returns a
-/// superset of the items whose box meets the query rectangle — never a
-/// subset, which is what lets callers keep their exact tests and get
-/// identical answers. Items the grid does not file — a non-finite
-/// coordinate, or the widest boxes once filing them all would cost more
-/// than [_filingBudget] — are on a list every query returns.
-class _Grid {
-  _Grid._({
+/// The numbers a [_Grid] is made of: what gridding produces, on whichever
+/// isolate it runs, and what the grid is then built from.
+class _GridArrays {
+  const _GridArrays({
     required this.count,
     required this.originX,
     required this.originY,
@@ -373,9 +611,18 @@ class _Grid {
     required this.starts,
     required this.filed,
     required this.everywhere,
-  }) : stamp = Int32List(count);
+  });
 
-  factory _Grid.build(Float64List boxes) {
+  /// Grids the item boxes (`left, top, right, bottom` per item, in a flat
+  /// list; either pair may be inverted).
+  ///
+  /// An item is filed in every bucket its box touches, so a query returns a
+  /// superset of the items whose box meets the query rectangle — never a
+  /// subset, which is what lets callers keep their exact tests and get
+  /// identical answers. Items the grid does not file — a non-finite
+  /// coordinate, or the widest boxes once filing them all would cost more
+  /// than [_Grid._filingBudget] — are on a list every query returns.
+  factory _GridArrays.build(Float64List boxes) {
     final count = boxes.length ~/ 4;
     var minX = double.infinity;
     var minY = double.infinity;
@@ -383,7 +630,7 @@ class _Grid {
     var maxY = double.negativeInfinity;
     var finite = 0;
     for (var i = 0; i < count; i++) {
-      if (!_isFinite(boxes, i)) continue;
+      if (!_Grid._isFinite(boxes, i)) continue;
       finite++;
       minX = math.min(minX, math.min(boxes[i * 4], boxes[i * 4 + 2]));
       maxX = math.max(maxX, math.max(boxes[i * 4], boxes[i * 4 + 2]));
@@ -395,7 +642,7 @@ class _Grid {
     if (finite == 0 || !width.isFinite || !height.isFinite) {
       // Nothing to file sensibly — every item is a candidate for every
       // query, which is the old full scan.
-      return _Grid._(
+      return _GridArrays(
         count: count,
         originX: 0,
         originY: 0,
@@ -410,7 +657,7 @@ class _Grid {
     }
 
     // About one item per bucket, shaped like the scope.
-    final target = finite.clamp(1, _maxBuckets);
+    final target = finite.clamp(1, _Grid._maxBuckets);
     final int cols;
     if (width <= 0) {
       cols = 1;
@@ -419,7 +666,7 @@ class _Grid {
     } else {
       cols = math.sqrt(target * width / height).round().clamp(1, target);
     }
-    final rows = (target / cols).ceil().clamp(1, _maxBuckets);
+    final rows = (target / cols).ceil().clamp(1, _Grid._maxBuckets);
     final bucketW = width > 0 ? width / cols : 1.0;
     final bucketH = height > 0 ? height / rows : 1.0;
 
@@ -429,30 +676,30 @@ class _Grid {
     final unfiled = <int>[];
     var filings = 0;
     for (var i = 0; i < count; i++) {
-      if (!_isFinite(boxes, i)) {
+      if (!_Grid._isFinite(boxes, i)) {
         unfiled.add(i);
         span[i * 4] = -1;
         continue;
       }
-      final c0 = _bucketOf(
+      final c0 = _Grid._bucketOf(
         math.min(boxes[i * 4], boxes[i * 4 + 2]),
         minX,
         bucketW,
         cols,
       ).clamp(0, cols - 1);
-      final c1 = _bucketOf(
+      final c1 = _Grid._bucketOf(
         math.max(boxes[i * 4], boxes[i * 4 + 2]),
         minX,
         bucketW,
         cols,
       ).clamp(0, cols - 1);
-      final r0 = _bucketOf(
+      final r0 = _Grid._bucketOf(
         math.min(boxes[i * 4 + 1], boxes[i * 4 + 3]),
         minY,
         bucketH,
         rows,
       ).clamp(0, rows - 1);
-      final r1 = _bucketOf(
+      final r1 = _Grid._bucketOf(
         math.max(boxes[i * 4 + 1], boxes[i * 4 + 3]),
         minY,
         bucketH,
@@ -472,7 +719,7 @@ class _Grid {
     // every such box could cost more memory than the scope itself, so the
     // widest are kept on the always-returned list instead, until the rest
     // fit the budget.
-    final budget = _filingBudget(count);
+    final budget = _Grid._filingBudget(count);
     if (filings > budget) {
       final widest = <int>[
         for (var i = 0; i < count; i++)
@@ -509,7 +756,7 @@ class _Grid {
         }
       }
     }
-    return _Grid._(
+    return _GridArrays(
       count: count,
       originX: minX,
       originY: minY,
@@ -522,6 +769,52 @@ class _Grid {
       everywhere: Int32List.fromList(unfiled..sort()),
     );
   }
+
+  final int count;
+  final double originX;
+  final double originY;
+  final double bucketW;
+  final double bucketH;
+  final int cols;
+  final int rows;
+  final Int32List starts;
+  final Int32List filed;
+  final Int32List everywhere;
+}
+
+/// A uniform bucket grid over item boxes; see [_GridArrays.build] for how
+/// items are filed. Holds the per-query generation stamps beside the arrays,
+/// which is why a grid is built on the isolate that queries it, from arrays
+/// that may have been computed on another.
+class _Grid {
+  _Grid._({
+    required this.count,
+    required this.originX,
+    required this.originY,
+    required this.bucketW,
+    required this.bucketH,
+    required this.cols,
+    required this.rows,
+    required this.starts,
+    required this.filed,
+    required this.everywhere,
+  }) : stamp = Int32List(count);
+
+  factory _Grid.build(Float64List boxes) =>
+      _Grid.fromArrays(_GridArrays.build(boxes));
+
+  factory _Grid.fromArrays(_GridArrays arrays) => _Grid._(
+    count: arrays.count,
+    originX: arrays.originX,
+    originY: arrays.originY,
+    bucketW: arrays.bucketW,
+    bucketH: arrays.bucketH,
+    cols: arrays.cols,
+    rows: arrays.rows,
+    starts: arrays.starts,
+    filed: arrays.filed,
+    everywhere: arrays.everywhere,
+  );
 
   /// Upper bound on buckets, whatever the item count.
   static const int _maxBuckets = 1 << 18;
