@@ -2908,6 +2908,10 @@
   "@settingsTelemetryInstallationIdCopied": {
     "description": "Confirmation shown after the installation id is copied."
   },
+  "settingsTelemetryInstallationIdNone": "No installation ID. One is created only when usage statistics are turned on.",
+  "@settingsTelemetryInstallationIdNone": {
+    "description": "Shown in the Settings > Privacy installation id row while no installation id exists. The id is created only when the user turns anonymous usage statistics on."
+  },
   "xTracePanelTitle": "X-Trace",
   "@xTracePanelTitle": {
     "description": "Title of the X-trace result panel showing the causal chain from a selected net."

@@ -2409,6 +2409,7 @@
   "settingsTelemetryInstallationIdDescription": "这是与所收集数据关联的唯一标识符。它是随机生成的，与您本人无关。如需删除本次安装的数据，请将其发送给支持人员。",
   "settingsTelemetryInstallationIdCopy": "复制",
   "settingsTelemetryInstallationIdCopied": "已复制安装 ID。",
+  "settingsTelemetryInstallationIdNone": "暂无安装 ID。仅在开启使用统计后才会创建。",
   "xTracePanelTitle": "X 追溯",
   "xTracePanelEmpty": "暂无 X 追溯。请选择一个线网并运行“显示 X 追溯”。",
   "xTracePanelClearButton": "清除",
