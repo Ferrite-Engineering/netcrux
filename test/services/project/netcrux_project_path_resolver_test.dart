@@ -145,4 +145,88 @@ void main() {
       expect(resolved.includePaths, isEmpty);
     });
   });
+
+  group('relativizeProjectPaths', () {
+    test('writes paths under the project directory relative to it', () {
+      final portable = relativizeProjectPaths(
+        projectWith(
+          sourceFiles: <String>[
+            p.join(projectDir, 'alu.v'),
+            p.join(projectDir, 'rtl', 'regfile.v'),
+          ],
+          includePaths: <String>[p.join(projectDir, 'inc')],
+          languages: <String, NetcruxSourceLanguage>{
+            p.join(projectDir, 'alu.v'): NetcruxSourceLanguage.verilog,
+          },
+        ),
+        projectDir,
+      );
+      expect(portable.sourceFiles, <String>[
+        'alu.v',
+        p.join('rtl', 'regfile.v'),
+      ]);
+      expect(portable.includePaths, <String>['inc']);
+      expect(portable.sourceFileLanguages, <String, NetcruxSourceLanguage>{
+        'alu.v': NetcruxSourceLanguage.verilog,
+      });
+    });
+
+    test(
+      'reaches a sibling directory with .. rather than an absolute path',
+      () {
+        final shared = p.normalize(p.join(projectDir, '..', 'ip', 'fifo.v'));
+        final portable = relativizeProjectPaths(
+          projectWith(sourceFiles: <String>[shared]),
+          projectDir,
+        );
+        expect(portable.sourceFiles, <String>[p.join('..', 'ip', 'fifo.v')]);
+      },
+    );
+
+    test('keeps a path already relative as written', () {
+      final portable = relativizeProjectPaths(
+        projectWith(sourceFiles: <String>['rtl/top.v']),
+        projectDir,
+      );
+      expect(portable.sourceFiles, <String>['rtl/top.v']);
+    });
+
+    test('keeps a path on another Windows drive absolute', () {
+      const dir = r'C:\Users\Dev\Designs\CPU';
+      final portable = relativizeProjectPaths(
+        projectWith(
+          sourceFiles: <String>[
+            r'C:\Users\Dev\Designs\CPU\RTL\Top.v',
+            r'D:\Shared\IP\Fifo.v',
+          ],
+          includePaths: <String>[r'C:\Users\Dev\Designs\Inc'],
+        ),
+        dir,
+        pathContext: p.windows,
+      );
+      expect(portable.sourceFiles, <String>[
+        r'RTL\Top.v',
+        r'D:\Shared\IP\Fifo.v',
+      ]);
+      expect(portable.includePaths, <String>[r'..\Inc']);
+    });
+
+    test('round-trips through resolveProjectPaths', () {
+      final original = projectWith(
+        sourceFiles: <String>[
+          p.join(projectDir, 'alu.v'),
+          p.normalize(p.join(projectDir, '..', 'ip', 'fifo.v')),
+        ],
+        includePaths: <String>[p.join(projectDir, 'inc')],
+        languages: <String, NetcruxSourceLanguage>{
+          p.join(projectDir, 'alu.v'): NetcruxSourceLanguage.systemVerilog,
+        },
+      );
+      final back = resolveProjectPaths(
+        relativizeProjectPaths(original, projectDir),
+        projectDir,
+      );
+      expect(back, original);
+    });
+  });
 }

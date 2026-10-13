@@ -90,6 +90,9 @@ enum NetcruxAction implements CruxAction {
   /// Save the current session as a `.netcrux` file.
   saveSession,
 
+  /// Save the active tab's project as a `.netcrux-project` file.
+  saveProjectAs,
+
   /// Open a `.netcrux` session file.
   openSession,
 
@@ -402,6 +405,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.loadComparisonNetlist:
       case NetcruxAction.clearComparisonNetlist:
       case NetcruxAction.saveSession:
+      case NetcruxAction.saveProjectAs:
       case NetcruxAction.saveWorkspaceAs:
       case NetcruxAction.exportPng:
       case NetcruxAction.exportSvg:
@@ -560,6 +564,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionExportJson;
       case NetcruxAction.saveSession:
         return l10n.actionSaveSession;
+      case NetcruxAction.saveProjectAs:
+        return l10n.actionSaveProjectAs;
       case NetcruxAction.openSession:
         return l10n.actionOpenSession;
       case NetcruxAction.importFilelist:
@@ -776,6 +782,7 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.exportSvg:
       case NetcruxAction.exportJson:
       case NetcruxAction.saveSession:
+      case NetcruxAction.saveProjectAs:
       case NetcruxAction.openSession:
       case NetcruxAction.importFilelist:
       case NetcruxAction.splitPaneRight:
@@ -900,6 +907,7 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.exportSvg:
       case NetcruxAction.exportJson:
       case NetcruxAction.saveSession:
+      case NetcruxAction.saveProjectAs:
       case NetcruxAction.openSession:
       case NetcruxAction.importFilelist:
       case NetcruxAction.splitPaneRight:

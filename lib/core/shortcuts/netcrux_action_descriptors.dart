@@ -236,6 +236,16 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isEnabled: _requiresNetlist,
   ),
 
+  // ── Save Project As — browsable, needs a tab ────────────────────────
+  // Writes the active tab's project definition, which exists before and
+  // regardless of a successful elaboration, so a tab is enough. A file on
+  // disk, so the browser build does not offer it.
+  NetcruxAction.saveProjectAs => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _desktopOnly,
+    isEnabled: _requiresTab,
+  ),
+
   // ── Trace overlays — toolbar (as one split button) + menu + palette ──
   // Fan-in / fan-out / clear share a single grouped toolbar slot rather
   // than three near-identical buttons; see NetcruxToolbar.

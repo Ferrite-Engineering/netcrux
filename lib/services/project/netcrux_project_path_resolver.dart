@@ -68,3 +68,50 @@ NetcruxProject resolveProjectPaths(
     sourceFileLanguages: languages,
   );
 }
+
+/// The inverse of [resolveProjectPaths], for writing a project file: every
+/// absolute source and include path that shares a root with [projectDir] is
+/// written relative to it (`..` segments included, as a filelist would), so
+/// the file travels between checkouts and machines; a path on another root,
+/// a second Windows drive, stays absolute, since no relative path reaches
+/// it. A path already relative is kept as written.
+///
+/// [NetcruxProject.sourceFileLanguages] is keyed by the same strings as
+/// [NetcruxProject.sourceFiles], so its keys are rewritten in step, as the
+/// resolver does on the way in.
+NetcruxProject relativizeProjectPaths(
+  NetcruxProject project,
+  String projectDir, {
+  p.Context? pathContext,
+}) {
+  final context = pathContext ?? p.context;
+  final dir = context.normalize(context.absolute(projectDir));
+  String relativize(String path) {
+    if (!context.isAbsolute(path)) return path;
+    final normalized = context.normalize(path);
+    if (!context.equals(
+      context.rootPrefix(normalized),
+      context.rootPrefix(dir),
+    )) {
+      return normalized;
+    }
+    return context.relative(normalized, from: dir);
+  }
+
+  final sourceFiles = <String>[
+    for (final f in project.sourceFiles) relativize(f),
+  ];
+  final includePaths = <String>[
+    for (final d in project.includePaths) relativize(d),
+  ];
+  final languages = <String, NetcruxSourceLanguage>{
+    for (final entry in project.sourceFileLanguages.entries)
+      relativize(entry.key): entry.value,
+  };
+
+  return project.copyWith(
+    sourceFiles: sourceFiles,
+    includePaths: includePaths,
+    sourceFileLanguages: languages,
+  );
+}

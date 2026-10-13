@@ -140,10 +140,11 @@ Turned on with `suite.audit.path`, suite-wide. The envelope, the format, rotatio
 |---|---|---|
 | `schematic.opened` | A design is opened — including re-opening one already open, which is exactly the repeat access an investigation looks for. | `source`, `fileCount`, `topModule` |
 | `session.saved` | A session is written. Only on a real write: a cancelled picker and a failed write both record nothing. | `file`, the base name, never the directory |
+| `project.saved` | A project file is written with **Save Project As…** (from NetCrux 1.1). Only on a real write, as for `session.saved`. | `file`, the base name, never the directory |
 | `crossprobe.originated` | A cross-probe is sent to another product from the schematic context menu. | `peerId`, `elementKind`, `honored` |
 | `search.executed` | A search result is activated. | `mode`, `resultKind` |
 
-**Four kinds, all of which fire.** `sourceserver.fetched` was listed here as *"registered, no producer"* until 2026-09-19 and has been **removed from the registry**: the centralized source server is unbuilt, and carrying a kind for it meant a catalogue whose reader could not tell "this exists and is quiet" from "this will never exist". It returns when the feature does.
+**Five kinds, all of which fire.** `sourceserver.fetched` was listed here as *"registered, no producer"* until 2026-09-19 and has been **removed from the registry**: the centralized source server is unbuilt, and carrying a kind for it meant a catalogue whose reader could not tell "this exists and is quiet" from "this will never exist". It returns when the feature does.
 
 ### What these payloads deliberately do not carry {#audit-withheld}
 

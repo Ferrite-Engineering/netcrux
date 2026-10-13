@@ -56,6 +56,9 @@ abstract final class NetCruxAuditKinds {
   /// `session.saved`
   static const String sessionSaved = 'session.saved';
 
+  /// `project.saved`
+  static const String projectSaved = 'project.saved';
+
   /// `crossprobe.originated`
   static const String crossprobeOriginated = 'crossprobe.originated';
 
@@ -66,6 +69,7 @@ abstract final class NetCruxAuditKinds {
   static const Set<String> all = <String>{
     schematicOpened,
     sessionSaved,
+    projectSaved,
     crossprobeOriginated,
     searchExecuted,
   };

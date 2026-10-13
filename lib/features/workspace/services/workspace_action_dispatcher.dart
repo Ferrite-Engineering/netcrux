@@ -27,8 +27,10 @@ import 'package:netcrux/features/command_palette/widgets/command_palette_dialog.
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
 import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/project/services/project_save_controller.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
 import 'package:netcrux/features/search/widgets/search_dialog.dart';
+import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/screens/settings_screen.dart';
 import 'package:netcrux/features/viewer/providers/canvas_fit_target_provider.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
@@ -465,6 +467,8 @@ class WorkspaceActionDispatcher {
             .zoomAboutCenter(1 / 1.25);
       case NetcruxAction.saveSession:
         unawaited(_saveSession(context));
+      case NetcruxAction.saveProjectAs:
+        unawaited(_saveProjectAs(context));
       case NetcruxAction.openSession:
         unawaited(_openSession(context));
       case NetcruxAction.showFanin:
@@ -795,6 +799,39 @@ class WorkspaceActionDispatcher {
         payload: <String, Object?>{'file': p.basename(saved)},
       );
     }
+  }
+
+  /// Writes the active tab's project where the user chooses, then, for a
+  /// write that happened: records the file as the tab's project file, so a
+  /// restore re-reads it the way it re-reads any project file; adds it to
+  /// the recent projects; and audits `project.saved` by file name, under the
+  /// same rule as `session.saved`.
+  Future<void> _saveProjectAs(BuildContext context) async {
+    final container = _ref.activeTabContainerOrNull(context);
+    if (container == null) return;
+    final controller = ProjectSaveController(
+      container: container,
+      messenger: ScaffoldMessenger.of(context),
+      l10n: L10N.of(context),
+    );
+    // Read before the await: `ref` is invalid across an async gap.
+    final audit = _ref.read(cruxAuditRecorderProvider);
+    final workspace = _ref.read(netcruxWorkspaceProvider.notifier);
+    final settings = _ref.read(appSettingsProvider.notifier);
+    final tabId = _ref.read(netcruxWorkspaceProvider).value?.activeTabId;
+    final saved = await controller.saveAs();
+    if (saved == null) return;
+    audit.record(
+      NetCruxAuditKinds.projectSaved,
+      payload: <String, Object?>{'file': p.basename(saved)},
+    );
+    if (tabId != null) {
+      await workspace.updateTabPayload(
+        tabId,
+        (payload) => payload.copyWith(projectFilePath: saved),
+      );
+    }
+    await settings.recordRecentProject(saved);
   }
 
   Future<void> _openSession(BuildContext context) async {

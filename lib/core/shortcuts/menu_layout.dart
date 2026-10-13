@@ -69,7 +69,10 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.openWaveformFile,
       NetcruxAction.closeWaveformFile,
     ],
+    // The project is the durable definition of a design, the session a view
+    // of it and the workspace the set of open tabs: saved in that order.
     [
+      NetcruxAction.saveProjectAs,
       NetcruxAction.saveSession,
       NetcruxAction.saveWorkspaceAs,
     ],

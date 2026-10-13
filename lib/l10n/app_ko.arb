@@ -444,6 +444,7 @@
   "@actionExportJson": {
     "description": "Command palette / menu label for exporting the current scope's Yosys JSON subset."
   },
+  "actionSaveProjectAs": "프로젝트 다른 이름으로 저장…",
   "actionSaveSession": "세션 다른 이름으로 저장…",
   "@actionSaveSession": {
     "description": "Command palette / menu label for saving the current session as a .netcrux file."
@@ -758,6 +759,8 @@
     }
   },
   "projectLoadFailed": "프로젝트를 불러올 수 없습니다: {reason}",
+  "projectSaveDialogTitle": "NetCrux 프로젝트 저장",
+  "projectSaveFailed": "프로젝트를 저장할 수 없습니다: {reason}",
   "@projectLoadFailed": {
     "description": "Snackbar shown when a .netcrux-project file cannot be loaded (I/O error, malformed JSON, missing version, etc.).",
     "placeholders": {

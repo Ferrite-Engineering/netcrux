@@ -144,6 +144,9 @@ void main() {
         NetcruxAction.newWorkspace,
         NetcruxAction.openWorkspace,
         NetcruxAction.saveWorkspaceAs,
+        // Save Project As… is a dialog-driven File-menu command like Save
+        // Workspace As…; Cmd/Ctrl+S stays with the session.
+        NetcruxAction.saveProjectAs,
         NetcruxAction.resetWorkspace,
         NetcruxAction.toggleTheme,
         // Collaborative sessions: File menu and palette, unbound by default,

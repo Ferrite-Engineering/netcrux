@@ -444,6 +444,10 @@
   "@actionExportJson": {
     "description": "Command palette / menu label for exporting the current scope's Yosys JSON subset."
   },
+  "actionSaveProjectAs": "Save Project As…",
+  "@actionSaveProjectAs": {
+    "description": "Command palette / menu label for writing the active tab's project as a .netcrux-project file."
+  },
   "actionSaveSession": "Save Session As…",
   "@actionSaveSession": {
     "description": "Command palette / menu label for saving the current session as a .netcrux file."
@@ -760,6 +764,19 @@
   "projectLoadFailed": "Could not load project: {reason}",
   "@projectLoadFailed": {
     "description": "Snackbar shown when a .netcrux-project file cannot be loaded (I/O error, malformed JSON, missing version, etc.).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "projectSaveDialogTitle": "Save NetCrux Project",
+  "@projectSaveDialogTitle": {
+    "description": "Title of the OS save dialog opened by Save Project As…."
+  },
+  "projectSaveFailed": "Could not save project: {reason}",
+  "@projectSaveFailed": {
+    "description": "Snackbar shown when writing a .netcrux-project file fails (I/O error, unwritable directory).",
     "placeholders": {
       "reason": {
         "type": "String"
