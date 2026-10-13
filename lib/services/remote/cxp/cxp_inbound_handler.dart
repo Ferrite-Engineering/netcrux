@@ -9,7 +9,9 @@ import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_window_chrome/crux_window_chrome.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
+import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
@@ -21,12 +23,17 @@ import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.dart';
+import 'package:netcrux/services/file_open/crux_project_resolution.dart';
+import 'package:netcrux/services/filelist/filelist_reader.dart';
+import 'package:netcrux/services/project/netcrux_project_file.dart';
+import 'package:netcrux/services/project/netcrux_project_path_resolver.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/editor_open_service.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_name_resolver.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/schematic/wire_selection_builder.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
+import 'package:path/path.dart' as p;
 
 /// Looks up the per-tab `ProviderContainer` that the inbound handler
 /// should route highlight requests to. The handler resolves the active
@@ -629,13 +636,18 @@ class CxpInboundHandler {
   static final RegExp _busBitSelectSuffix = RegExp(r'\[\d+(?::\d+)?\]$');
 
   /// Handles an inbound `request_open_artifact` (shared-workspace consumer):
-  /// NetCrux opens only `source` artifacts, resolving the concrete file through
-  /// its shared workspace store (preferring that over the sender's hint path,
-  /// whose absolute path may not exist on this machine's layout) and loading it
-  /// into the active tab. Acks honored=false with a reason when the kind is not
-  /// `source`, neither a record nor a hint names a file, the path fails the
-  /// floor ([kCxpOpenArtifactContainment]: empty, relative, a NUL, or padded
-  /// with white space), it is not a file here, or no tab is active.
+  /// NetCrux opens `source` and `project` artifacts, resolving the concrete
+  /// file through its shared workspace store (preferring that over the
+  /// sender's hint path, whose absolute path may not exist on this machine's
+  /// layout) and loading it into the active tab. A `source` is one HDL file,
+  /// loaded as a single-file design; a `project` is a `.netcrux-project`, a
+  /// `<design>.crux-project` manifest or a `.f` filelist, opened through the
+  /// project loader so a multi-file design arrives with its source list, top
+  /// module, defines and include paths. Acks honored=false with a reason when
+  /// the kind is neither, neither a record nor a hint names a file, the path
+  /// fails the floor ([kCxpOpenArtifactContainment]: empty, relative, a NUL,
+  /// or padded with white space), it is not a file here, no tab is active, or
+  /// a `project` file is not one NetCrux reads as a project.
   ///
   /// A design NetCrux has never opened is honoured: this route is not rooted
   /// in the directories the user has opened, and [kCxpOpenArtifactContainment]
@@ -644,7 +656,7 @@ class CxpInboundHandler {
     InboundCxpMessage message,
     RequestOpenArtifact request,
   ) async {
-    final result = _resolveOpenArtifact(request);
+    final result = await _resolveOpenArtifact(request);
     server.sendTo(
       message.from.peerId,
       RequestOpenArtifactAck(
@@ -656,23 +668,23 @@ class CxpInboundHandler {
     if (result.honored) unawaited(requestUserAttention());
   }
 
-  ({bool honored, String? reason}) _resolveOpenArtifact(
+  Future<({bool honored, String? reason})> _resolveOpenArtifact(
     RequestOpenArtifact request,
-  ) {
-    if (request.artifactKind != kCxpSourceArtifactKind) {
+  ) async {
+    final kind = request.artifactKind;
+    if (kind != kCxpSourceArtifactKind && kind != kCxpProjectArtifactKind) {
       return (
         honored: false,
-        reason:
-            'netcrux opens only source artifacts, not "${request.artifactKind}"',
+        reason: 'netcrux opens only source and project artifacts, not "$kind"',
       );
     }
     final path =
-        resolveOpenArtifactSourcePath(rootContainer, request.designId) ??
+        resolveOpenArtifactPath(rootContainer, request.designId, kind: kind) ??
         request.path;
     if (path == null) {
       return (
         honored: false,
-        reason: 'no source artifact recorded for design "${request.designId}"',
+        reason: 'no $kind artifact recorded for design "${request.designId}"',
       );
     }
     // CXP §11's MUST: the artifact a receiver resolved through its own records
@@ -699,8 +711,81 @@ class CxpInboundHandler {
     }
     final tab = activeTabContainerLookup();
     if (tab == null) return (honored: false, reason: 'No active tab');
-    tab.read(currentProjectProvider.notifier).setSourceFiles(<String>[path]);
+    if (kind == kCxpSourceArtifactKind) {
+      tab.read(currentProjectProvider.notifier).setSourceFiles(<String>[path]);
+      return (honored: true, reason: null);
+    }
+    final artifact = await _readProjectArtifact(path);
+    final project = artifact.project;
+    if (project == null) return (honored: false, reason: artifact.reason);
+    tab
+        .read(currentProjectProvider.notifier)
+        .setProject(project, source: artifact.source);
     return (honored: true, reason: null);
+  }
+
+  /// Reads the project a `project` artifact names, in the same three forms
+  /// Open Project… and the command line accept: a `<design>.crux-project`
+  /// manifest (its netlist, else its sources and top), a `.netcrux-project`
+  /// with its relative paths anchored to its own directory, or a `.f`
+  /// filelist. Anything else, and a file that does not parse, is refused
+  /// with a reason that never repeats the path (CXP §9.11).
+  static Future<_ProjectArtifact> _readProjectArtifact(String path) async {
+    switch (const CruxProjectResolver().resolve(path)) {
+      case ManifestNetlist(:final netlistPath):
+        return _ProjectArtifact.loaded(
+          NetcruxProject.create(sourceFiles: <String>[netlistPath]),
+          NetcruxDesignSource.project,
+        );
+      case ManifestSources(:final sources, :final top):
+        return _ProjectArtifact.loaded(
+          NetcruxProject.create(sourceFiles: sources, topModule: top ?? ''),
+          NetcruxDesignSource.project,
+        );
+      case ManifestUnusable(reason: final why):
+        return _ProjectArtifact.refused(switch (why) {
+          ManifestUnusableReason.invalid =>
+            'the manifest is not a valid crux-project file',
+          ManifestUnusableReason.netlistMissing =>
+            'the manifest names a netlist that is not here',
+          ManifestUnusableReason.nothingToOpen =>
+            'the manifest names nothing to open',
+          ManifestUnusableReason.noManifestInDirectory =>
+            'no manifest in that directory',
+        });
+      case ManifestAmbiguous():
+        return const _ProjectArtifact.refused(
+          'more than one manifest in that directory',
+        );
+      case NotAManifest():
+        break;
+    }
+    final lower = path.toLowerCase();
+    try {
+      if (lower.endsWith('.$kNetcruxProjectExtension')) {
+        final project = await const NetcruxProjectFileReader().read(path);
+        return _ProjectArtifact.loaded(
+          resolveProjectPaths(project, p.dirname(path)),
+          NetcruxDesignSource.project,
+        );
+      }
+      if (lower.endsWith('.$kFilelistExtension')) {
+        return _ProjectArtifact.loaded(
+          await const FilelistReader().readAsProject(path),
+          NetcruxDesignSource.filelist,
+        );
+      }
+    } on Object {
+      // A malformed or unreadable project file. The exception text can carry
+      // the path, so a fixed phrase goes on the wire instead.
+      return const _ProjectArtifact.refused(
+        'the project file could not be read',
+      );
+    }
+    return const _ProjectArtifact.refused(
+      'a project artifact must be a .netcrux-project, a <design>.crux-project '
+      'manifest or a .f filelist',
+    );
   }
 
   /// Resolves a canonical net reference ([local], e.g. `top.sample_a` or
@@ -961,4 +1046,25 @@ class CxpInboundHandler {
     // Bare path → line 1.
     return (path, 1, null);
   }
+}
+
+/// The outcome of reading a `project` artifact: the [project] with the
+/// [source] to record it under, or the wire-safe [reason] it was refused.
+class _ProjectArtifact {
+  const _ProjectArtifact.loaded(NetcruxProject this.project, this.source)
+    : reason = null;
+
+  const _ProjectArtifact.refused(String this.reason)
+    : project = null,
+      source = NetcruxDesignSource.project;
+
+  /// The project read from the artifact; null when it was refused.
+  final NetcruxProject? project;
+
+  /// How the design reached the tab, for the `schematic.opened` audit line.
+  final NetcruxDesignSource source;
+
+  /// Why the artifact was refused; null when [project] is set. Never carries
+  /// the path (CXP §9.11).
+  final String? reason;
 }

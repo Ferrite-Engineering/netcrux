@@ -135,7 +135,7 @@ primary element. NetCrux never sends `request_open_source`.
 | `request_highlight` | `marker`, `rule`, `test`, `breakpoint`, unknown | `honored: false` with a reason. Never throws. |
 | `notify_selection` | first `signal` / `instance` / `port` / `net` that resolves | Selected exactly as for `request_highlight`. No ack — `notify_selection` is fire-and-forget. |
 | `request_open_source` | — | `{file_path, line, column?}` handed to the editor command. |
-| `request_open_artifact` | — | Only `artifact_kind: source` is accepted: NetCrux loads that file into the active tab. |
+| `request_open_artifact` | — | `kind: source` loads that one HDL file into the active tab. `kind: project` (from NetCrux 1.1) opens a `.netcrux-project`, a `<design>.crux-project` manifest or a `.f` filelist through the project loader into the active tab, so a multi-file design arrives with its source list, top module, defines and include paths. Any other kind, and a `project` file NetCrux cannot read as a project, is `honored: false` with a reason. |
 
 When an element does not resolve and the message carries a `crux.design_id`
 that the suite's shared workspace maps to a design source, NetCrux opens

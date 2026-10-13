@@ -18,6 +18,16 @@ import 'package:path/path.dart' as p;
 /// source even when it had nothing loaded.
 const String kCxpSourceArtifactKind = 'source';
 
+/// The shared-workspace artifact kind for a design's *project definition*,
+/// which NetCrux **consumes**: a `request_open_artifact` naming it opens the
+/// file through the project loader, as Open Project… would, so a multi-file
+/// design arrives with its source list, top module, defines and include
+/// paths rather than as one HDL file. For NetCrux that file is a
+/// `.netcrux-project`, a `<design>.crux-project` manifest or a `.f` filelist.
+/// A `source` artifact names one file, and a top module that instantiates
+/// modules from other files does not elaborate from it alone.
+const String kCxpProjectArtifactKind = 'project';
+
 /// NetCrux's producer short-name stamped into workspace records.
 const String kNetcruxWorkspaceProducer = 'netcrux';
 
@@ -233,7 +243,7 @@ String? resolveDesignSourceArtifactPath(
   return artifact?.path;
 }
 
-/// Resolves the `source` artifact recorded for [designId] the way
+/// Resolves the artifact of [kind] recorded for [designId] the way
 /// `request_open_artifact` needs it: the records [cxpWorkspaceStoreProvider]
 /// reads, from the same directory, admitted by [kCxpOpenArtifactContainment]
 /// rather than by the rooted rule that store carries.
@@ -245,16 +255,27 @@ String? resolveDesignSourceArtifactPath(
 /// directory costs nothing.
 ///
 /// Returns the absolute path NetCrux should open, or null when the design has
-/// no source artifact recorded.
-String? resolveOpenArtifactSourcePath(
+/// no artifact of that kind recorded.
+String? resolveOpenArtifactPath(
   ProviderContainer container,
-  String designId,
-) {
+  String designId, {
+  required String kind,
+}) {
   if (designId.isEmpty) return null;
   final store = container.read(cxpWorkspaceStoreProvider);
   return CxpWorkspaceStore(
     workspaceDirectory: store.workspaceDirectory,
     ttl: store.ttl,
     containment: kCxpOpenArtifactContainment,
-  ).resolveArtifact(designId, kCxpSourceArtifactKind)?.path;
+  ).resolveArtifact(designId, kind)?.path;
 }
+
+/// [resolveOpenArtifactPath] for the `source` artifact.
+String? resolveOpenArtifactSourcePath(
+  ProviderContainer container,
+  String designId,
+) => resolveOpenArtifactPath(
+  container,
+  designId,
+  kind: kCxpSourceArtifactKind,
+);

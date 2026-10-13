@@ -12,11 +12,14 @@ import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
+import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/remote/cxp/cxp_inbound_handler.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
@@ -74,13 +77,16 @@ void main() {
         'module ${p.basenameWithoutExtension(name).trim()}; endmodule\n',
       );
 
-  Future<void> record(String designId, String path) =>
-      CxpWorkspaceStore(workspaceDirectory: storeDir.path).upsertArtifact(
-        designId: designId,
-        kind: 'source',
-        path: path,
-        producer: 'peer',
-      );
+  Future<void> record(
+    String designId,
+    String path, {
+    String kind = 'source',
+  }) => CxpWorkspaceStore(workspaceDirectory: storeDir.path).upsertArtifact(
+    designId: designId,
+    kind: kind,
+    path: path,
+    producer: 'peer',
+  );
 
   /// A handler whose rooted rule has [open] as its only root, over a
   /// workspace store that carries that rule — as the production store does.
@@ -132,7 +138,7 @@ void main() {
     });
 
     test(
-      'a kind other than source is declined, and nothing is loaded',
+      'a kind other than source or project is declined, and nothing is loaded',
       () async {
         final file = design(open, 'fsm.v');
         await record('d1', file.path);
@@ -145,10 +151,186 @@ void main() {
           ),
         );
         expect(ack.honored, isFalse);
-        expect(ack.reason, contains('only source artifacts'));
+        expect(ack.reason, contains('only source and project artifacts'));
         expect(loaded(env.tab), isEmpty);
       },
     );
+
+    // A `project` artifact is the hand-off for a multi-file design: a top
+    // module that instantiates modules from other files does not elaborate
+    // from one `source`, and a project file sent as `source` would have been
+    // parsed as HDL. The three project definitions Open Project… and the
+    // command line accept are the three this route accepts.
+    group('a project artifact', () {
+      test('naming a .netcrux-project opens it with its defines, include '
+          'paths and top, anchored to its own directory', () async {
+        final projectFile = p.join(outside.path, 'soc.netcrux-project');
+        await const NetcruxProjectFileWriter().write(
+          projectFile,
+          NetcruxProject.create(
+            sourceFiles: const <String>['rtl/gpio.v', 'rtl/soc_top.v'],
+            topModule: 'soc_top',
+            defines: const <String, String>{'WIDTH': '32'},
+            includePaths: const <String>['inc'],
+          ),
+        );
+        final env = boot();
+        final ack = await env.server.ask(
+          RequestOpenArtifact(
+            designId: 'soc',
+            artifactKind: 'project',
+            path: projectFile,
+          ),
+        );
+        expect(ack.honored, isTrue, reason: ack.reason);
+        final project = env.tab.read(currentProjectProvider);
+        expect(project.sourceFiles, <String>[
+          p.join(outside.path, 'rtl', 'gpio.v'),
+          p.join(outside.path, 'rtl', 'soc_top.v'),
+        ]);
+        expect(project.topModule, 'soc_top');
+        expect(project.defines, const <String, String>{'WIDTH': '32'});
+        expect(project.includePaths, <String>[p.join(outside.path, 'inc')]);
+        expect(
+          env.tab.read(currentProjectProvider.notifier).activeSource,
+          NetcruxDesignSource.project,
+        );
+      });
+
+      test(
+        'recorded in the shared workspace is resolved without a hint',
+        () async {
+          final projectFile = p.join(outside.path, 'alu.netcrux-project');
+          await const NetcruxProjectFileWriter().write(
+            projectFile,
+            NetcruxProject.create(
+              sourceFiles: const <String>['alu.v'],
+              topModule: 'alu',
+            ),
+          );
+          await record('alu', projectFile, kind: 'project');
+          final env = boot();
+          final ack = await env.server.ask(
+            const RequestOpenArtifact(designId: 'alu', artifactKind: 'project'),
+          );
+          expect(ack.honored, isTrue, reason: ack.reason);
+          expect(loaded(env.tab), <String>[p.join(outside.path, 'alu.v')]);
+          expect(env.tab.read(currentProjectProvider).topModule, 'alu');
+        },
+      );
+
+      test('naming a <design>.crux-project manifest opens its sources and '
+          'top', () async {
+        for (final f in <String>['defs.vh', 'fifo.v', 'uart_tx.v']) {
+          File(p.join(outside.path, 'rtl', f))
+            ..parent.createSync(recursive: true)
+            ..writeAsStringSync('');
+        }
+        final manifest = File(p.join(outside.path, 'uart.crux-project'))
+          ..writeAsStringSync('''
+version: 1
+name: uart
+design:
+  top: uart_tx
+  sources:
+    - rtl/defs.vh
+    - rtl/fifo.v
+    - rtl/uart_tx.v
+''');
+        final env = boot();
+        final ack = await env.server.ask(
+          RequestOpenArtifact(
+            designId: 'uart',
+            artifactKind: 'project',
+            path: manifest.path,
+          ),
+        );
+        expect(ack.honored, isTrue, reason: ack.reason);
+        final project = env.tab.read(currentProjectProvider);
+        expect(project.sourceFiles.map(p.basename), <String>[
+          'defs.vh',
+          'fifo.v',
+          'uart_tx.v',
+        ]);
+        expect(project.topModule, 'uart_tx');
+      });
+
+      test('naming a .f filelist expands it', () async {
+        for (final f in <String>['gpio.v', 'soc_top.v']) {
+          File(p.join(outside.path, 'rtl', f))
+            ..parent.createSync(recursive: true)
+            ..writeAsStringSync('');
+        }
+        final filelist = File(p.join(outside.path, 'soc.f'))
+          ..writeAsStringSync('+define+WIDTH=32\nrtl/gpio.v\nrtl/soc_top.v\n');
+        final env = boot();
+        final ack = await env.server.ask(
+          RequestOpenArtifact(
+            designId: 'soc',
+            artifactKind: 'project',
+            path: filelist.path,
+          ),
+        );
+        expect(ack.honored, isTrue, reason: ack.reason);
+        final project = env.tab.read(currentProjectProvider);
+        expect(project.sourceFiles.map(p.basename), <String>[
+          'gpio.v',
+          'soc_top.v',
+        ]);
+        expect(project.defines, const <String, String>{'WIDTH': '32'});
+        expect(
+          env.tab.read(currentProjectProvider.notifier).activeSource,
+          NetcruxDesignSource.filelist,
+        );
+      });
+
+      test('naming an HDL file is declined, and nothing is loaded', () async {
+        final file = design(outside, 'top.v');
+        final env = boot();
+        final ack = await env.server.ask(
+          RequestOpenArtifact(
+            designId: 'top',
+            artifactKind: 'project',
+            path: file.path,
+          ),
+        );
+        expect(ack.honored, isFalse);
+        expect(ack.reason, contains('a project artifact must be'));
+        expect(ack.reason, isNot(contains(file.path)));
+        expect(loaded(env.tab), isEmpty);
+      });
+
+      test('naming a project file that does not parse is declined without '
+          'repeating the path', () async {
+        final broken = File(p.join(outside.path, 'broken.netcrux-project'))
+          ..writeAsStringSync('{ not json');
+        final env = boot();
+        final ack = await env.server.ask(
+          RequestOpenArtifact(
+            designId: 'broken',
+            artifactKind: 'project',
+            path: broken.path,
+          ),
+        );
+        expect(ack.honored, isFalse);
+        expect(ack.reason, contains('could not be read'));
+        expect(ack.reason, isNot(contains(broken.path)));
+        expect(loaded(env.tab), isEmpty);
+      });
+
+      test('with no record and no hint is declined', () async {
+        final env = boot();
+        final ack = await env.server.ask(
+          const RequestOpenArtifact(
+            designId: 'unknown',
+            artifactKind: 'project',
+          ),
+        );
+        expect(ack.honored, isFalse);
+        expect(ack.reason, contains('no project artifact recorded'));
+        expect(loaded(env.tab), isEmpty);
+      });
+    });
 
     test('no record and no hint is declined', () async {
       final env = boot();
