@@ -13,8 +13,9 @@ import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
 /// canvas with its own paint pipeline. App-level metrics (memory, FPS)
 /// live at the root scope.
 ///
-/// The [paneId] parameter is part of the [`PaneOverridesFactory`]
-/// signature; future per-pane providers that need the pane id can read it.
+/// The [paneId] parameter is part of the signature
+/// `PaneContainerManager.overridesFactory` takes; future per-pane providers
+/// that need the pane id can read it.
 List<Override> netcruxPaneOverridesFactory(PaneId paneId) {
   return <Override>[
     paneRenderStatsProvider.overrideWith(PaneRenderStatsNotifier.new),

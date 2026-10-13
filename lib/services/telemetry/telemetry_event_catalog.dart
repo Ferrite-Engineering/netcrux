@@ -181,6 +181,14 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
     boolProperties: <String>['silent'],
   ),
 
+  // `crux_telemetry`'s `TelemetryUncleanShutdownDetector` records this once
+  // at launch when the previous desktop session ended without a clean exit
+  // (a crash, a force quit, a power loss). No properties: the event is the
+  // count. The name is the package's constant, and the package ships it dark
+  // behind its own switch, so the entry is declared before the first row can
+  // arrive.
+  TelemetryCatalogEvent(kTelemetryUncleanShutdownEvent),
+
   // ── the commercial group ──────────────────────────────────────────────
   // Recorded from BOTH repositories, by two gate-denial sites covering
   // disjoint activation surfaces: open core's `allowProAction` (the

@@ -7,6 +7,8 @@ import 'package:crux_eula/crux_eula.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_linux_integration/crux_linux_integration.dart';
+import 'package:crux_settings_ui/crux_settings_ui.dart'
+    show CruxPolicyLockScope, kCruxPolicyLockNoteEn;
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_theme/crux_theme.dart';
 import 'package:crux_updates/crux_updates.dart';
@@ -47,6 +49,7 @@ import 'package:netcrux/features/workspace/screens/workspace_screen.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/netcrux_color_theme_bootstrap.dart';
 import 'package:netcrux/plugins/extra_localizations_delegates_provider.dart';
+import 'package:netcrux/plugins/policy_lock_message_provider.dart';
 import 'package:netcrux/services/cli/cli_args.dart';
 import 'package:netcrux/services/file_open/incoming_document_service.dart';
 import 'package:netcrux/services/logging/severe_log_stderr_sink.dart';
@@ -474,13 +477,16 @@ class NetcruxApp extends ConsumerWidget {
   ///    `bootstrap` cannot reach. Neither provider has dependents inside its
   ///    package beyond the widgets read here, so scoping them does not move
   ///    `updateStatusProvider` (and its launch/periodic timer) off the root.
-  /// 2. The screenshot [RepaintBoundary] the beta issue reporter captures.
+  /// 2. [CruxPolicyLockScope], the one mount of the policy-lock sentence
+  ///    (localized by the overlay through [policyLockMessageProvider]),
+  ///    above the root navigator so dialogs see it too.
+  /// 3. The screenshot [RepaintBoundary] the beta issue reporter captures.
   ///    Placed above the banners so a report shows exactly what the user saw,
   ///    banners included.
-  /// 3. [BetaExpiryGate], so a blocking expiry modal covers the update banner
+  /// 4. [BetaExpiryGate], so a blocking expiry modal covers the update banner
   ///    — an expired build must not offer a second, competing call to action.
-  /// 4. [UpdateBanner], the dismissible "a newer NetCrux is available" strip.
-  /// 5. [DesktopMenuBar], which wraps *every* route rather than living inside
+  /// 5. [UpdateBanner], the dismissible "a newer NetCrux is available" strip.
+  /// 6. [DesktopMenuBar], which wraps *every* route rather than living inside
   ///    `WorkspaceScreen`. On Windows/Linux it draws the frameless window's
   ///    title bar and its min/maximize/close caption buttons, so mounting it
   ///    inside a screen meant navigating to /settings removed the title bar
@@ -506,43 +512,52 @@ class NetcruxApp extends ConsumerWidget {
         ),
       ],
       child: Consumer(
-        builder: (context, ref, _) => RepaintBoundary(
-          key: ref.watch(cruxAppScreenshotBoundaryKeyProvider),
-          child: DesktopMenuBar(
-            onAction: _dispatchFromMenu,
-            child: BetaExpiryGate(
-              // Below the expiry gate so an expired build's blocking modal
-              // still wins — an expired build has nothing to collect and the
-              // user can do nothing about it — and above the update banner so
-              // the one-time disclosure is not competing for the top of the
-              // window with an update prompt. Renders its child untouched for
-              // the whole beta: without the dev flag it never mounts at all.
-              child: CruxEulaGate(
-                // OUTSIDE the telemetry disclosure, and that ordering is not a
-                // preference. The disclosure asks for consent to a term the
-                // EULA itself defines (EULA 8), so collecting it first would
-                // have the user answering a question about a contract they had
-                // not been shown. It is also the only ordering under which the
-                // EEA/UK/CH/KR opt-in default is defensible.
-                //
-                // Inside the expiry gate, on the same rule that puts the
-                // disclosure there: an expired build has nothing to license.
-                //
-                // Not localized — see CruxEulaStrings. The agreement is
-                // executed in English, so its chrome stays English rather than
-                // implying a translated contract exists.
-                isPhoneLayout: !isDesktopPlatform,
-                child: TelemetryConsentGate(
-                  // NetCrux's own layout idiom, handed to the shared widget
-                  // rather than re-derived inside it. `isDesktopPlatform` is
-                  // the single bit every adaptive surface in this app reads, so
-                  // the sheet presentation appears exactly where `openAdaptive`
-                  // would push a route instead of showing a dialog.
+        builder: (context, ref, _) => CruxPolicyLockScope(
+          // Above the root navigator, so a locked control in a dialog reads
+          // the same localized sentence as one in Settings.
+          message:
+              ref.watch(policyLockMessageProvider)?.call(context) ??
+              kCruxPolicyLockNoteEn,
+          child: RepaintBoundary(
+            key: ref.watch(cruxAppScreenshotBoundaryKeyProvider),
+            child: DesktopMenuBar(
+              onAction: _dispatchFromMenu,
+              child: BetaExpiryGate(
+                // Below the expiry gate so an expired build's blocking modal
+                // still wins — an expired build has nothing to collect and the
+                // user can do nothing about it — and above the update banner so
+                // the one-time disclosure is not competing for the top of the
+                // window with an update prompt. Renders its child untouched for
+                // the whole beta: without the dev flag it never mounts at all.
+                child: CruxEulaGate(
+                  // OUTSIDE the telemetry disclosure, and that ordering is not a
+                  // preference. The disclosure asks for consent to a term the
+                  // EULA itself defines (EULA 8), so collecting it first would
+                  // have the user answering a question about a contract they had
+                  // not been shown. It is also the only ordering under which the
+                  // EEA/UK/CH/KR opt-in default is defensible.
+                  //
+                  // Inside the expiry gate, on the same rule that puts the
+                  // disclosure there: an expired build has nothing to license.
+                  //
+                  // Not localized — see CruxEulaStrings. The agreement is
+                  // executed in English, so its chrome stays English rather than
+                  // implying a translated contract exists.
                   isPhoneLayout: !isDesktopPlatform,
-                  // The package defaults are the desktop Material values and
-                  // already clear the 44 dp consent floor; NetCrux has no
-                  // device-metrics system of its own to feed in.
-                  child: UpdateBanner(child: child ?? const SizedBox.shrink()),
+                  child: TelemetryConsentGate(
+                    // NetCrux's own layout idiom, handed to the shared widget
+                    // rather than re-derived inside it. `isDesktopPlatform` is
+                    // the single bit every adaptive surface in this app reads, so
+                    // the sheet presentation appears exactly where `openAdaptive`
+                    // would push a route instead of showing a dialog.
+                    isPhoneLayout: !isDesktopPlatform,
+                    // The package defaults are the desktop Material values and
+                    // already clear the 44 dp consent floor; NetCrux has no
+                    // device-metrics system of its own to feed in.
+                    child: UpdateBanner(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:ui' show Color;
+
 import 'package:crux_settings/crux_settings.dart';
 import 'package:crux_theme/crux_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,18 +80,20 @@ void main() {
   });
 
   test(
-    'the empty-token high-contrast-dark preset activates without error',
+    'the high-contrast-dark preset activates with its full chrome',
     () async {
-      // `high-contrast-dark`'s only tokens were WaveCrux canvas tokens,
-      // which moved to a product-registered overlay, leaving the preset
-      // empty for NetCrux. Selecting it must still be harmless: the theme
-      // resolves, nothing throws, and the user simply sees NetCrux's
-      // default chrome rather than a high-contrast one.
+      // High Contrast Dark declares the whole chrome set (black surfaces, white
+      // text and icons, yellow active), so NetCrux shows a high-contrast
+      // chrome rather than its default one.
       final container = await containerWithTheme('high-contrast-dark');
       addTearDown(container.dispose);
       final theme = container.read(cruxColorThemeProvider);
       expect(theme.id, 'high-contrast-dark');
-      expect(theme.tokens, isEmpty);
+      final chrome = theme.tokens['chrome'];
+      expect(chrome, isNotNull);
+      expect(chrome!['toolbar.iconActive'], const Color(0xFFFFFF00));
+      expect(chrome['statusBar.background'], const Color(0xFF000000));
+      expect(chrome['statusBar.foreground'], const Color(0xFFFFFFFF));
     },
   );
 }

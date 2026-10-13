@@ -29,7 +29,8 @@
 //     `kNetcruxEventCatalog`. An undocumented event cannot ship.
 //  2. Conversely, every catalog entry is still recorded somewhere (Pro-only
 //     entries excepted, since they live in the other repo, and the shared
-//     `app.uncaught_error`, which `crux_telemetry` records) — a catalog that
+//     `app.uncaught_error` and `app.unclean_shutdown`, which `crux_telemetry`
+//     records) — a catalog that
 //     accumulates dead names stops being a description of the product.
 //  3. Every catalog name matches the Worker's event-name class.
 //  4. Every property key matches the Worker's property-key class.
@@ -107,9 +108,13 @@ const Set<String> _proOnlyEvents = <String>{
 
 /// Catalog entries recorded by a shared package rather than by a call site in
 /// either repository. `crux_telemetry` records `app.uncaught_error` from the
-/// global error handlers, so no scan of this repository's `lib/` can find it,
-/// and it is excused from the "still recorded" rule.
-const Set<String> _sharedEvents = <String>{'app.uncaught_error'};
+/// global error handlers and `app.unclean_shutdown` from its launch-time
+/// detector, so no scan of this repository's `lib/` can find either, and both
+/// are excused from the "still recorded" rule.
+const Set<String> _sharedEvents = <String>{
+  'app.uncaught_error',
+  'app.unclean_shutdown',
+};
 
 void main() {
   const catalog = kNetcruxEventCatalog;
@@ -325,6 +330,16 @@ void main() {
       };
       expect(fromActions, NetcruxGatedFeature.values.toSet());
     });
+  });
+
+  test('app.unclean_shutdown is the shared constant, with no properties', () {
+    // Recorded by `crux_telemetry`'s launch-time detector, not by this
+    // repository: the event is the count, so it carries nothing.
+    expect(kTelemetryUncleanShutdownEvent, 'app.unclean_shutdown');
+    final entry = catalog.firstWhere(
+      (e) => e.name == kTelemetryUncleanShutdownEvent,
+    );
+    expect(entry.propertyKeys, isEmpty);
   });
 
   test('app.uncaught_error carries the shared counter vocabulary', () {
