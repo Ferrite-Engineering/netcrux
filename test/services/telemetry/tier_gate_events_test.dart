@@ -128,6 +128,7 @@ void main() {
                 openSourceFiles: () async {},
                 openNetlistJson: () async {},
                 openWorkspaceFlow: () async {},
+                openDesignByPath: (_) async {},
               );
               return const Focus(autofocus: true, child: SizedBox.shrink());
             },

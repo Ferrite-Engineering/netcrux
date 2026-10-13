@@ -40,6 +40,7 @@ import 'package:netcrux/services/file_open/crux_project_resolution.dart';
 import 'package:netcrux/services/file_open/file_open_service.dart';
 import 'package:netcrux/services/file_open/file_open_service_provider.dart';
 import 'package:netcrux/services/file_open/incoming_document_service_provider.dart';
+import 'package:netcrux/services/filelist/filelist_reader.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/project/netcrux_project_path_resolver.dart';
 import 'package:netcrux/services/session/session_controller.dart';
@@ -614,6 +615,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           source: NetcruxDesignSource.project,
           projectFilePath: path,
         );
+      case NotAManifest(:final path) when _hasSuffix(path, kFilelistExtension):
+        await _openFilelistByPath(path);
       case NotAManifest(:final path):
         await _openDesignTab(
           recentPath: path,
@@ -622,6 +625,33 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           source: NetcruxDesignSource.rtl,
         );
     }
+  }
+
+  /// Opens the Vivado-style `.f` filelist at [path] as a design. The import
+  /// action, a Recent Projects entry and a command-line argument all arrive
+  /// here, so a filelist is expanded through [FilelistReader] on every route
+  /// rather than handed to Yosys as a Verilog source, which is what the
+  /// fall-through case above would do with it. The filelist is recorded as
+  /// the tab's project file, so a restore re-reads it, defines and include
+  /// paths included.
+  Future<void> _openFilelistByPath(String path) async {
+    if (!mounted) return;
+    final l10n = L10N.of(context);
+    final NetcruxProject project;
+    try {
+      project = await const FilelistReader().readAsProject(path);
+    } on Object catch (e) {
+      if (!mounted) return;
+      showCruxErrorSnack(context, l10n.projectLoadFailed(e.toString()));
+      return;
+    }
+    await _openDesignTab(
+      recentPath: path,
+      displayName: p.basenameWithoutExtension(path),
+      project: project,
+      source: NetcruxDesignSource.filelist,
+      projectFilePath: path,
+    );
   }
 
   /// Whether [path] ends in `.<extension>`, ignoring case — the command line
@@ -779,12 +809,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   /// Pushes each restored tab's design into its pipeline.
   ///
-  /// A tab opened from a `.netcrux-project` is re-read from that file: the
-  /// payload carries only its sources and top module, and rebuilding the
-  /// project from those silently dropped its defines, include paths, extra
-  /// Yosys commands and lowering, so the restored tab elaborated a different
-  /// design. When the file cannot be read any more, the payload is the best
-  /// there is.
+  /// A tab opened from a `.netcrux-project` or a `.f` filelist is re-read
+  /// from that file: the payload carries only its sources and top module, and
+  /// rebuilding the project from those silently dropped its defines, include
+  /// paths, extra Yosys commands and lowering, so the restored tab elaborated
+  /// a different design. When the file cannot be read any more, the payload
+  /// is the best there is.
   Future<void> _hydrateActiveTabFromWorkspace() async {
     final ws = ref.read(netcruxWorkspaceProvider).value;
     if (ws == null) return;
@@ -794,14 +824,25 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       final container = scope.tabContainerManager.containerFor(tab.id);
       final payload = tab.payload;
       final projectFile = payload.projectFilePath;
-      if (projectFile != null &&
-          _hasSuffix(projectFile, kNetcruxProjectExtension)) {
+      final isProjectFile =
+          projectFile != null &&
+          _hasSuffix(projectFile, kNetcruxProjectExtension);
+      final isFilelist =
+          projectFile != null && _hasSuffix(projectFile, kFilelistExtension);
+      if (isProjectFile || isFilelist) {
         try {
-          final project = await _readNetcruxProject(projectFile);
+          final project = isFilelist
+              ? await const FilelistReader().readAsProject(projectFile)
+              : await _readNetcruxProject(projectFile);
           if (!mounted) return;
           container
               .read(currentProjectProvider.notifier)
-              .setProject(project, source: NetcruxDesignSource.project);
+              .setProject(
+                project,
+                source: isFilelist
+                    ? NetcruxDesignSource.filelist
+                    : NetcruxDesignSource.project,
+              );
           continue;
         } on Object {
           if (!mounted) return;
@@ -842,6 +883,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     openSourceFiles: _onOpenSourceFilesPressed,
     openNetlistJson: _onOpenNetlistJsonPressed,
     openWorkspaceFlow: _onOpenWorkspacePressed,
+    openDesignByPath: _openProjectByPath,
   );
 
   void _dispatchAction(BuildContext context, NetcruxAction action) =>

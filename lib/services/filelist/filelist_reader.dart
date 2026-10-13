@@ -8,6 +8,12 @@ import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:path/path.dart' as p;
 
+/// The extension of a Vivado-style filelist, without its dot. The import
+/// picker filters on it, and the workspace's open-by-path route recognises a
+/// recent or command-line `.f` by it, so the filelist is expanded through
+/// [FilelistReader] rather than handed to Yosys as a Verilog source.
+const String kFilelistExtension = 'f';
+
 /// Thrown when a `.f` filelist references itself (directly or
 /// transitively through nested `-f` includes).
 @immutable

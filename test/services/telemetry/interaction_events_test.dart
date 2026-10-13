@@ -141,6 +141,7 @@ void main() {
                   openSourceFiles: () async {},
                   openNetlistJson: () async {},
                   openWorkspaceFlow: () async {},
+                  openDesignByPath: (_) async {},
                 );
                 return const SizedBox.shrink();
               },

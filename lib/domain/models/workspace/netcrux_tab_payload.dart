@@ -54,9 +54,14 @@ class NetcruxTabPayload {
   /// as [`NetcruxProject.topModule`]).
   final String topModule;
 
-  /// Path to the `.netcrux-project` file or `<design>.crux-project` manifest
-  /// the tab was opened from. `null` for tabs opened directly from a
-  /// source-file list or from a `.netcrux` session import.
+  /// Path to the `.netcrux-project` file, `<design>.crux-project` manifest or
+  /// `.f` filelist the tab was opened from. `null` for tabs opened directly
+  /// from a source-file list or from a `.netcrux` session import.
+  ///
+  /// A restore re-reads the file it names: the payload carries only the
+  /// sources and top module, and a project file or filelist also carries
+  /// defines and include paths, which would otherwise be lost at the next
+  /// launch.
   final String? projectFilePath;
 
   /// Dotted instance-name path of the active scope (e.g. `['u_cpu', 'alu']`

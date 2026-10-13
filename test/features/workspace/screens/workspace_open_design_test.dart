@@ -348,4 +348,102 @@ design:
     expect(tester.takeException(), isNull);
     await WorkspaceAppHarness.unmount(tester);
   }, variant: macOS);
+
+  /// Writes a two-source Vivado filelist with a define and an include
+  /// directory into [designDir], and returns its path.
+  String writeFilelist(String designDir) {
+    for (final f in ['gpio.v', 'soc_top.v']) {
+      File(p.join(designDir, 'rtl', f))
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync('');
+    }
+    Directory(p.join(designDir, 'inc')).createSync();
+    final filelist = p.join(designDir, 'soc.f');
+    File(filelist).writeAsStringSync('''
++incdir+inc
++define+WIDTH=32
+rtl/gpio.v
+rtl/soc_top.v
+''');
+    return filelist;
+  }
+
+  void expectFilelistDesign(NetcruxProject project) {
+    expect(project.sourceFiles, <String>[
+      p.join(dir.path, 'rtl', 'gpio.v'),
+      p.join(dir.path, 'rtl', 'soc_top.v'),
+    ]);
+    expect(project.defines, const <String, String>{'WIDTH': '32'});
+    expect(project.includePaths, <String>[p.join(dir.path, 'inc')]);
+  }
+
+  // A `.f` reaches the open-by-path route from Recent Projects and from the
+  // command line alike. Read as a Verilog source, as the fall-through case
+  // once did with it, the filelist's own text went to Yosys and failed on
+  // its first path.
+  testWidgets('a .f filelist opened by path is expanded, not read as HDL', (
+    tester,
+  ) async {
+    final filelist = writeFilelist(dir.path);
+    final h = await WorkspaceAppHarness.boot(
+      tester,
+      intent: CliLaunchIntent.openProject(filelist),
+    );
+    expectFilelistDesign(h.activeTab.read(currentProjectProvider));
+    final tab = h.root.read(netcruxWorkspaceProvider).value!.tabs.single;
+    expect(tab.payload.projectFilePath, filelist);
+    expect(tab.displayName, 'soc');
+    expect(
+      h.root.read(appSettingsProvider).value!.recentProjectPaths.first,
+      filelist,
+    );
+    expect(tester.takeException(), isNull);
+    await WorkspaceAppHarness.unmount(tester);
+  }, variant: macOS);
+
+  testWidgets('a restored filelist tab re-reads the filelist', (tester) async {
+    final filelist = writeFilelist(dir.path);
+    final wsDir = Directory(p.join(dir.path, 'ws'))..createSync();
+    final pane = PaneId.generate();
+    final tabId = TabId.generate();
+    await tester.runAsync(
+      () =>
+          WorkspaceService<NetcruxTabPayload>(
+            codec: const NetcruxWorkspaceCodec(),
+            directoryFactory: () async => wsDir,
+            logger: (_) {},
+          ).save(
+            Workspace<NetcruxTabPayload>(
+              tabs: <WorkspaceTab<NetcruxTabPayload>>[
+                WorkspaceTab<NetcruxTabPayload>(
+                  id: tabId,
+                  displayName: 'soc',
+                  paneId: pane,
+                  // The sources alone: the define and the include directory
+                  // live only in the filelist.
+                  payload: NetcruxTabPayload(
+                    sourceFiles: <String>[
+                      p.join(dir.path, 'rtl', 'gpio.v'),
+                      p.join(dir.path, 'rtl', 'soc_top.v'),
+                    ],
+                    projectFilePath: filelist,
+                  ),
+                ),
+              ],
+              panes: <WorkspacePane>[
+                WorkspacePane(id: pane, activeTabId: tabId),
+              ],
+              activePaneId: pane,
+            ),
+          ),
+    );
+
+    final h = await WorkspaceAppHarness.boot(
+      tester,
+      workspaceDirectory: wsDir,
+    );
+    expectFilelistDesign(h.activeTab.read(currentProjectProvider));
+    expect(tester.takeException(), isNull);
+    await WorkspaceAppHarness.unmount(tester);
+  }, variant: macOS);
 }

@@ -17,22 +17,18 @@ import 'package:netcrux/core/netcrux_url_launcher.dart';
 import 'package:netcrux/core/policy/netcrux_policy_keys.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/theme/theme_brightness_toggle.dart';
-import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/enums/netcrux_export_kind.dart';
 import 'package:netcrux/domain/interfaces/cone_of_influence_service.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
-import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/about/netcrux_about_dialog.dart';
 import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/command_palette/widgets/command_palette_dialog.dart';
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
 import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
-import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
 import 'package:netcrux/features/search/widgets/search_dialog.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/screens/settings_screen.dart';
 import 'package:netcrux/features/viewer/providers/canvas_fit_target_provider.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
@@ -60,7 +56,6 @@ import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/file_open/file_open_service.dart';
 import 'package:netcrux/services/file_open/file_open_service_provider.dart';
-import 'package:netcrux/services/filelist/filelist_reader.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
 import 'package:netcrux/services/schematic/cone_of_influence_service_provider.dart';
@@ -99,6 +94,7 @@ class WorkspaceActionDispatcher {
     required this._openSourceFiles,
     required this._openNetlistJson,
     required this._openWorkspaceFlow,
+    required this._openDesignByPath,
   });
 
   final WidgetRef _ref;
@@ -115,6 +111,13 @@ class WorkspaceActionDispatcher {
 
   /// The screen's Open Workspace… flow (shared with the empty canvas).
   final Future<void> Function() _openWorkspaceFlow;
+
+  /// The screen's open-by-path route: the one that a Recent Projects entry
+  /// and a command-line argument take, branching on the file's name (a
+  /// project file, a manifest, a session, a filelist, an HDL source). Import
+  /// Vivado Filelist… hands its pick here, so a filelist opens the same way
+  /// from the picker as it does when reopened from recents.
+  final Future<void> Function(String path) _openDesignByPath;
 
   /// Dispatches [action]. Behavior is verbatim from the pre-extraction
   /// `WorkspaceScreen._dispatchAction`.
@@ -685,35 +688,10 @@ class WorkspaceActionDispatcher {
       return;
     }
     if (result.isCancelled || !context.mounted) return;
-    final filelistPath = result.paths.single;
-    try {
-      final project = await const FilelistReader().readAsProject(filelistPath);
-      if (!context.mounted) return;
-      await _ref
-          .read(appSettingsProvider.notifier)
-          .recordRecentProject(
-            filelistPath,
-          );
-      if (!context.mounted) return;
-      final displayName = p.basenameWithoutExtension(filelistPath);
-      await _ref
-          .read(netcruxWorkspaceProvider.notifier)
-          .openTab(
-            displayName: displayName,
-            payload: NetcruxTabPayload(
-              sourceFiles: project.sourceFiles,
-              topModule: project.topModule,
-            ),
-          );
-      if (!context.mounted) return;
-      final container = _ref.activeTabContainerOrNull(context);
-      container
-          ?.read(currentProjectProvider.notifier)
-          .setProject(project, source: NetcruxDesignSource.filelist);
-    } on Object catch (e) {
-      if (!context.mounted) return;
-      showCruxErrorSnack(context, l10n.projectLoadFailed(e.toString()));
-    }
+    // The screen's open-by-path route expands the filelist, records it in
+    // recents and marks the tab as opened from it, so a restore and a
+    // Recent Projects pick re-read the filelist rather than its sources.
+    await _openDesignByPath(result.paths.single);
   }
 
   /// The active tab canvas' current on-screen size, read straight from the
@@ -804,10 +782,17 @@ class WorkspaceActionDispatcher {
     // for a failed write, which are the two cases an audit line must not
     // claim — a line for a save that did not happen is the one an
     // investigation would trust.
+    //
+    // The payload carries the file's base name under `file`, never its
+    // directory: the suite's rule is that no audit payload carries a
+    // filesystem path, because a session is saved wherever the engineer
+    // likes (a home directory, a customer's share) and the log is shipped
+    // off the machine. The name is what an investigation needs. WaveCrux
+    // records the same key with the same meaning.
     if (saved != null) {
       audit.record(
         NetCruxAuditKinds.sessionSaved,
-        payload: <String, Object?>{'path': saved},
+        payload: <String, Object?>{'file': p.basename(saved)},
       );
     }
   }

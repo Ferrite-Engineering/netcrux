@@ -139,7 +139,7 @@ Turned on with `suite.audit.path`, suite-wide. The envelope, the format, rotatio
 | Kind | When | Payload |
 |---|---|---|
 | `schematic.opened` | A design is opened — including re-opening one already open, which is exactly the repeat access an investigation looks for. | `source`, `fileCount`, `topModule` |
-| `session.saved` | A session is written. Only on a real write: a cancelled picker and a failed write both record nothing. | `path` |
+| `session.saved` | A session is written. Only on a real write: a cancelled picker and a failed write both record nothing. | `file`, the base name, never the directory |
 | `crossprobe.originated` | A cross-probe is sent to another product from the schematic context menu. | `peerId`, `elementKind`, `honored` |
 | `search.executed` | A search result is activated. | `mode`, `resultKind` |
 
@@ -153,7 +153,11 @@ This file is read by whoever runs your log shipper, which is usually not the tea
 - **No search queries.** A search term in a netlist is a signal or instance name, which is design IP. "What were people looking for in our RTL" is not a question this file is entitled to answer, so it records that a search ran, in which mode, and what class of thing was activated.
 - **No cross-probed element paths.** A hierarchical path is design structure. The event records the peer, the element *kind*, and whether the peer honoured the probe.
 
-`session.saved` does record the path the engineer chose to write to. It is the one place NetCrux writes a filesystem path into a payload, and it is there because the path *is* the event.
+- **No session paths either.** `session.saved` records the session file's base name (`soc_debug.netcrux`), not the directory it was written to. A session is saved wherever the engineer likes, a home directory or a customer's share, and this file is forwarded off the machine by your log shipper. The name is what an investigation needs; the directory is what it must not export. WaveCrux records the same `file` key with the same meaning, so one log-shipper query serves both products.
+
+!!! note "`session.saved` carries `file`, not `path`, from NetCrux 1.1"
+
+    NetCrux 1.0 wrote the full path under a `path` key, the one documented exception to the rule above. From 1.1 the payload key is **`file`** and its value is the **base name**, matching WaveCrux. A log-shipper query written against `path` matches nothing on a 1.1 install; rewrite it to `file`.
 
 ## X-Trace, for a reviewer reading a chain {#tracing}
 

@@ -425,6 +425,7 @@ void main() {
                     openSourceFiles: openSourceFiles ?? () async {},
                     openNetlistJson: openNetlistJson ?? () async {},
                     openWorkspaceFlow: openWorkspaceFlow ?? () async {},
+                    openDesignByPath: (_) async {},
                   );
                   return const SizedBox.expand();
                 },

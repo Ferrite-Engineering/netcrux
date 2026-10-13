@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import 'package:crux_project/crux_project.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:netcrux/services/filelist/filelist_reader.dart'
+    show kFilelistExtension;
 
 /// Result of a file-open dialog. Either at least one path was selected or
 /// the user cancelled (the picker returned `null`). Distinguished here so
@@ -66,7 +68,7 @@ class FileOpenService {
     final result = await FilePicker.pickFiles(
       dialogTitle: dialogTitle,
       type: FileType.custom,
-      allowedExtensions: const <String>['f'],
+      allowedExtensions: const <String>[kFilelistExtension],
     );
     if (result == null || result.files.isEmpty) {
       return const FileOpenResult.cancelled();
