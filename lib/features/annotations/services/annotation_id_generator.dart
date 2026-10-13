@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Riverpod provider exposing a per-app [AnnotationIdGenerator]. Tests

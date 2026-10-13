@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/annotations/services/annotations_on_scope.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';

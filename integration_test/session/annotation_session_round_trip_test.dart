@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 // integration_test/session/annotation_session_round_trip_test.dart
 //
 // Verification driver for annotations (Verification Guide §7.5): seed a

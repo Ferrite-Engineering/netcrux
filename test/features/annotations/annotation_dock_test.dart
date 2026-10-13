@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 // The Annotations panel docks as a right-dock tab, and a row click lands on
 // the annotation's element (netcrux#17, netcrux#18).
 //

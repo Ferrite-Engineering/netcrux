@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
 

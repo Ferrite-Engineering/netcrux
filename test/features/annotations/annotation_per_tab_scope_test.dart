@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 // Each tab's annotations belong to that tab's design (netcrux#17).
 // `annotationStateProvider` was one app-wide keepAlive notifier
 // registered at root only, so an annotation made on

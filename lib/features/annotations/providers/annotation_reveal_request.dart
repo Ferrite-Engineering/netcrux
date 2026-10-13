@@ -1,3 +1,6 @@
+// Copyright 2026 Ferrite Engineering LLC
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'annotation_reveal_request.g.dart';
