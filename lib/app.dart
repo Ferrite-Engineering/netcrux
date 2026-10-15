@@ -1,7 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
-import 'dart:io' show exit, stdout;
+import 'dart:io' show stdout;
 import 'package:crux_about_dialog/crux_about_dialog.dart';
 import 'package:crux_eula/crux_eula.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
@@ -176,7 +176,7 @@ Future<void> bootstrap({
   List<Override> extraOverrides = const [],
   List<Override> extraTabOverrides = const [],
   LinuxDesktopApp? linuxDesktopApp,
-  @visibleForTesting void Function(int code) exitProcess = exit,
+  @visibleForTesting void Function(int code) exitProcess = cruxExit,
   @visibleForTesting
   IncomingDocumentService incomingDocuments = const IncomingDocumentService(),
 }) async {
@@ -583,9 +583,10 @@ class NetcruxApp extends ConsumerWidget {
     // the Actions handler the WORKSPACE screen registers, so on the welcome
     // route a menu Quit silently no-oped (the app could only be quit from
     // the Dock). Handle it here, with the same semantics as the workspace
-    // dispatcher's case.
+    // dispatcher's case: `cruxExit`, so the session is recorded as ended
+    // cleanly before the process goes.
     if (action == NetcruxAction.quit) {
-      exit(0);
+      cruxExit();
     }
     // Prefer the focused context so a screen-specific handler still wins,
     // but only when it actually resolves one: right after launch primary

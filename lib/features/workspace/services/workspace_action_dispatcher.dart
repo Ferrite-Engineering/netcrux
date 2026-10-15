@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
-import 'dart:io';
 
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
@@ -407,7 +406,7 @@ class WorkspaceActionDispatcher {
       case NetcruxAction.closeProject:
         unawaited(_closeActiveTab());
       case NetcruxAction.quit:
-        exit(0);
+        cruxExit();
       case NetcruxAction.openAbout:
         unawaited(NetcruxAboutDialog.openAdaptive(context, _ref));
       case NetcruxAction.checkForUpdates:

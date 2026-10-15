@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async' show unawaited;
-import 'dart:io' show exit;
 
 import 'package:crux_license/crux_license.dart';
+import 'package:crux_telemetry/crux_telemetry.dart' show cruxExit;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/updates/netcrux_update_config.dart';
@@ -18,12 +18,13 @@ import 'package:url_launcher/url_launcher.dart';
 Future<bool> Function(Uri uri) betaExpiryLaunchUrl = launchUrl;
 
 /// Seam for terminating the process from the expired modal's quit action,
-/// overridable in tests (calling the real `exit` would kill the test runner).
+/// overridable in tests (calling the real exit would kill the test runner).
 ///
-/// Defaults to the same immediate `exit(0)` the menu-bar quit action uses. The
-/// expired modal only ever renders on a native desktop beta build — the web
-/// viewer ships no `BETA_EXPIRY` — so the `dart:io`-on-web caveat never fires.
-void Function() betaExpiryExitApp = () => exit(0);
+/// Defaults to the same immediate `cruxExit()` the menu-bar quit action uses.
+/// The expired modal only ever renders on a native desktop beta build — the
+/// web viewer ships no `BETA_EXPIRY` — so the `dart:io`-on-web caveat never
+/// fires.
+void Function() betaExpiryExitApp = cruxExit;
 
 /// Startup / resume gate enforcing the per-release hard beta build expiry.
 ///
