@@ -13,7 +13,7 @@ Engineering's EDACrux suite.
 
 ## Status
 
-Public beta. Implemented in this repository today:
+Stable since 1.0. Implemented in this repository today:
 
 - Yosys-backed elaboration of Verilog / SystemVerilog / VHDL, with an elaboration cache,
   a bounded and killable subprocess, and structured error reporting.
@@ -24,7 +24,7 @@ Public beta. Implemented in this repository today:
 - PNG, SVG and JSON export; `.netcrux` sessions, `.netcrux-project` projects,
   `.netcrux-workspace` workspaces, and Vivado-style `.f` filelist import.
 - A CXP cross-probe server for the rest of the EDACrux suite.
-- Update checks, the beta issue reporter, themes, rebindable shortcuts, and
+- Update checks, the in-app issue reporter, themes, rebindable shortcuts, and
   en/zh_CN/zh/ja/ko localization.
 
 ## Try it
