@@ -110,6 +110,18 @@ jobs:
           key: pub-ubuntu-latest-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-ubuntu-latest-
 
+      # The exclusion above does not work: actions/cache hands tar the
+      # `.dart_tool/` directory, and tar recurses into it, so the restored
+      # cache still carries build_runner's incremental asset graph. A graph
+      # written before a file was deleted from a crux-shared package fails
+      # codegen with `InvalidOutputException … Tried to delete from package
+      # not in the build` (measured on the crux-shared 8b434d0 pin, for
+      # `crux_theme|lib/src/crux_chrome_colors.dart`). Dropping the graph after
+      # the restore is what keeps it out, as the Pro overlay's jobs do.
+      - name: Drop the restored build_runner asset graph
+        shell: bash
+        run: rm -rf .dart_tool/build
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -216,6 +228,11 @@ jobs:
             !.dart_tool/build
           key: pub-${{ matrix.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-${{ matrix.os }}-
+
+      # See the analyze job: the restored cache carries the asset graph.
+      - name: Drop the restored build_runner asset graph
+        shell: bash
+        run: rm -rf .dart_tool/build
 
       - name: Install dependencies
         run: flutter pub get
@@ -426,6 +443,11 @@ jobs:
           key: pub-${{ matrix.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-${{ matrix.os }}-
 
+      # See the analyze job: the restored cache carries the asset graph.
+      - name: Drop the restored build_runner asset graph
+        shell: bash
+        run: rm -rf .dart_tool/build
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -496,6 +518,11 @@ jobs:
             !.dart_tool/build
           key: pub-ubuntu-web-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-ubuntu-web-
+
+      # See the analyze job: the restored cache carries the asset graph.
+      - name: Drop the restored build_runner asset graph
+        shell: bash
+        run: rm -rf .dart_tool/build
 
       - name: Install dependencies
         run: flutter pub get
