@@ -1055,26 +1055,6 @@
   "@emptyCanvasPeerSimCrux": {
     "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
   },
-  "emptyCanvasRecentProjects": "最近的项目",
-  "@emptyCanvasRecentProjects": {
-    "description": "Section header for the recent-projects list on the empty-canvas state."
-  },
-  "emptyCanvasRecentSources": "最近的源文件",
-  "@emptyCanvasRecentSources": {
-    "description": "Section header for the recent-source-files list on the empty-canvas state."
-  },
-  "emptyCanvasNoRecentProjects": "暂无最近的项目。",
-  "@emptyCanvasNoRecentProjects": {
-    "description": "Placeholder shown under the recent-projects header when the list is empty."
-  },
-  "emptyCanvasNoRecentSources": "暂无最近的源文件。",
-  "@emptyCanvasNoRecentSources": {
-    "description": "Placeholder shown under the recent-source-files header when the list is empty."
-  },
-  "emptyCanvasClearRecent": "清除最近记录",
-  "@emptyCanvasClearRecent": {
-    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
-  },
   "actionSplitPaneRight": "向右拆分窗格",
   "@actionSplitPaneRight": {
     "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
@@ -1115,33 +1095,8 @@
   "@actionShowCrossProbePanel": {
     "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
   },
-  "crossProbePanelTitle": "交叉探测对等节点",
-  "@crossProbePanelTitle": {
-    "description": "Title shown above the cross-probe panel."
-  },
-  "crossProbePanelPeersHeader": "对等节点",
-  "@crossProbePanelPeersHeader": {
-    "description": "Section header above the list of connected peers."
-  },
-  "crossProbePanelNoPeers": "尚未连接任何对等节点。",
-  "@crossProbePanelNoPeers": {
-    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
-  },
-  "crossProbePanelEventsHeader": "最近事件",
-  "@crossProbePanelEventsHeader": {
-    "description": "Section header above the rolling CXP event log."
-  },
-  "crossProbePanelNoEvents": "尚无交叉探测事件。",
-  "@crossProbePanelNoEvents": {
-    "description": "Placeholder shown when the event log is empty."
-  },
-  "crossProbeCloseTooltip": "关闭交叉探测面板",
-  "crossProbeServerOffline": "交叉探测服务器已离线。",
-  "crossProbeSendTooltip": "将选择发送到此对等节点",
-  "crossProbeUnreachableTitle": "无法连接的对等节点",
-  "crossProbeClearEvents": "清除事件",
-  "crossProbeSendFailed": "发送到 {peer} 的交叉探测未能完成",
-  "crossProbeSendRefused": "发送到 {peer} 的交叉探测：{reason}",
+  "actionCrossProbeSelection": "交叉探测所选内容…",
+  "actionClearRecentProjects": "清除最近的项目",
   "schematicHorizontalScrollbarLabel": "原理图水平滚动条",
   "@schematicHorizontalScrollbarLabel": {
     "description": "Accessibility label for the horizontal scrollbar under the schematic canvas."
@@ -1153,64 +1108,6 @@
   "settingsEditorsSection": "编辑器",
   "@settingsEditorsSection": {
     "description": "Settings section header for external-editor integration."
-  },
-  "settingsCxpEnabledLabel": "启用 CXP 服务器",
-  "@settingsCxpEnabledLabel": {
-    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
-  },
-  "settingsCxpPortLabel": "CXP 端口",
-  "@settingsCxpPortLabel": {
-    "description": "Text-field label for the CXP server's bind port."
-  },
-  "settingsCxpEnabledDescription": "让 NetCrux 与其他兼容 Crux 的工具共享选择事件",
-  "@settingsCxpEnabledDescription": {
-    "description": "Subtitle explaining what enabling the CXP server does."
-  },
-  "settingsCxpPortDescription": "TCP 端口号 (1–65535)",
-  "@settingsCxpPortDescription": {
-    "description": "Subtitle / helper for the CXP port input describing the valid range."
-  },
-  "settingsRequestAttentionOnCrossProbeLabel": "交叉探测时请求注意",
-  "@settingsRequestAttentionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
-  },
-  "settingsRequestAttentionOnCrossProbeDescription": "当对等端发送交叉探测时，弹跳程序坞图标（或闪烁任务栏）。绝不抢占焦点。",
-  "@settingsRequestAttentionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
-  },
-  "settingsBroadcastSelectionOnCrossProbeLabel": "自动广播选择",
-  "@settingsBroadcastSelectionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
-  },
-  "settingsBroadcastSelectionOnCrossProbeDescription": "在您选择时向已连接的对等端通告您的选择（实时交叉探测）。关闭时，仅共享显式发送的内容。",
-  "@settingsBroadcastSelectionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
-  },
-  "settingsCxpStatus": "CXP 状态",
-  "@settingsCxpStatus": {
-    "description": "Label for the CXP server status display."
-  },
-  "settingsCxpStatusRunning": "正在端口 {port} 上运行",
-  "@settingsCxpStatusRunning": {
-    "description": "Indicates the CXP server is running on a specific port.",
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsCxpStatusStopped": "已停止",
-  "@settingsCxpStatusStopped": {
-    "description": "Indicates the CXP server is not running."
-  },
-  "settingsCxpPeersConnected": "已连接 {count} 个对等端",
-  "@settingsCxpPeersConnected": {
-    "description": "Shows how many peers are currently connected to the CXP server.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "settingsCxpEditorCommandLabel": "编辑器命令(打开源代码)",
   "@settingsCxpEditorCommandLabel": {
@@ -2337,7 +2234,6 @@
   "settingsLanguageDescription": "应用界面使用的语言",
   "settingsCxpSectionTitle": "CXP 交叉探测",
   "settingsAutoReloadDescription": "已加载文件在磁盘上更改时 NetCrux 的响应方式",
-  "settingsCxpPortError": "请输入 1 到 65535 之间的端口。",
   "workspaceResetConfirmButton": "重置",
   "workspaceReplaceConfirmButton": "替换",
   "tabContextMenuRevealInFinder": "在 Finder 中显示",

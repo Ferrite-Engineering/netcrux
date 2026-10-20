@@ -175,6 +175,23 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isVisible: _desktopOnly,
   ),
 
+  // ── Cross-probe Selection — menu + palette, always enabled ───────────
+  // Enabled even with nothing selected: the command says so ("Select
+  // something to cross-probe first.") instead of being a dead key. A browser
+  // has no peers to send to.
+  NetcruxAction.crossProbeSelection => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _desktopOnly,
+  ),
+
+  // ── Clear Recent Projects — menu + palette, always enabled ───────────
+  // The start screen keeps a Clear Recent button per list; this is the menu
+  // and palette route to the projects list. A browser keeps no recents.
+  NetcruxAction.clearRecentProjects => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _desktopOnly,
+  ),
+
   // ── Command palette opener — menu only ──────────────────────────────
   // Self-referential in the palette itself (you can't open the palette
   // from the palette), so it is excluded from the palette surface — but

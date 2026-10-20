@@ -3,12 +3,15 @@
 
 import 'dart:async';
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show runCrossProbeSelection;
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_theme/crux_theme.dart';
 import 'package:crux_updates/crux_updates.dart';
+import 'package:crux_workspace/crux_workspace.dart'
+    show CruxRecentKind, CruxRecentListStrings, clearCruxRecentList;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/help_urls.dart';
@@ -19,6 +22,7 @@ import 'package:netcrux/core/theme/theme_brightness_toggle.dart';
 import 'package:netcrux/domain/enums/netcrux_export_kind.dart';
 import 'package:netcrux/domain/interfaces/cone_of_influence_service.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
+import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/about/netcrux_about_dialog.dart';
 import 'package:netcrux/features/annotations/services/annotation_openers.dart';
@@ -26,10 +30,11 @@ import 'package:netcrux/features/command_palette/widgets/command_palette_dialog.
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
 import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/services/project_save_controller.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
+import 'package:netcrux/features/remote/services/netcrux_cross_probe_selection.dart';
 import 'package:netcrux/features/search/widgets/search_dialog.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/screens/settings_screen.dart';
 import 'package:netcrux/features/viewer/providers/canvas_fit_target_provider.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
@@ -39,12 +44,14 @@ import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.dart';
 import 'package:netcrux/features/viewer/providers/x_trace_panel_visible_provider.dart';
+import 'package:netcrux/features/viewer/selection/schematic_keyboard_navigator.dart';
 import 'package:netcrux/features/viewer/services/clear_schematic_paint.dart';
 import 'package:netcrux/features/viewer/services/cone_of_influence_controller.dart';
 import 'package:netcrux/features/viewer/services/schematic_export_controller.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/services/x_trace_controller.dart';
 import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/features/workspace/services/active_tab_container.dart';
 import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
@@ -234,6 +241,15 @@ class WorkspaceActionDispatcher {
         unawaited(_onMoveTabToOtherPane());
       case NetcruxAction.showCrossProbePanel:
         _onToggleCrossProbePanel();
+      case NetcruxAction.crossProbeSelection:
+        unawaited(_crossProbeSelection(context));
+      case NetcruxAction.clearRecentProjects:
+        clearCruxRecentList(
+          context,
+          _ref,
+          list: recentProjects,
+          strings: CruxRecentListStrings.of(context, CruxRecentKind.projects),
+        );
       case NetcruxAction.addAnnotation:
         _ref.read(addAnnotationDialogOpenerProvider)(context, _ref);
       case NetcruxAction.showAnnotationsPanel:
@@ -677,6 +693,43 @@ class WorkspaceActionDispatcher {
     }
   }
 
+  /// Cross-probe Selection: sends the active tab's selection to another suite
+  /// product, at once when one runs, from a menu of them when several do. The
+  /// key belongs to a text field that has focus, so the command stays out of it.
+  Future<void> _crossProbeSelection(BuildContext context) async {
+    if (cruxTextInputFocused()) return;
+    // The selection and the canvas are the active tab's, not the root's.
+    final tab = _ref.activeTabContainerOrNull(context);
+    final selection = tab == null ? null : netcruxCrossProbeSelection(tab.read);
+    await runCrossProbeSelection(
+      context,
+      _ref,
+      selection: selection,
+      anchor: tab == null ? null : _selectionAnchor(tab),
+    );
+  }
+
+  /// The bottom-left corner, in global coordinates, of the selected element
+  /// on the active tab's canvas, where the target menu opens; null when it is
+  /// off screen or the canvas is not laid out.
+  Offset? _selectionAnchor(ProviderContainer tab) {
+    final box = tab
+        .read(schematicCanvasKeyProvider)
+        .currentContext
+        ?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    final bounds = SchematicKeyboardNavigator(
+      tab.read(currentLaidOutGraphProvider).value ?? LaidOutGraph.empty,
+    ).boundsOf(tab.read(selectedElementProvider).primary);
+    if (bounds == null) return null;
+    final transform = tab.read(viewportTransformProvider);
+    final corner =
+        Offset(bounds.x, bounds.y + bounds.height) * transform.zoom +
+        transform.offset;
+    if (!(Offset.zero & box.size).contains(corner)) return null;
+    return box.localToGlobal(corner);
+  }
+
   Future<void> _onImportFilelistPressed(BuildContext context) async {
     final l10n = L10N.of(context);
     final service = _ref.read(fileOpenServiceProvider);
@@ -814,7 +867,7 @@ class WorkspaceActionDispatcher {
     // Read before the await: `ref` is invalid across an async gap.
     final audit = _ref.read(cruxAuditRecorderProvider);
     final workspace = _ref.read(netcruxWorkspaceProvider.notifier);
-    final settings = _ref.read(appSettingsProvider.notifier);
+    final recent = _ref.read(recentProjects.provider.notifier);
     final tabId = _ref.read(netcruxWorkspaceProvider).value?.activeTabId;
     final saved = await controller.saveAs();
     if (saved == null) return;
@@ -828,7 +881,7 @@ class WorkspaceActionDispatcher {
         (payload) => payload.copyWith(projectFilePath: saved),
       );
     }
-    await settings.recordRecentProject(saved);
+    recent.markOpened(saved);
   }
 
   Future<void> _openSession(BuildContext context) async {

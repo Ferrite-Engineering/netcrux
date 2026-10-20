@@ -6,7 +6,7 @@
 // Verification driver for Open-Core Guide §6.2 (notify_selection emission
 // on canvas selection): boots the real open-core app, seeds a loaded
 // design (Yosys-free, via the design-seed helper), connects a raw CXP peer
-// directly to the live `NetcruxCxpServer`'s bound port (the same
+// directly to the live shared runtime's bound port (the same
 // raw-socket-as-fake-peer technique
 // `test/services/remote/cxp/cxp_outbound_emitter_controller_test.dart`
 // uses at the unit level), subscribes it to `notify_selection`, selects an
@@ -28,12 +28,12 @@
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 
 import '../fixtures/design_seed_netlist.dart';
@@ -66,7 +66,7 @@ void main() {
           // Hermetic manifest directory — never touch the real
           // suite-shared discovery location, and never discover a real
           // running suite product on the dev host mid-test.
-          cxpManifestDirectoryProvider.overrideWith(
+          cruxCxpManifestDirectoryProvider.overrideWith(
             (ref) async => '${tmp.path}/peers',
           ),
         ],
@@ -95,8 +95,8 @@ void main() {
       expect(topLaidOut, isTrue, reason: 'top scope never laid out');
 
       final root = rootContainer(tester);
-      final host = await root.read(cxpServerHostProvider.future);
-      expect(host, isNotNull, reason: 'cxpServerEnabled defaults to true');
+      final host = await root.read(cruxCxpRuntimeProvider.future);
+      expect(host, isNotNull, reason: 'the CXP setting defaults to on');
       expect(
         host!.isAvailable,
         isTrue,

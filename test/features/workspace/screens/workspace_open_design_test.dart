@@ -13,7 +13,7 @@ import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
@@ -187,10 +187,7 @@ design:
     // The manifest, not the directory, is what the tab and recents remember,
     // so reopening goes straight to the file.
     expect(payload.payload.projectFilePath, manifest);
-    expect(
-      h.root.read(appSettingsProvider).value!.recentProjectPaths.first,
-      manifest,
-    );
+    expect(h.root.read(recentProjects.provider).first, manifest);
     expect(tester.takeException(), isNull);
     await WorkspaceAppHarness.unmount(tester);
   }, variant: macOS);
@@ -393,10 +390,7 @@ rtl/soc_top.v
     final tab = h.root.read(netcruxWorkspaceProvider).value!.tabs.single;
     expect(tab.payload.projectFilePath, filelist);
     expect(tab.displayName, 'soc');
-    expect(
-      h.root.read(appSettingsProvider).value!.recentProjectPaths.first,
-      filelist,
-    );
+    expect(h.root.read(recentProjects.provider).first, filelist);
     expect(tester.takeException(), isNull);
     await WorkspaceAppHarness.unmount(tester);
   }, variant: macOS);

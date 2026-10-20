@@ -17,7 +17,6 @@ import 'package:netcrux/core/help_urls.dart';
 import 'package:netcrux/core/platform_utils.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/providers/extra_settings_categories_provider.dart';
 import 'package:netcrux/features/settings/widgets/color_theme_section.dart';
@@ -198,11 +197,12 @@ class _SettingsContent extends ConsumerWidget {
         // "RemoteControl" while its value read "CXP Cross-Probe".
         icon: Icons.hub_outlined,
         title: l10n.settingsCxpSectionTitle,
-        content: CruxSettingsSectionCard(
+        content: const CruxSettingsSectionCard(
           children: [
-            // The suite-shared CXP controls (crux_cxp_ui); NetCrux supplies
-            // provider wiring, strings, and the status tile.
-            _NetcruxCxpControls(settings: settings),
+            // The suite-shared CXP section (crux_cxp_ui), bound to the shared
+            // lifecycle: the four controls and the status line.
+            CruxCxpSettingsSection(),
+            _CxpHelpRow(),
           ],
         ),
       ),
@@ -572,100 +572,23 @@ class _DiagnosticsEnabledTile extends ConsumerWidget {
   }
 }
 
-/// NetCrux's wiring around the suite-shared [CruxCxpSettingsControls]:
-/// values from [AppSettings], callbacks into [appSettingsProvider], plus the
-/// running-state / peer-count [_CxpStatusTile].
-class _NetcruxCxpControls extends ConsumerWidget {
-  const _NetcruxCxpControls({required this.settings});
-
-  final AppSettings settings;
+/// The "Learn more" link for the CXP section, a row of its own under the shared
+/// section (which carries no link of its own).
+class _CxpHelpRow extends StatelessWidget {
+  const _CxpHelpRow();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = L10N.of(context);
-    final notifier = ref.read(appSettingsProvider.notifier);
-    return CruxCxpSettingsControls(
-      strings: CruxCxpSettingsStrings(
-        enableLabel: l10n.settingsCxpEnabledLabel,
-        enableHelp: l10n.settingsCxpEnabledDescription,
-        portLabel: l10n.settingsCxpPortLabel,
-        portHelp: l10n.settingsCxpPortDescription,
-        portError: l10n.settingsCxpPortError,
-        attentionLabel: l10n.settingsRequestAttentionOnCrossProbeLabel,
-        attentionHelp: l10n.settingsRequestAttentionOnCrossProbeDescription,
-        broadcastLabel: l10n.settingsBroadcastSelectionOnCrossProbeLabel,
-        broadcastHelp: l10n.settingsBroadcastSelectionOnCrossProbeDescription,
-      ),
-      enabled: settings.cxpServerEnabled,
-      port: settings.cxpServerPort,
-      requestAttention: settings.requestAttentionOnCrossProbe,
-      broadcastSelection: settings.broadcastSelectionOnCrossProbe,
-      onEnabledChanged: (value) =>
-          unawaited(notifier.setCxpServerEnabled(enabled: value)),
-      onPortSubmitted: (port) => unawaited(notifier.setCxpServerPort(port)),
-      onRequestAttentionChanged: (value) =>
-          unawaited(notifier.setRequestAttentionOnCrossProbe(enabled: value)),
-      onBroadcastSelectionChanged: (value) => unawaited(
-        notifier.setBroadcastSelectionOnCrossProbe(enabled: value),
-      ),
-      statusTile: const _CxpStatusTile(),
-    );
-  }
-}
-
-/// Settings → CXP Cross-Probe status line: whether the server is running
-/// (and on which port), plus the connected-peer count. Reads the CXP server
-/// host and peer providers NetCrux already owns. Shows "Stopped" when the
-/// server is disabled or not yet up.
-class _CxpStatusTile extends ConsumerWidget {
-  const _CxpStatusTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = L10N.of(context);
-    final theme = Theme.of(context);
-    final settings =
-        ref.watch(appSettingsProvider).value ?? const AppSettings.defaults();
-    final running =
-        settings.cxpServerEnabled &&
-        ref.watch(cxpServerHostProvider).value != null;
-    final peerCount = ref.watch(cxpPeersProvider).value?.length ?? 0;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        ListTile(
-          title: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  l10n.settingsCxpStatus,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 4),
-              CruxHelpLink(
-                url: HelpUrls.integrations,
-                tooltip: l10n.helpLinkLearnMore,
-              ),
-            ],
-          ),
-          trailing: Text(
-            running
-                ? l10n.settingsCxpStatusRunning(settings.cxpServerPort)
-                : l10n.settingsCxpStatusStopped,
-            style: TextStyle(
-              color: running
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: CruxHelpLink(
+          url: HelpUrls.integrations,
+          tooltip: l10n.helpLinkLearnMore,
         ),
-        if (running)
-          ListTile(
-            trailing: Text(l10n.settingsCxpPeersConnected(peerCount)),
-          ),
-      ],
+      ),
     );
   }
 }

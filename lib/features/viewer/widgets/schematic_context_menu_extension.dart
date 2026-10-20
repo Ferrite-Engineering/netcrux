@@ -57,11 +57,17 @@ class SchematicContextMenuExtensionEntry {
   /// greyed but still visible.
   final bool enabled;
 
-  /// Invoked when the user selects the entry. Receives the build
-  /// context (mounted at dispatch time) and a Riverpod [WidgetRef]
-  /// so the contributor can dispatch into providers without
-  /// reaching out to a global container.
-  final Future<void> Function(BuildContext context, WidgetRef ref) onTap;
+  /// Invoked when the user selects the entry, after the menu has closed.
+  /// Receives the build context (mounted at dispatch time), a Riverpod
+  /// [WidgetRef] so the contributor can dispatch into providers without
+  /// reaching out to a global container, and the global position the menu
+  /// opened at, for an entry that opens a second menu where the first was.
+  final Future<void> Function(
+    BuildContext context,
+    WidgetRef ref,
+    Offset globalPosition,
+  )
+  onTap;
 }
 
 /// Signature for an extension-entry builder. Builders receive the

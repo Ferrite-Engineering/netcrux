@@ -3,6 +3,7 @@
 
 import 'dart:io';
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show cruxCxpRuntimeProvider;
 import 'package:crux_settings/crux_settings.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:crux_yosys/crux_yosys.dart';
@@ -21,11 +22,9 @@ import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
@@ -61,12 +60,6 @@ class RowLayoutService extends ElkLayoutService {
       height: 120,
     ),
   );
-}
-
-/// No CXP server: a real one binds a socket and writes a discovery manifest.
-class _NullCxpServerHost extends CxpServerHost {
-  @override
-  Future<NetcruxCxpServer?> build() async => null;
 }
 
 /// The real `NetcruxApp`, booted the way `bootstrap()` wires it, for tests
@@ -112,7 +105,9 @@ class WorkspaceAppHarness {
       overrides: <Override>[
         ...netcruxAppTestOverrides(sourcePollInterval: sourcePollInterval),
         cliLaunchIntentProvider.overrideWithValue(intent),
-        cxpServerHostProvider.overrideWith(_NullCxpServerHost.new),
+        // No CXP runtime: a real one binds a socket and writes a discovery
+        // manifest.
+        cruxCxpRuntimeProvider.overrideWith((_) async => null),
         settingsServiceProvider.overrideWithValue(
           SettingsService<AppSettings>(
             const NetcruxSettingsCodec(),

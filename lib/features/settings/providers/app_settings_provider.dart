@@ -31,74 +31,30 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
     return await service.load();
   }
 
-  /// Records [path] at the top of the recent-projects list, evicting any
-  /// existing entry for the same path. Trims the list to
-  /// [AppSettings.recentPathsLimit].
-  Future<void> recordRecentProject(String path) async {
-    await _update(
-      (current) {
-        final dedup = [
-          path,
-          ...current.recentProjectPaths.where((p) => p != path),
-        ];
-        return current.copyWith(
-          recentProjectPaths: List.unmodifiable(
-            dedup.take(AppSettings.recentPathsLimit),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Records [paths] at the top of the recent-source-files list, evicting
-  /// any existing entry for the same path. Trims the list to
-  /// [AppSettings.recentPathsLimit].
-  Future<void> recordRecentSourceFiles(Iterable<String> paths) async {
-    if (paths.isEmpty) return;
-    await _update(
-      (current) {
-        final seen = paths.toSet();
-        final dedup = [
-          ...paths,
-          ...current.recentSourceFilePaths.where((p) => !seen.contains(p)),
-        ];
-        return current.copyWith(
-          recentSourceFilePaths: List.unmodifiable(
-            dedup.take(AppSettings.recentPathsLimit),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Records [path] at the top of the recent-workspaces list, evicting any
-  /// existing entry for the same path. Trims the list to
-  /// [AppSettings.recentPathsLimit]. Used by the Open Workspace / Save
-  /// Workspace As… flow.
-  Future<void> recordRecentWorkspace(String path) async {
-    await _update(
-      (current) {
-        final dedup = [
-          path,
-          ...current.recentWorkspacePaths.where((p) => p != path),
-        ];
-        return current.copyWith(
-          recentWorkspacePaths: List.unmodifiable(
-            dedup.take(AppSettings.recentPathsLimit),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Clears all recent-files entries (project, source-file, and workspace
-  /// lists).
-  Future<void> clearRecentFiles() async {
+  /// Replaces the recent-projects list. The shared Recent list owns the
+  /// ordering, the cap and the removal rules and calls this to save.
+  Future<void> setRecentProjectPaths(List<String> paths) async {
     await _update(
       (current) => current.copyWith(
-        recentProjectPaths: const [],
-        recentSourceFilePaths: const [],
-        recentWorkspacePaths: const [],
+        recentProjectPaths: List<String>.unmodifiable(paths),
+      ),
+    );
+  }
+
+  /// Replaces the recent-source-files list (see [setRecentProjectPaths]).
+  Future<void> setRecentSourceFilePaths(List<String> paths) async {
+    await _update(
+      (current) => current.copyWith(
+        recentSourceFilePaths: List<String>.unmodifiable(paths),
+      ),
+    );
+  }
+
+  /// Replaces the recent-workspaces list (see [setRecentProjectPaths]).
+  Future<void> setRecentWorkspacePaths(List<String> paths) async {
+    await _update(
+      (current) => current.copyWith(
+        recentWorkspacePaths: List<String>.unmodifiable(paths),
       ),
     );
   }
@@ -165,45 +121,6 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
   Future<void> setYosysCustomPath(String path) async {
     await _update(
       (current) => current.copyWith(yosysCustomPath: path),
-    );
-  }
-
-  /// Enables or disables the CXP peer cross-probe server. The
-  /// `cxpServerProvider` watches this flag and starts/stops the
-  /// underlying [`LocalCxpServer`](package:crux_cxp) accordingly.
-  Future<void> setCxpServerEnabled({required bool enabled}) async {
-    await _update(
-      (current) => current.copyWith(cxpServerEnabled: enabled),
-    );
-  }
-
-  /// Updates the CXP server's bind port. The `cxpServerProvider`
-  /// re-binds on the next launch (or on the next manual restart from
-  /// Settings → CXP Cross-Probe).
-  Future<void> setCxpServerPort(int port) async {
-    await _update(
-      (current) => current.copyWith(cxpServerPort: port),
-    );
-  }
-
-  /// Enables or disables requesting user attention (bouncing the dock /
-  /// flashing the taskbar) when a peer sends a cross-probe. The
-  /// `cxpAttentionBridge` mirrors this flag; it never steals focus.
-  Future<void> setRequestAttentionOnCrossProbe({required bool enabled}) async {
-    await _update(
-      (current) => current.copyWith(requestAttentionOnCrossProbe: enabled),
-    );
-  }
-
-  /// Enables or disables automatic broadcast of the active schematic
-  /// selection to connected CXP peers on selection change (live cross-probe).
-  /// The `CxpOutboundEmitterController` reads this flag; when off, only
-  /// explicit sends ("Send selection" / "Open in WaveCrux") share.
-  Future<void> setBroadcastSelectionOnCrossProbe({
-    required bool enabled,
-  }) async {
-    await _update(
-      (current) => current.copyWith(broadcastSelectionOnCrossProbe: enabled),
     );
   }
 

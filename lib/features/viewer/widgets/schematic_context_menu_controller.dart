@@ -85,9 +85,8 @@ class SchematicContextMenuController {
       overlay.size.width - globalPosition.dx,
       overlay.size.height - globalPosition.dy,
     );
-    // Gather the extension entries: the annotation builder in
-    // open core, plus whatever the Pro overlay's `proOverrides` registers
-    // (cross-probe entries among them).
+    // Gather the extension entries: the cross-probe and annotation builders
+    // in open core, plus whatever the Pro overlay's `proOverrides` registers.
     final extensionBuilders = ref.read(schematicContextMenuExtensionsProvider);
     final extensions = <SchematicContextMenuExtensionEntry>[
       for (final builder in extensionBuilders) ...builder(ref, target),
@@ -134,7 +133,7 @@ class SchematicContextMenuController {
     }
     if (value is SchematicContextMenuExtensionEntry) {
       if (!context.mounted) return null;
-      await value.onTap(context, ref);
+      await value.onTap(context, ref, globalPosition);
       // Extension dispatches do not surface as a
       // SchematicContextMenuAction value (the enum is built-in only);
       // return null so callers can distinguish "built-in fired" from

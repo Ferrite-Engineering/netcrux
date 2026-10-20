@@ -6,9 +6,9 @@
 // The trace counter comes out of `WorkspaceActionDispatcher._dispatchTrace`,
 // which is where the Show Fanin / Show Fanout actions land from all three
 // discovery surfaces (keyboard, menu bar, command palette). The cross-probe
-// counter comes out of `CxpInboundHandler._resolveAndAct`, the one seam both
-// the acked `request_highlight` and the fire-and-forget `notify_selection`
-// pass through.
+// counter comes out of `NetcruxCxpRequestHandler._resolveAndAct`, the one seam
+// both the acked `request_highlight` and the fire-and-forget
+// `notify_selection` pass through, here on the shared runtime.
 //
 // The cross-probe test asserts the honored=false case as loudly as the
 // honored=true one, because that is the whole point of the property: a probe a
@@ -38,10 +38,10 @@ import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
-import 'package:netcrux/services/remote/cxp/cxp_inbound_handler.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
 import 'package:netcrux/services/telemetry/telemetry_event_catalog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/cxp_runtime_rig.dart';
 
 class _RecordingTelemetryService implements TelemetryService {
   final List<TelemetryEvent> events = <TelemetryEvent>[];
@@ -200,20 +200,17 @@ void main() {
   group('cxp.crossprobe (inbound)', () {
     Future<
       ({
-        NetcruxCxpServer server,
+        CxpRuntimeRig server,
         LocalCxpClient client,
         ProviderContainer rootContainer,
         ProviderContainer tabContainer,
         Directory tmp,
-        CxpInboundHandler handler,
+        AttachedCxpHandler handler,
       })
     >
     setup({bool loadModel = true}) async {
       final tmp = Directory.systemTemp.createTempSync('cxp_telemetry_');
-      final server = NetcruxCxpServer(
-        productVersion: '0.0.0-test',
-        manifestDirectory: '${tmp.path}/peers',
-      );
+      final server = CxpRuntimeRig(manifestDirectory: '${tmp.path}/peers');
       await server.start();
 
       final client = LocalCxpClient(
@@ -236,8 +233,8 @@ void main() {
       if (loadModel) {
         tabContainer.read(hierarchyTreeProvider.notifier).setModel(_model());
       }
-      final handler = CxpInboundHandler(
-        server: server.server!,
+      final handler = AttachedCxpHandler(
+        server: server,
         rootContainer: rootContainer,
         activeTabContainerLookup: () => tabContainer,
       );

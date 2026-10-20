@@ -25,6 +25,8 @@ import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 
+import '../../../helpers/cxp_test_overrides.dart';
+
 /// The tab's elaboration, answered by the test: every build parks on a fresh
 /// completer in [builds], so a test decides when, and with what, each load
 /// resolves. Watches the project like the real pipeline, so changing the
@@ -172,6 +174,8 @@ void main() {
       // and the tree must not be handed it once the frame comes.
       final root = ProviderContainer(
         overrides: [
+          // Opening a design reads whether the CXP server runs.
+          ...netcruxCxpOffTestOverrides(),
           yosysAvailabilityProvider.overrideWith(
             (ref) async => const YosysAvailability.available(
               executablePath: 'yosys',

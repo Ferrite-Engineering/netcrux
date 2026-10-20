@@ -1055,26 +1055,6 @@
   "@emptyCanvasPeerSimCrux": {
     "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
   },
-  "emptyCanvasRecentProjects": "最近のプロジェクト",
-  "@emptyCanvasRecentProjects": {
-    "description": "Section header for the recent-projects list on the empty-canvas state."
-  },
-  "emptyCanvasRecentSources": "最近のソースファイル",
-  "@emptyCanvasRecentSources": {
-    "description": "Section header for the recent-source-files list on the empty-canvas state."
-  },
-  "emptyCanvasNoRecentProjects": "最近のプロジェクトはまだありません。",
-  "@emptyCanvasNoRecentProjects": {
-    "description": "Placeholder shown under the recent-projects header when the list is empty."
-  },
-  "emptyCanvasNoRecentSources": "最近のソースファイルはまだありません。",
-  "@emptyCanvasNoRecentSources": {
-    "description": "Placeholder shown under the recent-source-files header when the list is empty."
-  },
-  "emptyCanvasClearRecent": "最近の項目を消去",
-  "@emptyCanvasClearRecent": {
-    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
-  },
   "actionSplitPaneRight": "ペインを右に分割",
   "@actionSplitPaneRight": {
     "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
@@ -1115,33 +1095,8 @@
   "@actionShowCrossProbePanel": {
     "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
   },
-  "crossProbePanelTitle": "クロスプローブピア",
-  "@crossProbePanelTitle": {
-    "description": "Title shown above the cross-probe panel."
-  },
-  "crossProbePanelPeersHeader": "ピア",
-  "@crossProbePanelPeersHeader": {
-    "description": "Section header above the list of connected peers."
-  },
-  "crossProbePanelNoPeers": "まだピアが接続されていません。",
-  "@crossProbePanelNoPeers": {
-    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
-  },
-  "crossProbePanelEventsHeader": "最近のイベント",
-  "@crossProbePanelEventsHeader": {
-    "description": "Section header above the rolling CXP event log."
-  },
-  "crossProbePanelNoEvents": "クロスプローブイベントはまだありません。",
-  "@crossProbePanelNoEvents": {
-    "description": "Placeholder shown when the event log is empty."
-  },
-  "crossProbeCloseTooltip": "クロスプローブパネルを閉じる",
-  "crossProbeServerOffline": "クロスプローブサーバーはオフラインです。",
-  "crossProbeSendTooltip": "選択項目をこのピアに送信",
-  "crossProbeUnreachableTitle": "到達できないピア",
-  "crossProbeClearEvents": "イベントをクリア",
-  "crossProbeSendFailed": "{peer} へのクロスプローブは完了しませんでした",
-  "crossProbeSendRefused": "{peer} へのクロスプローブ: {reason}",
+  "actionCrossProbeSelection": "選択をクロスプローブ…",
+  "actionClearRecentProjects": "最近のプロジェクトを消去",
   "schematicHorizontalScrollbarLabel": "回路図の水平スクロールバー",
   "@schematicHorizontalScrollbarLabel": {
     "description": "Accessibility label for the horizontal scrollbar under the schematic canvas."
@@ -1153,64 +1108,6 @@
   "settingsEditorsSection": "エディター",
   "@settingsEditorsSection": {
     "description": "Settings section header for external-editor integration."
-  },
-  "settingsCxpEnabledLabel": "CXP サーバーを有効化",
-  "@settingsCxpEnabledLabel": {
-    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
-  },
-  "settingsCxpPortLabel": "CXP ポート",
-  "@settingsCxpPortLabel": {
-    "description": "Text-field label for the CXP server's bind port."
-  },
-  "settingsCxpEnabledDescription": "NetCrux が他の Crux 対応ツールと選択イベントを共有できるようにする",
-  "@settingsCxpEnabledDescription": {
-    "description": "Subtitle explaining what enabling the CXP server does."
-  },
-  "settingsCxpPortDescription": "TCP ポート番号 (1–65535)",
-  "@settingsCxpPortDescription": {
-    "description": "Subtitle / helper for the CXP port input describing the valid range."
-  },
-  "settingsRequestAttentionOnCrossProbeLabel": "クロスプローブ時に注意を要求",
-  "@settingsRequestAttentionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
-  },
-  "settingsRequestAttentionOnCrossProbeDescription": "ピアがクロスプローブを送信したとき、Dockをバウンス（またはタスクバーを点滅）させます。フォーカスは奪いません。",
-  "@settingsRequestAttentionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
-  },
-  "settingsBroadcastSelectionOnCrossProbeLabel": "選択範囲を自動的にブロードキャスト",
-  "@settingsBroadcastSelectionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
-  },
-  "settingsBroadcastSelectionOnCrossProbeDescription": "選択したときに、接続中のピアへ選択範囲を通知します（ライブクロスプローブ）。オフの場合、明示的な送信のみが共有されます。",
-  "@settingsBroadcastSelectionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
-  },
-  "settingsCxpStatus": "CXP ステータス",
-  "@settingsCxpStatus": {
-    "description": "Label for the CXP server status display."
-  },
-  "settingsCxpStatusRunning": "ポート {port} で実行中",
-  "@settingsCxpStatusRunning": {
-    "description": "Indicates the CXP server is running on a specific port.",
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsCxpStatusStopped": "停止中",
-  "@settingsCxpStatusStopped": {
-    "description": "Indicates the CXP server is not running."
-  },
-  "settingsCxpPeersConnected": "{count} 件のピアが接続中",
-  "@settingsCxpPeersConnected": {
-    "description": "Shows how many peers are currently connected to the CXP server.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "settingsCxpEditorCommandLabel": "エディターコマンド(ソースを開く)",
   "@settingsCxpEditorCommandLabel": {
@@ -2337,7 +2234,6 @@
   "settingsLanguageDescription": "アプリケーションインターフェースに使用する言語",
   "settingsCxpSectionTitle": "CXP クロスプローブ",
   "settingsAutoReloadDescription": "読み込んだファイルがディスク上で変更されたときの NetCrux の動作",
-  "settingsCxpPortError": "1 から 65535 の範囲でポートを入力してください。",
   "workspaceResetConfirmButton": "リセット",
   "workspaceReplaceConfirmButton": "置き換える",
   "tabContextMenuRevealInFinder": "Finder で表示",

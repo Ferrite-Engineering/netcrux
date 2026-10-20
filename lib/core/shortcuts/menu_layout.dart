@@ -59,6 +59,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.openWorkspace,
       NetcruxAction.openSession,
       NetcruxAction.importFilelist,
+      NetcruxAction.clearRecentProjects,
     ],
     // Auxiliary inputs loaded alongside the design: a comparison netlist for
     // the diff view and a waveform for activity analysis. Each loader sits
@@ -115,6 +116,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.toggleHierarchyTree,
       NetcruxAction.toggleInspector,
       NetcruxAction.showCrossProbePanel,
+      NetcruxAction.crossProbeSelection,
       NetcruxAction.showAnnotationsPanel,
       NetcruxAction.showSourcePane,
       NetcruxAction.closeSourcePane,

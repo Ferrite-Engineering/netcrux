@@ -5,23 +5,24 @@ import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/app_info/about_providers.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/shared/widgets/glowing_app_icon.dart';
 import 'package:netcrux/shared/widgets/netcrux_suite_footer.dart';
 import 'package:netcrux/shared/widgets/netcrux_suite_peers.dart';
-import 'package:path/path.dart' as p;
 
 /// Renders the package's [`EmptyCanvasState`] shell with NetCrux-specific
 /// content slots: recent projects, recent source files, recent named
 /// workspaces, and the three primary Open actions (Open Project, Open
 /// Source Files, Open Workspace).
 ///
-/// Watches [`appSettingsProvider`] so the recent lists refresh as the user
-/// opens / clears them. Every action dispatches through caller-supplied
-/// callbacks so this widget stays free of file-picker / workspace-mutation
-/// dependencies — the wiring layer in `ProjectTabContent` / the home-route
-/// owns those.
+/// Each recent list is the shared `CruxRecentListSection` over the matching
+/// list in `recent_lists.dart`, so a row whose file is gone is greyed and says
+/// so, opening it drops it and reports why, and every row has a remove button
+/// and every list a Clear Recent button. Every action dispatches through
+/// caller-supplied callbacks so this widget stays free of file-picker /
+/// workspace-mutation dependencies — the wiring layer in `ProjectTabContent` /
+/// the home-route owns those.
 class EmptyCanvasContent extends ConsumerWidget {
   /// Creates the empty-canvas content.
   const EmptyCanvasContent({
@@ -31,7 +32,6 @@ class EmptyCanvasContent extends ConsumerWidget {
     required this.onPickRecentProject,
     required this.onPickRecentSourceFile,
     required this.onPickRecentWorkspace,
-    required this.onClearRecent,
     super.key,
   });
 
@@ -44,72 +44,70 @@ class EmptyCanvasContent extends ConsumerWidget {
   /// Fired when the Open Workspace button is tapped.
   final VoidCallback onOpenWorkspace;
 
-  /// Fired when a recent-project list entry is tapped.
-  final ValueChanged<String> onPickRecentProject;
+  /// Opens a recent-project list entry that still exists. A load failure
+  /// reports itself.
+  final Future<void> Function(String path) onPickRecentProject;
 
-  /// Fired when a recent-source-file list entry is tapped.
-  final ValueChanged<String> onPickRecentSourceFile;
+  /// Opens a recent-source-file list entry that still exists.
+  final Future<void> Function(String path) onPickRecentSourceFile;
 
-  /// Fired when a recent-workspace list entry is tapped.
-  final ValueChanged<String> onPickRecentWorkspace;
-
-  /// Fired when the Clear Recent button is tapped.
-  final VoidCallback onClearRecent;
+  /// Opens a recent-workspace list entry that still exists.
+  final Future<void> Function(String path) onPickRecentWorkspace;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
-    final settings = ref.watch(appSettingsProvider).value;
-    final projects = settings?.recentProjectPaths ?? const <String>[];
-    final sources = settings?.recentSourceFilePaths ?? const <String>[];
-    final workspaces = settings?.recentWorkspacePaths ?? const <String>[];
-    final hasAnyRecent =
-        projects.isNotEmpty || sources.isNotEmpty || workspaces.isNotEmpty;
+    final hasWorkspaces = ref.watch(recentWorkspaces.provider).isNotEmpty;
     // The running version, shown as a muted line under the subtitle. On web
     // there is no native menu bar, so this is the only always-visible place a
     // user can read the version without knowing the palette / overflow About
     // entry points. Resolves in milliseconds; renders nothing until then.
     final version = ref.watch(aboutBuildInfoProvider).value?.version;
 
+    // A missing file is dropped and reported by the section; a load failure
+    // reports itself, so the wrapper only answers "does it exist".
+    Future<bool> Function(String path) opening(
+      CruxRecentList list,
+      Future<void> Function(String path) open,
+    ) {
+      final exists = ref.read(list.existsProvider);
+      return (path) async {
+        if (!exists(path)) return false;
+        await open(path);
+        return true;
+      };
+    }
+
     return EmptyCanvasState(
       header: const GlowingAppIcon(size: 72),
       title: l10n.emptyCanvasTitle,
       subtitle: l10n.emptyCanvasSubtitle,
       versionLabel: version == null ? null : l10n.emptyCanvasVersion(version),
-      recentFilesSection: _RecentList(
-        header: l10n.emptyCanvasRecentProjects,
-        paths: projects,
-        onTap: onPickRecentProject,
-        emptyLabel: l10n.emptyCanvasNoRecentProjects,
+      recentFilesSection: CruxRecentListSection(
+        list: recentProjects,
+        strings: CruxRecentListStrings.of(context, CruxRecentKind.projects),
+        icon: Icons.folder_outlined,
+        onOpen: opening(recentProjects, onPickRecentProject),
       ),
       recentWorkspacesSection: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _RecentList(
-            header: l10n.emptyCanvasRecentSources,
-            paths: sources,
-            onTap: onPickRecentSourceFile,
-            emptyLabel: l10n.emptyCanvasNoRecentSources,
+          CruxRecentListSection(
+            list: recentSources,
+            strings: CruxRecentListStrings.of(context, CruxRecentKind.files),
+            onOpen: opening(recentSources, onPickRecentSourceFile),
           ),
-          if (workspaces.isNotEmpty) ...[
+          if (hasWorkspaces) ...[
             const SizedBox(height: 16),
-            _RecentList(
-              header: l10n.workspaceOpenWorkspaceTitle,
-              paths: workspaces,
-              onTap: onPickRecentWorkspace,
-              emptyLabel: '',
-            ),
-          ],
-          if (hasAnyRecent) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: onClearRecent,
-                icon: const Icon(Icons.delete_outline),
-                label: Text(l10n.emptyCanvasClearRecent),
+            CruxRecentListSection(
+              list: recentWorkspaces,
+              strings: CruxRecentListStrings.of(
+                context,
+                CruxRecentKind.workspaces,
               ),
+              icon: Icons.workspaces_outline,
+              onOpen: opening(recentWorkspaces, onPickRecentWorkspace),
             ),
           ],
         ],
@@ -138,67 +136,6 @@ class EmptyCanvasContent extends ConsumerWidget {
       // version of the same statement.
       peers: const NetCruxSuitePeers(),
       footer: const NetCruxSuiteFooter(),
-    );
-  }
-}
-
-class _RecentList extends StatelessWidget {
-  const _RecentList({
-    required this.header,
-    required this.paths,
-    required this.onTap,
-    required this.emptyLabel,
-  });
-
-  final String header;
-  final List<String> paths;
-  final ValueChanged<String> onTap;
-  final String emptyLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(header, style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
-        if (paths.isEmpty)
-          Text(
-            emptyLabel,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontStyle: FontStyle.italic,
-            ),
-          )
-        else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 160),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: paths.length,
-              itemBuilder: (context, index) {
-                final path = paths[index];
-                return ListTile(
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                  title: Text(
-                    p.basename(path),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    p.dirname(path),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () => onTap(path),
-                );
-              },
-            ),
-          ),
-      ],
     );
   }
 }

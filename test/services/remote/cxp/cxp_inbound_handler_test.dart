@@ -8,6 +8,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart'
+    show cruxCxpAttentionRequesterProvider, cruxCxpSettingsProvider;
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -25,12 +27,12 @@ import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
-import 'package:netcrux/services/remote/cxp/cxp_inbound_handler.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/editor_open_service.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../helpers/cxp_runtime_rig.dart';
+import '../../../helpers/cxp_test_overrides.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// [posix] spelled as an absolute path on the host.
@@ -143,7 +145,7 @@ NetlistModel _modelWithNet() {
 
 Future<
   ({
-    NetcruxCxpServer server,
+    CxpRuntimeRig server,
     LocalCxpClient client,
     ProviderContainer rootContainer,
     ProviderContainer tabContainer,
@@ -166,11 +168,9 @@ _setup({
   // wire with the floor (`kCxpOpenArtifactContainment` says why).
   final roots = openDirectories ?? <String>[_abs('/abs/path')];
   final containment = CxpPathContainment(roots: () => roots);
-  final server = NetcruxCxpServer(
-    productVersion: '0.0.0-test',
-    manifestDirectory: '${tmp.path}/peers',
-    containment: kCxpOpenArtifactContainment,
-  );
+  // The binding's containment is the floor (`kCxpOpenArtifactContainment`)
+  // and the handler keeps the rooted rule, as in production.
+  final server = CxpRuntimeRig(manifestDirectory: '${tmp.path}/peers');
   await server.start();
 
   final client = LocalCxpClient(
@@ -190,6 +190,9 @@ _setup({
   final rootContainer = ProviderContainer(
     overrides: <Override>[
       ...netcruxTelemetryTestOverrides(),
+      // The handler reads the shared CXP settings for the attention a live
+      // selection asks for; nothing here starts a second runtime.
+      ...netcruxCxpOffTestOverrides(),
       cxpPathContainmentProvider.overrideWithValue(containment),
       ...rootOverrides,
     ],
@@ -233,8 +236,8 @@ void main() {
         }
       });
 
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
       );
@@ -284,8 +287,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -330,8 +333,8 @@ void main() {
           /* best */
         }
       });
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
       );
@@ -375,8 +378,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -417,8 +420,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -458,8 +461,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -504,8 +507,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -543,8 +546,8 @@ void main() {
           /* best */
         }
       });
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
       );
@@ -597,8 +600,8 @@ void main() {
       expect(before, isNotNull);
       expect(before!.isRoot, isTrue);
 
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
       );
@@ -634,8 +637,8 @@ void main() {
           /* best */
         }
       });
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
       );
@@ -688,8 +691,8 @@ void main() {
         },
       );
 
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
         editorService: mockEditor,
@@ -737,8 +740,8 @@ void main() {
           .setCxpEditorCommand('vim +{line} {file}');
 
       var spawned = false;
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
         editorService: EditorOpenService(
@@ -795,8 +798,8 @@ void main() {
             .setCxpEditorCommand('vim +{line} {file}');
 
         var spawned = false;
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
           editorService: EditorOpenService(
@@ -847,8 +850,8 @@ void main() {
             .read(appSettingsProvider.notifier)
             .setCxpEditorCommand('');
 
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
           editorService: EditorOpenService(
@@ -884,8 +887,8 @@ void main() {
           /* best */
         }
       });
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => null,
       );
@@ -929,8 +932,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -971,8 +974,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -1011,8 +1014,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -1046,6 +1049,70 @@ void main() {
         );
       },
     );
+
+    // A live selection is not a request, so the runtime asks for nothing on
+    // its behalf; the handler asks, and only when the user's setting is on.
+    for (final attentionOn in <bool>[true, false]) {
+      test("a live selection asks for the user's attention only when the "
+          'setting is on (on: $attentionOn)', () async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'netcrux.requestAttentionOnCrossProbe': attentionOn,
+        });
+        var asked = 0;
+        final boot = await _setup(
+          model: _modelWithNet(),
+          rootOverrides: <Override>[
+            cruxCxpAttentionRequesterProvider.overrideWithValue(
+              () => asked++,
+            ),
+          ],
+        );
+        addTearDown(() async {
+          await boot.client.dispose();
+          await boot.server.stop();
+          boot.tabContainer.dispose();
+          boot.rootContainer.dispose();
+          try {
+            boot.tmp.deleteSync(recursive: true);
+          } on FileSystemException {
+            /* best */
+          }
+        });
+        // The saved setting is read in the background; the gate is the loaded
+        // value.
+        await boot.rootContainer.read(cruxCxpSettingsProvider.notifier).loaded;
+        final handler = AttachedCxpHandler(
+          server: boot.server,
+          rootContainer: boot.rootContainer,
+          activeTabContainerLookup: () => boot.tabContainer,
+        );
+        addTearDown(handler.dispose);
+
+        final selected = Completer<void>();
+        final sub = boot.tabContainer.listen(selectedElementProvider, (
+          _,
+          next,
+        ) {
+          if (next.primary is SelectedElementWire && !selected.isCompleted) {
+            selected.complete();
+          }
+        });
+        addTearDown(sub.close);
+
+        boot.client.send(
+          const NotifySelection(
+            elements: <ElementId>[
+              ElementId(kind: ElementKind.signal, path: 'tb_top.dut.data'),
+            ],
+          ),
+        );
+        await selected.future.timeout(const Duration(seconds: 2));
+        // The handler asks right after it selected.
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(asked, attentionOn ? 1 : 0);
+      });
+    }
 
     test(
       'request_highlight for a NOT-open design opens it via the shared workspace and selects '
@@ -1097,8 +1164,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -1194,8 +1261,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -1258,8 +1325,8 @@ void main() {
             /* best */
           }
         });
-        final handler = CxpInboundHandler(
-          server: boot.server.server!,
+        final handler = AttachedCxpHandler(
+          server: boot.server,
           rootContainer: boot.rootContainer,
           activeTabContainerLookup: () => boot.tabContainer,
         );
@@ -1329,8 +1396,8 @@ void main() {
         }
       });
       final framed = <Object?>[];
-      final handler = CxpInboundHandler(
-        server: boot.server.server!,
+      final handler = AttachedCxpHandler(
+        server: boot.server,
         rootContainer: boot.rootContainer,
         activeTabContainerLookup: () => boot.tabContainer,
         selectionFramer: (tab) {

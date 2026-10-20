@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show cruxCxpRuntimeProvider;
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
@@ -21,13 +22,12 @@ import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/diagnostics/widgets/pane_render_stats_popover.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_attention_bridge.dart';
-import 'package:netcrux/features/remote/widgets/cxp_inbound_listener.dart';
+import 'package:netcrux/features/remote/widgets/cxp_inbound_handler_publisher.dart';
 import 'package:netcrux/features/remote/widgets/cxp_outbound_emitter.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_status_bar.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_toolbar.dart';
 import 'package:netcrux/features/workspace/providers/netcrux_action_context_provider.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/features/workspace/services/active_tab_container.dart';
 import 'package:netcrux/features/workspace/services/web_deep_link.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
@@ -237,10 +237,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     // it. Menu items dispatch back into this screen through
     // `NetcruxActionIntent`, the same path the keyboard uses.
     //
-    // Keep the settings→attention bridge alive for the shell's
-    // lifetime so the `requestAttentionOnCrossProbe` preference is mirrored
-    // into the global window-attention backend.
-    ref.watch(cxpAttentionBridgeProvider);
+    // Start the shared CXP runtime with the workspace, as before, rather than
+    // on the first cross-probe: discovery and the outbound connector need time
+    // to finish their handshakes before anyone opens the menu. Listened, not
+    // watched, so the screen does not rebuild as the server comes up.
+    ref.listen(cruxCxpRuntimeProvider, (_, _) {});
     return ShortcutManagerWidget(
       // Single source of truth: every NetcruxAction's keyboard handler
       // routes through `_dispatchAction`, the same path the menu bar
@@ -269,7 +270,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         // app name, so a second "NetCrux" bar just wasted a row of vertical
         // space. The action toolbar and the tab strip are the top of the
         // workspace (VS Code style).
-        // CxpInboundListener wraps the body so every CXP inbound
+        // CxpInboundHandlerPublisher wraps the body so every CXP inbound
         // request_highlight / request_open_source flows through one
         // handler that targets the active tab via the workspace
         // managers scope.
@@ -281,7 +282,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         // zero tabs — so a fresh launch shows the full-width "open a
         // project" prompt with no stray pane separator. This matches the
         // WaveCrux / LintCrux / SimCrux workspace-shell model.
-        body: CxpInboundListener(
+        body: CxpInboundHandlerPublisher(
           // Keyboard regions (F6 / Shift+F6) and lost-focus recovery. Inside
           // the `Actions` ShortcutManagerWidget installs, so focus it restores
           // is always within reach of the screen's shortcut handler: focus
@@ -402,7 +403,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   onPickRecentSourceFile: (path) =>
                       _openSourceFilesByPaths(<String>[path]),
                   onPickRecentWorkspace: _openWorkspaceByPath,
-                  onClearRecent: _clearRecent,
                 )
               : BrowserEmptyCanvasContent(
                   onOpenNetlistJson: _onOpenNetlistJsonPressed,
@@ -463,21 +463,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     }
     if (result.isCancelled || !mounted) return;
     final location = result.paths.single;
-    // Remembered with the recent source files, which reopen through the same
-    // single-source path. A browser upload is a `blob:` URL that dies with
-    // the page, so only a desktop path is worth remembering.
-    if (ref.read(hdlElaborationSupportedProvider)) {
-      await ref.read(appSettingsProvider.notifier).recordRecentSourceFiles(
-        <String>[location],
-      );
-      if (!mounted) return;
-    }
     await _openDesignTab(
       recentPath: null,
       displayName: NetcruxProject.locationLabel(location),
       project: NetcruxProject.create(sourceFiles: <String>[location]),
       source: NetcruxDesignSource.netlistJson,
     );
+    // Remembered with the recent source files, which reopen through the same
+    // single-source path. A browser upload is a `blob:` URL that dies with
+    // the page, so only a desktop path is worth remembering.
+    if (mounted && ref.read(hdlElaborationSupportedProvider)) {
+      ref.read(recentSources.provider.notifier).markOpened(location);
+    }
   }
 
   /// Opens the netlist a web viewer URL names (`?json=`), then applies its
@@ -589,7 +586,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       case NotAManifest(:final path)
           when _hasSuffix(path, kNetcruxProjectExtension):
         if (!mounted) return;
-        await ref.read(appSettingsProvider.notifier).recordRecentProject(path);
         final NetcruxProject project;
         try {
           project = await _readNetcruxProject(path);
@@ -616,6 +612,10 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           source: NetcruxDesignSource.project,
           projectFilePath: path,
         );
+        // Recorded once the project has read and opened, so a file that does
+        // not read never lands in Recent.
+        if (!mounted) return;
+        ref.read(recentProjects.provider.notifier).markOpened(path);
       case NotAManifest(:final path) when _hasSuffix(path, kFilelistExtension):
         await _openFilelistByPath(path);
       case NotAManifest(:final path):
@@ -699,8 +699,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   /// Opens [project] in a tab (focusing an existing tab for the same design)
   /// and pushes it into that tab's elaboration pipeline.
   ///
-  /// [recentPath] is recorded in recents first when non-null. [projectFilePath]
-  /// is the project or manifest the design came from, when it came from one.
+  /// [recentPath] is recorded in recents once the design is open, when
+  /// non-null. [projectFilePath] is the project or manifest the design came
+  /// from, when it came from one.
   Future<void> _openDesignTab({
     required String? recentPath,
     required String displayName,
@@ -708,11 +709,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     required NetcruxDesignSource source,
     String? projectFilePath,
   }) async {
-    if (recentPath != null) {
-      await ref
-          .read(appSettingsProvider.notifier)
-          .recordRecentProject(recentPath);
-    }
     if (!mounted) return;
     await ref
         .read(netcruxWorkspaceProvider.notifier)
@@ -730,6 +726,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         .activeTabContainerOrNull(context)
         ?.read(currentProjectProvider.notifier)
         .setProject(project, source: source);
+    if (recentPath != null) {
+      ref.read(recentProjects.provider.notifier).markOpened(recentPath);
+    }
   }
 
   /// Opens the `.netcrux` session at [path]: a tab for the session's design,
@@ -740,7 +739,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   Future<void> _openSessionByPath(String path) async {
     if (!mounted) return;
     final l10n = L10N.of(context);
-    await ref.read(appSettingsProvider.notifier).recordRecentProject(path);
     final NetcruxSession session;
     try {
       session = await SessionController.readSession(path);
@@ -764,6 +762,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           ),
         );
     if (!mounted) return;
+    // The session read and its tab is open: now it is a recent project.
+    ref.read(recentProjects.provider.notifier).markOpened(path);
     final container = ref.activeTabContainerOrNull(context);
     if (container == null) return;
     await SessionController(
@@ -775,8 +775,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   Future<void> _openSourceFilesByPaths(List<String> paths) async {
     if (paths.isEmpty || !mounted) return;
-    await ref.read(appSettingsProvider.notifier).recordRecentSourceFiles(paths);
-    if (!mounted) return;
     final displayName = paths.length == 1
         ? p.basename(paths.first)
         : '${paths.length} files';
@@ -789,18 +787,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     if (!mounted) return;
     final container = ref.activeTabContainerOrNull(context);
     container?.read(currentProjectProvider.notifier).setSourceFiles(paths);
+    // Newest last, so the first path ends up first in the list.
+    paths.reversed.forEach(
+      ref.read(recentSources.provider.notifier).markOpened,
+    );
   }
 
   Future<void> _openWorkspaceByPath(String path) async {
     if (!mounted) return;
     final l10n = L10N.of(context);
-    await ref.read(appSettingsProvider.notifier).recordRecentWorkspace(path);
-    if (!mounted) return;
     try {
       await ref.read(netcruxWorkspaceProvider.notifier).loadFrom(path);
       // After load, hydrate each tab's currentProjectProvider so the
       // elaboration pipeline restarts.
       await _hydrateActiveTabFromWorkspace();
+      // Recorded once the workspace has loaded.
+      if (mounted) {
+        ref.read(recentWorkspaces.provider.notifier).markOpened(path);
+      }
     } on Object catch (e) {
       if (!mounted) return;
       showCruxErrorSnack(context, l10n.projectLoadFailed(e.toString()));
@@ -861,10 +865,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 : NetcruxDesignSource.project,
           );
     }
-  }
-
-  Future<void> _clearRecent() async {
-    await ref.read(appSettingsProvider.notifier).clearRecentFiles();
   }
 
   // ---------------------------------------------------------------------------

@@ -51,10 +51,9 @@ Widget get _desktopCanvas => EmptyCanvasContent(
   onOpenProject: () {},
   onOpenSourceFiles: () {},
   onOpenWorkspace: () {},
-  onPickRecentProject: (_) {},
-  onPickRecentSourceFile: (_) {},
-  onPickRecentWorkspace: (_) {},
-  onClearRecent: () {},
+  onPickRecentProject: (_) async {},
+  onPickRecentSourceFile: (_) async {},
+  onPickRecentWorkspace: (_) async {},
 );
 
 void main() {

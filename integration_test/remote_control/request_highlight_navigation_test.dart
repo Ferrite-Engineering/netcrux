@@ -6,12 +6,12 @@
 // Verification driver for Open-Core Guide §6.3 (request_highlight receive
 // → inspector selection / hierarchy nav): boots the real open-core app,
 // seeds a loaded design (Yosys-free, via the design-seed helper), connects
-// a raw CXP peer directly to the live `NetcruxCxpServer`'s bound port (the
+// a raw CXP peer directly to the live shared runtime's bound port (the
 // same raw-socket-as-fake-peer technique
 // `test/services/remote/cxp/cxp_inbound_handler_test.dart` uses at the
 // unit level — this file drives the same handler through the FULL app,
-// i.e. via the real `CxpInboundListener` mounted in `WorkspaceScreen`, not
-// a bare `CxpInboundHandler` constructed by hand).
+// i.e. via the real `CxpInboundHandlerPublisher` mounted in `WorkspaceScreen`,
+// not a bare `NetcruxCxpRequestHandler` constructed by hand).
 //
 // Two request_highlight kinds are exercised end to end:
 //  - `ElementKind.instance` → the active tab's `selectedElementProvider`
@@ -25,6 +25,7 @@
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -32,7 +33,6 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/inspector/widgets/inspector_panel.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 
 import '../fixtures/design_seed_netlist.dart';
@@ -65,7 +65,7 @@ void main() {
           // integration tests; irrelevant to request_highlight itself
           // (no discovery involved) but keeps every CXP integration test
           // in this directory hermetic by the same convention.
-          cxpManifestDirectoryProvider.overrideWith(
+          cruxCxpManifestDirectoryProvider.overrideWith(
             (ref) async => '${tmp.path}/peers',
           ),
         ],
@@ -91,8 +91,8 @@ void main() {
       expect(topLaidOut, isTrue, reason: 'top scope never laid out');
 
       final root = rootContainer(tester);
-      final host = await root.read(cxpServerHostProvider.future);
-      expect(host, isNotNull, reason: 'cxpServerEnabled defaults to true');
+      final host = await root.read(cruxCxpRuntimeProvider.future);
+      expect(host, isNotNull, reason: 'the CXP setting defaults to on');
       expect(
         host!.isAvailable,
         isTrue,

@@ -3,6 +3,11 @@
 
 import 'dart:io' show stdout;
 import 'package:crux_about_dialog/crux_about_dialog.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart'
+    show
+        cruxCxpDesktopHost,
+        cruxCxpLaunchSettingsProvider,
+        loadCruxCxpLaunchSettings;
 import 'package:crux_eula/crux_eula.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
 import 'package:crux_license/crux_license.dart';
@@ -42,6 +47,7 @@ import 'package:netcrux/features/beta_expiry/widgets/beta_expiry_gate.dart';
 import 'package:netcrux/features/eula/netcrux_eula_overrides.dart';
 import 'package:netcrux/features/issue_reporter/netcrux_issue_reporter_overrides.dart';
 import 'package:netcrux/features/menu_bar/widgets/desktop_menu_bar.dart';
+import 'package:netcrux/features/remote/netcrux_cxp_overrides.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/telemetry/netcrux_telemetry_overrides.dart';
 import 'package:netcrux/features/update/netcrux_update_overrides.dart';
@@ -53,6 +59,7 @@ import 'package:netcrux/plugins/policy_lock_message_provider.dart';
 import 'package:netcrux/services/cli/cli_args.dart';
 import 'package:netcrux/services/file_open/incoming_document_service.dart';
 import 'package:netcrux/services/logging/severe_log_stderr_sink.dart';
+import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
@@ -104,6 +111,10 @@ final List<Override> netcruxAppOverrides = <Override>[
   // every edition, Open Core included (EULA 2.1).
   ...netcruxEulaOverrides,
   ...netcruxTelemetryOverrides,
+  // The shared CXP lifecycle: who NetCrux is, what it does when a peer asks,
+  // its version, the organization's peer filter and the outbound-send
+  // observer. The settings loaded before `runApp` are bound by `bootstrap`.
+  ...netcruxCxpOverrides,
 ];
 
 /// Starts capturing diagnostics. Idempotent under hot restart.
@@ -271,10 +282,18 @@ Future<void> bootstrap({
   // id to a registered descriptor.
   registerNetcruxThemeTokens();
 
+  // The saved CXP settings, loaded before the container exists so a launch with
+  // CXP off never starts the server or writes a manifest, even briefly. Desktop
+  // only: a browser (and a phone) runs no CXP server.
+  final cxpLaunchSettings = cruxCxpDesktopHost()
+      ? await loadCruxCxpLaunchSettings(kNetcruxCxpBinding)
+      : null;
   final rootContainer = ProviderContainer(
     overrides: <Override>[
       // Open-core overrides go here first. Pro overrides are spread last
       // so later overrides win for any shared extension-point provider.
+      if (cxpLaunchSettings != null)
+        cruxCxpLaunchSettingsProvider.overrideWithValue(cxpLaunchSettings),
       cliLaunchIntentProvider.overrideWithValue(launchIntent),
       cliYosysPathOverrideProvider.overrideWithValue(yosysOverride),
       webLaunchParamsProvider.overrideWithValue(webLaunch),

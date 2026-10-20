@@ -24,8 +24,29 @@ class _TextAwareShortcutManager extends ShortcutManager {
     if (_isTextInputFocused() && _isBareLetter()) {
       return KeyEventResult.ignored;
     }
+    // Modifier chords pass through a text field on purpose, with one
+    // exception: a chord the field itself uses. Cross-probe Selection sits on
+    // Cmd/Ctrl+Shift+Enter, which a multi-line field takes (an annotation's
+    // note); without this the field would never see the key.
+    if (_isTextInputFocused() && _isFieldOwnedChord(event)) {
+      return KeyEventResult.ignored;
+    }
     if (_activatesFocusedControl(event)) return KeyEventResult.ignored;
     return super.handleKeypress(context, event);
+  }
+
+  /// True when [event] is the chord of an action that must not fire from a
+  /// text field, so the field keeps the key.
+  bool _isFieldOwnedChord(KeyEvent event) {
+    for (final entry in shortcuts.entries) {
+      final intent = entry.value;
+      if (intent is NetcruxActionIntent &&
+          intent.action == NetcruxAction.crossProbeSelection &&
+          entry.key.accepts(event, HardwareKeyboard.instance)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// True for a bare Space or Enter while the focused widget is a control

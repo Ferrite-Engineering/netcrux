@@ -369,4 +369,94 @@ void main() {
       expect(fired, isFalse);
     });
   });
+
+  group('ShortcutManagerWidget — Cross-probe Selection chord', () {
+    Future<void> chord(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+    }
+
+    Widget host({
+      required Map<NetcruxAction, VoidCallback> handlers,
+      required Widget child,
+    }) => ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: L10N.localizationsDelegates,
+        supportedLocales: L10N.supportedLocales,
+        home: ShortcutManagerWidget(
+          handlers: handlers,
+          actionContextResolver: () => _enabledContext,
+          child: Material(child: child),
+        ),
+      ),
+    );
+
+    testWidgets('Ctrl/Cmd+Shift+Enter is Cross-probe Selection', (
+      tester,
+    ) async {
+      var fired = 0;
+      await tester.pumpWidget(
+        host(
+          handlers: {NetcruxAction.crossProbeSelection: () => fired++},
+          child: const Focus(autofocus: true, child: SizedBox.expand()),
+        ),
+      );
+      await tester.pump();
+
+      await chord(tester, LogicalKeyboardKey.enter);
+
+      expect(fired, 1);
+    });
+
+    testWidgets('the chord is left to a focused text field, and the field '
+        'receives the key', (tester) async {
+      var fired = 0;
+      final keysAtTheField = <LogicalKeyboardKey>[];
+      await tester.pumpWidget(
+        host(
+          handlers: {NetcruxAction.crossProbeSelection: () => fired++},
+          // A multi-line field (an annotation's note) takes Enter. The probe
+          // sits between the field and the shortcut manager, so it only sees
+          // the key when the manager returns it unhandled.
+          child: Focus(
+            onKeyEvent: (_, event) {
+              if (event is KeyDownEvent) keysAtTheField.add(event.logicalKey);
+              return KeyEventResult.ignored;
+            },
+            child: const TextField(autofocus: true, maxLines: null),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await chord(tester, LogicalKeyboardKey.enter);
+
+      expect(fired, 0, reason: 'the key belongs to the field');
+      expect(keysAtTheField, contains(LogicalKeyboardKey.enter));
+    });
+
+    testWidgets('other modifier chords still pass through a text field', (
+      tester,
+    ) async {
+      // Modifier chords pass through a focused field on purpose (a command's
+      // chord must work while the user is typing); only this one is the
+      // field's.
+      var palette = 0;
+      await tester.pumpWidget(
+        host(
+          handlers: {NetcruxAction.openCommandPalette: () => palette++},
+          child: const TextField(autofocus: true),
+        ),
+      );
+      await tester.pump();
+
+      await chord(tester, LogicalKeyboardKey.keyP);
+
+      expect(palette, 1);
+    });
+  });
 }

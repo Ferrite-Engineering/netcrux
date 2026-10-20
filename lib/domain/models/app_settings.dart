@@ -12,6 +12,10 @@ import 'package:netcrux/domain/models/panel_layout_state.dart';
 /// locale, auto-save interval, plugin governance, etc.) via has-a and
 /// adds NetCrux-specific fields on top. Mirrors WaveCrux's settings
 /// composition.
+///
+/// The four CXP settings (server on or off, port, attention request, selection
+/// broadcast) are not here: the shared lifecycle owns and saves them
+/// (`cruxCxpSettingsProvider`).
 @immutable
 class AppSettings {
   /// Creates a fully-specified [AppSettings].
@@ -22,11 +26,7 @@ class AppSettings {
     required this.recentWorkspacePaths,
     required this.yosysPathMode,
     required this.yosysCustomPath,
-    this.cxpServerEnabled = true,
-    this.cxpServerPort = defaultCxpServerPort,
     this.cxpEditorCommand = defaultCxpEditorCommand,
-    this.requestAttentionOnCrossProbe = true,
-    this.broadcastSelectionOnCrossProbe = true,
     this.panelLayout = const PanelLayoutState(),
     this.autoCheckForUpdates = true,
   });
@@ -40,11 +40,7 @@ class AppSettings {
       recentWorkspacePaths = const <String>[],
       yosysPathMode = YosysPathMode.autoDetect,
       yosysCustomPath = '',
-      cxpServerEnabled = true,
-      cxpServerPort = defaultCxpServerPort,
       cxpEditorCommand = defaultCxpEditorCommand,
-      requestAttentionOnCrossProbe = true,
-      broadcastSelectionOnCrossProbe = true,
       panelLayout = const PanelLayoutState(),
       autoCheckForUpdates = true;
 
@@ -77,19 +73,6 @@ class AppSettings {
   /// in that state rather than falling through to the default.
   final String yosysCustomPath;
 
-  /// When true, the CXP peer cross-probe server starts at app launch and
-  /// writes a discovery manifest so other Crux apps can find this
-  /// NetCrux instance. Defaults to enabled — cross-probe is a
-  /// suite-defining capability and should "just work" out of the box.
-  final bool cxpServerEnabled;
-
-  /// TCP port the CXP server binds to on localhost (`127.0.0.1`). Default
-  /// is [defaultCxpServerPort] (`54323`), distinct from WaveCrux's CXP
-  /// port (`54322`) so multiple Crux apps run side-by-side without
-  /// collision. Set to `0` to let the OS pick a free port (useful in
-  /// tests).
-  final int cxpServerPort;
-
   /// Shell command template used to honour `request_open_source` from
   /// remote peers. The first segment is the executable; later segments
   /// are arguments. The literal tokens `{file}` and `{line}` are
@@ -99,24 +82,6 @@ class AppSettings {
   /// `code` is on `PATH`. Empty string disables shell-out and the
   /// handler responds with `honored: false`.
   final String cxpEditorCommand;
-
-  /// Whether an actionable inbound cross-probe (a honored highlight, opened
-  /// source, or opened artifact) requests the user's attention — a portable
-  /// dock bounce / taskbar flash that never steals focus. The
-  /// settings→lifecycle bridge swaps the global
-  /// `windowAttentionRequester` between the method-channel backend and a no-op
-  /// on this flag, so turning it off makes `requestUserAttention()` silent.
-  /// Defaults to enabled.
-  final bool requestAttentionOnCrossProbe;
-
-  /// When true, NetCrux announces the active schematic selection to every
-  /// connected CXP peer as it changes (live cross-probe), via
-  /// `CxpOutboundEmitterController`. When false, no automatic `notify_selection`
-  /// broadcast is emitted on selection change — only explicit sends (the
-  /// cross-probe panel's "Send selection" and "Open in WaveCrux") still share.
-  /// Defaults to enabled: live cross-probe is the suite-defining behaviour and
-  /// should work out of the box.
-  final bool broadcastSelectionOnCrossProbe;
 
   /// Visibility and size state for the workspace IDE layout's side panels
   /// (hierarchy tree, inspector, diagnostics drawer). Driven by
@@ -149,12 +114,6 @@ class AppSettings {
   /// entries are evicted on insertion.
   static const int recentPathsLimit = 10;
 
-  /// Default port for the NetCrux CXP server. Distinct from WaveCrux's
-  /// 54322 and from LintCrux/SimCrux when they ship — every product
-  /// gets its own default so a developer running all four locally has
-  /// no port collision out of the box.
-  static const int defaultCxpServerPort = 54323;
-
   /// Default editor invocation. VS Code is the most-likely available
   /// editor across NetCrux's macOS / Linux / Windows targets; engineers
   /// using vim, sublime, or emacs configure their own command via
@@ -170,11 +129,7 @@ class AppSettings {
     List<String>? recentWorkspacePaths,
     YosysPathMode? yosysPathMode,
     String? yosysCustomPath,
-    bool? cxpServerEnabled,
-    int? cxpServerPort,
     String? cxpEditorCommand,
-    bool? requestAttentionOnCrossProbe,
-    bool? broadcastSelectionOnCrossProbe,
     PanelLayoutState? panelLayout,
     bool? autoCheckForUpdates,
   }) {
@@ -186,13 +141,7 @@ class AppSettings {
       recentWorkspacePaths: recentWorkspacePaths ?? this.recentWorkspacePaths,
       yosysPathMode: yosysPathMode ?? this.yosysPathMode,
       yosysCustomPath: yosysCustomPath ?? this.yosysCustomPath,
-      cxpServerEnabled: cxpServerEnabled ?? this.cxpServerEnabled,
-      cxpServerPort: cxpServerPort ?? this.cxpServerPort,
       cxpEditorCommand: cxpEditorCommand ?? this.cxpEditorCommand,
-      requestAttentionOnCrossProbe:
-          requestAttentionOnCrossProbe ?? this.requestAttentionOnCrossProbe,
-      broadcastSelectionOnCrossProbe:
-          broadcastSelectionOnCrossProbe ?? this.broadcastSelectionOnCrossProbe,
       panelLayout: panelLayout ?? this.panelLayout,
       autoCheckForUpdates: autoCheckForUpdates ?? this.autoCheckForUpdates,
     );
@@ -205,16 +154,7 @@ class AppSettings {
     if (other.core != core) return false;
     if (other.yosysPathMode != yosysPathMode) return false;
     if (other.yosysCustomPath != yosysCustomPath) return false;
-    if (other.cxpServerEnabled != cxpServerEnabled) return false;
-    if (other.cxpServerPort != cxpServerPort) return false;
     if (other.cxpEditorCommand != cxpEditorCommand) return false;
-    if (other.requestAttentionOnCrossProbe != requestAttentionOnCrossProbe) {
-      return false;
-    }
-    if (other.broadcastSelectionOnCrossProbe !=
-        broadcastSelectionOnCrossProbe) {
-      return false;
-    }
     if (other.panelLayout != panelLayout) return false;
     if (other.autoCheckForUpdates != autoCheckForUpdates) return false;
     if (!_listEquals(other.recentProjectPaths, recentProjectPaths)) {
@@ -237,11 +177,7 @@ class AppSettings {
     Object.hashAll(recentProjectPaths),
     Object.hashAll(recentSourceFilePaths),
     Object.hashAll(recentWorkspacePaths),
-    cxpServerEnabled,
-    cxpServerPort,
     cxpEditorCommand,
-    requestAttentionOnCrossProbe,
-    broadcastSelectionOnCrossProbe,
     panelLayout,
     autoCheckForUpdates,
   );

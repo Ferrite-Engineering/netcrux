@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart'
+    show cruxCxpConnectedPeerCountProvider;
 import 'package:crux_toolbar/crux_toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +12,6 @@ import 'package:netcrux/core/shortcuts/netcrux_action_context.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action_descriptor.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action_descriptors.dart';
 import 'package:netcrux/core/shortcuts/shortcut_bindings_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
 import 'package:netcrux/features/workspace/providers/netcrux_action_context_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -41,7 +42,7 @@ class NetcruxToolbar extends ConsumerWidget {
     // connected?" is answerable without opening the panel — the question the
     // descriptor comments explicitly wrestle with when they keep the panel
     // openable at zero peers.
-    final peerCount = ref.watch(cxpPeersProvider).value?.length ?? 0;
+    final peerCount = ref.watch(cruxCxpConnectedPeerCountProvider);
 
     return CruxToolbar<NetcruxAction>(
       common: _visibleItems(ctx, [

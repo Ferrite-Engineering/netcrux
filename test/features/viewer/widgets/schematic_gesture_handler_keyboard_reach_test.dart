@@ -6,7 +6,7 @@
 // net (the click), Shift adds to the selection (the Shift-click), Enter pushes
 // into the selected instance (the double-click), and Shift+F10 or the Menu
 // key opens the element menu (the right-click) — the only route to Copy Path
-// and to the Pro entries such as cross-probing a signal to a peer. Each step
+// and to Cross-probe to. Each step
 // is announced, because a selection a screen reader user cannot hear is not a
 // selection they can act on.
 
@@ -45,6 +45,8 @@ import 'package:netcrux/features/reset_domain/providers/reset_domain_analysis_st
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_gesture_handler.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+
+import '../../../helpers/cxp_test_overrides.dart';
 
 /// `clk` drives `u_a.A` (net 5) and `u_a.Y` drives `u_b.A` (net 7). The cells
 /// sit on the top row, the port below, all inside the 400 × 300 canvas.
@@ -143,6 +145,8 @@ Future<ProviderContainer> _pump(
 }) async {
   final container = ProviderContainer(
     overrides: [
+      // The element menu lists Cross-probe to, which reads the CXP peers.
+      ...netcruxCxpOffTestOverrides(),
       currentLaidOutGraphProvider.overrideWith((ref) async => graph),
       if (hierarchy != null)
         hierarchyTreeProvider.overrideWith(() => hierarchy),
@@ -357,6 +361,26 @@ void main() {
 
     expect(hierarchy.pushed, <String>['u_b']);
     expect(_primary(container), const SelectedElement.none());
+  });
+
+  testWidgets('Shift+Enter and Ctrl+Shift+Enter are left to the shortcut '
+      'layer, not read as Enter', (tester) async {
+    final hierarchy = _RecordingHierarchy();
+    final container = await _pump(tester, hierarchy: hierarchy);
+    container
+        .read(selectedElementProvider.notifier)
+        .select(const SelectedElement.cell(cellId: 'u_b'));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(hierarchy.pushed, isEmpty);
+    expect(_primary(container), const SelectedElement.cell(cellId: 'u_b'));
   });
 
   for (final (name, press) in <(String, Future<void> Function(WidgetTester))>[

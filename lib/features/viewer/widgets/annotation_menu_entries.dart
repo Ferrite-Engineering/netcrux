@@ -44,7 +44,7 @@ List<SchematicContextMenuExtensionEntry> buildAnnotationMenuEntries(
       SchematicContextMenuExtensionEntry(
         id: 'show-annotation-${mapped.kind.name}-${mapped.targetId}',
         label: l10n.annotationMenuShow,
-        onTap: (context, ref) async {
+        onTap: (context, ref, _) async {
           ref.read(showAnnotationForTargetOpenerProvider)(
             context,
             ref,
@@ -55,7 +55,7 @@ List<SchematicContextMenuExtensionEntry> buildAnnotationMenuEntries(
     SchematicContextMenuExtensionEntry(
       id: 'add-annotation-${mapped.kind.name}-${mapped.targetId}',
       label: l10n.annotationMenuAdd,
-      onTap: (context, ref) async {
+      onTap: (context, ref, _) async {
         ref.read(addAnnotationDialogOpenerProvider)(
           context,
           ref,

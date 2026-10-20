@@ -7,6 +7,8 @@ library;
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart'
+    show cruxCxpProductBindingProvider, cruxCxpRuntimeProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
@@ -16,14 +18,13 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
-import 'package:netcrux/services/remote/cxp/cxp_inbound_handler.dart';
 import 'package:netcrux/services/remote/cxp/cxp_outbound_emitter_controller.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
+import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../helpers/cxp_runtime_rig.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 import '../../../helpers/wait_for.dart';
 
@@ -32,7 +33,7 @@ import '../../../helpers/wait_for.dart';
 /// every frame arriving on our OWN connector-owned client socket (a peer
 /// replying to us, or gossiping notify_selection to us) was discarded
 /// because nothing listened to that socket's inbound stream. NetCrux's
-/// production wiring (`NetcruxCxpServer.start`) now constructs its
+/// production wiring (the shared `CruxCxpRuntime.start`) now constructs its
 /// `CxpPeerConnector` with `server: server`, which merges connector-link
 /// traffic into `LocalCxpServer.inbound` and auto-subscribes the link —
 /// exactly the seam these tests exercise. Both tests use only real
@@ -157,10 +158,7 @@ void main() {
         });
 
         final manifestDir = p.join(tmp.path, 'peers');
-        final netcrux = NetcruxCxpServer(
-          productVersion: '0.0.0-test',
-          manifestDirectory: manifestDir,
-        );
+        final netcrux = CxpRuntimeRig(manifestDirectory: manifestDir);
         await netcrux.start();
         addTearDown(netcrux.stop);
 
@@ -181,20 +179,20 @@ void main() {
         addTearDown(tabContainer.dispose);
         addTearDown(rootContainer.dispose);
 
-        final handler = CxpInboundHandler(
-          server: netcrux.server!,
+        final handler = AttachedCxpHandler(
+          server: netcrux,
           rootContainer: rootContainer,
           activeTabContainerLookup: () => tabContainer,
         );
         addTearDown(handler.dispose);
 
-        // NetCrux's own connector (constructed inside NetcruxCxpServer.start
-        // with server: netcrux.server) must discover and dial the remote
+        // NetCrux's own connector (constructed inside the shared runtime's
+        // start with server: its server) must discover and dial the remote
         // peer — proving the link exists before the remote uses it as a
         // reply/delivery path.
         await waitFor(
           () => remote.server.connectedPeers.any(
-            (peer) => peer.peerId == netcrux.selfIdentity?.peerId,
+            (peer) => peer.peerId == netcrux.selfIdentity.peerId,
           ),
           reason: "the remote peer's server never saw NetCrux connect",
         );
@@ -203,9 +201,9 @@ void main() {
         // it accepted (i.e. the one NetCrux's connector opened). Without
         // the connector's inbound merge (server: server), this frame
         // would land only on the connector's own client's `.inbound`
-        // stream, which CxpInboundHandler never subscribes to.
+        // stream, which the shared runtime never subscribes to.
         final delivered = remote.server.sendTo(
-          netcrux.selfIdentity!.peerId,
+          netcrux.selfIdentity.peerId,
           const RequestHighlight(
             element: ElementId(
               kind: ElementKind.instance,
@@ -228,7 +226,7 @@ void main() {
 
         // The handler actually acted on the request — the cell got
         // selected in the active tab, proving the frame reached
-        // CxpInboundHandler and not merely the connector's socket.
+        // NetCrux's request handler and not merely the connector's socket.
         final selection = tabContainer.read(selectedElementProvider);
         expect(selection.primary, isA<SelectedElementCell>());
         expect(
@@ -253,10 +251,7 @@ void main() {
         });
 
         final manifestDir = p.join(tmp.path, 'peers');
-        final netcrux = NetcruxCxpServer(
-          productVersion: '0.0.0-test',
-          manifestDirectory: manifestDir,
-        );
+        final netcrux = CxpRuntimeRig(manifestDirectory: manifestDir);
         await netcrux.start();
         addTearDown(netcrux.stop);
 
@@ -298,13 +293,12 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ...netcruxTelemetryTestOverrides(),
-            cxpServerHostProvider.overrideWith(
-              () => _StaticCxpServerHost(netcrux),
-            ),
+            cruxCxpProductBindingProvider.overrideWithValue(kNetcruxCxpBinding),
+            cruxCxpRuntimeProvider.overrideWith((ref) async => netcrux.runtime),
           ],
         );
         addTearDown(container.dispose);
-        await container.read(cxpServerHostProvider.future);
+        await container.read(cruxCxpRuntimeProvider.future);
         container.read(hierarchyTreeProvider.notifier).setModel(_model());
 
         final controller = CxpOutboundEmitterController(container);
@@ -328,13 +322,4 @@ void main() {
       },
     );
   });
-}
-
-class _StaticCxpServerHost extends CxpServerHost {
-  _StaticCxpServerHost(this._server);
-
-  final NetcruxCxpServer _server;
-
-  @override
-  Future<NetcruxCxpServer?> build() async => _server;
 }

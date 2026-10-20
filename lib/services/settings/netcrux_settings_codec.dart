@@ -14,6 +14,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// netcrux-specific recent-files lists under the `netcrux.*` namespace so
 /// they cannot collide with anything WaveCrux or another suite product
 /// might persist.
+///
+/// The four CXP keys (`netcrux.cxpServerEnabled`, `netcrux.cxpServerPort`,
+/// `netcrux.requestAttentionOnCrossProbe`,
+/// `netcrux.broadcastSelectionOnCrossProbe`) are read and written only by the
+/// shared lifecycle's codec; this one neither reads nor writes them, so an
+/// unrelated settings save never overwrites a CXP choice.
 class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
   /// Const constructor — codec is stateless.
   const NetcruxSettingsCodec();
@@ -23,13 +29,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
   static const _kRecentWorkspacePaths = 'netcrux.recentWorkspacePaths';
   static const _kYosysPathMode = 'netcrux.yosysPathMode';
   static const _kYosysCustomPath = 'netcrux.yosysCustomPath';
-  static const _kCxpServerEnabled = 'netcrux.cxpServerEnabled';
-  static const _kCxpServerPort = 'netcrux.cxpServerPort';
   static const _kCxpEditorCommand = 'netcrux.cxpEditorCommand';
-  static const _kRequestAttentionOnCrossProbe =
-      'netcrux.requestAttentionOnCrossProbe';
-  static const _kBroadcastSelectionOnCrossProbe =
-      'netcrux.broadcastSelectionOnCrossProbe';
   static const _kAutoCheckForUpdates = 'netcrux.autoCheckForUpdates';
   static const _kPanelHierarchyVisible =
       'netcrux.panelLayout.hierarchyTreeVisible';
@@ -52,16 +52,9 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
     final modeName = prefs.getString(_kYosysPathMode);
     final yosysMode = _decodeYosysMode(modeName);
     final yosysCustomPath = prefs.getString(_kYosysCustomPath) ?? '';
-    final cxpServerEnabled = prefs.getBool(_kCxpServerEnabled) ?? true;
-    final cxpServerPort =
-        prefs.getInt(_kCxpServerPort) ?? AppSettings.defaultCxpServerPort;
     final cxpEditorCommand =
         prefs.getString(_kCxpEditorCommand) ??
         AppSettings.defaultCxpEditorCommand;
-    final requestAttentionOnCrossProbe =
-        prefs.getBool(_kRequestAttentionOnCrossProbe) ?? true;
-    final broadcastSelectionOnCrossProbe =
-        prefs.getBool(_kBroadcastSelectionOnCrossProbe) ?? true;
     final autoCheckForUpdates = prefs.getBool(_kAutoCheckForUpdates) ?? true;
     final panelLayout = _readPanelLayout(prefs);
     return AppSettings(
@@ -77,11 +70,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       ),
       yosysPathMode: yosysMode,
       yosysCustomPath: yosysCustomPath,
-      cxpServerEnabled: cxpServerEnabled,
-      cxpServerPort: cxpServerPort,
       cxpEditorCommand: cxpEditorCommand,
-      requestAttentionOnCrossProbe: requestAttentionOnCrossProbe,
-      broadcastSelectionOnCrossProbe: broadcastSelectionOnCrossProbe,
       panelLayout: panelLayout,
       autoCheckForUpdates: autoCheckForUpdates,
     );
@@ -105,17 +94,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       ),
       prefs.setString(_kYosysPathMode, settings.yosysPathMode.name),
       prefs.setString(_kYosysCustomPath, settings.yosysCustomPath),
-      prefs.setBool(_kCxpServerEnabled, settings.cxpServerEnabled),
-      prefs.setInt(_kCxpServerPort, settings.cxpServerPort),
       prefs.setString(_kCxpEditorCommand, settings.cxpEditorCommand),
-      prefs.setBool(
-        _kRequestAttentionOnCrossProbe,
-        settings.requestAttentionOnCrossProbe,
-      ),
-      prefs.setBool(
-        _kBroadcastSelectionOnCrossProbe,
-        settings.broadcastSelectionOnCrossProbe,
-      ),
       prefs.setBool(_kAutoCheckForUpdates, settings.autoCheckForUpdates),
     ]);
     await _writePanelLayout(prefs, settings.panelLayout);

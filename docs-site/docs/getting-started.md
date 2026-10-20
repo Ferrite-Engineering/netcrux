@@ -75,7 +75,7 @@ These choose Yosys only. GHDL always resolves from `PATH`.
 
 ## First launch {#first-launch}
 
-With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, the version, your **Recent projects** and **Recent source files** (and recent workspaces, once you have saved one), a **Clear recent** button, and the **Open Project…**, **Open Source Files…** and **Open Workspace…** buttons. You do not need a design loaded to explore the app — the menu bar, toolbar, command palette and Settings all work from the welcome screen.
+With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, the version, your **Recent projects** and **Recent files** (and recent workspaces, once you have saved one), and the **Open Project…**, **Open Source Files…** and **Open Workspace…** buttons. From NetCrux 1.2 each recent list has its own **Clear** button and a remove button on every entry, a file that has moved is greyed as **File not found** and is dropped when you click it, and `File → Clear Recent Projects` clears the projects list from the menu or the command palette. You do not need a design loaded to explore the app — the menu bar, toolbar, command palette and Settings all work from the welcome screen.
 
 ## Elaborate your first design {#first-elaboration}
 

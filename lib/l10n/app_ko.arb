@@ -1055,26 +1055,6 @@
   "@emptyCanvasPeerSimCrux": {
     "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
   },
-  "emptyCanvasRecentProjects": "최근 프로젝트",
-  "@emptyCanvasRecentProjects": {
-    "description": "Section header for the recent-projects list on the empty-canvas state."
-  },
-  "emptyCanvasRecentSources": "최근 소스 파일",
-  "@emptyCanvasRecentSources": {
-    "description": "Section header for the recent-source-files list on the empty-canvas state."
-  },
-  "emptyCanvasNoRecentProjects": "최근 프로젝트가 없습니다.",
-  "@emptyCanvasNoRecentProjects": {
-    "description": "Placeholder shown under the recent-projects header when the list is empty."
-  },
-  "emptyCanvasNoRecentSources": "최근 소스 파일이 없습니다.",
-  "@emptyCanvasNoRecentSources": {
-    "description": "Placeholder shown under the recent-source-files header when the list is empty."
-  },
-  "emptyCanvasClearRecent": "최근 항목 지우기",
-  "@emptyCanvasClearRecent": {
-    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
-  },
   "actionSplitPaneRight": "창을 오른쪽으로 분할",
   "@actionSplitPaneRight": {
     "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
@@ -1115,33 +1095,8 @@
   "@actionShowCrossProbePanel": {
     "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
   },
-  "crossProbePanelTitle": "교차 프로브 피어",
-  "@crossProbePanelTitle": {
-    "description": "Title shown above the cross-probe panel."
-  },
-  "crossProbePanelPeersHeader": "피어",
-  "@crossProbePanelPeersHeader": {
-    "description": "Section header above the list of connected peers."
-  },
-  "crossProbePanelNoPeers": "아직 연결된 피어가 없습니다.",
-  "@crossProbePanelNoPeers": {
-    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
-  },
-  "crossProbePanelEventsHeader": "최근 이벤트",
-  "@crossProbePanelEventsHeader": {
-    "description": "Section header above the rolling CXP event log."
-  },
-  "crossProbePanelNoEvents": "교차 프로브 이벤트가 아직 없습니다.",
-  "@crossProbePanelNoEvents": {
-    "description": "Placeholder shown when the event log is empty."
-  },
-  "crossProbeCloseTooltip": "교차 프로브 패널 닫기",
-  "crossProbeServerOffline": "교차 프로브 서버가 오프라인입니다.",
-  "crossProbeSendTooltip": "이 피어로 선택 항목 전송",
-  "crossProbeUnreachableTitle": "연결할 수 없는 피어",
-  "crossProbeClearEvents": "이벤트 지우기",
-  "crossProbeSendFailed": "{peer}에 보낸 교차 프로브가 완료되지 않았습니다",
-  "crossProbeSendRefused": "{peer}에 보낸 교차 프로브: {reason}",
+  "actionCrossProbeSelection": "선택 항목 교차 프로브…",
+  "actionClearRecentProjects": "최근 프로젝트 지우기",
   "schematicHorizontalScrollbarLabel": "회로도 가로 스크롤바",
   "@schematicHorizontalScrollbarLabel": {
     "description": "Accessibility label for the horizontal scrollbar under the schematic canvas."
@@ -1153,64 +1108,6 @@
   "settingsEditorsSection": "에디터",
   "@settingsEditorsSection": {
     "description": "Settings section header for external-editor integration."
-  },
-  "settingsCxpEnabledLabel": "CXP 서버 활성화",
-  "@settingsCxpEnabledLabel": {
-    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
-  },
-  "settingsCxpPortLabel": "CXP 포트",
-  "@settingsCxpPortLabel": {
-    "description": "Text-field label for the CXP server's bind port."
-  },
-  "settingsCxpEnabledDescription": "NetCrux가 다른 Crux 호환 도구와 선택 이벤트를 공유할 수 있게 합니다",
-  "@settingsCxpEnabledDescription": {
-    "description": "Subtitle explaining what enabling the CXP server does."
-  },
-  "settingsCxpPortDescription": "TCP 포트 번호 (1–65535)",
-  "@settingsCxpPortDescription": {
-    "description": "Subtitle / helper for the CXP port input describing the valid range."
-  },
-  "settingsRequestAttentionOnCrossProbeLabel": "크로스 프로브 시 주의 요청",
-  "@settingsRequestAttentionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
-  },
-  "settingsRequestAttentionOnCrossProbeDescription": "피어가 크로스 프로브를 보낼 때 Dock을 튕기거나 작업 표시줄을 깜박입니다. 포커스를 빼앗지 않습니다.",
-  "@settingsRequestAttentionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
-  },
-  "settingsBroadcastSelectionOnCrossProbeLabel": "선택 항목 자동 브로드캐스트",
-  "@settingsBroadcastSelectionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
-  },
-  "settingsBroadcastSelectionOnCrossProbeDescription": "선택할 때 연결된 피어에게 선택 항목을 알립니다(실시간 크로스 프로브). 끄면 명시적으로 보낸 항목만 공유됩니다.",
-  "@settingsBroadcastSelectionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
-  },
-  "settingsCxpStatus": "CXP 상태",
-  "@settingsCxpStatus": {
-    "description": "Label for the CXP server status display."
-  },
-  "settingsCxpStatusRunning": "포트 {port}에서 실행 중",
-  "@settingsCxpStatusRunning": {
-    "description": "Indicates the CXP server is running on a specific port.",
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsCxpStatusStopped": "중지됨",
-  "@settingsCxpStatusStopped": {
-    "description": "Indicates the CXP server is not running."
-  },
-  "settingsCxpPeersConnected": "피어 {count}개 연결됨",
-  "@settingsCxpPeersConnected": {
-    "description": "Shows how many peers are currently connected to the CXP server.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "settingsCxpEditorCommandLabel": "에디터 명령(소스 열기)",
   "@settingsCxpEditorCommandLabel": {
@@ -2337,7 +2234,6 @@
   "settingsLanguageDescription": "애플리케이션 인터페이스에 사용할 언어",
   "settingsCxpSectionTitle": "CXP 교차 프로브",
   "settingsAutoReloadDescription": "불러온 파일이 디스크에서 변경될 때 NetCrux의 응답 방식",
-  "settingsCxpPortError": "1부터 65535 사이의 포트를 입력하세요.",
   "workspaceResetConfirmButton": "재설정",
   "workspaceReplaceConfirmButton": "바꾸기",
   "tabContextMenuRevealInFinder": "Finder에서 표시",

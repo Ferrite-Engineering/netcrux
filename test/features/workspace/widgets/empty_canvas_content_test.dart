@@ -2,25 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_app_info/crux_app_info.dart';
-import 'package:crux_settings/crux_settings.dart';
+import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/app_info/about_providers.dart';
-import 'package:netcrux/domain/enums/yosys_path_mode.dart';
-import 'package:netcrux/domain/models/app_settings.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/features/workspace/widgets/empty_canvas_content.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
-class _SettingsHarness extends AppSettingsNotifier {
-  _SettingsHarness(this.initial);
+/// A Recent list's store, held in memory.
+class _MemoryStore implements CruxRecentStore {
+  _MemoryStore(this.entries);
 
-  final AppSettings initial;
+  List<String> entries;
 
   @override
-  Future<AppSettings> build() async => initial;
+  Future<List<String>> load() async => entries;
+
+  @override
+  Future<void> save(List<String> next) async => entries = next;
 }
 
 /// Fixed build metadata for the version-line test, so the assertion does not
@@ -35,20 +37,38 @@ const _testBuildInfo = ApplicationBuildInfo(
   dartSdkVersion: '3.12.2',
 );
 
-Future<void> _pumpWith(
+typedef _Picker = Future<void> Function(String path);
+
+Future<ProviderContainer> _pumpWith(
   WidgetTester tester, {
-  required AppSettings settings,
   required Locale locale,
   required EmptyCanvasContent child,
+  List<String> projects = const <String>[],
+  List<String> sources = const <String>[],
+  List<String> workspaces = const <String>[],
+  bool Function(String path)? exists,
   ApplicationBuildInfo? buildInfo,
 }) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        appSettingsProvider.overrideWith(() => _SettingsHarness(settings)),
-        if (buildInfo != null)
-          aboutBuildInfoProvider.overrideWith((ref) async => buildInfo),
+  final container = ProviderContainer(
+    overrides: [
+      recentProjects.storeProvider.overrideWithValue(_MemoryStore(projects)),
+      recentSources.storeProvider.overrideWithValue(_MemoryStore(sources)),
+      recentWorkspaces.storeProvider.overrideWithValue(
+        _MemoryStore(workspaces),
+      ),
+      if (exists != null) ...[
+        recentProjects.existsProvider.overrideWithValue(exists),
+        recentSources.existsProvider.overrideWithValue(exists),
+        recentWorkspaces.existsProvider.overrideWithValue(exists),
       ],
+      if (buildInfo != null)
+        aboutBuildInfoProvider.overrideWith((ref) async => buildInfo),
+    ],
+  );
+  addTearDown(container.dispose);
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: const [
@@ -58,7 +78,7 @@ Future<void> _pumpWith(
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: L10N.supportedLocales,
-        home: Scaffold(body: child),
+        home: Scaffold(body: SingleChildScrollView(child: child)),
       ),
     ),
   );
@@ -67,25 +87,24 @@ Future<void> _pumpWith(
   // frames instead — the same constraint WaveCrux's welcome test documents.
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  return container;
 }
 
 EmptyCanvasContent _newContent({
   VoidCallback? onOpenProject,
   VoidCallback? onOpenSourceFiles,
   VoidCallback? onOpenWorkspace,
-  ValueChanged<String>? onPickRecentProject,
-  ValueChanged<String>? onPickRecentSourceFile,
-  ValueChanged<String>? onPickRecentWorkspace,
-  VoidCallback? onClearRecent,
+  _Picker? onPickRecentProject,
+  _Picker? onPickRecentSourceFile,
+  _Picker? onPickRecentWorkspace,
 }) {
   return EmptyCanvasContent(
     onOpenProject: onOpenProject ?? () {},
     onOpenSourceFiles: onOpenSourceFiles ?? () {},
     onOpenWorkspace: onOpenWorkspace ?? () {},
-    onPickRecentProject: onPickRecentProject ?? (_) {},
-    onPickRecentSourceFile: onPickRecentSourceFile ?? (_) {},
-    onPickRecentWorkspace: onPickRecentWorkspace ?? (_) {},
-    onClearRecent: onClearRecent ?? () {},
+    onPickRecentProject: onPickRecentProject ?? (_) async {},
+    onPickRecentSourceFile: onPickRecentSourceFile ?? (_) async {},
+    onPickRecentWorkspace: onPickRecentWorkspace ?? (_) async {},
   );
 }
 
@@ -96,7 +115,6 @@ void main() {
     ) async {
       await _pumpWith(
         tester,
-        settings: const AppSettings.defaults(),
         locale: const Locale('en'),
         child: _newContent(),
       );
@@ -106,17 +124,18 @@ void main() {
       // Canonical (WaveCrux) welcome screen: Open actions + recents only,
       // no "New Tab" affordance.
       expect(find.text('New Tab'), findsNothing);
-      // No recent files yet — placeholder text appears.
-      expect(find.text('No recent projects yet.'), findsOneWidget);
-      expect(find.text('No recent source files yet.'), findsOneWidget);
-      // No "Clear recent" button when there's nothing to clear.
-      expect(find.text('Clear recent'), findsNothing);
+      // No recent files yet — the shared placeholder text appears.
+      expect(find.text('No recent projects'), findsOneWidget);
+      expect(find.text('No recent files'), findsOneWidget);
+      // No Clear Recent button when there's nothing to clear, and no
+      // workspaces section while that list is empty.
+      expect(find.text('Clear Recent Projects'), findsNothing);
+      expect(find.text('Recent workspaces'), findsNothing);
     });
 
     testWidgets('renders the version line under the subtitle', (tester) async {
       await _pumpWith(
         tester,
-        settings: const AppSettings.defaults(),
         locale: const Locale('en'),
         child: _newContent(),
         buildInfo: _testBuildInfo,
@@ -133,7 +152,6 @@ void main() {
       // the first frames `.value` is null and nothing should render.
       await _pumpWith(
         tester,
-        settings: const AppSettings.defaults(),
         locale: const Locale('en'),
         child: _newContent(),
       );
@@ -143,54 +161,110 @@ void main() {
     testWidgets('lists every recent project / source / workspace', (
       tester,
     ) async {
-      const settings = AppSettings(
-        core: CoreSettings.defaults(),
-        recentProjectPaths: ['/d/cpu.netcrux-project'],
-        recentSourceFilePaths: ['/d/cpu.v', '/d/alu.sv'],
-        recentWorkspacePaths: ['/d/team.netcrux-workspace'],
-        yosysPathMode: YosysPathMode.autoDetect,
-        yosysCustomPath: '',
-      );
       await _pumpWith(
         tester,
-        settings: settings,
         locale: const Locale('en'),
         child: _newContent(),
+        projects: const ['/d/cpu.netcrux-project'],
+        sources: const ['/d/cpu.v', '/d/alu.sv'],
+        workspaces: const ['/d/team.netcrux-workspace'],
+        exists: (_) => true,
       );
       expect(find.text('cpu.netcrux-project'), findsOneWidget);
       expect(find.text('cpu.v'), findsOneWidget);
       expect(find.text('alu.sv'), findsOneWidget);
       expect(find.text('team.netcrux-workspace'), findsOneWidget);
-      // Clear button surfaces because there are recent entries.
-      expect(find.text('Clear recent'), findsOneWidget);
+      // A Clear Recent button per list, because each has entries.
+      expect(find.text('Clear Recent Projects'), findsOneWidget);
+      expect(find.text('Clear Recent Files'), findsOneWidget);
+      expect(find.text('Clear Recent Workspaces'), findsOneWidget);
     });
 
     testWidgets('tapping a recent project fires onPickRecentProject', (
       tester,
     ) async {
-      const settings = AppSettings(
-        core: CoreSettings.defaults(),
-        recentProjectPaths: ['/d/cpu.netcrux-project'],
-        recentSourceFilePaths: <String>[],
-        recentWorkspacePaths: <String>[],
-        yosysPathMode: YosysPathMode.autoDetect,
-        yosysCustomPath: '',
-      );
       String? picked;
       await _pumpWith(
         tester,
-        settings: settings,
         locale: const Locale('en'),
-        child: _newContent(onPickRecentProject: (path) => picked = path),
+        child: _newContent(
+          onPickRecentProject: (path) async => picked = path,
+        ),
+        projects: const ['/d/cpu.netcrux-project'],
+        exists: (_) => true,
       );
       await tester.tap(find.text('cpu.netcrux-project'));
+      await tester.pump();
       expect(picked, '/d/cpu.netcrux-project');
+    });
+
+    testWidgets('a row removes itself with its remove button', (tester) async {
+      final container = await _pumpWith(
+        tester,
+        locale: const Locale('en'),
+        child: _newContent(),
+        projects: const ['/d/cpu.netcrux-project', '/d/alu.netcrux-project'],
+        exists: (_) => true,
+      );
+      await tester.tap(find.byKey(const ValueKey('cruxRecentRemove')).first);
+      await tester.pump();
+      expect(container.read(recentProjects.provider), [
+        '/d/alu.netcrux-project',
+      ]);
+      expect(find.text('cpu.netcrux-project'), findsNothing);
+    });
+
+    testWidgets('Clear Recent Projects empties the list and says so', (
+      tester,
+    ) async {
+      final container = await _pumpWith(
+        tester,
+        locale: const Locale('en'),
+        child: _newContent(),
+        projects: const ['/d/cpu.netcrux-project'],
+        exists: (_) => true,
+      );
+      await tester.tap(find.text('Clear Recent Projects'));
+      await tester.pump();
+      expect(container.read(recentProjects.provider), isEmpty);
+      expect(find.text('Recent projects cleared.'), findsOneWidget);
+      expect(find.text('No recent projects'), findsOneWidget);
+    });
+
+    testWidgets('a missing file is greyed, and opening it drops it', (
+      tester,
+    ) async {
+      String? picked;
+      final container = await _pumpWith(
+        tester,
+        locale: const Locale('en'),
+        child: _newContent(
+          onPickRecentProject: (path) async => picked = path,
+        ),
+        projects: const ['/d/gone.netcrux-project'],
+        exists: (_) => false,
+      );
+      // The row names the problem instead of the path.
+      expect(find.text('Project file not found'), findsOneWidget);
+
+      await tester.tap(find.text('gone.netcrux-project'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(picked, isNull, reason: 'a missing file is never opened');
+      expect(container.read(recentProjects.provider), isEmpty);
+      expect(
+        find.text(
+          'gone.netcrux-project could not be opened and was removed from '
+          'Recent Projects.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('locale sweep — zh_CN', (tester) async {
       await _pumpWith(
         tester,
-        settings: const AppSettings.defaults(),
         locale: const Locale('zh', 'CN'),
         child: _newContent(),
       );
@@ -201,7 +275,6 @@ void main() {
     testWidgets('locale sweep — ja', (tester) async {
       await _pumpWith(
         tester,
-        settings: const AppSettings.defaults(),
         locale: const Locale('ja'),
         child: _newContent(),
       );
@@ -212,7 +285,6 @@ void main() {
     testWidgets('locale sweep — ko', (tester) async {
       await _pumpWith(
         tester,
-        settings: const AppSettings.defaults(),
         locale: const Locale('ko'),
         child: _newContent(),
       );

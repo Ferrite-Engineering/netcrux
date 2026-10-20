@@ -117,24 +117,47 @@ void main() {
       expect(loaded.core.autoSaveIntervalSeconds, 120);
     });
 
-    test('round-trips CXP server settings', () async {
+    test('round-trips the CXP editor command', () async {
       final seeded = const AppSettings.defaults().copyWith(
-        cxpServerEnabled: false,
-        cxpServerPort: 64321,
         cxpEditorCommand: 'subl {file}:{line}',
       );
       await codec.save(prefs, seeded);
       final loaded = await codec.load(prefs);
-      expect(loaded.cxpServerEnabled, isFalse);
-      expect(loaded.cxpServerPort, 64321);
       expect(loaded.cxpEditorCommand, 'subl {file}:{line}');
     });
 
-    test('CXP server defaults when prefs are empty', () async {
+    test('the CXP editor command defaults when prefs are empty', () async {
       final loaded = await codec.load(prefs);
-      expect(loaded.cxpServerEnabled, isTrue);
-      expect(loaded.cxpServerPort, AppSettings.defaultCxpServerPort);
       expect(loaded.cxpEditorCommand, AppSettings.defaultCxpEditorCommand);
+    });
+
+    // The four CXP settings belong to the shared lifecycle's codec. Writing
+    // them here too would overwrite a choice it saved with whatever an
+    // AppSettings snapshot last held.
+    test('never reads or writes the four shared CXP keys', () async {
+      const keys = <String>[
+        'netcrux.cxpServerEnabled',
+        'netcrux.cxpServerPort',
+        'netcrux.requestAttentionOnCrossProbe',
+        'netcrux.broadcastSelectionOnCrossProbe',
+      ];
+      await prefs.setBool('netcrux.cxpServerEnabled', false);
+      await prefs.setInt('netcrux.cxpServerPort', 64321);
+      await prefs.setBool('netcrux.requestAttentionOnCrossProbe', false);
+      await prefs.setBool('netcrux.broadcastSelectionOnCrossProbe', false);
+
+      await codec.save(prefs, await codec.load(prefs));
+
+      expect(prefs.getBool(keys[0]), isFalse);
+      expect(prefs.getInt(keys[1]), 64321);
+      expect(prefs.getBool(keys[2]), isFalse);
+      expect(prefs.getBool(keys[3]), isFalse);
+
+      await prefs.clear();
+      await codec.save(prefs, const AppSettings.defaults());
+      for (final key in keys) {
+        expect(prefs.containsKey(key), isFalse, reason: '$key written');
+      }
     });
 
     test(

@@ -4,15 +4,14 @@
 // integration_test/remote_control/cxp_server_lifecycle_test.dart
 //
 // Verification driver for Open-Core Guide §6.1 (CXP server lifecycle). With
-// `cxpServerEnabled = true` (the default) the app starts the CXP server at
-// boot; flipping the Settings → Remote Control toggle tears it down and back
-// up. This drives the real `cxpServerHostProvider` + `appSettingsProvider`
+// the CXP setting on (the default) the app starts the CXP runtime at boot;
+// flipping the Settings → CXP Cross-Probe toggle tears it down and back up.
+// This drives the real shared `cruxCxpRuntimeProvider` + `cruxCxpSettingsProvider`
 // through a live app rather than a bare ProviderContainer.
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 
 import '../helpers/app_driver.dart';
 
@@ -26,38 +25,38 @@ void main() {
       await bootNetcrux(tester);
       final root = rootContainer(tester);
 
-      // Default settings enable the server — the host provider resolves to a
-      // live NetcruxCxpServer.
-      final server = await root.read(cxpServerHostProvider.future);
+      // Default settings enable the server — the runtime provider resolves to
+      // a live CruxCxpRuntime.
+      final runtime = await root.read(cruxCxpRuntimeProvider.future);
       expect(
-        server,
+        runtime,
         isNotNull,
-        reason: 'cxpServerEnabled defaults to true → server is constructed',
+        reason: 'the CXP setting defaults to on → the runtime is constructed',
       );
       // Either it bound a port (isAvailable) or it degraded gracefully with a
       // reason — never a hard crash. On a clean macOS test host it binds.
       expect(
-        server!.isRunning || server.unavailableReason != null,
+        runtime!.isAvailable || runtime.unavailableReason != null,
         isTrue,
         reason: 'server either runs or records why it could not bind',
       );
 
-      // Disable CXP — the host tears down to null.
+      // Disable CXP — the runtime tears down to null.
       await root
-          .read(appSettingsProvider.notifier)
-          .setCxpServerEnabled(enabled: false);
-      final disabled = await root.read(cxpServerHostProvider.future);
+          .read(cruxCxpSettingsProvider.notifier)
+          .setEnabled(enabled: false);
+      final disabled = await root.read(cruxCxpRuntimeProvider.future);
       expect(
         disabled,
         isNull,
         reason: 'disabling the setting stops the server',
       );
 
-      // Re-enable — a fresh server is constructed.
+      // Re-enable — a fresh runtime is constructed.
       await root
-          .read(appSettingsProvider.notifier)
-          .setCxpServerEnabled(enabled: true);
-      final reenabled = await root.read(cxpServerHostProvider.future);
+          .read(cruxCxpSettingsProvider.notifier)
+          .setEnabled(enabled: true);
+      final reenabled = await root.read(cruxCxpRuntimeProvider.future);
       expect(
         reenabled,
         isNotNull,

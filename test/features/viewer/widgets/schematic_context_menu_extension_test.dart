@@ -7,18 +7,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/viewer/widgets/annotation_menu_entries.dart';
+import 'package:netcrux/features/viewer/widgets/cross_probe_menu_entries.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extensions_provider.dart';
 
 void main() {
   group('schematicContextMenuExtensionsProvider', () {
-    test('open-core default is the annotation builder alone', () {
+    test('open-core default is cross-probe first, then annotations', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       expect(
         container.read(schematicContextMenuExtensionsProvider),
         <SchematicContextMenuExtensionBuilder>[
+          buildCrossProbeMenuEntries,
           buildAnnotationMenuEntries,
         ],
       );
@@ -38,7 +40,7 @@ void main() {
                       SchematicContextMenuExtensionEntry(
                         id: 'fake-${target.cellId}',
                         label: 'Fake for ${target.cellId}',
-                        onTap: (ctx, _) async {},
+                        onTap: (ctx, _, _) async {},
                       ),
                   ],
                 ],
@@ -70,13 +72,13 @@ void main() {
       final free = SchematicContextMenuExtensionEntry(
         id: 'a',
         label: 'A',
-        onTap: (_, _) async {},
+        onTap: (_, _, _) async {},
       );
       final pro = SchematicContextMenuExtensionEntry(
         id: 'b',
         label: 'B',
         requiredTier: LicenseTier.pro,
-        onTap: (_, _) async {},
+        onTap: (_, _, _) async {},
       );
       expect(free.requiredTier, isNull);
       expect(pro.requiredTier, LicenseTier.pro);
@@ -96,4 +98,8 @@ void main() {
   });
 }
 
-Future<void> _noopTap(BuildContext context, WidgetRef ref) async {}
+Future<void> _noopTap(
+  BuildContext context,
+  WidgetRef ref,
+  Offset globalPosition,
+) async {}

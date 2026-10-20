@@ -4,29 +4,28 @@
 @TestOn('vm')
 library;
 
-import 'dart:async';
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show CruxCxpRequestHandler;
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/enums/netcrux_design_source.dart';
-import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/remote/cxp/cxp_inbound_handler.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../helpers/cxp_runtime_rig.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// `request_open_artifact`: a peer asks NetCrux to open a design's source,
@@ -44,7 +43,7 @@ import '../../../helpers/telemetry_test_overrides.dart';
 ///
 /// `LocalCxpServer` screens a hint on the wire first, so a socket-level
 /// test cannot tell whether the handler checks at all; most tests here
-/// deliver the request through [_ScriptedServer], which hands the handler
+/// deliver the request through [_ScriptedPeer], which hands the handler
 /// exactly what a peer sent. Two tests go through a real socket, one of them
 /// through the server the app's own provider builds.
 void main() {
@@ -91,7 +90,7 @@ void main() {
   /// A handler whose rooted rule has [open] as its only root, over a
   /// workspace store that carries that rule — as the production store does.
   /// Nothing on the `request_open_artifact` route should consult either.
-  ({_ScriptedServer server, ProviderContainer tab}) boot({
+  ({_ScriptedPeer server, ProviderContainer tab}) boot({
     bool withTab = true,
   }) {
     final containment = CxpPathContainment(roots: () => <String>[open.path]);
@@ -110,14 +109,12 @@ void main() {
     addTearDown(root.dispose);
     final tab = ProviderContainer(parent: root);
     addTearDown(tab.dispose);
-    final server = _ScriptedServer();
-    final handler = CxpInboundHandler(
-      server: server,
+    final handler = NetcruxCxpRequestHandler(
       rootContainer: root,
       activeTabContainerLookup: () => withTab ? tab : null,
     );
     addTearDown(handler.dispose);
-    return (server: server, tab: tab);
+    return (server: _ScriptedPeer(handler), tab: tab);
   }
 
   List<String> loaded(ProviderContainer tab) =>
@@ -614,12 +611,12 @@ design:
       expect(ack.reason, 'No active tab');
     });
 
-    // End to end over a real socket, through the server the app's own
-    // provider builds: `LocalCxpServer` screens the hint on the wire before
-    // the handler sees it, and a rooted screen there strips the hint for a
-    // design never opened. No record is written, so the hint is all the
-    // handler has. MUTATION: handing `NetcruxCxpServer` the rooted
-    // `cxpPathContainmentProvider` in `CxpServerHost.build` makes this red.
+    // End to end over a real socket, through the runtime NetCrux's own binding
+    // builds: `LocalCxpServer` screens the hint on the wire before the handler
+    // sees it, and a rooted screen there strips the hint for a design never
+    // opened. No record is written, so the hint is all the handler has.
+    // MUTATION: giving `kNetcruxCxpBinding` the rooted
+    // `cxpPathContainmentProvider` rule as its containment makes this red.
     test('over a socket, the production server passes a hint for a design '
         'never opened, and it is loaded', () async {
       final file = design(outside, 'never_opened.v');
@@ -628,13 +625,6 @@ design:
       final root = ProviderContainer(
         overrides: <Override>[
           ...netcruxTelemetryTestOverrides(),
-          appSettingsProvider.overrideWith(_CxpOnEphemeralPort.new),
-          cxpManifestDirectoryProvider.overrideWith((ref) async => peers.path),
-          // The build-info lookup waits on a platform channel the test
-          // binding never answers.
-          netcruxProductVersionProvider.overrideWith(
-            (ref) async => '0.0.0-test',
-          ),
           cxpWorkspaceDirectoryProvider.overrideWithValue(storeDir.path),
           cxpPathContainmentProvider.overrideWithValue(
             CxpPathContainment(roots: () => <String>[open.path]),
@@ -642,11 +632,15 @@ design:
         ],
       );
       addTearDown(root.dispose);
-      final host = (await root.read(cxpServerHostProvider.future))!;
+      final host = CxpRuntimeRig(
+        manifestDirectory: p.join(peers.path, 'peers'),
+      );
+      await host.start();
+      addTearDown(host.stop);
       final tab = ProviderContainer(parent: root);
       addTearDown(tab.dispose);
-      final handler = CxpInboundHandler(
-        server: host.server!,
+      final handler = AttachedCxpHandler(
+        server: host,
         rootContainer: root,
         activeTabContainerLookup: () => tab,
       );
@@ -682,10 +676,8 @@ design:
       final trailing = design(open, 'padded.v ').path;
       final peers = Directory.systemTemp.createTempSync('cxp_artifact_peers_');
       addTearDown(() => _deleteQuietly(peers));
-      final server = NetcruxCxpServer(
-        productVersion: '0.0.0-test',
+      final server = CxpRuntimeRig(
         manifestDirectory: p.join(peers.path, 'peers'),
-        containment: kCxpOpenArtifactContainment,
       );
       await server.start();
       addTearDown(server.stop);
@@ -703,8 +695,8 @@ design:
       addTearDown(root.dispose);
       final tab = ProviderContainer(parent: root);
       addTearDown(tab.dispose);
-      final handler = CxpInboundHandler(
-        server: server.server!,
+      final handler = AttachedCxpHandler(
+        server: server,
         rootContainer: root,
         activeTabContainerLookup: () => tab,
       );
@@ -761,7 +753,7 @@ design:
     });
 
     Future<
-      ({_ScriptedServer server, ProviderContainer root, ProviderContainer tab})
+      ({_ScriptedPeer server, ProviderContainer root, ProviderContainer tab})
     >
     bootApp() async {
       final recent = design(recentDir, 'closed.v');
@@ -796,16 +788,19 @@ design:
             ),
           );
       await root.read(appSettingsProvider.future);
+      // The Recent lists read the saved settings in the background; the rooted
+      // rule sees them once they have.
+      await root.read(recentSources.provider.notifier).restored;
+      await root.read(recentProjects.provider.notifier).restored;
+      await root.read(recentWorkspaces.provider.notifier).restored;
       final tab = ProviderContainer(parent: root);
       addTearDown(tab.dispose);
-      final server = _ScriptedServer();
-      final handler = CxpInboundHandler(
-        server: server,
+      final handler = NetcruxCxpRequestHandler(
         rootContainer: root,
         activeTabContainerLookup: () => tab,
       );
       addTearDown(handler.dispose);
-      return (server: server, root: root, tab: tab);
+      return (server: _ScriptedPeer(handler), root: root, tab: tab);
     }
 
     // The store applies the rule to what it resolves, before the handler
@@ -889,7 +884,7 @@ design:
     // `cxpPathContainmentProvider` turns 'never opened' red; dropping the
     // recent lists from `cxpOpenDirectories` turns 'closed tab' red.
     group('the crux.design_id fallback', () {
-      Future<RequestHighlightAck> probe(_ScriptedServer server, String id) =>
+      Future<RequestHighlightAck> probe(_ScriptedPeer server, String id) =>
           server.askHighlight(
             RequestHighlight(
               element: const ElementId(
@@ -934,16 +929,6 @@ design:
   });
 }
 
-/// CXP on, bound to an ephemeral port so the test never collides with a
-/// running NetCrux on the default one.
-class _CxpOnEphemeralPort extends AppSettingsNotifier {
-  @override
-  Future<AppSettings> build() async => const AppSettings.defaults().copyWith(
-    cxpServerEnabled: true,
-    cxpServerPort: 0,
-  );
-}
-
 /// Deletes [dir], tolerating a server that is still removing its manifest
 /// from it: the provider stops its server without awaiting the stop.
 void _deleteQuietly(Directory dir) {
@@ -972,15 +957,13 @@ Future<LocalCxpClient> _connect(int port) async {
   return client;
 }
 
-/// A [CxpServer] that delivers exactly the messages a test hands it — no
-/// socket, no wire-level screening — and records what the handler sends
-/// back.
-class _ScriptedServer implements CxpServer {
-  final StreamController<InboundCxpMessage> _inbound =
-      StreamController<InboundCxpMessage>.broadcast();
-  final StreamController<CxpMessage> _sent =
-      StreamController<CxpMessage>.broadcast();
-  var _nextId = 0;
+/// Calls NetCrux's request handler with exactly the request a test hands it —
+/// no socket, no wire-level screening — and wraps what it returns in the
+/// acknowledgement the shared runtime would send back.
+class _ScriptedPeer {
+  _ScriptedPeer(this._handler);
+
+  final CruxCxpRequestHandler _handler;
 
   static const PeerIdentity _peer = PeerIdentity(
     peerId: 'scripted-peer',
@@ -988,89 +971,25 @@ class _ScriptedServer implements CxpServer {
     productVersion: '0.0.0-test',
   );
 
-  /// Delivers [request] as if [_peer] had sent it and returns the ack.
-  Future<RequestOpenArtifactAck> ask(RequestOpenArtifact request) async =>
-      await _exchange(
-            request,
-            (m) => m is RequestOpenArtifactAck ? m.inReplyTo : null,
-          )
-          as RequestOpenArtifactAck;
-
-  /// Delivers [request] as if [_peer] had sent it and returns the ack.
-  Future<RequestHighlightAck> askHighlight(RequestHighlight request) async =>
-      await _exchange(
-            request,
-            (m) => m is RequestHighlightAck ? m.inReplyTo : null,
-          )
-          as RequestHighlightAck;
-
-  /// Delivers [request] and waits for the message [inReplyTo] reports as
-  /// answering it.
-  Future<CxpMessage> _exchange(
-    CxpMessage request,
-    String? Function(CxpMessage message) inReplyTo,
-  ) {
-    final messageId = 'm${_nextId++}';
-    final reply = _sent.stream.firstWhere((m) => inReplyTo(m) == messageId);
-    _inbound.add(
-      InboundCxpMessage(
-        envelope: CxpEnvelope(
-          messageId: messageId,
-          from: _peer.peerId,
-          kind: request.kind,
-          payload: request.toJson(),
-        ),
-        message: request,
-        from: _peer,
-      ),
+  /// Hands [request] to the handler as if [_peer] had sent it and returns the
+  /// ack.
+  Future<RequestOpenArtifactAck> ask(RequestOpenArtifact request) async {
+    final result = await _handler.openArtifact(request, _peer);
+    return RequestOpenArtifactAck(
+      inReplyTo: 'scripted',
+      honored: result.honored,
+      reason: result.reason,
     );
-    return reply.timeout(const Duration(seconds: 5));
   }
 
-  @override
-  Stream<InboundCxpMessage> get inbound => _inbound.stream;
-
-  @override
-  bool sendTo(String peerId, CxpMessage message) {
-    _sent.add(message);
-    return true;
+  /// Hands [request] to the handler as if [_peer] had sent it and returns the
+  /// ack.
+  Future<RequestHighlightAck> askHighlight(RequestHighlight request) async {
+    final result = await _handler.highlight(request, _peer);
+    return RequestHighlightAck(
+      inReplyTo: 'scripted',
+      honored: result.honored,
+      reason: result.reason,
+    );
   }
-
-  @override
-  PeerIdentity get selfIdentity => const PeerIdentity(
-    peerId: 'netcrux-under-test',
-    productName: 'netcrux',
-    productVersion: '0.0.0-test',
-  );
-
-  @override
-  int? get boundPort => null;
-
-  @override
-  List<PeerIdentity> get connectedPeers => const <PeerIdentity>[_peer];
-
-  @override
-  Stream<PeerPresenceEvent> get presence =>
-      const Stream<PeerPresenceEvent>.empty();
-
-  @override
-  Future<void> start() async {}
-
-  @override
-  Future<void> stop() async {}
-
-  @override
-  void broadcast(CxpMessage message) {}
-
-  @override
-  void attachLinkedPeer(
-    PeerIdentity peer,
-    void Function(CxpMessage message) send,
-  ) {}
-
-  @override
-  void detachLinkedPeer(String peerId) {}
-
-  @override
-  void injectInbound(InboundCxpMessage message) => _inbound.add(message);
 }

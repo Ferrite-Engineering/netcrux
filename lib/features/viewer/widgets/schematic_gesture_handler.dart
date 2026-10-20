@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show cruxCxpPeersProvider;
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,6 @@ import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/viewer/providers/canvas_fit_target_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -191,14 +191,14 @@ class _SchematicGestureHandlerState
 
   @override
   Widget build(BuildContext context) {
-    // Warm the CXP server the moment the schematic view mounts (rather than
-    // lazily on the first cross-probe right-click). Starting it here gives
-    // the discovery + outbound connector time to complete peer handshakes
-    // before the user opens the context menu, so the FIRST "Send to peer"
-    // submenu already reflects connected peers instead of showing an empty
-    // "no connected peers" state that only fills in on a second open.
-    // Cheap when disabled: the provider resolves to a null server.
-    ref.watch(cxpServerHostProvider);
+    // Warm the connected-peer list the moment the schematic view mounts
+    // (rather than lazily on the first cross-probe right-click). Watching it
+    // here keeps the runtime and its peer stream live, giving discovery and the
+    // outbound connector time to complete peer handshakes before the user opens
+    // the context menu, so the FIRST "Cross-probe to" submenu already reflects
+    // connected peers instead of showing "no peers running" until a second
+    // open. Cheap when disabled: the list is empty.
+    ref.watch(cruxCxpPeersProvider);
     // Auto-fit the camera whenever the scope's layout changes, so a large
     // design opens fit-to-view instead of at the identity transform's
     // top-left corner (where a 15 000 × 43 000 px core showed only a sliver
@@ -706,6 +706,14 @@ class _SchematicGestureHandlerState
 
   // ── Keyboard ──────────────────────────────────────────────────────
 
+  static bool get _hasModifier {
+    final keyboard = HardwareKeyboard.instance;
+    return keyboard.isShiftPressed ||
+        keyboard.isControlPressed ||
+        keyboard.isMetaPressed ||
+        keyboard.isAltPressed;
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -714,8 +722,7 @@ class _SchematicGestureHandlerState
     // Everything the pointer does on an element has a key: Alt+Arrow selects
     // (the mouse click), Enter pushes into an instance (the double-click),
     // and Shift+F10 or the Menu key opens the element's menu (the
-    // right-click) — the only route to Copy Path and to the Pro entries such
-    // as cross-probing a signal to a peer.
+    // right-click) — the only route to Copy Path and to Cross-probe to.
     if (event is KeyDownEvent &&
         (key == LogicalKeyboardKey.contextMenu ||
             (key == LogicalKeyboardKey.f10 &&
@@ -726,8 +733,13 @@ class _SchematicGestureHandlerState
     if (HardwareKeyboard.instance.isAltPressed && _stepSelection(key)) {
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.enter ||
-        key == LogicalKeyboardKey.numpadEnter) {
+    // A bare Enter only. Enter with a modifier is a command's chord (Cmd/Ctrl+
+    // Shift+Enter is Cross-probe Selection), and this handler sits below the
+    // shortcut manager: handling it here would push into the selected cell and
+    // the command would never see the key.
+    if ((key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.numpadEnter) &&
+        !_hasModifier) {
       final primary = ref.read(selectedElementProvider).primary;
       if (primary is! SelectedElementCell) return KeyEventResult.ignored;
       ref.read(hierarchyTreeProvider.notifier).pushInto(primary.cellId);

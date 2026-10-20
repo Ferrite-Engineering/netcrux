@@ -5,8 +5,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
-import 'package:crux_window_chrome/crux_window_chrome.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/enums/netcrux_design_source.dart';
@@ -50,8 +50,8 @@ typedef SelectionFramer = bool Function(ProviderContainer tab);
 bool _zoomToSelection(ProviderContainer tab) =>
     ZoomToSelectionController(tab).run();
 
-/// Subscribes to a [`LocalCxpServer`]'s inbound stream and dispatches
-/// the v1 request messages NetCrux honours:
+/// What NetCrux does when a peer asks (`cruxCxpRequestHandlerProvider`), for the
+/// v1 request messages it honours:
 ///
 ///   - [`RequestHighlight`] — focus on an [`ElementId`] in the active
 ///     tab. For [`ElementKind.instance`] / [`ElementKind.scope`] /
@@ -59,20 +59,20 @@ bool _zoomToSelection(ProviderContainer tab) =>
 ///     the per-tab selection. For [`ElementKind.source`] the handler
 ///     hands off to the [`EditorOpenService`].
 ///   - [`RequestOpenSource`] — shell out to the configured editor.
+///   - [`RequestOpenArtifact`] — open a `source` or `project` artifact.
+///   - [`NotifySelection`] — a peer's live selection gossip.
 ///
-/// Both handlers reply with the corresponding `Ack` carrying
-/// `honored: true|false` plus a reason on failure. The reply targets
-/// the sender peer via [`LocalCxpServer.sendTo`].
+/// Each request method returns whether it was honoured, and why not; the shared
+/// runtime sends the acknowledgement and asks for the user's attention, so this
+/// class never replies on the wire.
 ///
-/// Lifecycle: [`CxpInboundHandler`] is constructed against a running
-/// server and disposes its subscription on [dispose]. The
-/// [`cxpServerHostProvider`] consumer is responsible for the
-/// construction / teardown — this class itself does not touch the
-/// provider container.
-class CxpInboundHandler {
-  /// Attaches the handler to [server].
-  CxpInboundHandler({
-    required this.server,
+/// Lifecycle: the handler resolves the active tab's container when a request
+/// arrives, so it is built where the tab containers are reachable (a mounted
+/// widget) and published into `netcruxInboundHandlerHolderProvider`; whoever
+/// publishes it calls [dispose] when it is replaced.
+class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
+  /// Creates the handler.
+  NetcruxCxpRequestHandler({
     required this.rootContainer,
     required this.activeTabContainerLookup,
     EditorOpenService? editorService,
@@ -80,9 +80,7 @@ class CxpInboundHandler {
     SelectionFramer? selectionFramer,
   }) : _editorService = editorService ?? EditorOpenService(),
        _frame = selectionFramer ?? _zoomToSelection,
-       _nameResolver = nameResolver ?? const NetcruxNameResolver() {
-    _subscription = server.inbound.listen(_onInbound);
-  }
+       _nameResolver = nameResolver ?? const NetcruxNameResolver();
 
   /// CXP §11's rooted rule, read from the root container so this handler
   /// applies the very instance the workspace store applies to the
@@ -96,9 +94,6 @@ class CxpInboundHandler {
   CxpPathContainment get _containment =>
       rootContainer.read(cxpPathContainmentProvider);
 
-  /// The CXP server whose inbound stream is being handled.
-  final CxpServer server;
-
   /// The root [`ProviderContainer`] — used to read app-wide settings
   /// (the editor command template).
   final ProviderContainer rootContainer;
@@ -111,7 +106,6 @@ class CxpInboundHandler {
   final EditorOpenService _editorService;
   final NameResolver _nameResolver;
   final SelectionFramer _frame;
-  late final StreamSubscription<InboundCxpMessage> _subscription;
 
   /// Deferred post-open highlight subscriptions/timers. A shared-workspace open
   /// loads a design's source into a tab and elaboration then runs
@@ -123,7 +117,7 @@ class CxpInboundHandler {
       <ProviderSubscription<Object?>>[];
   final List<Timer> _deferredTimers = <Timer>[];
 
-  /// Stop handling inbound messages.
+  /// Cancels any still-pending deferred highlight or framing.
   Future<void> dispose() async {
     for (final sub in _deferredSubs) {
       sub.close();
@@ -133,54 +127,32 @@ class CxpInboundHandler {
       timer.cancel();
     }
     _deferredTimers.clear();
-    await _subscription.cancel();
   }
 
-  void _onInbound(InboundCxpMessage message) {
-    final body = message.message;
-    if (body is RequestHighlight) {
-      unawaited(_handleRequestHighlight(message, body));
-    } else if (body is RequestOpenSource) {
-      unawaited(_handleRequestOpenSource(message, body));
-    } else if (body is RequestOpenArtifact) {
-      unawaited(_handleRequestOpenArtifact(message, body));
-    } else if (body is NotifySelection) {
-      // A peer's live selection gossip (the emitter's auto-broadcast, and any
-      // panel send from a build that still uses notify_selection). NetCrux acts
-      // on it symmetrically to WaveCrux's inbound-selection handler: resolve the
-      // first signal-like element and highlight it. No ack — notify_selection is
-      // fire-and-forget in the protocol.
-      unawaited(_handleNotifySelection(body));
-    }
-  }
-
-  Future<void> _handleRequestHighlight(
-    InboundCxpMessage message,
+  @override
+  Future<CruxCxpHandlerResult> highlight(
     RequestHighlight request,
+    PeerIdentity from,
   ) async {
     final result = await _resolveAndAct(
       request.element,
       request.metadata,
       frame: true,
     );
-    _replyHighlight(
-      from: message.from.peerId,
-      replyTo: message.envelope.messageId,
-      honored: result.honored,
-      reason: result.reason,
-    );
-    // An actionable inbound message was applied — nudge the OS's
-    // attention affordance without stealing focus. Gated by the user setting
-    // via the swappable `windowAttentionRequester` seam, so this is a no-op
-    // when the preference is off (and under tests, which have no native side).
-    if (result.honored) unawaited(requestUserAttention());
+    return CruxCxpHandlerResult(honored: result.honored, reason: result.reason);
   }
 
-  /// Handles an inbound `notify_selection` — a peer's live selection gossip.
+  /// Handles an inbound `notify_selection`, a peer's live selection gossip.
   /// The mirror of WaveCrux's `handleInboundSelection`: resolve the first
   /// signal-like element and highlight it (opening the design via the shared
-  /// workspace when it isn't loaded). No ack is sent — `notify_selection` is
-  /// fire-and-forget.
+  /// workspace when it isn't loaded). It is fire-and-forget, so nothing is
+  /// acknowledged and the runtime asks for no attention: the one attention
+  /// request here is this handler's own, gated on the user's setting.
+  @override
+  void selection(NotifySelection message, PeerIdentity from) {
+    unawaited(_handleNotifySelection(message));
+  }
+
   Future<void> _handleNotifySelection(NotifySelection message) async {
     for (final element in message.elements) {
       if (!_isSignalLikeKind(element.kind)) continue;
@@ -190,10 +162,18 @@ class CxpInboundHandler {
         frame: false,
       );
       if (result.honored) {
-        unawaited(requestUserAttention());
+        _requestAttentionForSelection();
         return;
       }
     }
+  }
+
+  /// Asks the window manager for the user's attention, without stealing focus,
+  /// when the user has that on. Used only for a live selection, which is not a
+  /// request and so is not covered by the runtime's own attention request.
+  void _requestAttentionForSelection() {
+    if (!rootContainer.read(cruxCxpSettingsProvider).requestAttention) return;
+    rootContainer.read(cruxCxpAttentionRequesterProvider)?.call();
   }
 
   /// Resolves [element] against the active tab and applies the highlight,
@@ -652,20 +632,13 @@ class CxpInboundHandler {
   /// A design NetCrux has never opened is honoured: this route is not rooted
   /// in the directories the user has opened, and [kCxpOpenArtifactContainment]
   /// says why.
-  Future<void> _handleRequestOpenArtifact(
-    InboundCxpMessage message,
+  @override
+  Future<CruxCxpHandlerResult> openArtifact(
     RequestOpenArtifact request,
+    PeerIdentity from,
   ) async {
     final result = await _resolveOpenArtifact(request);
-    server.sendTo(
-      message.from.peerId,
-      RequestOpenArtifactAck(
-        inReplyTo: message.envelope.messageId,
-        honored: result.honored,
-        reason: result.reason,
-      ),
-    );
-    if (result.honored) unawaited(requestUserAttention());
+    return CruxCxpHandlerResult(honored: result.honored, reason: result.reason);
   }
 
   Future<({bool honored, String? reason})> _resolveOpenArtifact(
@@ -864,42 +837,17 @@ class CxpInboundHandler {
     };
   }
 
-  Future<void> _handleRequestOpenSource(
-    InboundCxpMessage message,
+  @override
+  Future<CruxCxpHandlerResult> openSource(
     RequestOpenSource request,
+    PeerIdentity from,
   ) async {
-    final replyTo = message.envelope.messageId;
-    final from = message.from.peerId;
     final result = await _openSource(
       request.filePath,
       request.line,
       request.column,
     );
-    final ack = RequestOpenSourceAck(
-      inReplyTo: replyTo,
-      honored: result.honored,
-      reason: result.reason,
-    );
-    server.sendTo(from, ack);
-    // Honored open-source is actionable — nudge attention (no-op when
-    // gated off or under tests).
-    if (result.honored) unawaited(requestUserAttention());
-  }
-
-  void _replyHighlight({
-    required String from,
-    required String replyTo,
-    required bool honored,
-    String? reason,
-  }) {
-    server.sendTo(
-      from,
-      RequestHighlightAck(
-        inReplyTo: replyTo,
-        honored: honored,
-        reason: reason,
-      ),
-    );
+    return CruxCxpHandlerResult(honored: result.honored, reason: result.reason);
   }
 
   Future<EditorOpenResult> _openSource(

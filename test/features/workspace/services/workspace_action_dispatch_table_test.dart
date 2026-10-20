@@ -6,6 +6,7 @@ library;
 
 import 'dart:io';
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,7 @@ import 'package:netcrux/services/collaboration/collaboration_session_openers.dar
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
+import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
@@ -102,6 +104,9 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.showConeOfInfluenceFanin: _Routing.tabScoped,
   NetcruxAction.showConeOfInfluenceFanout: _Routing.tabScoped,
   NetcruxAction.showXTrace: _Routing.tabScoped,
+  // Reads the active tab's selection; with no tab it reports that nothing is
+  // selected.
+  NetcruxAction.crossProbeSelection: _Routing.tabScoped,
 
   NetcruxAction.splitPaneRight: _Routing.workspaceScoped,
   NetcruxAction.closePane: _Routing.workspaceScoped,
@@ -129,6 +134,8 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.openSearch: _Routing.overlay,
   NetcruxAction.showCrossProbePanel: _Routing.overlay,
   NetcruxAction.importFilelist: _Routing.overlay,
+  // Empties the projects Recent list and says so in a toast.
+  NetcruxAction.clearRecentProjects: _Routing.overlay,
   // Beta-release infrastructure. `checkForUpdates` surfaces its
   // outcome as a SnackBar via the root ScaffoldMessenger; `submitIssue`
   // pushes the shared reporter dialog.
@@ -357,6 +364,9 @@ void main() {
     final root = ProviderContainer(
       overrides: <Override>[
         ...netcruxTelemetryTestOverrides(),
+        // The cross-probe command reads the CXP lifecycle: bound, never started.
+        cruxCxpProductBindingProvider.overrideWithValue(kNetcruxCxpBinding),
+        cruxCxpTransportAvailableProvider.overrideWithValue(false),
         // The workspace's launch gate reads the settings service before it
         // loads the document; the production one would await a platform
         // channel this zone never pumps.

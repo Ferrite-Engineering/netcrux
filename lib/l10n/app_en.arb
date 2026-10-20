@@ -1069,26 +1069,6 @@
   "@emptyCanvasPeerSimCrux": {
     "description": "One line in the \"More from EDACrux\" section of the empty-canvas (welcome) screen, describing SimCrux to someone using NetCrux. Written from THIS product's point of view on purpose — what SimCrux does for a NetCrux user is not what it does for a user of another product — so do not reuse another repository's wording. Keep it to roughly one short sentence plus one more; the row wraps but is not a paragraph. Product names are never translated."
   },
-  "emptyCanvasRecentProjects": "Recent projects",
-  "@emptyCanvasRecentProjects": {
-    "description": "Section header for the recent-projects list on the empty-canvas state."
-  },
-  "emptyCanvasRecentSources": "Recent source files",
-  "@emptyCanvasRecentSources": {
-    "description": "Section header for the recent-source-files list on the empty-canvas state."
-  },
-  "emptyCanvasNoRecentProjects": "No recent projects yet.",
-  "@emptyCanvasNoRecentProjects": {
-    "description": "Placeholder shown under the recent-projects header when the list is empty."
-  },
-  "emptyCanvasNoRecentSources": "No recent source files yet.",
-  "@emptyCanvasNoRecentSources": {
-    "description": "Placeholder shown under the recent-source-files header when the list is empty."
-  },
-  "emptyCanvasClearRecent": "Clear recent",
-  "@emptyCanvasClearRecent": {
-    "description": "Button on the empty-canvas state that wipes the recent files / recent projects lists."
-  },
   "actionSplitPaneRight": "Split Pane Right",
   "@actionSplitPaneRight": {
     "description": "Command palette / menu label for splitting the active pane and moving the active tab into the new (right) pane."
@@ -1129,69 +1109,13 @@
   "@actionShowCrossProbePanel": {
     "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
   },
-  "crossProbePanelTitle": "Cross-Probe Peers",
-  "@crossProbePanelTitle": {
-    "description": "Title shown above the cross-probe panel."
+  "actionCrossProbeSelection": "Cross-probe Selection…",
+  "@actionCrossProbeSelection": {
+    "description": "Action label that sends the current selection to another suite product (View menu / command palette)."
   },
-  "crossProbePanelPeersHeader": "Peers",
-  "@crossProbePanelPeersHeader": {
-    "description": "Section header above the list of connected peers."
-  },
-  "crossProbePanelNoPeers": "No peers connected yet.",
-  "@crossProbePanelNoPeers": {
-    "description": "Placeholder shown when the discovery watcher has not yet observed any peers."
-  },
-  "crossProbePanelEventsHeader": "Recent events",
-  "@crossProbePanelEventsHeader": {
-    "description": "Section header above the rolling CXP event log."
-  },
-  "crossProbePanelNoEvents": "No cross-probe events yet.",
-  "@crossProbePanelNoEvents": {
-    "description": "Placeholder shown when the event log is empty."
-  },
-  "crossProbeCloseTooltip": "Close cross-probe panel",
-  "@crossProbeCloseTooltip": {
-    "description": "Tooltip on the docked cross-probe panel's header close chevron."
-  },
-  "crossProbeServerOffline": "Cross-probe server is offline.",
-  "@crossProbeServerOffline": {
-    "description": "Banner shown in the cross-probe panel when the local CXP server is not running."
-  },
-  "crossProbeSendTooltip": "Send selection to this peer",
-  "@crossProbeSendTooltip": {
-    "description": "Tooltip on each connected-peer row's direct-send button in the cross-probe panel."
-  },
-  "crossProbeUnreachableTitle": "Unreachable peers",
-  "@crossProbeUnreachableTitle": {
-    "description": "Section header in the cross-probe panel listing discovered-but-undialable peers."
-  },
-  "crossProbeClearEvents": "Clear events",
-  "@crossProbeClearEvents": {
-    "description": "Label on the cross-probe panel's button that empties the recent-events log."
-  },
-  "crossProbeSendFailed": "The cross-probe to {peer} did not go through",
-  "@crossProbeSendFailed": {
-    "description": "Toast in the docked cross-probe panel when a send failed with no explanation: it never reached the peer, the peer never answered, or the peer declined without saying why. {peer} is the peer's product name.",
-    "placeholders": {
-      "peer": {
-        "type": "String",
-        "example": "WaveCrux"
-      }
-    }
-  },
-  "crossProbeSendRefused": "Cross-probe to {peer}: {reason}",
-  "@crossProbeSendRefused": {
-    "description": "Toast in the docked cross-probe panel when a send came back with an explanation: a refusal, a partial result, or a delivery failure the carrier explained. {peer} is the peer's product name; {reason} is that explanation, as sent.",
-    "placeholders": {
-      "peer": {
-        "type": "String",
-        "example": "WaveCrux"
-      },
-      "reason": {
-        "type": "String",
-        "example": "element not found: top.data"
-      }
-    }
+  "actionClearRecentProjects": "Clear Recent Projects",
+  "@actionClearRecentProjects": {
+    "description": "Action label that empties the Recent Projects list (File menu / command palette)."
   },
   "schematicHorizontalScrollbarLabel": "Schematic horizontal scrollbar",
   "@schematicHorizontalScrollbarLabel": {
@@ -1204,64 +1128,6 @@
   "settingsEditorsSection": "Editors",
   "@settingsEditorsSection": {
     "description": "Settings section header for external-editor integration (every Crux app has a dedicated Editors section)."
-  },
-  "settingsCxpEnabledLabel": "Enable CXP server",
-  "@settingsCxpEnabledLabel": {
-    "description": "Toggle label that enables / disables the NetCrux CXP cross-probe server."
-  },
-  "settingsCxpPortLabel": "CXP port",
-  "@settingsCxpPortLabel": {
-    "description": "Text-field label for the CXP server's bind port."
-  },
-  "settingsCxpEnabledDescription": "Let NetCrux gossip selection events with other Crux-compatible tools",
-  "@settingsCxpEnabledDescription": {
-    "description": "Subtitle explaining what enabling the CXP server does."
-  },
-  "settingsCxpPortDescription": "TCP port number (1–65535)",
-  "@settingsCxpPortDescription": {
-    "description": "Subtitle / helper for the CXP port input describing the valid range."
-  },
-  "settingsRequestAttentionOnCrossProbeLabel": "Request attention on cross-probe",
-  "@settingsRequestAttentionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether an incoming cross-probe bounces the dock / flashes the taskbar."
-  },
-  "settingsRequestAttentionOnCrossProbeDescription": "Bounce the dock (or flash the taskbar) when a peer sends a cross-probe. Never steals focus.",
-  "@settingsRequestAttentionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the request-attention-on-cross-probe toggle."
-  },
-  "settingsBroadcastSelectionOnCrossProbeLabel": "Broadcast selection automatically",
-  "@settingsBroadcastSelectionOnCrossProbeLabel": {
-    "description": "Toggle label controlling whether the active selection is auto-broadcast to connected CXP peers as it changes."
-  },
-  "settingsBroadcastSelectionOnCrossProbeDescription": "Announce your selection to connected peers as you select it (live cross-probe). When off, only explicit sends are shared.",
-  "@settingsBroadcastSelectionOnCrossProbeDescription": {
-    "description": "Subtitle explaining the broadcast-selection-automatically toggle."
-  },
-  "settingsCxpStatus": "CXP Status",
-  "@settingsCxpStatus": {
-    "description": "Label for the CXP server status display."
-  },
-  "settingsCxpStatusRunning": "Running on port {port}",
-  "@settingsCxpStatusRunning": {
-    "description": "Indicates the CXP server is running on a specific port.",
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsCxpStatusStopped": "Stopped",
-  "@settingsCxpStatusStopped": {
-    "description": "Indicates the CXP server is not running."
-  },
-  "settingsCxpPeersConnected": "{count} peer(s) connected",
-  "@settingsCxpPeersConnected": {
-    "description": "Shows how many peers are currently connected to the CXP server.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "settingsCxpEditorCommandLabel": "Editor command (open source)",
   "@settingsCxpEditorCommandLabel": {
@@ -2614,10 +2480,6 @@
   "settingsAutoReloadDescription": "How NetCrux responds when a loaded file changes on disk",
   "@settingsAutoReloadDescription": {
     "description": "Description for the auto-reload segmented control."
-  },
-  "settingsCxpPortError": "Enter a port between 1 and 65535.",
-  "@settingsCxpPortError": {
-    "description": "Error under the CXP port field for an invalid value."
   },
   "workspaceResetConfirmButton": "Reset",
   "@workspaceResetConfirmButton": {

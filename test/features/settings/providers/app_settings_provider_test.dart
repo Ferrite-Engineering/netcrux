@@ -34,46 +34,33 @@ void main() {
       expect(settings, const AppSettings.defaults());
     });
 
-    test('recordRecentProject prepends and dedupes', () async {
+    // The ordering, cap and removal rules are the shared Recent list's (see
+    // recent_lists_test.dart); the notifier only stores what it is handed.
+    test('the recent-list setters replace each list and persist it', () async {
       final container = await _makeContainer();
       addTearDown(container.dispose);
       final notifier = container.read(appSettingsProvider.notifier);
 
       await container.read(appSettingsProvider.future);
-      await notifier.recordRecentProject('/p/a.netcrux');
-      await notifier.recordRecentProject('/p/b.netcrux');
-      await notifier.recordRecentProject('/p/a.netcrux');
+      await notifier.setRecentProjectPaths(['/p/b.netcrux', '/p/a.netcrux']);
+      await notifier.setRecentSourceFilePaths(['top.v']);
+      await notifier.setRecentWorkspacePaths(['/w/team.netcrux-workspace']);
 
       final state = container.read(appSettingsProvider).value!;
-      expect(state.recentProjectPaths, ['/p/a.netcrux', '/p/b.netcrux']);
-    });
+      expect(state.recentProjectPaths, ['/p/b.netcrux', '/p/a.netcrux']);
+      expect(state.recentSourceFilePaths, ['top.v']);
+      expect(state.recentWorkspacePaths, ['/w/team.netcrux-workspace']);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getStringList('netcrux.recentProjectPaths'), [
+        '/p/b.netcrux',
+        '/p/a.netcrux',
+      ]);
 
-    test('recordRecentSourceFiles preserves order across calls', () async {
-      final container = await _makeContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(appSettingsProvider.notifier);
-
-      await container.read(appSettingsProvider.future);
-      await notifier.recordRecentSourceFiles(['top.v', 'cpu.sv']);
-      await notifier.recordRecentSourceFiles(['top.v', 'mem.v']);
-
-      final state = container.read(appSettingsProvider).value!;
-      expect(state.recentSourceFilePaths, ['top.v', 'mem.v', 'cpu.sv']);
-    });
-
-    test('clearRecentFiles empties both lists', () async {
-      final container = await _makeContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(appSettingsProvider.notifier);
-
-      await container.read(appSettingsProvider.future);
-      await notifier.recordRecentProject('/p/a.netcrux');
-      await notifier.recordRecentSourceFiles(['/s/a.v']);
-      await notifier.clearRecentFiles();
-
-      final state = container.read(appSettingsProvider).value!;
-      expect(state.recentProjectPaths, isEmpty);
-      expect(state.recentSourceFilePaths, isEmpty);
+      await notifier.setRecentProjectPaths(const []);
+      expect(
+        container.read(appSettingsProvider).value!.recentProjectPaths,
+        isEmpty,
+      );
     });
 
     test('updatePanelLayout persists the new layout', () async {
@@ -90,22 +77,29 @@ void main() {
       expect(state.panelLayout.inspectorVisible, isTrue);
     });
 
-    test('mutations enforce recentPathsLimit', () async {
-      final container = await _makeContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(appSettingsProvider.notifier);
+    test(
+      'an unrelated change keeps the CXP keys a shared save wrote',
+      () async {
+        final container = await _makeContainer();
+        addTearDown(container.dispose);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('netcrux.cxpServerEnabled', false);
+        await prefs.setInt('netcrux.cxpServerPort', 60001);
+        await prefs.setBool('netcrux.requestAttentionOnCrossProbe', false);
+        await prefs.setBool('netcrux.broadcastSelectionOnCrossProbe', false);
+        final notifier = container.read(appSettingsProvider.notifier);
 
-      await container.read(appSettingsProvider.future);
-      for (var i = 0; i < AppSettings.recentPathsLimit + 4; i++) {
-        await notifier.recordRecentProject('/p/$i.netcrux');
-      }
-      final state = container.read(appSettingsProvider).value!;
-      expect(state.recentProjectPaths.length, AppSettings.recentPathsLimit);
-      // The newest insertion sits at the top.
-      expect(
-        state.recentProjectPaths.first,
-        '/p/${AppSettings.recentPathsLimit + 3}.netcrux',
-      );
-    });
+        await container.read(appSettingsProvider.future);
+        await notifier.setAutoCheckForUpdates(enabled: false);
+
+        expect(prefs.getBool('netcrux.cxpServerEnabled'), isFalse);
+        expect(prefs.getInt('netcrux.cxpServerPort'), 60001);
+        expect(prefs.getBool('netcrux.requestAttentionOnCrossProbe'), isFalse);
+        expect(
+          prefs.getBool('netcrux.broadcastSelectionOnCrossProbe'),
+          isFalse,
+        );
+      },
+    );
   });
 }

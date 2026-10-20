@@ -24,6 +24,8 @@ import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
+import '../../../helpers/cxp_test_overrides.dart';
+
 /// `top` with one child scope `u_cpu` (module `cpu`) so the hierarchy
 /// notifier has a real root to select and pop out of.
 NetlistModel _model() {
@@ -88,7 +90,9 @@ void main() {
     List<Override> overrides = const [],
     bool withModel = true,
   }) async {
-    final container = ProviderContainer(overrides: overrides);
+    final container = ProviderContainer(
+      overrides: [...netcruxCxpOffTestOverrides(), ...overrides],
+    );
     addTearDown(container.dispose);
     if (withModel) {
       container.read(hierarchyTreeProvider.notifier).setModel(_model());
@@ -401,7 +405,7 @@ void main() {
                   SchematicContextMenuExtensionEntry(
                     id: 'ext-1',
                     label: 'Cross-probe → wavecrux',
-                    onTap: (_, _) async => taps++,
+                    onTap: (_, _, _) async => taps++,
                   ),
                 ];
               },
@@ -438,18 +442,18 @@ void main() {
                   id: 'ext-pro',
                   label: 'Pro entry',
                   requiredTier: LicenseTier.pro,
-                  onTap: (_, _) async {},
+                  onTap: (_, _, _) async {},
                 ),
                 SchematicContextMenuExtensionEntry(
                   id: 'ext-ent',
                   label: 'Enterprise entry',
                   requiredTier: LicenseTier.enterprise,
-                  onTap: (_, _) async {},
+                  onTap: (_, _, _) async {},
                 ),
                 SchematicContextMenuExtensionEntry(
                   id: 'ext-free',
                   label: 'Free entry',
-                  onTap: (_, _) async {},
+                  onTap: (_, _, _) async {},
                 ),
               ],
             ],
@@ -495,7 +499,7 @@ void main() {
                   label: 'Cross-probe → no peers',
                   tooltip: 'No peers connected',
                   enabled: false,
-                  onTap: (_, _) async => taps++,
+                  onTap: (_, _, _) async => taps++,
                 ),
               ],
             ],

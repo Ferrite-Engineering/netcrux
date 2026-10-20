@@ -7,7 +7,7 @@ import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:path/path.dart' as p;
 
@@ -75,12 +75,9 @@ Iterable<String> cxpOpenDirectories(Ref ref) {
     final projectFile = tab.payload.projectFilePath;
     if (projectFile != null) addDirectoryOf(projectFile);
   }
-  final settings = ref.read(appSettingsProvider).value;
-  if (settings != null) {
-    settings.recentProjectPaths.forEach(addDirectoryOf);
-    settings.recentSourceFilePaths.forEach(addDirectoryOf);
-    settings.recentWorkspacePaths.forEach(addDirectoryOf);
-  }
+  ref.read(recentProjects.provider).forEach(addDirectoryOf);
+  ref.read(recentSources.provider).forEach(addDirectoryOf);
+  ref.read(recentWorkspaces.provider).forEach(addDirectoryOf);
   return roots;
 }
 
@@ -186,8 +183,8 @@ String? cxpDesignIdForProject(NetcruxProject project) {
 /// directory via [cxpDesignIdForProject] — the same join key NetCrux attaches
 /// to its outbound `crux.design_id` metadata.
 ///
-/// Gated on [serverRunning], which the caller resolves from the feature-layer
-/// `cxpServerHostProvider`: with CXP off there is no peer to serve and no
+/// Gated on [serverRunning], which the caller resolves from the shared
+/// `cruxCxpServerStatusProvider`: with CXP off there is no peer to serve and no
 /// reason to write into the shared workspace directory — which also keeps
 /// the wide swath of open/elaborate tests from writing into the real
 /// per-user workspace.

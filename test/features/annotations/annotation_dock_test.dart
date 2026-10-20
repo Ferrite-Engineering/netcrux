@@ -504,7 +504,7 @@ void main() {
         host.canvasRef,
         const SelectedElement.cell(cellId: 'dma_reg'),
       ).singleWhere((e) => e.label == 'Show Annotation');
-      await entry.onTap(host.canvasContext, host.canvasRef);
+      await entry.onTap(host.canvasContext, host.canvasRef, Offset.zero);
       await tester.pump();
       await tester.pump();
 

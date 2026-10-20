@@ -29,7 +29,8 @@ that make interop work. The protocol itself is specified at
 - **Enable CXP server** — on by default. Cross-probe is a suite-defining
   capability and is meant to work without setup.
 - **CXP port** — default `54323`, any value from 1 to 65535. The port is
-  applied when you press Enter, and the server restarts on it.
+  applied when you press Enter, and the server restarts on it. From
+  NetCrux 1.2 the change takes effect at once, with no relaunch.
 - **Request attention on cross-probe** — on by default. Bounces the dock
   icon (or flashes the taskbar) when a peer's cross-probe is acted on. It
   never steals focus.
@@ -172,14 +173,36 @@ normalization.
 for an instance, the port name for a port, and `net_<netId>` for an
 anonymous wire.
 
+## Cross-probing from the canvas
+
+From NetCrux 1.2 every suite product sends a cross-probe the same way.
+
+- **Right-click an element** in the schematic and choose **Cross-probe to**.
+  The submenu lists each running product (WaveCrux, NetCrux, LintCrux,
+  SimCrux); a product running in several windows lists them as `WaveCrux 1`,
+  `WaveCrux 2`, oldest first. The element you right-clicked is the one sent,
+  not the current selection. With no peer running the entry reads
+  **Cross-probe to (no peers running)** and is disabled.
+- **`View → Cross-probe Selection…`** (`Cmd/Ctrl+Shift+Enter`, or the command
+  palette) sends the current selection. With one product running it sends at
+  once; with several it opens the same list at the selection. The shortcut is
+  ignored while a text field has focus, and plain `Enter` still pushes into the
+  selected instance.
+
+The result is reported as a short message and announced to screen readers: sent,
+refused with the peer's reason, no answer, peer gone, or nothing selected. An
+organization allowlist, when one is set, removes the products it excludes from
+every one of these lists.
+
 ## The Cross-Probe panel
 
 `View → Show Cross-Probe Panel` (`Cmd/Ctrl+Shift+X`, or the toolbar button)
 toggles the **Cross-Probe** dock tab. It shows:
 
 - **Cross-probe server is offline.** when the server is not running.
-- **Peers** — every discovered peer as product name and version over its
-  peer id, each with a **Send selection to this peer** button that sends a
+- **Connected peers** — every connected peer as product name and version over
+  its peer id (from NetCrux 1.2 the toolbar badge counts connected peers, not
+  discovered ones), each with a **Send selection to this peer** button that sends a
   `request_highlight` for whatever is selected right now. From NetCrux 1.1
   the targeted send is free in every edition and the button carries no tier
   badge.

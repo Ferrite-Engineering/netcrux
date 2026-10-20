@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show CrossProbeSelection;
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
@@ -50,19 +51,21 @@ class ResolvedCxpSelection {
         },
       );
 
-  /// The `request_highlight` message this selection produces — the ack-bearing
-  /// form the cross-probe panel's per-peer send uses so a rejected send can be
-  /// surfaced to the user, versus the fire-and-forget [toNotifySelection] the
-  /// automatic emitter broadcasts. Carries the same `netcrux.scope_path` hint
-  /// plus any [extraMetadata] (e.g. `crux.design_id` for the shared workspace).
-  RequestHighlight toRequestHighlight([Map<String, Object?>? extraMetadata]) =>
-      RequestHighlight(
-        element: element,
-        metadata: <String, Object?>{
-          'netcrux.scope_path': scopePath,
-          ...?extraMetadata,
-        },
-      );
+  /// The selection every explicit cross-probe surface sends (the panel, the
+  /// "Cross-probe to" menu, the Cross-probe Selection command and the "Open in
+  /// WaveCrux" buttons): the one element this selection names, with the same
+  /// `netcrux.scope_path` hint plus any [extraMetadata] (e.g. `crux.design_id`
+  /// for the shared workspace). The shared send picks the kind per target.
+  CrossProbeSelection toCrossProbeSelection([
+    Map<String, Object?>? extraMetadata,
+  ]) => CrossProbeSelection(
+    candidates: <ElementId>[element],
+    displayName: displayName,
+    metadata: <String, Object?>{
+      'netcrux.scope_path': scopePath,
+      ...?extraMetadata,
+    },
+  );
 }
 
 /// Translates [element] — selected inside [scope] of [model] — into

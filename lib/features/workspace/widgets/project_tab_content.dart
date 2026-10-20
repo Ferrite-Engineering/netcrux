@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart' show cruxCxpServerStatusProvider;
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,6 @@ import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dar
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/statistics/widgets/netcrux_stats_strip.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
@@ -114,7 +114,7 @@ class ProjectTabContent extends ConsumerWidget {
             unawaited(
               publishDesignSourceArtifact(
                 ProviderScope.containerOf(context, listen: false),
-                serverRunning: ref.read(cxpServerHostProvider).value != null,
+                serverRunning: ref.read(cruxCxpServerStatusProvider).running,
                 designId: designId,
                 sourcePath: project.sourceFiles.first,
                 topModule: model.topModule?.name ?? project.topModule,

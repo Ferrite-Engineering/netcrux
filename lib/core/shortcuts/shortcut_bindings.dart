@@ -85,6 +85,13 @@ Map<NetcruxAction, ShortcutActivator> defaultBindings() {
       LogicalKeyboardKey.keyX,
       shift: true,
     ),
+    // Cmd/Ctrl+Shift+Enter — Cross-probe Selection. Enter with these
+    // modifiers is nothing else in NetCrux, and the canvas leaves a modified
+    // Enter alone (it pushes into a cell on a bare Enter only).
+    NetcruxAction.crossProbeSelection: mod(
+      LogicalKeyboardKey.enter,
+      shift: true,
+    ),
     // ── tools / help ──────────────────────────────────────────────────────
     // Tab cycling — Ctrl+Tab / Ctrl+Shift+Tab on every platform, matching
     // LintCrux and SimCrux (and browsers / VS Code). Not Cmd-based on macOS:

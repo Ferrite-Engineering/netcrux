@@ -8,11 +8,10 @@
 // `CrossProbePanel` the same way `WorkspaceActionDispatcher
 // ._onShowCrossProbePanel` does (a dialog hosting `CrossProbePanel()`
 // against the live root `ProviderContainer`), then drives a genuine
-// two-peer manifest exchange by starting a SECOND real `NetcruxCxpServer`
+// two-peer manifest exchange by starting a SECOND real `CruxCxpRuntime`
 // in-process — the same raw-server-as-fake-peer technique
-// `test/services/remote/cxp/netcrux_cxp_server_conformance_test.dart`'s
-// `bootPair()` and `cxp_outbound_emitter_controller_test.dart`'s
-// `_bootServerWithSubscribedClient()` use at the unit level — pointed at
+// `cxp_outbound_emitter_controller_test.dart`'s
+// `_bootServerWithSubscribedClient()` uses at the unit level — pointed at
 // the same manifest directory as the booted app.
 //
 // This is real, not mocked: peer B writes an actual manifest file to
@@ -21,9 +20,9 @@
 // both sides dials the other so the app's own `LocalCxpServer` sees a
 // real inbound Hello handshake — the same mechanism a second running
 // suite product would go through. Assertions cover both halves of the
-// panel: the "Peers" section (sourced from `cxpPeersProvider`, driven by
+// panel: the "Peers" section (sourced from `cruxCxpPeersProvider`, driven by
 // file-based discovery) and the "Recent events" section (sourced from
-// `cxpEventLogProvider`, driven by the server's own inbound/presence
+// `cruxCxpEventLogProvider`, driven by the runtime's own inbound/presence
 // streams) — first via the presence "connected" event the two-peer
 // handshake itself produces, then via a genuine inbound protocol message
 // from a third raw peer dialing directly into the app's bound port (the
@@ -35,14 +34,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:netcrux/features/remote/providers/cxp_event_log_provider.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
 import 'package:netcrux/features/remote/widgets/cross_probe_panel.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
+import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 
 import '../helpers/app_driver.dart';
 
@@ -78,17 +76,17 @@ void main() {
           // two-peer exchange is real but confined to this test, never
           // touching the suite-shared discovery location or discovering
           // a real running suite product on the dev host.
-          cxpManifestDirectoryProvider.overrideWith(
+          cruxCxpManifestDirectoryProvider.overrideWith(
             (ref) async => manifestDir,
           ),
         ],
       );
 
       final root = rootContainer(tester);
-      final appHost = await root.read(cxpServerHostProvider.future);
-      expect(appHost, isNotNull, reason: 'cxpServerEnabled defaults to true');
+      final appHost = await root.read(cruxCxpRuntimeProvider.future);
+      expect(appHost, isNotNull, reason: 'the CXP setting defaults to on');
       expect(appHost!.isAvailable, isTrue);
-      final appIdentity = appHost.selfIdentity!;
+      final appIdentity = appHost.selfIdentity;
 
       // Open the panel the same way the "Show Cross-Probe Panel" action
       // does (`WorkspaceActionDispatcher._onShowCrossProbePanel`): a
@@ -121,15 +119,18 @@ void main() {
       );
       expect(panelMounted, isTrue, reason: 'cross-probe panel never opened');
 
-      // ── Peer B: a second real NetcruxCxpServer sharing the manifest
+      // ── Peer B: a second real CruxCxpRuntime sharing the manifest
       // directory — the genuine two-peer manifest exchange.
-      final peerB = NetcruxCxpServer(
+      final peerB = CruxCxpRuntime(
+        binding: kNetcruxCxpBinding,
         productVersion: '0.0.0-test',
         manifestDirectory: manifestDir,
+        port: 0,
+        handler: () => const CruxCxpRequestHandler(),
       );
       await peerB.start();
-      addTearDown(peerB.stop);
-      final peerBIdentity = peerB.selfIdentity!;
+      addTearDown(peerB.dispose);
+      final peerBIdentity = peerB.selfIdentity;
       expect(
         peerBIdentity.peerId,
         isNot(appIdentity.peerId),
@@ -140,20 +141,15 @@ void main() {
       // directory (every ~2s) and picks up peer B's manifest.
       final peerDiscovered = await pumpUntil(
         tester,
-        () =>
-            root
-                .read(cxpPeersProvider)
-                .value
-                ?.any(
-                  (p) => p.identity.peerId == peerBIdentity.peerId,
-                ) ??
-            false,
+        () => root
+            .read(cruxCxpPeersProvider)
+            .any((p) => p.peerId == peerBIdentity.peerId),
         timeout: const Duration(seconds: 20),
       );
       expect(
         peerDiscovered,
         isTrue,
-        reason: 'peer B never showed up in cxpPeersProvider',
+        reason: 'peer B never showed up in cruxCxpPeersProvider',
       );
       await tester.pump();
       expect(
@@ -169,13 +165,8 @@ void main() {
       final presenceLogged = await pumpUntil(
         tester,
         () => root
-            .read(cxpEventLogProvider)
-            .any(
-              (e) =>
-                  e.direction == CxpEventDirection.presence &&
-                  e.kind == 'connected' &&
-                  e.peerLabel.contains(peerBIdentity.peerId),
-            ),
+            .read(cruxCxpEventLogProvider)
+            .any((e) => e.kind == CrossProbeEventKind.peerConnected),
         timeout: const Duration(seconds: 20),
       );
       expect(
@@ -222,11 +213,11 @@ void main() {
       final messageLogged = await pumpUntil(
         tester,
         () => root
-            .read(cxpEventLogProvider)
+            .read(cruxCxpEventLogProvider)
             .any(
               (e) =>
-                  e.direction == CxpEventDirection.inbound &&
-                  e.kind == CxpMessageKind.requestHighlight,
+                  e.direction == CrossProbeEventDirection.inbound &&
+                  e.messageKind == CxpMessageKind.requestHighlight,
             ),
       );
       expect(

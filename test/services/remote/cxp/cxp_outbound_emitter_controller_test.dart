@@ -7,9 +7,10 @@ library;
 import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/net.dart';
@@ -17,12 +18,11 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
-import 'package:netcrux/features/remote/providers/cxp_server_provider.dart';
-import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/services/remote/cxp/cxp_outbound_emitter_controller.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
+import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 
+import '../../../helpers/cxp_runtime_rig.dart';
 import '../../../helpers/wait_for.dart';
 import 'cxp_test_barrier.dart';
 
@@ -67,13 +67,10 @@ NetlistModel _model() {
   );
 }
 
-Future<({NetcruxCxpServer server, LocalCxpClient client, Directory tmp})>
+Future<({CxpRuntimeRig server, LocalCxpClient client, Directory tmp})>
 _bootServerWithSubscribedClient() async {
   final tmp = Directory.systemTemp.createTempSync('cxp_emit_ctrl_');
-  final server = NetcruxCxpServer(
-    productVersion: '0.0.0-test',
-    manifestDirectory: '${tmp.path}/peers',
-  );
+  final server = CxpRuntimeRig(manifestDirectory: '${tmp.path}/peers');
   await server.start();
   final client = LocalCxpClient(
     selfIdentity: const PeerIdentity(
@@ -118,15 +115,13 @@ void main() {
 
         final container = ProviderContainer(
           overrides: [
-            cxpServerHostProvider.overrideWith(
-              () => _StaticCxpServerHost(boot.server),
-            ),
+            ..._cxpOverrides(boot.server),
           ],
         );
         addTearDown(container.dispose);
         // Prime the AsyncNotifier so .value is populated before the
         // controller fires its first emission.
-        await container.read(cxpServerHostProvider.future);
+        await container.read(cruxCxpRuntimeProvider.future);
         container.read(hierarchyTreeProvider.notifier).setModel(_model());
 
         final controller = CxpOutboundEmitterController(container);
@@ -167,15 +162,13 @@ void main() {
       });
       final container = ProviderContainer(
         overrides: [
-          cxpServerHostProvider.overrideWith(
-            () => _StaticCxpServerHost(boot.server),
-          ),
+          ..._cxpOverrides(boot.server),
         ],
       );
       addTearDown(container.dispose);
       // Prime the AsyncNotifier so .value is populated before the
       // controller fires its first emission.
-      await container.read(cxpServerHostProvider.future);
+      await container.read(cruxCxpRuntimeProvider.future);
       container.read(hierarchyTreeProvider.notifier).setModel(_model());
 
       final controller = CxpOutboundEmitterController(container);
@@ -215,15 +208,13 @@ void main() {
       });
       final container = ProviderContainer(
         overrides: [
-          cxpServerHostProvider.overrideWith(
-            () => _StaticCxpServerHost(boot.server),
-          ),
+          ..._cxpOverrides(boot.server),
         ],
       );
       addTearDown(container.dispose);
       // Prime the AsyncNotifier so .value is populated before the
       // controller fires its first emission.
-      await container.read(cxpServerHostProvider.future);
+      await container.read(cruxCxpRuntimeProvider.future);
       container.read(hierarchyTreeProvider.notifier).setModel(_model());
 
       final controller = CxpOutboundEmitterController(container);
@@ -258,15 +249,13 @@ void main() {
       });
       final container = ProviderContainer(
         overrides: [
-          cxpServerHostProvider.overrideWith(
-            () => _StaticCxpServerHost(boot.server),
-          ),
+          ..._cxpOverrides(boot.server),
         ],
       );
       addTearDown(container.dispose);
       // Prime the AsyncNotifier so .value is populated before the
       // controller fires its first emission.
-      await container.read(cxpServerHostProvider.future);
+      await container.read(cruxCxpRuntimeProvider.future);
       container.read(hierarchyTreeProvider.notifier).setModel(_model());
 
       final controller = CxpOutboundEmitterController(container);
@@ -326,16 +315,13 @@ void main() {
         });
         final container = ProviderContainer(
           overrides: [
-            cxpServerHostProvider.overrideWith(
-              () => _StaticCxpServerHost(boot.server),
-            ),
-            // Gate the emitter: the setter's default is ON; here it is OFF.
-            appSettingsProvider.overrideWith(_BroadcastOffSettings.new),
+            ..._cxpOverrides(boot.server),
+            // Gate the emitter: the setting's default is ON; here it is OFF.
+            cruxCxpSettingsProvider.overrideWith(_BroadcastOffSettings.new),
           ],
         );
         addTearDown(container.dispose);
-        await container.read(cxpServerHostProvider.future);
-        await container.read(appSettingsProvider.future);
+        await container.read(cruxCxpRuntimeProvider.future);
         container.read(hierarchyTreeProvider.notifier).setModel(_model());
 
         final controller = CxpOutboundEmitterController(container);
@@ -368,19 +354,18 @@ void main() {
   });
 }
 
-/// App-settings notifier stub with automatic selection broadcast turned OFF.
-class _BroadcastOffSettings extends AppSettingsNotifier {
+/// CXP settings with automatic selection broadcast turned OFF.
+class _BroadcastOffSettings extends CruxCxpSettingsNotifier {
   @override
-  Future<AppSettings> build() async => const AppSettings.defaults().copyWith(
-    broadcastSelectionOnCrossProbe: false,
+  CruxCxpSettings build() => const CruxCxpSettings(
+    enabled: true,
+    port: 54323,
+    broadcastSelection: false,
   );
 }
 
-class _StaticCxpServerHost extends CxpServerHost {
-  _StaticCxpServerHost(this._server);
-
-  final NetcruxCxpServer _server;
-
-  @override
-  Future<NetcruxCxpServer?> build() async => _server;
-}
+/// NetCrux's CXP binding over [rig]'s running runtime, as the app wires it.
+List<Override> _cxpOverrides(CxpRuntimeRig rig) => <Override>[
+  cruxCxpProductBindingProvider.overrideWithValue(kNetcruxCxpBinding),
+  cruxCxpRuntimeProvider.overrideWith((ref) async => rig.runtime),
+];

@@ -3,16 +3,17 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/viewer/widgets/annotation_menu_entries.dart';
+import 'package:netcrux/features/viewer/widgets/cross_probe_menu_entries.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 
 /// Extension-point provider: the builders that inject extra entries into the
 /// schematic right-click / long-press context menu.
 ///
-/// Open core resolves it to the annotation builder, so
-/// "Add Annotation…" and "Show Annotation" are on the menu
-/// at every tier. The Pro overlay's `proOverrides` replaces the list with one
-/// that carries this builder and one builder per Pro feature (cross-probe
-/// origination among them).
+/// Open core resolves it to the cross-probe builder, so "Cross-probe to" is on
+/// the menu first, and the annotation builder, so "Add Annotation…" and "Show
+/// Annotation" are on the menu at every tier. The Pro overlay's `proOverrides`
+/// replaces the list with one that carries these two builders and one builder
+/// per Pro feature.
 ///
 /// Declared as a manual `Provider` (not `@Riverpod`-codegen) so the
 /// Pro overlay can override with `.overrideWith` without taking the
@@ -30,5 +31,6 @@ final schematicContextMenuExtensionsProvider =
 /// state of the tab the menu opened in.
 const List<SchematicContextMenuExtensionBuilder>
 kOpenCoreSchematicContextMenuBuilders = <SchematicContextMenuExtensionBuilder>[
+  buildCrossProbeMenuEntries,
   buildAnnotationMenuEntries,
 ];

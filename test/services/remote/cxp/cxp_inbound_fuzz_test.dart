@@ -8,25 +8,23 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../helpers/cxp_runtime_rig.dart';
 import '../../../helpers/wait_for.dart';
 
 /// Malformed inbound CXP traffic (bad JSON, non-object root, missing
 /// fields, unknown verb, oversized payload) must be rejected with a protocol
 /// error reply and must never crash the server: a valid client can still
-/// connect and handshake afterward.
+/// connect and handshake afterward. The server is the one the shared runtime
+/// builds from NetCrux's binding, as in the app.
 void main() {
   late Directory tmp;
-  late NetcruxCxpServer server;
+  late CxpRuntimeRig server;
 
   setUp(() async {
     tmp = Directory.systemTemp.createTempSync('netcrux_cxp_fuzz_');
-    server = NetcruxCxpServer(
-      productVersion: '0.0.0-test',
-      manifestDirectory: p.join(tmp.path, 'peers'),
-    );
+    server = CxpRuntimeRig(manifestDirectory: p.join(tmp.path, 'peers'));
     await server.start();
   });
   tearDown(() async {
@@ -139,7 +137,7 @@ void main() {
         },
       }),
     );
-    expect(server.isRunning, isTrue);
+    expect(server.isAvailable, isTrue);
     expect(reply.toLowerCase(), contains('hello'));
   });
 }

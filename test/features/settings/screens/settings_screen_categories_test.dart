@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:crux_settings/crux_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/screens/settings_screen.dart';
 import 'package:netcrux/features/settings/widgets/color_theme_section.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,6 +33,12 @@ Future<ProviderContainer> _pump(
           prefsOverride: prefs,
         ),
       ),
+      // The CXP section reads the shared lifecycle; no runtime binds a socket.
+      cruxCxpProductBindingProvider.overrideWithValue(kNetcruxCxpBinding),
+      cruxCxpLaunchSettingsProvider.overrideWithValue(
+        const CruxCxpSettings(enabled: true, port: 54323),
+      ),
+      cruxCxpRuntimeProvider.overrideWith((_) async => null),
     ],
   );
   addTearDown(container.dispose);
@@ -188,13 +196,13 @@ void main() {
     final l10n = await l10nFor(const Locale('en'));
 
     await _openCategory(tester, l10n.settingsCxpSectionTitle);
-    final before = _settings(container).cxpServerEnabled;
+    final before = container.read(cruxCxpSettingsProvider).enabled;
 
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(_settings(container).cxpServerEnabled, !before);
+    expect(container.read(cruxCxpSettingsProvider).enabled, !before);
     expect(tester.takeException(), isNull);
   });
 
@@ -216,7 +224,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(_settings(container).cxpServerPort, 54999);
+    expect(container.read(cruxCxpSettingsProvider).port, 54999);
     expect(tester.takeException(), isNull);
   });
 

@@ -22,6 +22,8 @@ import 'package:netcrux/features/viewer/widgets/x_trace_result_panel.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
+import '../../../helpers/cxp_test_overrides.dart';
+
 XTraceResult _chain() => const XTraceResult(
   rootNetId: 7,
   chain: <XTraceStep>[
@@ -50,7 +52,9 @@ void main() {
   }
 
   ProviderContainer makeContainer({List<Override> overrides = const []}) {
-    final container = ProviderContainer(overrides: overrides);
+    final container = ProviderContainer(
+      overrides: [...netcruxCxpOffTestOverrides(), ...overrides],
+    );
     addTearDown(container.dispose);
     return container;
   }

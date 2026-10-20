@@ -117,6 +117,14 @@ enum NetcruxAction implements CruxAction {
   /// Show the CXP cross-probe panel (peers + event log).
   showCrossProbePanel,
 
+  /// Send the current schematic selection to another suite product: at once
+  /// when one is running, from a menu of them when several are.
+  crossProbeSelection,
+
+  /// Empty the Recent Projects list (the one on the start screen and the
+  /// File menu's source of truth).
+  clearRecentProjects,
+
   /// Show the multi-step cone-of-influence fanin overlay for the
   /// current selection. Pro feature — requires [LicenseTier.pro]
   /// (see [NetcruxActionRequiredTier.requiredTier]).
@@ -412,6 +420,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.exportJson:
       case NetcruxAction.closeTab:
       case NetcruxAction.closeProject:
+      case NetcruxAction.clearRecentProjects:
       case NetcruxAction.resetWorkspace:
       case NetcruxAction.shareSession:
       case NetcruxAction.joinSession:
@@ -441,6 +450,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.nextTab:
       case NetcruxAction.previousTab:
       case NetcruxAction.showCrossProbePanel:
+      case NetcruxAction.crossProbeSelection:
       case NetcruxAction.showSourcePane:
       case NetcruxAction.closeSourcePane:
       case NetcruxAction.showDiffPane:
@@ -580,6 +590,10 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionMoveTabToOtherPane;
       case NetcruxAction.showCrossProbePanel:
         return l10n.actionShowCrossProbePanel;
+      case NetcruxAction.crossProbeSelection:
+        return l10n.actionCrossProbeSelection;
+      case NetcruxAction.clearRecentProjects:
+        return l10n.actionClearRecentProjects;
       case NetcruxAction.showConeOfInfluenceFanin:
         return l10n.actionShowConeOfInfluenceFanin;
       case NetcruxAction.showConeOfInfluenceFanout:
@@ -790,6 +804,9 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.focusOtherPane:
       case NetcruxAction.moveTabToOtherPane:
       case NetcruxAction.showCrossProbePanel:
+      // Cross-probing is free in every edition, like receiving.
+      case NetcruxAction.crossProbeSelection:
+      case NetcruxAction.clearRecentProjects:
       case NetcruxAction.clearConeOfInfluence:
       case NetcruxAction.showXTracePanel:
       case NetcruxAction.clearXTrace:
@@ -915,6 +932,8 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.focusOtherPane:
       case NetcruxAction.moveTabToOtherPane:
       case NetcruxAction.showCrossProbePanel:
+      case NetcruxAction.crossProbeSelection:
+      case NetcruxAction.clearRecentProjects:
       case NetcruxAction.clearConeOfInfluence:
       case NetcruxAction.showXTracePanel:
       case NetcruxAction.clearXTrace:

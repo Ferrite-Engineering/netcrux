@@ -154,6 +154,9 @@ void main() {
         NetcruxAction.shareSession,
         NetcruxAction.joinSession,
         NetcruxAction.leaveSession,
+        // Clear Recent Projects: File menu and palette, no shortcut (a chord
+        // that empties a list does not belong one keystroke away).
+        NetcruxAction.clearRecentProjects,
         // openAppDiagnostics and openTabDiagnostics are not in this set:
         // they carry WaveCrux's
         // Cmd/Ctrl+Shift+M and Cmd/Ctrl+Shift+I defaults respectively.

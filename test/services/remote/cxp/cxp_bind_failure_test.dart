@@ -7,11 +7,13 @@ library;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/services/remote/cxp/netcrux_cxp_server.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../helpers/cxp_runtime_rig.dart';
+
 /// A CXP bind failure must degrade to "cross-probe unavailable",
-/// never throw an uncaught SocketException onto the launch path.
+/// never throw an uncaught SocketException onto the launch path. The runtime
+/// is the shared one NetCrux starts at launch, built from its binding.
 void main() {
   late Directory tmp;
 
@@ -33,8 +35,7 @@ void main() {
       final blocker = await ServerSocket.bind('127.0.0.1', 0);
       addTearDown(() async => await blocker.close());
 
-      final server = NetcruxCxpServer(
-        productVersion: '0.0.0-test',
+      final server = CxpRuntimeRig(
         manifestDirectory: p.join(tmp.path, 'peers'),
         port: blocker.port,
       );
@@ -43,7 +44,6 @@ void main() {
       await server.start();
 
       expect(server.isAvailable, isFalse);
-      expect(server.isRunning, isFalse);
       expect(server.boundPort, isNull);
       expect(server.unavailableReason, isNotNull);
       // No manifest was written for a server that never bound.
@@ -61,10 +61,7 @@ void main() {
   );
 
   test('a clean bind reports available with no unavailable reason', () async {
-    final server = NetcruxCxpServer(
-      productVersion: '0.0.0-test',
-      manifestDirectory: p.join(tmp.path, 'peers'),
-    );
+    final server = CxpRuntimeRig(manifestDirectory: p.join(tmp.path, 'peers'));
     await server.start();
     addTearDown(server.stop);
     expect(server.isAvailable, isTrue);
