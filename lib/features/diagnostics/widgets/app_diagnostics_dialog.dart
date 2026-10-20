@@ -48,7 +48,7 @@ class AppDiagnosticsDialog extends ConsumerStatefulWidget {
   /// on the menu item, or the palette entry must not stack a second dialog.
   static Future<void> show(BuildContext context) => ModalGuard.run(
     'appDiagnostics',
-    () => showDialog<void>(
+    () => showCruxDialog<void>(
       context: context,
       builder: (_) => const AppDiagnosticsDialog(),
     ),
@@ -129,56 +129,49 @@ class _AppDiagnosticsDialogState extends ConsumerState<AppDiagnosticsDialog> {
     final session = ref.watch(cruxIssueSessionContextProvider);
     final tabs = _tabFootprints();
 
-    return Dialog(
-      child: SizedBox(
-        width: 720,
-        height: 620,
+    return CruxDialog(
+      title: l10n.diagnosticsAppDialogTitle,
+      titleTrailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            key: const Key('appDiagnosticsCopyReportButton'),
+            onPressed: () => _copyReport(
+              context,
+              l10n,
+              memory: memory,
+              frame: frame,
+              session: session,
+              tabs: tabs,
+            ),
+            icon: const Icon(Icons.copy, size: 16),
+            label: Text(l10n.diagnosticsCopyFullReport),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            key: const Key('appDiagnosticsCloseButton'),
+            icon: const Icon(Icons.close),
+            tooltip: l10n.diagnosticsCloseTooltip,
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+        ],
+      ),
+      width: 720,
+      // The report scrolls itself, under a pinned subtitle.
+      scrollable: false,
+      contentPadding: EdgeInsets.zero,
+      content: SizedBox(
+        height: 540,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          l10n.diagnosticsAppDialogTitle,
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        Text(
-                          l10n.diagnosticsAppDialogSubtitle,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    key: const Key('appDiagnosticsCopyReportButton'),
-                    onPressed: () => _copyReport(
-                      context,
-                      l10n,
-                      memory: memory,
-                      frame: frame,
-                      session: session,
-                      tabs: tabs,
-                    ),
-                    icon: const Icon(Icons.copy, size: 16),
-                    label: Text(l10n.diagnosticsCopyFullReport),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    key: const Key('appDiagnosticsCloseButton'),
-                    icon: const Icon(Icons.close),
-                    tooltip: l10n.diagnosticsCloseTooltip,
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                l10n.diagnosticsAppDialogSubtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const Divider(height: 1),

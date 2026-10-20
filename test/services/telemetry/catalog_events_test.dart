@@ -642,7 +642,7 @@ void main() {
                 builder: (context) {
                   controller = SchematicExportController(
                     container: container,
-                    messenger: ScaffoldMessenger.of(context),
+                    context: context,
                     l10n: L10N.of(context),
                     canvasKey: null,
                     pickSavePath: pickSavePath,

@@ -34,7 +34,7 @@ Future<ProjectSaveController> _controller(
             builder: (context) {
               controller = ProjectSaveController(
                 container: container,
-                messenger: ScaffoldMessenger.of(context),
+                context: context,
                 l10n: L10N.of(context),
               );
               return const SizedBox.shrink();

@@ -32,7 +32,7 @@ typedef SaveLocationPicker = Future<String?> Function(String defaultName);
 /// current scope covers.
 ///
 /// All three flows pop the OS save-file dialog and surface success /
-/// failure as a snackbar so the user has a clear signal that the
+/// failure as a toast so the user has a clear signal that the
 /// export landed (or didn't).
 ///
 /// Reads through a [ProviderContainer] rather than a [WidgetRef] so
@@ -49,7 +49,7 @@ class SchematicExportController {
   /// injectable-picker seam `ColorThemeSection` uses).
   SchematicExportController({
     required this.container,
-    required this.messenger,
+    required this.context,
     required this.l10n,
     required this.canvasKey,
     SaveLocationPicker? pickSavePath,
@@ -58,8 +58,9 @@ class SchematicExportController {
   /// Tab-scoped container the controller reads through.
   final ProviderContainer container;
 
-  /// Scaffold messenger used to surface result snackbars.
-  final ScaffoldMessengerState messenger;
+  /// Where the result toasts are shown. Checked for `mounted` before each
+  /// one, since an export outlives the picker's await.
+  final BuildContext context;
 
   /// Localized strings.
   final L10N l10n;
@@ -180,25 +181,14 @@ class SchematicExportController {
             properties: <String, Object?>{'kind': telemetryEnumToken(kind)},
           ),
         );
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l10n.exportSuccessMessage(path)),
-        behavior: SnackBarBehavior.floating,
-        // Canon info duration matches the framework default today; keep it
-        // explicit so this surface can't drift from the suite standard.
-        // ignore: avoid_redundant_argument_values
-        duration: kCruxInfoSnackDuration,
-      ),
-    );
+    if (context.mounted) {
+      showCruxInfoSnack(context, l10n.exportSuccessMessage(path));
+    }
   }
 
   void _fail(String reason) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l10n.exportFailureMessage(reason)),
-        behavior: SnackBarBehavior.floating,
-        duration: kCruxErrorSnackDuration,
-      ),
-    );
+    if (context.mounted) {
+      showCruxErrorSnack(context, l10n.exportFailureMessage(reason));
+    }
   }
 }

@@ -138,7 +138,7 @@ void main() {
 
       openAddAnnotationDialog(ctx, ref, target: target);
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(TextButton).last);
+      await tester.tap(find.byType(OutlinedButton).last);
       await tester.pumpAndSettle();
 
       expect(telemetry.all('annotation.added'), isEmpty);

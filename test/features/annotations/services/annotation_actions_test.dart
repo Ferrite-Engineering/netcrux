@@ -3,6 +3,7 @@
 
 import 'dart:io';
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -232,11 +233,11 @@ void main() {
       openAddAnnotationDialog(ctx, ref, target: _target);
       await tester.pumpAndSettle();
       expect(find.byType(NetCruxFeatureTierBadge), findsNothing);
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(CruxDialog), findsOneWidget);
       expect(
         find.text(
           L10N
-              .of(tester.element(find.byType(AlertDialog)))
+              .of(tester.element(find.byType(CruxDialog)))
               .annotationDialogTitle,
         ),
         findsOneWidget,
@@ -259,7 +260,7 @@ void main() {
 
         // The annotation dialog opened for the resolved selection; the
         // inline picker fallback never appeared.
-        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byType(CruxDialog), findsOneWidget);
         expect(find.byType(NetCruxFeatureTierBadge), findsNothing);
         expect(find.byType(InlineElementPicker), findsNothing);
       },

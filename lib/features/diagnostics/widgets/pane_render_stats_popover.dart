@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
@@ -72,9 +73,8 @@ class PaneRenderStatsButton extends ConsumerWidget {
       ancestor: overlay,
     );
     unawaited(
-      showDialog<void>(
+      showCruxDialog<void>(
         context: context,
-        barrierColor: Colors.transparent,
         builder: (_) => UncontrolledProviderScope(
           container: container,
           child: Stack(

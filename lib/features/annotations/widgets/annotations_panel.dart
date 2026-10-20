@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
+
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -349,47 +351,51 @@ class _AnnotationTile extends ConsumerWidget {
         ),
       ),
     );
+    // The same commands on the row's "⋯" button and on right-click.
+    final entries = <CruxMenuEntry>[
+      if (!readOnly)
+        CruxMenuItem(
+          key: const ValueKey<String>('annotationMenuEdit'),
+          label: l10n.annotationContextMenuEdit,
+          onSelected: () => unawaited(_edit(context, ref)),
+        ),
+      CruxMenuItem(
+        key: const ValueKey<String>('annotationMenuDelete'),
+        label: l10n.annotationContextMenuDelete,
+        onSelected: () =>
+            ref.read(annotationStoreProvider).removeAnnotation(annotation.id),
+      ),
+    ];
     return AnimatedContainer(
       key: ValueKey<String>('annotationRow-${annotation.id}'),
       duration: const Duration(milliseconds: 250),
       color: theme.colorScheme.primary.withValues(alpha: flashing ? 0.30 : 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(child: row),
-          PopupMenuButton<_AnnotationMenuAction>(
-            icon: const Icon(Icons.more_horiz),
-            onSelected: (action) async {
-              final store = ref.read(annotationStoreProvider);
-              switch (action) {
-                case _AnnotationMenuAction.edit:
-                  final edited = await showAnnotationDialog(
-                    context: context,
-                    ref: ref,
-                    targetKind: annotation.targetKind,
-                    targetId: annotation.targetId,
-                    existing: annotation,
-                  );
-                  if (edited != null) store.updateAnnotation(edited);
-                case _AnnotationMenuAction.delete:
-                  store.removeAnnotation(annotation.id);
-              }
-            },
-            itemBuilder: (context) => <PopupMenuEntry<_AnnotationMenuAction>>[
-              if (!readOnly)
-                PopupMenuItem<_AnnotationMenuAction>(
-                  value: _AnnotationMenuAction.edit,
-                  child: Text(l10n.annotationContextMenuEdit),
-                ),
-              PopupMenuItem<_AnnotationMenuAction>(
-                value: _AnnotationMenuAction.delete,
-                child: Text(l10n.annotationContextMenuDelete),
-              ),
-            ],
-          ),
-        ],
+      child: CruxContextMenuRegion(
+        entries: entries,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(child: row),
+            CruxOverflowMenu(
+              entries: entries,
+              tooltip: l10n.annotationRowActionsTooltip,
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final store = ref.read(annotationStoreProvider);
+    final edited = await showAnnotationDialog(
+      context: context,
+      ref: ref,
+      targetKind: annotation.targetKind,
+      targetId: annotation.targetId,
+      existing: annotation,
+    );
+    if (edited != null) store.updateAnnotation(edited);
   }
 
   /// Selects and reveals the annotation's element on this tab's schematic.
@@ -458,5 +464,3 @@ String annotationTargetKindLabel(L10N l10n, AnnotationTargetKind kind) {
       return l10n.annotationTargetKindScope;
   }
 }
-
-enum _AnnotationMenuAction { edit, delete }

@@ -3032,6 +3032,10 @@
   "@annotationContextMenuDelete": {
     "description": "Context-menu item that deletes an annotation."
   },
+  "annotationRowActionsTooltip": "Annotation actions",
+  "@annotationRowActionsTooltip": {
+    "description": "Tooltip and accessible name of the overflow button on an Annotations panel row."
+  },
   "annotationSessionLayerLabel": "Session {code} · {date}",
   "@annotationSessionLayerLabel": {
     "description": "Label of a session layer: the notes written during one collaborative session, grouped in the Annotations panel. {code} is the session code, {date} the date it took place (YYYY-MM-DD).",

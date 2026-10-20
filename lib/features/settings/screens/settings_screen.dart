@@ -425,21 +425,22 @@ class _YosysCustomPathTileState extends ConsumerState<_YosysCustomPathTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          TextField(
-            controller: _controller,
-            decoration: InputDecoration(
-              labelText: l10n.settingsYosysCustomPathLabel,
-              hintText: l10n.settingsYosysCustomPathHint,
-              border: const OutlineInputBorder(),
+          CruxFormRow(
+            label: l10n.settingsYosysCustomPathLabel,
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: l10n.settingsYosysCustomPathHint,
+              ),
+              onChanged: (value) {
+                unawaited(
+                  ref
+                      .read(appSettingsProvider.notifier)
+                      .setYosysCustomPath(value),
+                );
+                _scheduleProbe(value);
+              },
             ),
-            onChanged: (value) {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setYosysCustomPath(value),
-              );
-              _scheduleProbe(value);
-            },
           ),
           ?helper,
         ],
@@ -466,18 +467,21 @@ class _AutoCheckUpdatesTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
-    return SwitchListTile(
-      key: switchKey,
-      title: Text(l10n.settingsAutoCheckUpdatesLabel),
-      subtitle: Text(l10n.settingsAutoCheckUpdatesDescription),
-      value: enabled,
-      onChanged: (value) {
-        unawaited(
-          ref
-              .read(appSettingsProvider.notifier)
-              .setAutoCheckForUpdates(enabled: value),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: CruxFormRow.toggle(
+        key: switchKey,
+        label: l10n.settingsAutoCheckUpdatesLabel,
+        help: l10n.settingsAutoCheckUpdatesDescription,
+        value: enabled,
+        onChanged: (value) {
+          unawaited(
+            ref
+                .read(appSettingsProvider.notifier)
+                .setAutoCheckForUpdates(enabled: value),
+          );
+        },
+      ),
     );
   }
 }
@@ -501,35 +505,34 @@ class _RestoreTabsOnLaunchTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
-    return SwitchListTile(
-      key: switchKey,
-      title: Row(
+    // The form row's label is a plain string, so the help icon rides beside
+    // the row (the same placement the Yosys path tile uses for its control).
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Row(
         children: [
-          // Flexible so the label shrinks (and ellipsises) before the help
-          // icon trailing the row gets pushed off-screen on narrow viewports
-          // (the WaveCrux settings help-link pattern).
-          Flexible(
-            child: Text(
-              l10n.settingsRestoreTabsOnLaunchLabel,
-              overflow: TextOverflow.ellipsis,
+          Expanded(
+            child: CruxFormRow.toggle(
+              key: switchKey,
+              label: l10n.settingsRestoreTabsOnLaunchLabel,
+              help: l10n.settingsRestoreTabsOnLaunchDescription,
+              value: enabled,
+              onChanged: (value) {
+                unawaited(
+                  ref
+                      .read(appSettingsProvider.notifier)
+                      .setRestoreTabsOnLaunch(enabled: value),
+                );
+              },
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           CruxHelpLink(
             url: HelpUrls.filesAndProjects,
             tooltip: l10n.helpLinkLearnMore,
           ),
         ],
       ),
-      subtitle: Text(l10n.settingsRestoreTabsOnLaunchDescription),
-      value: enabled,
-      onChanged: (value) {
-        unawaited(
-          ref
-              .read(appSettingsProvider.notifier)
-              .setRestoreTabsOnLaunch(enabled: value),
-        );
-      },
     );
   }
 }
@@ -550,21 +553,21 @@ class _DiagnosticsEnabledTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
-    return SwitchListTile(
-      key: switchKey,
-      title: Text(
-        l10n.diagnosticsSettingsLabel,
-        overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: CruxFormRow.toggle(
+        key: switchKey,
+        label: l10n.diagnosticsSettingsLabel,
+        help: l10n.diagnosticsSettingsDescription,
+        value: enabled,
+        onChanged: (value) {
+          unawaited(
+            ref
+                .read(appSettingsProvider.notifier)
+                .setDiagnosticsEnabled(enabled: value),
+          );
+        },
       ),
-      subtitle: Text(l10n.diagnosticsSettingsDescription),
-      value: enabled,
-      onChanged: (value) {
-        unawaited(
-          ref
-              .read(appSettingsProvider.notifier)
-              .setDiagnosticsEnabled(enabled: value),
-        );
-      },
     );
   }
 }

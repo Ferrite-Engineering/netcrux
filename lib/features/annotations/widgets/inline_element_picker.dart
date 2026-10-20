@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
@@ -45,10 +46,15 @@ class _InlineElementPickerState extends ConsumerState<InlineElementPicker> {
         : _buildCandidates(graph);
     final filtered = _filter(candidates, _query);
 
-    return AlertDialog(
-      title: Text(l10n.inlineElementPickerTitle),
+    // Two-line rows are held at the desktop token height by the list itself:
+    // a dense two-line ListTile sizes to its text.
+    final rowHeight = CruxDesktopTokens.of(context)?.twoLineRowHeight;
+    return CruxDialog(
+      title: l10n.inlineElementPickerTitle,
+      width: 480,
+      // The list scrolls itself.
+      scrollable: false,
       content: SizedBox(
-        width: 480,
         height: 420,
         child: Column(
           children: <Widget>[
@@ -59,7 +65,6 @@ class _InlineElementPickerState extends ConsumerState<InlineElementPicker> {
                 hintText: l10n.inlineElementPickerSearchHint,
                 prefixIcon: const Icon(Icons.search, size: 16),
                 isDense: true,
-                border: const OutlineInputBorder(),
               ),
               onChanged: (value) => setState(() => _query = value.trim()),
             ),
@@ -74,6 +79,7 @@ class _InlineElementPickerState extends ConsumerState<InlineElementPicker> {
                     )
                   : ListView.builder(
                       itemCount: filtered.length,
+                      itemExtent: rowHeight,
                       itemBuilder: (_, i) {
                         final candidate = filtered[i];
                         return ListTile(
@@ -98,9 +104,9 @@ class _InlineElementPickerState extends ConsumerState<InlineElementPicker> {
         ),
       ),
       actions: <Widget>[
-        TextButton(
+        CruxDialogAction(
+          label: l10n.inlineElementPickerCancel,
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.inlineElementPickerCancel),
         ),
       ],
     );
@@ -211,7 +217,7 @@ Future<AnnotationTarget?> showInlineElementPicker(
   BuildContext context, {
   required ProviderContainer? container,
 }) {
-  return showDialog<AnnotationTarget>(
+  return showCruxDialog<AnnotationTarget>(
     context: context,
     barrierDismissible: false,
     builder: (_) => container == null

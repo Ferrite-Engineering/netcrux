@@ -1,7 +1,9 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_settings/crux_settings.dart';
+import 'package:crux_settings_ui/crux_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,14 +67,14 @@ void main() {
   testWidgets('is on by default', (tester) async {
     await openGeneral(tester);
 
-    expect(tester.widget<SwitchListTile>(find.byKey(switchKey)).value, isTrue);
+    expect(tester.widget<CruxFormRow>(find.byKey(switchKey)).value, isTrue);
   });
 
   testWidgets('reflects a persisted "off"', (tester) async {
     await service.save(withRestore(enabled: false));
     await openGeneral(tester);
 
-    expect(tester.widget<SwitchListTile>(find.byKey(switchKey)).value, isFalse);
+    expect(tester.widget<CruxFormRow>(find.byKey(switchKey)).value, isFalse);
   });
 
   testWidgets('flipping it writes through to storage', (tester) async {
@@ -82,7 +84,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(tester.widget<SwitchListTile>(find.byKey(switchKey)).value, isFalse);
+    expect(tester.widget<CruxFormRow>(find.byKey(switchKey)).value, isFalse);
     expect((await service.load()).restoreTabsOnLaunch, isFalse);
     // The key a user reaches with `defaults write` is the suite-shared one.
     expect(prefs.getBool('settings.restoreTabsOnLaunch'), isFalse);
@@ -93,9 +95,9 @@ void main() {
     expect((await service.load()).restoreTabsOnLaunch, isTrue);
   });
 
-  testWidgets('clears the 44 dp touch-target floor', (tester) async {
+  testWidgets('keeps its help link beside the row', (tester) async {
     await openGeneral(tester);
-    expect(tester.getSize(find.byKey(switchKey)).height, greaterThan(44));
+    expect(find.byType(CruxHelpLink), findsWidgets);
   });
 
   group('locale sweep', () {

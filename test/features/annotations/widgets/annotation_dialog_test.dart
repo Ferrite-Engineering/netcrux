@@ -3,7 +3,9 @@
 
 import 'dart:async';
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -120,6 +122,35 @@ void main() {
       expect(ann.targetKind, AnnotationTargetKind.cell);
       expect(ann.targetId, 'top.alu');
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Escape on an edited form asks before discarding', (
+      tester,
+    ) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      final (ctx, ref) = await _pumpHost(tester);
+      final future = showAnnotationDialog(
+        context: ctx,
+        ref: ref,
+        targetKind: AnnotationTargetKind.cell,
+        targetId: 'top.alu',
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(_body, 'Half a thought');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      // The edit is still there behind the discard question.
+      expect(find.text(l10n.annotationUnsavedChangesTitle), findsOneWidget);
+      await tester.tap(find.text(l10n.annotationUnsavedChangesKeep));
+      await tester.pumpAndSettle();
+      expect(find.byType(CruxDialog), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.annotationUnsavedChangesDiscard));
+      await tester.pumpAndSettle();
+      expect(await future, isNull);
+      expect(find.byType(CruxDialog), findsNothing);
     });
 
     testWidgets('records the module on create and keeps it on edit', (
@@ -246,7 +277,7 @@ void main() {
       await tester.pumpAndSettle();
       // A title or a body is required: the dialog stays open and the form
       // says what is missing.
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(CruxDialog), findsOneWidget);
       expect(find.text(l10n.annotationDialogEmptyError), findsOneWidget);
       // Typing in either field clears the message.
       await tester.enterText(_title, 'x');
@@ -351,7 +382,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(await future, isNull);
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(CruxDialog), findsNothing);
       expect(tester.takeException(), isNull);
     });
 

@@ -215,7 +215,7 @@ void main() {
                 builder: (context) {
                   controller = SessionController(
                     container: tab,
-                    messenger: ScaffoldMessenger.of(context),
+                    context: context,
                     l10n: L10N.of(context),
                   );
                   return const SizedBox.shrink();

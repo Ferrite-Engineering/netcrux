@@ -1,7 +1,10 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_a11y/crux_a11y.dart';
 import 'package:crux_settings/crux_settings.dart';
+import 'package:crux_settings_ui/crux_settings_ui.dart';
+import 'package:crux_theme/crux_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,7 +58,7 @@ void main() {
   testWidgets('is on by default', (tester) async {
     await openGeneral(tester);
 
-    final toggle = tester.widget<SwitchListTile>(find.byKey(switchKey));
+    final toggle = tester.widget<CruxFormRow>(find.byKey(switchKey));
     expect(toggle.value, isTrue);
   });
 
@@ -65,7 +68,7 @@ void main() {
     );
     await openGeneral(tester);
 
-    final toggle = tester.widget<SwitchListTile>(find.byKey(switchKey));
+    final toggle = tester.widget<CruxFormRow>(find.byKey(switchKey));
     expect(toggle.value, isFalse);
   });
 
@@ -77,7 +80,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(
-      tester.widget<SwitchListTile>(find.byKey(switchKey)).value,
+      tester.widget<CruxFormRow>(find.byKey(switchKey)).value,
       isFalse,
     );
     expect((await service.load()).autoCheckForUpdates, isFalse);
@@ -88,9 +91,35 @@ void main() {
     expect((await service.load()).autoCheckForUpdates, isTrue);
   });
 
-  testWidgets('clears the 44 dp touch-target floor', (tester) async {
-    await openGeneral(tester);
-    expect(tester.getSize(find.byKey(switchKey)).height, greaterThan(44));
+  testWidgets('is a CruxSwitch under the desktop theme', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [settingsServiceProvider.overrideWithValue(service)],
+        child: MaterialApp(
+          theme: cruxThemeForDevice(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
+            highContrast: false,
+            mobile: ThemeData.new,
+            platform: TargetPlatform.macOS,
+          ),
+          localizationsDelegates: L10N.localizationsDelegates,
+          supportedLocales: L10N.supportedLocales,
+          home: const SettingsScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(
+      find.descendant(
+        of: find.byKey(switchKey),
+        matching: find.byType(CruxSwitch),
+      ),
+      findsOneWidget,
+    );
   });
 
   group('locale sweep', () {

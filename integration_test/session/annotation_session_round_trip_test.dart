@@ -32,7 +32,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:netcrux/domain/models/annotation.dart';
@@ -98,7 +97,7 @@ void main() {
       final element = tester.element(find.byType(ProjectTabContent));
       final controller = SessionController(
         container: tab,
-        messenger: ScaffoldMessenger.of(element),
+        context: element,
         l10n: L10N.of(element),
       );
 

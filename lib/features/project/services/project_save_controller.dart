@@ -30,15 +30,16 @@ class ProjectSaveController {
   /// Creates a controller over [container], the tab whose project is saved.
   const ProjectSaveController({
     required this.container,
-    required this.messenger,
+    required this.context,
     required this.l10n,
   });
 
   /// The tab container; its `currentProjectProvider` is what gets written.
   final ProviderContainer container;
 
-  /// Surface for the success and failure snackbars.
-  final ScaffoldMessengerState messenger;
+  /// Where the success and failure toasts are shown. Checked for `mounted`
+  /// before each one, since a save outlives the picker's await.
+  final BuildContext context;
 
   /// Localized strings.
   final L10N l10n;
@@ -46,7 +47,7 @@ class ProjectSaveController {
   /// Asks the user where to write, then writes.
   ///
   /// Returns the path written, or `null` when the picker was cancelled or
-  /// the write failed. Both already explain themselves through a snackbar;
+  /// the write failed. Both already explain themselves through a toast;
   /// the caller needs the outcome because it records the file as the tab's
   /// project file, as a recent project and in the audit log, and each of
   /// those must follow a write that happened.
@@ -77,25 +78,14 @@ class ProjectSaveController {
       final project = container.read(currentProjectProvider);
       final portable = relativizeProjectPaths(project, p.dirname(path));
       await const NetcruxProjectFileWriter().write(path, portable);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.exportSuccessMessage(path)),
-          behavior: SnackBarBehavior.floating,
-          // Canon info duration matches the framework default today; keep it
-          // explicit so this surface can't drift from the suite standard.
-          // ignore: avoid_redundant_argument_values
-          duration: kCruxInfoSnackDuration,
-        ),
-      );
+      if (context.mounted) {
+        showCruxInfoSnack(context, l10n.exportSuccessMessage(path));
+      }
       return true;
     } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.projectSaveFailed(e.toString())),
-          behavior: SnackBarBehavior.floating,
-          duration: kCruxErrorSnackDuration,
-        ),
-      );
+      if (context.mounted) {
+        showCruxErrorSnack(context, l10n.projectSaveFailed(e.toString()));
+      }
       return false;
     }
   }

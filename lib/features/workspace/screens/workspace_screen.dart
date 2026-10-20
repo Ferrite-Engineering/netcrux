@@ -740,7 +740,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   Future<void> _openSessionByPath(String path) async {
     if (!mounted) return;
     final l10n = L10N.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     await ref.read(appSettingsProvider.notifier).recordRecentProject(path);
     final NetcruxSession session;
     try {
@@ -769,7 +768,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     if (container == null) return;
     await SessionController(
       container: container,
-      messenger: messenger,
+      context: context,
       l10n: l10n,
     ).apply(session);
   }

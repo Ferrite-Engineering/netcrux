@@ -1,10 +1,13 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_theme/crux_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:netcrux/core/theme/netcrux_colors.dart';
 
-/// Builders for the NetCrux Material 3 themes.
+/// Builders for the NetCrux themes: seed, canvas colours, and the choice of
+/// the Crux Desktop layer (desktop platforms) or Material 3 (iOS and Android)
+/// from `cruxThemeForDevice`.
 ///
 /// Both light and dark themes are derived from a single brand seed
 /// ([NetcruxColors.brandSeed], a muted amber). Dark is the default —
@@ -49,14 +52,20 @@ abstract final class NetcruxTheme {
             : const Color(0xFF333333),
       );
     }
-    return ThemeData(
-      useMaterial3: true,
-      brightness: brightness,
+    final canvas = isDark
+        ? NetcruxColors.darkCanvasBackground
+        : NetcruxColors.lightCanvasBackground;
+    // Desktop (macOS, Windows, Linux, web) gets the Crux Desktop component
+    // themes; iOS and Android keep the stock Material 3 theme.
+    return cruxThemeForDevice(
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: isDark
-          ? NetcruxColors.darkCanvasBackground
-          : NetcruxColors.lightCanvasBackground,
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-    );
+      highContrast: highContrast,
+      mobile: () => ThemeData(
+        useMaterial3: true,
+        brightness: brightness,
+        colorScheme: colorScheme,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+    ).copyWith(scaffoldBackgroundColor: canvas);
   }
 }

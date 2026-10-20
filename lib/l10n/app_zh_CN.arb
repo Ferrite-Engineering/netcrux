@@ -2433,6 +2433,10 @@
   "@annotationContextMenuDelete": {
     "description": "Context-menu item that deletes an annotation."
   },
+  "annotationRowActionsTooltip": "注释操作",
+  "@annotationRowActionsTooltip": {
+    "description": "Tooltip and accessible name of the overflow button on an Annotations panel row."
+  },
   "annotationSessionLayerLabel": "会话 {code} · {date}",
   "annotationLayerHide": "隐藏图层",
   "annotationLayerShow": "显示图层",

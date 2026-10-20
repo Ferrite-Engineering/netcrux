@@ -201,24 +201,32 @@ class _PresetSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10N.of(context);
-    return ListTile(
-      title: Text(l10n.settingsShortcutsPresetLabel),
-      subtitle: Text(l10n.settingsShortcutsPresetDescription),
-      // `active == null` ("Custom") has no item — it is surfaced via [hint], so
-      // the user can never *select* Custom, only land on it by hand-editing.
-      trailing: DropdownButton<KeymapPreset>(
-        value: active,
-        hint: Text(l10n.settingsShortcutsPresetCustom),
-        onChanged: (preset) {
-          if (preset != null) onSelect(preset);
-        },
-        items: [
-          for (final preset in KeymapPreset.values)
-            DropdownMenuItem<KeymapPreset>(
-              value: preset,
-              child: Text(_label(preset, l10n)),
-            ),
-        ],
+    return CruxSettingsControlTile(
+      title: l10n.settingsShortcutsPresetLabel,
+      description: l10n.settingsShortcutsPresetDescription,
+      // A boxed dropdown, matching the desktop text fields.
+      control: InputDecorator(
+        decoration: const InputDecoration(isDense: true),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<KeymapPreset>(
+            value: active,
+            isDense: true,
+            // `active == null` ("Custom") has no item — it is surfaced via
+            // [hint], so the user can never *select* Custom, only land on it
+            // by hand-editing.
+            hint: Text(l10n.settingsShortcutsPresetCustom),
+            onChanged: (preset) {
+              if (preset != null) onSelect(preset);
+            },
+            items: [
+              for (final preset in KeymapPreset.values)
+                DropdownMenuItem<KeymapPreset>(
+                  value: preset,
+                  child: Text(_label(preset, l10n)),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

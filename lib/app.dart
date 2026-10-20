@@ -407,33 +407,23 @@ class NetcruxApp extends ConsumerWidget {
     final cruxColorTheme = ref.watch(cruxColorThemeProvider);
     final chromeExt = CruxThemeExtension(theme: cruxColorTheme);
     final themeMode = themeModeFromBrightness(cruxColorTheme);
-    final lightTheme = applyChromeTokens(
-      NetcruxTheme.light().copyWith(
-        extensions: <ThemeExtension<dynamic>>[chromeExt],
-      ),
-      chromeExt,
-    );
-    final darkTheme = applyChromeTokens(
-      NetcruxTheme.dark().copyWith(
-        extensions: <ThemeExtension<dynamic>>[chromeExt],
-      ),
-      chromeExt,
-    );
+    // The extensions are merged, not replaced: the base theme carries the
+    // Crux Desktop marker the toast and form components read.
+    ThemeData withChrome(ThemeData base) {
+      final kept = base.extensions.values.toList();
+      return applyChromeTokens(
+        base.copyWith(extensions: [...kept, chromeExt]),
+        chromeExt,
+      );
+    }
+
+    final lightTheme = withChrome(NetcruxTheme.light());
+    final darkTheme = withChrome(NetcruxTheme.dark());
     // High-contrast variants are selected by MaterialApp when the OS
     // "increase contrast" accessibility setting is on (MediaQuery.highContrast),
     // hardening the seed-derived borders to fully-opaque outline colors.
-    final highContrastLightTheme = applyChromeTokens(
-      NetcruxTheme.highContrastLight().copyWith(
-        extensions: <ThemeExtension<dynamic>>[chromeExt],
-      ),
-      chromeExt,
-    );
-    final highContrastDarkTheme = applyChromeTokens(
-      NetcruxTheme.highContrastDark().copyWith(
-        extensions: <ThemeExtension<dynamic>>[chromeExt],
-      ),
-      chromeExt,
-    );
+    final highContrastLightTheme = withChrome(NetcruxTheme.highContrastLight());
+    final highContrastDarkTheme = withChrome(NetcruxTheme.highContrastDark());
     // Wrap the MaterialApp in WorkspaceLifecycleObserver so the auto-saved
     // workspace.json gets flushed on AppLifecycleState.paused / detached
     // (mobile background or desktop close). The observer reads

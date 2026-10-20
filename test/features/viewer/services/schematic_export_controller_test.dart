@@ -48,7 +48,7 @@ Future<SchematicExportController> _controller(
             builder: (context) {
               controller = SchematicExportController(
                 container: container,
-                messenger: ScaffoldMessenger.of(context),
+                context: context,
                 l10n: L10N.of(context),
                 canvasKey: canvasKey,
                 pickSavePath: pickSavePath,

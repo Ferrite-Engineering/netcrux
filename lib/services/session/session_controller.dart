@@ -43,7 +43,7 @@ class SessionController {
   /// Creates a controller.
   const SessionController({
     required this.container,
-    required this.messenger,
+    required this.context,
     required this.l10n,
   });
 
@@ -52,8 +52,9 @@ class SessionController {
   /// hierarchy, selection, viewport, …) round-trips correctly.
   final ProviderContainer container;
 
-  /// Surface for success/failure snackbars.
-  final ScaffoldMessengerState messenger;
+  /// Where the success and failure toasts are shown. Checked for `mounted`
+  /// before each one, since a save or load outlives the picker's await.
+  final BuildContext context;
 
   /// Localized strings.
   final L10N l10n;
@@ -63,7 +64,7 @@ class SessionController {
   ///
   /// Returns the path written, or `null` when the user cancelled the picker or
   /// the write failed. Both failures already explain themselves to the user
-  /// through a snackbar; the return value exists because the CALLER has a
+  /// through a toast; the return value exists because the CALLER has a
   /// reason to know — the workspace dispatcher records a `session.saved` audit
   /// event, and an audit line for a save that did not happen is worse than no
   /// line, because it is the one an investigation would trust.
@@ -97,25 +98,14 @@ class SessionController {
       final session = _snapshot();
       const encoder = JsonEncoder.withIndent('  ');
       await File(path).writeAsString(encoder.convert(session.toJson()));
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.exportSuccessMessage(path)),
-          behavior: SnackBarBehavior.floating,
-          // Canon info duration matches the framework default today; keep it
-          // explicit so this surface can't drift from the suite standard.
-          // ignore: avoid_redundant_argument_values
-          duration: kCruxInfoSnackDuration,
-        ),
-      );
+      if (context.mounted) {
+        showCruxInfoSnack(context, l10n.exportSuccessMessage(path));
+      }
       return true;
     } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.sessionLoadFailed(e.toString())),
-          behavior: SnackBarBehavior.floating,
-          duration: kCruxErrorSnackDuration,
-        ),
-      );
+      if (context.mounted) {
+        showCruxErrorSnack(context, l10n.sessionLoadFailed(e.toString()));
+      }
       return false;
     }
   }
@@ -155,21 +145,13 @@ class SessionController {
       final session = await readSession(path);
       await apply(session);
     } on NetcruxSessionVersionException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.sessionLoadUnknownVersion(e.version)),
-          behavior: SnackBarBehavior.floating,
-          duration: kCruxErrorSnackDuration,
-        ),
-      );
+      if (context.mounted) {
+        showCruxErrorSnack(context, l10n.sessionLoadUnknownVersion(e.version));
+      }
     } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.sessionLoadFailed(e.toString())),
-          behavior: SnackBarBehavior.floating,
-          duration: kCruxErrorSnackDuration,
-        ),
-      );
+      if (context.mounted) {
+        showCruxErrorSnack(context, l10n.sessionLoadFailed(e.toString()));
+      }
     }
   }
 

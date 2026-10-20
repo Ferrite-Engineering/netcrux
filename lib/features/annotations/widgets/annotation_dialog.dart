@@ -1,7 +1,10 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
+
 import 'package:crux_ide_layout/crux_ide_layout.dart';
+import 'package:crux_settings_ui/crux_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation.dart';
@@ -35,13 +38,12 @@ Future<Annotation?> showAnnotationDialog({
   // who, never what. Raised here, around the dialog, so every way of opening
   // it says so and every way of closing it stops saying so.
   final writing = ref.read(annotationWritingProvider.notifier)..start();
-  return showDialog<Annotation>(
+  return showCruxDialog<Annotation>(
     context: context,
     // Editor dialogs hold in-progress user input: closing must be a
-    // deliberate act (Cancel / Save), never a stray scrim click, as in every
-    // other editor dialog in the suite. Note this
-    // also disables Escape (Flutter routes DismissIntent through the
-    // barrier flag).
+    // deliberate act (Cancel / Save / Escape), never a stray scrim click, as
+    // in every other editor dialog in the suite. Escape asks to discard when
+    // the form is dirty (see the dialog's PopScope).
     barrierDismissible: false,
     builder: (ctx) => _AnnotationDialog(
       ref: ref,
@@ -143,60 +145,64 @@ class _AnnotationDialogState extends State<_AnnotationDialog> {
   Widget build(BuildContext context) {
     final l10n = L10N.of(context);
     final isEdit = widget.existing != null;
-    return AlertDialog(
-      title: Text(
-        isEdit ? l10n.annotationDialogEditTitle : l10n.annotationDialogTitle,
-      ),
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    // Escape and every other pop request go through the same unsaved-changes
+    // check as Cancel; the submit path pops the route directly.
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_onCancel());
+      },
+      child: CruxDialog(
+        title: isEdit
+            ? l10n.annotationDialogEditTitle
+            : l10n.annotationDialogTitle,
+        width: 520,
+        content: CruxFormSection(
           children: <Widget>[
-            TextField(
-              key: const ValueKey<String>('annotationDialogTitleField'),
-              controller: _title,
-              decoration: InputDecoration(
-                labelText: l10n.annotationDialogTitleLabel,
-                hintText: l10n.annotationDialogTitleHint,
+            CruxFormRow(
+              label: l10n.annotationDialogTitleLabel,
+              child: TextField(
+                key: const ValueKey<String>('annotationDialogTitleField'),
+                controller: _title,
+                decoration: InputDecoration(
+                  hintText: l10n.annotationDialogTitleHint,
+                ),
+                autofocus: true,
+                textInputAction: TextInputAction.next,
               ),
-              autofocus: true,
-              textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: 8),
-            TextField(
-              key: const ValueKey<String>('annotationDialogBodyField'),
-              controller: _body,
-              decoration: InputDecoration(
-                labelText: l10n.annotationDialogBodyLabel,
-                alignLabelWithHint: true,
-                errorText: _showEmptyError
-                    ? l10n.annotationDialogEmptyError
-                    : null,
+            CruxFormRow(
+              label: l10n.annotationDialogBodyLabel,
+              child: TextField(
+                key: const ValueKey<String>('annotationDialogBodyField'),
+                controller: _body,
+                decoration: InputDecoration(
+                  errorText: _showEmptyError
+                      ? l10n.annotationDialogEmptyError
+                      : null,
+                ),
+                minLines: 4,
+                maxLines: 10,
               ),
-              minLines: 4,
-              maxLines: 10,
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _author,
-              decoration: InputDecoration(
-                labelText: l10n.annotationDialogAuthorLabel,
-              ),
+            CruxFormRow(
+              label: l10n.annotationDialogAuthorLabel,
+              child: TextField(controller: _author),
             ),
           ],
         ),
+        actions: <Widget>[
+          CruxDialogAction(
+            label: l10n.annotationDialogCancelButton,
+            onPressed: _onCancel,
+          ),
+          CruxDialogAction(
+            label: l10n.annotationDialogSaveButton,
+            role: CruxDialogActionRole.primary,
+            onPressed: _submit,
+          ),
+        ],
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: _onCancel,
-          child: Text(l10n.annotationDialogCancelButton),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(l10n.annotationDialogSaveButton),
-        ),
-      ],
     );
   }
 

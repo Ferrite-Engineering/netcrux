@@ -720,12 +720,11 @@ class WorkspaceActionDispatcher {
   ) async {
     final container = _ref.activeTabContainerOrNull(context);
     if (container == null) return;
-    final messenger = ScaffoldMessenger.of(context);
     final l10n = L10N.of(context);
     final canvasKey = container.read(schematicCanvasKeyProvider);
     final controller = SchematicExportController(
       container: container,
-      messenger: messenger,
+      context: context,
       l10n: l10n,
       canvasKey: canvasKey,
     );
@@ -771,11 +770,10 @@ class WorkspaceActionDispatcher {
   Future<void> _saveSession(BuildContext context) async {
     final container = _ref.activeTabContainerOrNull(context);
     if (container == null) return;
-    final messenger = ScaffoldMessenger.of(context);
     final l10n = L10N.of(context);
     final controller = SessionController(
       container: container,
-      messenger: messenger,
+      context: context,
       l10n: l10n,
     );
     // Read before the await: `ref` is invalid across an async gap.
@@ -810,7 +808,7 @@ class WorkspaceActionDispatcher {
     if (container == null) return;
     final controller = ProjectSaveController(
       container: container,
-      messenger: ScaffoldMessenger.of(context),
+      context: context,
       l10n: L10N.of(context),
     );
     // Read before the await: `ref` is invalid across an async gap.
@@ -836,11 +834,10 @@ class WorkspaceActionDispatcher {
   Future<void> _openSession(BuildContext context) async {
     final container = _ref.activeTabContainerOrNull(context);
     if (container == null) return;
-    final messenger = ScaffoldMessenger.of(context);
     final l10n = L10N.of(context);
     final controller = SessionController(
       container: container,
-      messenger: messenger,
+      context: context,
       l10n: l10n,
     );
     await controller.openPicker();
@@ -875,7 +872,6 @@ class WorkspaceActionDispatcher {
   ) async {
     final container = _ref.activeTabContainerOrNull(context);
     if (container == null) return;
-    final messenger = ScaffoldMessenger.of(context);
     final l10n = L10N.of(context);
     // Route through the shared controller so this palette / menu-bar path
     // gets the exact same painting, fit-to-cone, and cell-count readout as
@@ -884,7 +880,7 @@ class WorkspaceActionDispatcher {
       container,
     ).run(mode);
     if (!context.mounted || count == null || count == 0) return;
-    messenger.hideCurrentSnackBar();
+    hideCruxSnack(context);
     showCruxInfoSnack(context, l10n.coneOfInfluenceCellCount(count));
   }
 
