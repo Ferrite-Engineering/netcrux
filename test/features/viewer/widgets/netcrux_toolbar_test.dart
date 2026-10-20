@@ -194,11 +194,11 @@ void main() {
     ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.more_vert), findsNothing);
+      expect(find.byIcon(Icons.more_horiz), findsNothing);
 
       await tester.pumpWidget(_wrap(width: 240));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.more_vert), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz), findsOneWidget);
     });
 
     testWidgets('groups fan-in / fan-out / clear into one split button', (
