@@ -1,14 +1,23 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_dock/crux_dock.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
+import 'package:netcrux/domain/models/layout/bounding_box.dart';
+import 'package:netcrux/domain/models/layout/edge_route.dart';
+import 'package:netcrux/domain/models/layout/netlist_layout.dart';
+import 'package:netcrux/domain/models/layout/node_position.dart';
+import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
+import 'package:netcrux/features/annotations/providers/annotation_drafts_provider.dart';
 import 'package:netcrux/features/annotations/services/annotation_actions.dart';
+import 'package:netcrux/features/inspector/widgets/inspector_panel.dart';
+import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/telemetry/annotation_telemetry.dart';
 import 'package:netcrux/services/telemetry/telemetry_event_catalog.dart';
@@ -42,37 +51,54 @@ void _assertInCatalog(TelemetryEvent event) {
   });
 }
 
+const _graph = LaidOutGraph(
+  graph: SchematicGraph(
+    moduleName: 'top',
+    cells: <SchematicCell>[
+      SchematicCell(
+        id: 'u_alu',
+        kind: CellKind.generic,
+        type: 'alu',
+        ports: [],
+      ),
+    ],
+    boundaryPorts: <SchematicBoundaryPort>[],
+    edges: <SchematicEdge>[],
+  ),
+  layout: NetlistLayout(
+    nodes: <NodePosition>[],
+    edges: <EdgeRoute>[],
+    bounds: BoundingBox(x: 0, y: 0, width: 0, height: 0),
+  ),
+);
+
 void main() {
   late _RecordingTelemetryService telemetry;
 
   setUp(() => telemetry = _RecordingTelemetryService());
 
+  /// The Inspector in a tab-like scope; returns a context and ref inside it,
+  /// as the schematic context menu has.
   Future<(BuildContext, WidgetRef)> pumpHost(WidgetTester tester) async {
     late BuildContext ctx;
     late WidgetRef wref;
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
+        overrides: [
           telemetryServiceProvider.overrideWithValue(telemetry),
+          currentLaidOutGraphProvider.overrideWith((ref) async => _graph),
         ],
         child: MaterialApp(
-          localizationsDelegates: const <LocalizationsDelegate<Object?>>[
-            L10N.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          localizationsDelegates: L10N.localizationsDelegates,
           supportedLocales: L10N.supportedLocales,
           home: Consumer(
             builder: (context, ref, _) {
               wref = ref;
-              return Scaffold(
-                body: Builder(
-                  builder: (inner) {
-                    ctx = inner;
-                    return const SizedBox.shrink();
-                  },
-                ),
+              ctx = context;
+              return const Scaffold(
+                body: SizedBox(width: 420, child: InspectorPanel()),
               );
             },
           ),
@@ -85,7 +111,14 @@ void main() {
 
   const target = AnnotationTarget(
     kind: AnnotationTargetKind.cell,
-    targetId: 'top.alu',
+    targetId: 'u_alu',
+  );
+  final key = newAnnotationDraftKey(AnnotationTargetKind.cell, 'u_alu', null);
+  final title = find.byKey(ValueKey<String>('annotationTitleField-$key'));
+  final body = find.byKey(ValueKey<String>('annotationBodyField-$key'));
+  final apply = find.descendant(
+    of: find.byType(CruxInspectorApplyBar),
+    matching: find.byType(FilledButton),
   );
 
   group('annotation.added', () {
@@ -96,19 +129,16 @@ void main() {
 
       openAddAnnotationDialog(ctx, ref, target: target);
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('annotationDialogTitleField')),
-        'my marker',
-      );
+      await tester.enterText(title, 'my marker');
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(FilledButton).last);
+      await tester.tap(apply);
       await tester.pumpAndSettle();
 
       final event = telemetry.all('annotation.added').single;
       expect(event.properties, isEmpty);
       // The title the user typed and the element it anchors to are theirs.
       expect(event.toString(), isNot(contains('my marker')));
-      expect(event.toString(), isNot(contains('top.alu')));
+      expect(event.toString(), isNot(contains('u_alu')));
       _assertInCatalog(event);
     });
 
@@ -119,12 +149,9 @@ void main() {
 
       openAddAnnotationDialog(ctx, ref, target: target);
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey<String>('annotationDialogBodyField')),
-        'a private note',
-      );
+      await tester.enterText(body, 'a private note');
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(FilledButton).last);
+      await tester.tap(apply);
       await tester.pumpAndSettle();
 
       final event = telemetry.all('annotation.added').single;
@@ -133,12 +160,15 @@ void main() {
       _assertInCatalog(event);
     });
 
-    testWidgets('cancelling the dialog records nothing', (tester) async {
+    testWidgets('discarding the new annotation records nothing', (
+      tester,
+    ) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
       final (ctx, ref) = await pumpHost(tester);
 
       openAddAnnotationDialog(ctx, ref, target: target);
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(OutlinedButton).last);
+      await tester.tap(find.text(l10n.annotationUnsavedChangesDiscard));
       await tester.pumpAndSettle();
 
       expect(telemetry.all('annotation.added'), isEmpty);

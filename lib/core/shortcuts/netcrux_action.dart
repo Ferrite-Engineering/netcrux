@@ -48,6 +48,12 @@ enum NetcruxAction implements CruxAction {
   /// Toggle the right inspector panel.
   toggleInspector,
 
+  /// Open the Inspector on the selected schematic element with keyboard
+  /// focus on its first control. The keyboard and menu route to what the
+  /// schematic's *Properties* context-menu entry does; double-click on a cell
+  /// pushes into its module instead.
+  showProperties,
+
   /// Toggle the bottom diagnostics panel.
   toggleDiagnosticsPanel,
 
@@ -440,6 +446,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.openCommandPalette:
       case NetcruxAction.toggleHierarchyTree:
       case NetcruxAction.toggleInspector:
+      case NetcruxAction.showProperties:
       // Showing a panel is a View concern; *creating* the thing the panel
       // lists (Add Annotation) stays in Tools.
       case NetcruxAction.showAnnotationsPanel:
@@ -546,6 +553,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionToggleHierarchyTree;
       case NetcruxAction.toggleInspector:
         return l10n.actionToggleInspector;
+      case NetcruxAction.showProperties:
+        return l10n.actionShowProperties;
       case NetcruxAction.toggleDiagnosticsPanel:
         return l10n.actionToggleDiagnosticsPanel;
       case NetcruxAction.openSearch:
@@ -780,6 +789,7 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.zoomToSelection:
       case NetcruxAction.toggleHierarchyTree:
       case NetcruxAction.toggleInspector:
+      case NetcruxAction.showProperties:
       case NetcruxAction.toggleDiagnosticsPanel:
       case NetcruxAction.openSearch:
       case NetcruxAction.openCommandPalette:
@@ -910,6 +920,7 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.zoomToSelection:
       case NetcruxAction.toggleHierarchyTree:
       case NetcruxAction.toggleInspector:
+      case NetcruxAction.showProperties:
       case NetcruxAction.toggleDiagnosticsPanel:
       case NetcruxAction.openSearch:
       case NetcruxAction.openCommandPalette:

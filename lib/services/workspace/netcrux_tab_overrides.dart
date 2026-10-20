@@ -4,6 +4,7 @@
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:netcrux/features/annotations/providers/annotation_drafts_provider.dart';
 import 'package:netcrux/features/annotations/providers/annotation_reveal_request.dart';
 import 'package:netcrux/features/annotations/providers/annotation_schematic_markers.dart';
 import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
@@ -11,6 +12,7 @@ import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.
 import 'package:netcrux/features/diagnostics/providers/netlist_footprint_provider.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
+import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
@@ -157,5 +159,12 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     schematicAnnotationMarkersProvider.overrideWith(
       annotationSchematicMarkers,
     ),
+    // The Inspector's controller (its pending focus request and held draft),
+    // the annotation it is asked to focus, and its unapplied annotation
+    // drafts are this tab's: shared at root, an open in one tab would move
+    // focus in another and a draft would follow the user across designs.
+    inspectorControllerProvider.overrideWith(buildInspectorController),
+    inspectorFocusRequestProvider.overrideWith(InspectorFocusRequest.new),
+    annotationDraftsProvider.overrideWith(AnnotationDraftsNotifier.new),
   ];
 }

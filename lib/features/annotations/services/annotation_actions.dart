@@ -4,34 +4,40 @@
 import 'dart:async';
 
 import 'package:crux_ide_layout/crux_ide_layout.dart';
-import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:netcrux/domain/interfaces/annotation_store.dart';
 import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
+import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/features/annotations/providers/annotation_drafts_provider.dart';
 import 'package:netcrux/features/annotations/providers/annotation_reveal_request.dart';
+import 'package:netcrux/features/annotations/services/annotation_target_reveal.dart';
 import 'package:netcrux/features/annotations/services/annotations_on_scope.dart';
-import 'package:netcrux/features/annotations/widgets/annotation_dialog.dart';
 import 'package:netcrux/features/annotations/widgets/inline_element_picker.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/workspace/services/active_tab_container.dart';
 import 'package:netcrux/features/workspace/services/analysis_dock_actions.dart';
 import 'package:netcrux/services/session/annotation_store_provider.dart';
-import 'package:netcrux/services/telemetry/annotation_telemetry.dart';
 
-/// Default [AddAnnotationDialogOpener]. Mounts [showAnnotationDialog] with
-/// either the supplied [target] (e.g. from the schematic context menu) or —
-/// when [target] is null — the currently selected schematic element's
-/// primary anchor. When neither is available the inline element picker asks
-/// for one (the user invoked the action from the command palette with
-/// nothing selected).
+/// Default [AddAnnotationDialogOpener]. Starts a new annotation in the
+/// Inspector on either the supplied [target] (from the schematic context
+/// menu) or, when [target] is null, the currently selected schematic
+/// element's primary anchor. When neither is available the inline element
+/// picker asks for one (the user invoked the action from the command palette
+/// with nothing selected).
 ///
-/// Re-entrancy guarded ([ModalGuard]): reached from the keyboard shortcut /
-/// menu / command-palette `addAnnotation` action — a double-fire must not
-/// stack two pickers/dialogs across the picker→dialog chain.
+/// The element is selected, a new-annotation draft is started in the tab's
+/// [annotationDraftsProvider] and the Inspector opens with focus on the
+/// draft's title. The draft's Add button writes the annotation to the tab's
+/// store and records `annotation.added`.
+///
+/// Re-entrancy guarded ([ModalGuard]): reached from the keyboard shortcut,
+/// menu and command-palette `addAnnotation` action, and a double-fire must
+/// not stack two pickers.
 void openAddAnnotationDialog(
   BuildContext context,
   WidgetRef ref, {
@@ -40,37 +46,88 @@ void openAddAnnotationDialog(
   unawaited(
     ModalGuard.run('netcruxAddAnnotation', () async {
       // Command-palette dispatch passes the root ref and no target. The
-      // active selection and the schematic graph live in the active tab's
-      // per-tab container, so resolve it before reading either — reading
-      // through the root ref would see an empty selection and an empty
-      // graph. The context-menu path already supplies a resolved target
-      // and skips both fallbacks.
-      final tabContainer = ref.activeTabContainerOrNull(context);
-      final store = _storeOf(tabContainer, context);
-      // Read before the picker and the dialog: the widget that owns `ref`
-      // may be gone by the time the dialog closes, and the service is not.
-      final telemetry = ref.read(telemetryServiceProvider);
+      // active selection, the schematic graph and the drafts live in the
+      // active tab's per-tab container, so resolve it before reading any of
+      // them: reading through the root ref would see an empty selection and
+      // start a draft no tab shows. The context-menu path already supplies
+      // a resolved target and skips both fallbacks.
+      final tab =
+          ref.activeTabContainerOrNull(context) ??
+          ProviderScope.containerOf(context, listen: false);
       final resolved =
           target ??
-          _targetFromContainer(tabContainer) ??
-          await showInlineElementPicker(context, container: tabContainer);
+          _targetFromContainer(tab) ??
+          await showInlineElementPicker(context, container: tab);
       if (resolved == null) return;
-      if (!context.mounted) return;
-      final created = await showAnnotationDialog(
-        context: context,
-        ref: ref,
-        targetKind: resolved.kind,
-        targetId: resolved.targetId,
-        moduleName: _moduleOf(tabContainer, resolved),
-      );
-      if (created == null) return;
-      // The annotation belongs to the active tab's design, so it is written
-      // to that tab's store. The command palette and menu bar pass the
-      // root ref, whose store no tab reads.
-      store.addAnnotation(created);
-      recordAnnotationAdded(telemetry);
+      startAnnotationInInspector(tab, resolved);
     }),
   );
+}
+
+/// Selects [target] on the schematic of [tab] (the per-tab container),
+/// starts a new-annotation draft on it and opens the Inspector with focus on
+/// the draft's title.
+void startAnnotationInInspector(
+  ProviderContainer tab,
+  AnnotationTarget target,
+) {
+  final element = selectedElementForAnnotationTarget(target);
+  final key = tab
+      .read(annotationDraftsProvider.notifier)
+      .startNew(
+        kind: target.kind,
+        targetId: target.targetId,
+        moduleName: _moduleOf(tab, target),
+      );
+  openInspectorFor(tab, element ?? const SelectedElement.none());
+  tab.read(inspectorFocusRequestProvider.notifier).request(key);
+}
+
+/// The Annotations panel's Edit: selects the
+/// annotated element (switching scope when it is in another one) and opens
+/// the Inspector with focus on that annotation's title. Returns false,
+/// changing nothing, when the shown design has no such element.
+bool openAnnotationInInspector(ProviderContainer tab, Annotation annotation) {
+  final found = revealAnnotationTarget(
+    tab,
+    kind: annotation.targetKind,
+    targetId: annotation.targetId,
+    moduleName: annotation.moduleName,
+  );
+  if (!found) return false;
+  tab.read(inspectorControllerProvider).open();
+  tab.read(inspectorFocusRequestProvider.notifier).request(annotation.id);
+  return true;
+}
+
+/// The schematic element an annotation [target] names, or null for a scope
+/// (which is not a selectable element) and for an id the canvas does not
+/// mint.
+SelectedElement? selectedElementForAnnotationTarget(AnnotationTarget target) {
+  final id = target.targetId;
+  switch (target.kind) {
+    case AnnotationTargetKind.cell:
+      return SelectedElement.cell(cellId: id);
+    case AnnotationTargetKind.port:
+      final cellId = cellIdOfPinId(id);
+      if (cellId == null) return null;
+      return SelectedElement.port(
+        cellId: cellId,
+        portId: id,
+        portName: id.substring(cellId.length + 1),
+      );
+    case AnnotationTargetKind.boundaryPort:
+      return SelectedElement.boundaryPort(
+        portId: id,
+        portName: id.startsWith('port:') ? id.substring('port:'.length) : id,
+      );
+    case AnnotationTargetKind.net:
+      final netId = netIdOfEdgeId(id);
+      if (netId == null) return null;
+      return SelectedElement.wire(edgeId: id, netId: netId);
+    case AnnotationTargetKind.scope:
+      return null;
+  }
 }
 
 /// Default [AnnotationsPanelOpener]: the right dock's Annotations tab
@@ -148,16 +205,6 @@ String? _moduleOf(ProviderContainer? tab, AnnotationTarget target) {
   if (tab == null || target.kind == AnnotationTargetKind.scope) return null;
   return tab.read(hierarchyTreeProvider).selected?.moduleName;
 }
-
-/// The annotation store of the active tab, or of [context]'s scope when no tab
-/// container can be resolved (a test harness mounting the opener without a
-/// workspace).
-AnnotationStore _storeOf(
-  ProviderContainer? tab,
-  BuildContext context,
-) => (tab ?? ProviderScope.containerOf(context, listen: false)).read(
-  annotationStoreProvider,
-);
 
 /// Reads the active selection from the active tab's [container] and maps
 /// its primary anchor to an annotation target. Returns null when no tab is

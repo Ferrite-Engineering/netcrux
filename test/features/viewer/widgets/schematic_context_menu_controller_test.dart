@@ -14,7 +14,9 @@ import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
@@ -165,9 +167,8 @@ void main() {
   });
 
   group('dispatch — selection + hierarchy entries', () {
-    testWidgets('openInInspector promotes the target to the selection', (
-      tester,
-    ) async {
+    testWidgets('Properties promotes the target to the selection and opens '
+        'the Inspector with focus', (tester) async {
       final h = await pumpController(tester);
 
       await h.controller.dispatch(
@@ -177,6 +178,11 @@ void main() {
       );
 
       expect(h.container.read(selectedElementProvider).primary, target);
+      expect(
+        h.container.read(inspectorControllerProvider).focusPending,
+        isTrue,
+      );
+      expect(h.container.read(rightDockTabProvider), kRightDockTabInspector);
       expect(h.trace.faninCalls, 0);
       expect(h.trace.fanoutCalls, 0);
     });
@@ -355,7 +361,7 @@ void main() {
       expect(find.text(l10n.contextMenuTraceFanin), findsOneWidget);
       expect(find.text(l10n.contextMenuTraceFanout), findsOneWidget);
       expect(find.text(l10n.contextMenuFindInHierarchy), findsOneWidget);
-      expect(find.text(l10n.contextMenuOpenInInspector), findsOneWidget);
+      expect(find.text(l10n.contextMenuProperties), findsOneWidget);
       expect(find.byType(PopupMenuDivider), findsNothing);
     });
 

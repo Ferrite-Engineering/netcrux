@@ -736,9 +736,9 @@
   "@contextMenuFindInHierarchy": {
     "description": "Right-click / long-press context-menu item that selects the parent scope of the right-clicked element in the hierarchy tree."
   },
-  "contextMenuOpenInInspector": "인스펙터에서 열기",
-  "@contextMenuOpenInInspector": {
-    "description": "Right-click / long-press context-menu item that promotes the right-clicked element to the inspector pane's primary view."
+  "contextMenuProperties": "속성",
+  "@contextMenuProperties": {
+    "description": "Right-click / long-press context-menu item that selects the right-clicked element and opens the Inspector dock tab on it with keyboard focus. The same as View > Properties."
   },
   "contextMenuCopyPathSuccess": "경로 복사됨: {path}",
   "@contextMenuCopyPathSuccess": {
@@ -2363,10 +2363,6 @@
   "@annotationDialogBodyLabel": {
     "description": "Form field label for the markdown body of an annotation."
   },
-  "annotationDialogEditTitle": "주석 편집",
-  "@annotationDialogEditTitle": {
-    "description": "Title of the dialog when editing an existing annotation."
-  },
   "annotationDialogTitle": "주석 추가",
   "@annotationDialogTitle": {
     "description": "Title of the dialog for adding an annotation on the currently selected schematic element."
@@ -2447,21 +2443,49 @@
   "@inlineElementPickerTitle": {
     "description": "Title of the inline element picker dialog shown when the Add Annotation flow is invoked without an active selection."
   },
-  "annotationUnsavedChangesTitle": "변경 사항을 버리시겠습니까?",
-  "@annotationUnsavedChangesTitle": {
-    "description": "Title of the unsaved-changes confirmation shown when the user cancels the Add / Edit Annotation dialog with pending edits."
-  },
-  "annotationUnsavedChangesBody": "저장되지 않은 변경 사항이 있습니다. 버리시겠습니까?",
-  "@annotationUnsavedChangesBody": {
-    "description": "Body text of the unsaved-changes confirmation dialog."
-  },
   "annotationUnsavedChangesDiscard": "버리기",
   "@annotationUnsavedChangesDiscard": {
-    "description": "Destructive button label on the unsaved-changes confirmation dialog."
+    "description": "Button under a new annotation in the Inspector that drops it unsaved."
   },
-  "annotationUnsavedChangesKeep": "편집 계속",
-  "@annotationUnsavedChangesKeep": {
-    "description": "Cancel button label on the unsaved-changes confirmation dialog."
+  "inspectorHeading": "{kind} {name}",
+  "@inspectorHeading": {
+    "description": "The Inspector's heading: the kind of the selected schematic element (Cell, Port, Wire) and its id.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "Cell"
+      },
+      "name": {
+        "type": "String",
+        "example": "u_alu"
+      }
+    }
+  },
+  "inspectorHeldMessage": "{name}의 변경 사항을 적용하거나 되돌리면 선택을 따라갑니다.",
+  "@inspectorHeldMessage": {
+    "description": "Shown and announced in the Inspector when the selection moved while an annotation on another element holds unapplied edits. {name} is that element's Inspector heading.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Cell u_alu"
+      }
+    }
+  },
+  "inspectorNewAnnotation": "새 주석",
+  "@inspectorNewAnnotation": {
+    "description": "Heading of the form for an annotation being added in the Inspector, before it is saved."
+  },
+  "inspectorRevert": "되돌리기",
+  "@inspectorRevert": {
+    "description": "Button under an annotation's form in the Inspector that drops the unapplied edits."
+  },
+  "inspectorAnnotationAuthor": "작성자",
+  "@inspectorAnnotationAuthor": {
+    "description": "Label of the read-only author row of an annotation another participant of a collaborative session wrote, in the Inspector."
+  },
+  "actionShowProperties": "속성",
+  "@actionShowProperties": {
+    "description": "View > Properties, its shortcut and its command-palette entry: opens the Inspector dock tab on the selected schematic element with keyboard focus."
   },
   "fileWatcherIgnore": "무시",
   "@fileWatcherIgnore": {

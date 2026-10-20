@@ -305,8 +305,10 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   // ── Browsable, requires a non-empty selection ───────────────────────
   // All selection-seeded: the dispatch reads the active tab's primary
   // selection and silently returned before this gate existed.
+  // Properties opens the Inspector on the selected element.
   NetcruxAction.showConeOfInfluenceFanin ||
   NetcruxAction.showConeOfInfluenceFanout ||
+  NetcruxAction.showProperties ||
   NetcruxAction.addAnnotation ||
   NetcruxAction.openSourceForElement ||
   NetcruxAction.editSymbolForCurrentInstance ||

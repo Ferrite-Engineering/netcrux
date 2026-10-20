@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_dock/crux_dock.dart';
 import 'package:crux_license/crux_license.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -285,7 +286,9 @@ void main() {
 
       expect(tester.takeException(), isNull);
       final rows = tester
-          .widgetList<SelectableText>(find.byType(SelectableText))
+          .widgetList<CruxInspectorValueRow>(
+            find.byType(CruxInspectorValueRow),
+          )
           .length;
       // Header rows (net id + driver) plus one per *visible* sink. A 600 px
       // pane fits well under 40 of them; the pre-fix shape built all 2 000
@@ -338,7 +341,8 @@ void main() {
       await tester.pumpWidget(_wrap(container, const Locale('en')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(NetCruxFeatureTierBadge), findsOneWidget);
+      // Go to source and, with no overlay, the cell's Edit Symbol entry.
+      expect(find.byType(NetCruxFeatureTierBadge), findsNWidgets(2));
       await tester.tap(find.text('Go to source'));
       await tester.pump();
       expect(opened, 0);

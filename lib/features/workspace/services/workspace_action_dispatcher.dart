@@ -30,6 +30,7 @@ import 'package:netcrux/features/command_palette/widgets/command_palette_dialog.
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
 import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/services/project_save_controller.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
@@ -137,6 +138,12 @@ class WorkspaceActionDispatcher {
         );
       case NetcruxAction.toggleInspector:
         unawaited(_ref.read(panelLayoutProvider.notifier).toggleInspector());
+      case NetcruxAction.showProperties:
+        // The Inspector and its controller are the active tab's.
+        _ref
+            .activeTabContainerOrNull(context)
+            ?.read(inspectorControllerProvider)
+            .open();
       case NetcruxAction.toggleDiagnosticsPanel:
         unawaited(_ref.read(panelLayoutProvider.notifier).toggleDiagnostics());
       case NetcruxAction.openTabDiagnostics:

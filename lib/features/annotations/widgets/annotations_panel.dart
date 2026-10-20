@@ -1,8 +1,6 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
-import 'dart:async';
-
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -10,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/features/annotations/providers/annotation_reveal_request.dart';
+import 'package:netcrux/features/annotations/services/annotation_actions.dart';
 import 'package:netcrux/features/annotations/services/annotation_target_reveal.dart';
-import 'package:netcrux/features/annotations/widgets/annotation_dialog.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
 import 'package:netcrux/services/session/annotation_store_provider.dart';
@@ -27,7 +25,7 @@ import 'package:netcrux/shared/widgets/revealing_list_view.dart';
 /// Each row leads with the annotation's title, or the first line of its
 /// body when it has none, then names its element and author. The rest of
 /// the body renders below through `flutter_markdown_plus`'s [MarkdownBody];
-/// the edit dialog shows the raw Markdown source. A row is one focusable,
+/// the Inspector's form shows the raw Markdown source. A row is one focusable,
 /// named control: activating it (click, Enter or Space) selects the
 /// annotation's element on the schematic and brings it into view,
 /// switching scope when the element is in another one.
@@ -352,12 +350,14 @@ class _AnnotationTile extends ConsumerWidget {
       ),
     );
     // The same commands on the row's "⋯" button and on right-click.
+    // Edit opens the Inspector on the annotated element. A note on a scope
+    // names no element the Inspector can show, so it offers no Edit.
     final entries = <CruxMenuEntry>[
-      if (!readOnly)
+      if (!readOnly && annotation.targetKind != AnnotationTargetKind.scope)
         CruxMenuItem(
           key: const ValueKey<String>('annotationMenuEdit'),
           label: l10n.annotationContextMenuEdit,
-          onSelected: () => unawaited(_edit(context, ref)),
+          onSelected: () => _edit(context, l10n),
         ),
       CruxMenuItem(
         key: const ValueKey<String>('annotationMenuDelete'),
@@ -386,16 +386,18 @@ class _AnnotationTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final store = ref.read(annotationStoreProvider);
-    final edited = await showAnnotationDialog(
-      context: context,
-      ref: ref,
-      targetKind: annotation.targetKind,
-      targetId: annotation.targetId,
-      existing: annotation,
-    );
-    if (edited != null) store.updateAnnotation(edited);
+  /// Edits the annotation in the Inspector: selects its element and opens
+  /// the Inspector with focus on the annotation's title. The panel is
+  /// mounted inside the tab's scope, so the container found here is the
+  /// tab's.
+  void _edit(BuildContext context, L10N l10n) {
+    final tab = ProviderScope.containerOf(context, listen: false);
+    if (!openAnnotationInInspector(tab, annotation)) {
+      showCruxInfoSnack(
+        context,
+        l10n.annotationsPanelTargetNotFound(annotationRowHeading(annotation)),
+      );
+    }
   }
 
   /// Selects and reveals the annotation's element on this tab's schematic.

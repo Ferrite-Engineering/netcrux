@@ -6,9 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/features/annotations/services/annotation_actions.dart';
 
-/// Opens the Add Annotation dialog. When [target] is non-null the dialog
-/// is pre-populated for that element; otherwise the opener resolves the
-/// currently selected schematic element from the provided [ref].
+/// Starts a new annotation in the Inspector. When [target] is non-null the
+/// annotation is on that element; otherwise the opener resolves the currently
+/// selected schematic element from the provided [ref], and with nothing
+/// selected asks for one in the inline element picker.
 typedef AddAnnotationDialogOpener =
     void Function(
       BuildContext context,
@@ -33,8 +34,9 @@ typedef ShowAnnotationForTargetOpener =
       AnnotationTarget target,
     );
 
-/// Extension point for the Add Annotation dialog opener. The default mounts
-/// the dialog; a test or an embedder replaces it with `.overrideWith`.
+/// Extension point for Add Annotation. The default selects the element,
+/// starts a new-annotation draft and opens the Inspector on it; a test or an
+/// embedder replaces it with `.overrideWith`.
 final addAnnotationDialogOpenerProvider = Provider<AddAnnotationDialogOpener>(
   (_) => openAddAnnotationDialog,
   name: 'addAnnotationDialogOpenerProvider',

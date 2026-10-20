@@ -107,6 +107,8 @@ const _routing = <NetcruxAction, _Routing>{
   // Reads the active tab's selection; with no tab it reports that nothing is
   // selected.
   NetcruxAction.crossProbeSelection: _Routing.tabScoped,
+  // Opens the active tab's Inspector through its per-tab controller.
+  NetcruxAction.showProperties: _Routing.tabScoped,
 
   NetcruxAction.splitPaneRight: _Routing.workspaceScoped,
   NetcruxAction.closePane: _Routing.workspaceScoped,

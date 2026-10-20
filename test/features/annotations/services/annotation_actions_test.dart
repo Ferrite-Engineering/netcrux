@@ -15,10 +15,12 @@ import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
+import 'package:netcrux/features/annotations/providers/annotation_drafts_provider.dart';
 import 'package:netcrux/features/annotations/services/annotation_actions.dart';
 import 'package:netcrux/features/annotations/widgets/annotations_panel.dart';
 import 'package:netcrux/features/annotations/widgets/inline_element_picker.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/viewer/providers/analysis_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -31,7 +33,6 @@ import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
-import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 import 'package:netcrux/shared/widgets/workspace_managers_scope.dart';
 
 import '../../../helpers/telemetry_test_overrides.dart';
@@ -226,22 +227,23 @@ void main() {
   });
 
   group('openAddAnnotationDialog', () {
-    testWidgets('an explicit target opens the annotation dialog', (
-      tester,
-    ) async {
+    testWidgets('an explicit target selects it, starts a draft and opens the '
+        'Inspector, with no dialog', (tester) async {
       final (ctx, ref) = await _pumpHost(tester);
       openAddAnnotationDialog(ctx, ref, target: _target);
       await tester.pumpAndSettle();
-      expect(find.byType(NetCruxFeatureTierBadge), findsNothing);
-      expect(find.byType(CruxDialog), findsOneWidget);
+      final scope = ProviderScope.containerOf(ctx, listen: false);
+      expect(find.byType(CruxDialog), findsNothing);
       expect(
-        find.text(
-          L10N
-              .of(tester.element(find.byType(CruxDialog)))
-              .annotationDialogTitle,
-        ),
-        findsOneWidget,
+        scope.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'top.alu'),
       );
+      expect(
+        scope.read(annotationDraftsProvider).keys.single,
+        newAnnotationDraftKey(AnnotationTargetKind.cell, 'top.alu', null),
+      );
+      expect(scope.read(rightDockTabProvider), kRightDockTabInspector);
+      expect(scope.read(inspectorControllerProvider).focusPending, isTrue);
     });
 
     testWidgets(
@@ -258,11 +260,12 @@ void main() {
         openAddAnnotationDialog(ctx, ref);
         await tester.pumpAndSettle();
 
-        // The annotation dialog opened for the resolved selection; the
+        // The draft started in the tab for the resolved selection; the
         // inline picker fallback never appeared.
-        expect(find.byType(CruxDialog), findsOneWidget);
-        expect(find.byType(NetCruxFeatureTierBadge), findsNothing);
+        expect(tabContainer.read(annotationDraftsProvider), hasLength(1));
         expect(find.byType(InlineElementPicker), findsNothing);
+        final root = ProviderScope.containerOf(ctx, listen: false);
+        expect(root.read(annotationDraftsProvider), isEmpty);
       },
     );
 
@@ -282,8 +285,8 @@ void main() {
     );
 
     testWidgets(
-      'a titled annotation added from the palette lands in the ACTIVE TAB '
-      'store, with the module of the scope on screen',
+      'an annotation started from the palette is in the ACTIVE TAB, with the '
+      'module of the scope on screen',
       (tester) async {
         final (ctx, ref, tabContainer) = await _pumpWorkspaceHost(tester);
         tabContainer
@@ -291,40 +294,21 @@ void main() {
             .setModel(_seedModel());
         openAddAnnotationDialog(ctx, ref, target: _dmaReg);
         await tester.pumpAndSettle();
-        await tester.enterText(
-          find.byKey(const ValueKey<String>('annotationDialogTitleField')),
-          'PC',
+
+        final draft = tabContainer.read(annotationDraftsProvider).values.single;
+        expect(draft.targetId, 'dma_reg');
+        expect(draft.moduleName, 'top');
+        expect(
+          tabContainer.read(selectedElementProvider).primary,
+          const SelectedElement.cell(cellId: 'dma_reg'),
         );
-        await tester.tap(find.text('Save'));
-        await tester.pumpAndSettle();
-
-        final inTab = tabContainer.read(annotationSnapshotProvider).annotations;
-        expect(inTab.single.title, 'PC');
-        expect(inTab.single.body, isEmpty);
-        expect(inTab.single.moduleName, 'top');
-        final root = ProviderScope.containerOf(ctx, listen: false);
-        expect(root.read(annotationSnapshotProvider).annotations, isEmpty);
-      },
-    );
-
-    testWidgets(
-      'an annotation body added from the palette lands in the ACTIVE TAB store',
-      (tester) async {
-        final (ctx, ref, tabContainer) = await _pumpWorkspaceHost(tester);
-        openAddAnnotationDialog(ctx, ref, target: _dmaReg);
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.byKey(const ValueKey<String>('annotationDialogBodyField')),
-          'Resets late',
+        expect(
+          tabContainer.read(inspectorFocusRequestProvider),
+          newAnnotationDraftKey(AnnotationTargetKind.cell, 'dma_reg', 'top'),
         );
-        await tester.tap(find.text('Save'));
-        await tester.pumpAndSettle();
-
-        final inTab = tabContainer.read(annotationSnapshotProvider).annotations;
-        expect(inTab.single.title, isNull);
-        expect(inTab.single.body, 'Resets late');
         final root = ProviderScope.containerOf(ctx, listen: false);
-        expect(root.read(annotationSnapshotProvider).annotations, isEmpty);
+        expect(root.read(annotationDraftsProvider), isEmpty);
+        expect(root.read(selectedElementProvider).primary.isNone, isTrue);
       },
     );
   });

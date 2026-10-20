@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/selection/element_path.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
@@ -34,8 +35,9 @@ enum SchematicContextMenuAction {
   /// hierarchy tree on the left pane.
   findInHierarchy,
 
-  /// Promotes the right-clicked element to the primary selection so
-  /// the inspector pane displays its details.
+  /// *Properties*: promotes the right-clicked element to the primary
+  /// selection and opens the Inspector on it with focus. Double-click on a
+  /// cell is not an Inspector opener: it pushes into the cell's module.
   openInInspector,
 }
 
@@ -110,7 +112,7 @@ class SchematicContextMenuController {
       ),
       PopupMenuItem<Object>(
         value: SchematicContextMenuAction.openInInspector,
-        child: Text(l10n.contextMenuOpenInInspector),
+        child: Text(l10n.contextMenuProperties),
       ),
       if (extensions.isNotEmpty) const PopupMenuDivider(),
       for (final ext in extensions)
@@ -172,6 +174,7 @@ class SchematicContextMenuController {
         _findInHierarchy();
       case SchematicContextMenuAction.openInInspector:
         ref.read(selectedElementProvider.notifier).select(target);
+        ref.read(inspectorControllerProvider).open();
     }
   }
 

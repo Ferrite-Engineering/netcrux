@@ -115,6 +115,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
     [
       NetcruxAction.toggleHierarchyTree,
       NetcruxAction.toggleInspector,
+      NetcruxAction.showProperties,
       NetcruxAction.showCrossProbePanel,
       NetcruxAction.crossProbeSelection,
       NetcruxAction.showAnnotationsPanel,

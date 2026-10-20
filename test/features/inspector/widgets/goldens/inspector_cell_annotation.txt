@@ -1,0 +1,7 @@
+# Tab walk: 6 stops, cycles
+1. Go to source button
+2. [Pro tier feature grouping] Edit Symbol for This Module… button
+3. Add Annotation button
+4. Title edit ALU
+5. Body (markdown) edit Glitches at reset
+6. Author (optional) edit

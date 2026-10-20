@@ -57,6 +57,13 @@ Map<NetcruxAction, ShortcutActivator> defaultBindings() {
     ),
     NetcruxAction.toggleHierarchyTree: mod(LogicalKeyboardKey.digit1),
     NetcruxAction.toggleInspector: mod(LogicalKeyboardKey.digit2),
+    // Alt+Enter (Option+Return on macOS), the desktop "Properties" chord.
+    // Enter with Alt is nothing else in NetCrux, and the canvas leaves a
+    // modified Enter alone (it pushes into a cell on a bare Enter only).
+    NetcruxAction.showProperties: const SingleActivator(
+      LogicalKeyboardKey.enter,
+      alt: true,
+    ),
     NetcruxAction.toggleDiagnosticsPanel: mod(LogicalKeyboardKey.digit3),
     // Cmd/Ctrl+Shift+K — theme toggle, matching WaveCrux and LintCrux
     // (suite keyboard-parity pass; toggleTheme previously shipped with no

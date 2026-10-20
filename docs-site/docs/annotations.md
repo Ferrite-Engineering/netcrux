@@ -23,6 +23,15 @@ An optional **Author** records who wrote it.
 
     The **Title** field sits above **Body (markdown)**. A title alone is enough for a quick marker; a body alone is fine for a note, and its first line then stands in for the title. **Save** with both empty is refused, and the dialog says "Add a title or a body."
 
+### In the Inspector, from NetCrux 1.2 {#inspector}
+
+From NetCrux 1.2 there is no annotation dialog: annotations are written and edited in the [Inspector](interface.md#inspector), beside the schematic.
+
+- **Add.** **Add Annotation…** (from the context menu, `Tools → Add Annotation…` or the command palette) selects the element and opens the Inspector on it with a **New annotation** form, the cursor in **Title**. The Inspector's **Annotations** section on any element also has an **Add Annotation** button. Press **Add Annotation** under the form, or Enter in the Title field, to save; **Discard** drops it. With both fields empty the form says "Add a title or a body."
+- **Edit.** Each of your annotations on the selected element is its own form in the Inspector. Change it and press **Save**, or **Revert** to go back to what is stored. The Annotations tab's **Edit Annotation…** selects the element and puts the cursor in that annotation's title.
+- **Unsaved changes stay put.** While a form has unsaved changes the Inspector keeps showing that element even if you select something else, and says "Apply or revert the changes to Cell *name* to follow the selection." Switching dock tabs keeps what you typed. Escape returns to the schematic without losing it.
+- **In a session.** A note another participant wrote shows as read-only rows. The room sees that you are writing a note from your first keystroke until you save or discard it.
+
 ## The Annotations tab {#panel}
 
 `View → Show Annotations Panel` opens the **Annotations** tab in the right dock, beside the Inspector, so the schematic stays in view. Choosing it again while the tab is on screen closes it; so does the **×** on the tab. Your annotations are kept either way.
@@ -30,7 +39,7 @@ An optional **Author** records who wrote it.
 Each row leads with the annotation's title, or the first line of its body when it has no title, then names the element (cell, port, boundary port, net or scope, and its ID) and the author. The rest of the body renders below as formatted Markdown.
 
 - **Go to the element.** Click a row, or press Enter or Space on it, to select its element on the schematic and bring it into view. When the element is in another scope, NetCrux opens that scope first. If the design no longer has the element (it was renamed or removed), NetCrux says so instead.
-- **Edit or delete.** Use the **…** menu on a row to **Edit Annotation…** (the dialog shows the title and the raw Markdown) or **Delete Annotation**. Clearing the title leaves an untitled annotation.
+- **Edit or delete.** Use the **…** menu on a row to **Edit Annotation…** (the dialog shows the title and the raw Markdown; from NetCrux 1.2 the Inspector does, see [above](#inspector)) or **Delete Annotation**. Clearing the title leaves an untitled annotation.
 - **With a screen reader.** Tab to a row; it reads the title, the element, the author and the body.
 
 ## Badges on the schematic {#badges}

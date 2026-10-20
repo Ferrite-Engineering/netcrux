@@ -19,7 +19,7 @@ The canvas is the center of the app and renders the elaborated netlist for the c
 - A **three-band level-of-detail** system simplifies the drawing as you zoom out, so a large module stays legible. See [Navigating the schematic](navigating.md#lod).
 - The **breadcrumb bar** above the canvas shows your scope path — for example `top › cpu › alu` — and each crumb is clickable to jump straight to that level.
 
-**Pan** by dragging empty canvas, with the middle mouse button, with the scroll wheel or a two-finger trackpad scroll, or with the arrow keys; **zoom** with ++cmd++ / ++ctrl++ + scroll wheel or a pinch. Vertical and horizontal scrollbars flank the canvas, so off-screen cells are always reachable without a gesture. Selecting a cell, port or net highlights it and surfaces its details in the inspector. Right-click an element for its context menu: **Copy Path**, **Trace Fanin**, **Trace Fanout**, **Find in Hierarchy** and **Open in Inspector**, plus the Pro entries described elsewhere in this guide. Each Pro entry carries the same **PRO** badge as the menu bar and the command palette, so you can tell it apart before you choose it.
+**Pan** by dragging empty canvas, with the middle mouse button, with the scroll wheel or a two-finger trackpad scroll, or with the arrow keys; **zoom** with ++cmd++ / ++ctrl++ + scroll wheel or a pinch. Vertical and horizontal scrollbars flank the canvas, so off-screen cells are always reachable without a gesture. Selecting a cell, port or net highlights it and surfaces its details in the inspector. Right-click an element for its context menu: **Copy Path**, **Trace Fanin**, **Trace Fanout**, **Find in Hierarchy** and **Open in Inspector** (called **Properties** from NetCrux 1.2, where it also moves the keyboard focus into the inspector), plus the Pro entries described elsewhere in this guide. Each Pro entry carries the same **PRO** badge as the menu bar and the command palette, so you can tell it apart before you choose it.
 
 ### Pin stubs {#pin-stubs}
 
@@ -48,6 +48,8 @@ The right panel is the **inspector**, showing the details of whatever is selecte
 - **Wire**: net name, net ID, driver and sinks.
 
 The **Go to source** button above the details, badged <span class="tier tier-pro">Pro</span>, opens the RTL behind the selection in the Pro [RTL source pane](source-and-inspection.md#source-pane); in Open Core it says it requires NetCrux Pro. Toggle the inspector with ++cmd+2++ / ++ctrl+2++.
+
+From NetCrux 1.2 the inspector also holds the selected element's [annotations](annotations.md#inspector), each editable in place, and a cell's **Custom symbol** status and Symbol Editor buttons <span class="tier tier-pro">Pro</span>. Open it with the keyboard focus in it by right-clicking an element and choosing **Properties**, with `View → Properties`, or with ++alt+enter++ (++option+enter++ on macOS); double-clicking a cell still steps into its module. Tab moves through its buttons and fields only; the detail rows can be selected and copied. Press ++escape++ to return to the schematic, and ++escape++ again there to clear the selection.
 
 The inspector is the pinned tab of the right dock. Other tabs open beside it on demand, each closed with the **×** on its tab: **Cross-Probe**, **X-Trace**, the [**Annotations**](annotations.md) list (free from NetCrux 1.1), and in Pro the analysis panels and the **Source** view.
 
