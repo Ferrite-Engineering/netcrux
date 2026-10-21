@@ -45,4 +45,4 @@ Someone handed you a block you have never seen, and you want its shape before yo
 
 - Search (++cmd+f++ / ++ctrl+f++) in **Glob** mode is the fast way to find the clock and reset nets: `*clk*`, `*rst*`.
 - Elaboration results are cached, so reopening the same sources is instant.
-- Set `Settings → General → Auto-reload on source change` to **Reload automatically** while you are editing the RTL — save the file and the schematic re-elaborates.
+- Set `Settings → General → Auto-reload on source change` to **Reload automatically** (**Auto** from NetCrux 1.2) while you are editing the RTL — save the file and the schematic re-elaborates.

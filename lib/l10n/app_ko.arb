@@ -667,15 +667,15 @@
   "@settingsAutoReloadLabel": {
     "description": "Label for the auto-reload setting in Settings → General."
   },
-  "settingsAutoReloadAuto": "자동으로 재로드",
+  "settingsAutoReloadAuto": "자동",
   "@settingsAutoReloadAuto": {
     "description": "Auto-reload mode option: re-elaborate whenever the source file changes."
   },
-  "settingsAutoReloadPrompt": "확인 후 재로드",
+  "settingsAutoReloadPrompt": "확인",
   "@settingsAutoReloadPrompt": {
     "description": "Auto-reload mode option: show a snackbar when the source changes and let the user decide."
   },
-  "settingsAutoReloadOff": "재로드하지 않음",
+  "settingsAutoReloadOff": "끄기",
   "@settingsAutoReloadOff": {
     "description": "Auto-reload mode option: ignore source-file changes."
   },

@@ -260,46 +260,48 @@ class _YosysPathModeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
-    return CruxSettingsControlTile(
-      title: l10n.settingsYosysPathLabel,
-      // The help icon rides the control row (the tile's title is a plain
-      // string), pointing at the docs' "How Yosys is used under the hood".
-      control: Row(
-        children: [
-          Expanded(
-            child: SegmentedButton<YosysPathMode>(
-              segments: <ButtonSegment<YosysPathMode>>[
-                ButtonSegment<YosysPathMode>(
-                  value: YosysPathMode.autoDetect,
-                  label: Text(l10n.yosysPathModeAuto),
+    // The same row a [CruxSettingsControlTile] builds, but not merged into one
+    // semantics node: the control is wrapped beside a help link, so a merged
+    // row would flatten the segments and the link into a single node.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: CruxFormRow(
+        label: l10n.settingsYosysPathLabel,
+        mergeSemantics: false,
+        // The help icon rides the control row (the label is a plain string),
+        // pointing at the docs' "How Yosys is used under the hood".
+        child: Row(
+          children: [
+            Expanded(
+              child: CruxSegmentedControl<YosysPathMode>(
+                segments: <CruxSegment<YosysPathMode>>[
+                  CruxSegment<YosysPathMode>(
+                    value: YosysPathMode.autoDetect,
+                    label: l10n.yosysPathModeAuto,
+                  ),
+                  CruxSegment<YosysPathMode>(
+                    value: YosysPathMode.bundled,
+                    label: l10n.yosysPathModeBundled,
+                  ),
+                  CruxSegment<YosysPathMode>(
+                    value: YosysPathMode.custom,
+                    label: l10n.yosysPathModeCustom,
+                  ),
+                ],
+                selected: currentMode,
+                semanticLabel: l10n.settingsYosysPathLabel,
+                onChanged: (mode) => unawaited(
+                  ref.read(appSettingsProvider.notifier).setYosysPathMode(mode),
                 ),
-                ButtonSegment<YosysPathMode>(
-                  value: YosysPathMode.bundled,
-                  label: Text(l10n.yosysPathModeBundled),
-                ),
-                ButtonSegment<YosysPathMode>(
-                  value: YosysPathMode.custom,
-                  label: Text(l10n.yosysPathModeCustom),
-                ),
-              ],
-              selected: <YosysPathMode>{currentMode},
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) {
-                if (selection.isEmpty) return;
-                unawaited(
-                  ref
-                      .read(appSettingsProvider.notifier)
-                      .setYosysPathMode(selection.first),
-                );
-              },
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          CruxHelpLink(
-            url: HelpUrls.gettingStarted,
-            tooltip: l10n.helpLinkLearnMore,
-          ),
-        ],
+            const SizedBox(width: 8),
+            CruxHelpLink(
+              url: HelpUrls.gettingStarted,
+              tooltip: l10n.helpLinkLearnMore,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -667,15 +667,15 @@
   "@settingsAutoReloadLabel": {
     "description": "Label for the auto-reload setting in Settings → General."
   },
-  "settingsAutoReloadAuto": "自動で再読み込み",
+  "settingsAutoReloadAuto": "自動",
   "@settingsAutoReloadAuto": {
     "description": "Auto-reload mode option: re-elaborate whenever the source file changes."
   },
-  "settingsAutoReloadPrompt": "確認する",
+  "settingsAutoReloadPrompt": "確認",
   "@settingsAutoReloadPrompt": {
     "description": "Auto-reload mode option: show a snackbar when the source changes and let the user decide."
   },
-  "settingsAutoReloadOff": "再読み込みしない",
+  "settingsAutoReloadOff": "オフ",
   "@settingsAutoReloadOff": {
     "description": "Auto-reload mode option: ignore source-file changes."
   },

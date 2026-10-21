@@ -79,7 +79,7 @@ The **status bar** along the bottom of each tab shows the first source file, the
 
 **Settings** (++cmd+comma++ / ++ctrl+comma++) is organized into:
 
-- **General** — **Auto-reload on source change** (**Prompt me** / **Reload automatically** / **Don't reload**), **Restore tabs on launch**, **Automatically check for updates**, and, in release builds, **Enable diagnostics surfaces**.
+- **General** — **Auto-reload on source change** (**Prompt me** / **Reload automatically** / **Don't reload**; from NetCrux 1.2 **Prompt** / **Auto** / **Off**), **Restore tabs on launch**, **Automatically check for updates**, and, in release builds, **Enable diagnostics surfaces**.
 - **Appearance** — the **Language** picker (English, 中文, 日本語, 한국어), color presets, per-token color overrides and theme packs. See [Appearance & themes](appearance-and-themes.md).
 - **Privacy** — **Send anonymous usage statistics**. See [Updates, issues & privacy](user-guide/updates-and-feedback.md#usage-statistics).
 - **Engines** — the Yosys binary path.

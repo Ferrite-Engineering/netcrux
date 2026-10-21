@@ -204,29 +204,21 @@ class _PresetSelector extends StatelessWidget {
     return CruxSettingsControlTile(
       title: l10n.settingsShortcutsPresetLabel,
       description: l10n.settingsShortcutsPresetDescription,
-      // A boxed dropdown, matching the desktop text fields.
-      control: InputDecorator(
-        decoration: const InputDecoration(isDense: true),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<KeymapPreset>(
-            value: active,
-            isDense: true,
-            // `active == null` ("Custom") has no item — it is surfaced via
-            // [hint], so the user can never *select* Custom, only land on it
-            // by hand-editing.
-            hint: Text(l10n.settingsShortcutsPresetCustom),
-            onChanged: (preset) {
-              if (preset != null) onSelect(preset);
-            },
-            items: [
-              for (final preset in KeymapPreset.values)
-                DropdownMenuItem<KeymapPreset>(
-                  value: preset,
-                  child: Text(_label(preset, l10n)),
-                ),
-            ],
-          ),
-        ),
+      // The row's title names the button.
+      control: CruxPopUpButton<KeymapPreset>(
+        value: active,
+        // `active == null` ("Custom") has no item, so it shows as the
+        // placeholder: the user can never *select* Custom, only land on it by
+        // hand-editing.
+        placeholder: l10n.settingsShortcutsPresetCustom,
+        onChanged: onSelect,
+        items: [
+          for (final preset in KeymapPreset.values)
+            CruxPopUpItem<KeymapPreset>(
+              value: preset,
+              label: _label(preset, l10n),
+            ),
+        ],
       ),
     );
   }

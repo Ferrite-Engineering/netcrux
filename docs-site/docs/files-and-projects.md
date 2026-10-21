@@ -92,6 +92,8 @@ NetCrux watches the source files behind the current schematic. What happens when
 | **Reload automatically** | Re-elaborate on save — the file-watching pattern of a modern editor. |
 | **Don't reload** | Ignore changes; re-elaborate only when you reopen. |
 
+From NetCrux 1.2 the three segments read **Prompt**, **Auto** and **Off**, in that order, and mean what the rows above say: **Prompt** is **Prompt me**, **Auto** is **Reload automatically** and **Off** is **Don't reload**.
+
 ## Sessions {#sessions}
 
 A `.netcrux` **session** saves your view of a design. `File → Save Session As…` (++cmd+s++ / ++ctrl+s++) writes one once a design is laid out; it records the source files and top module, the current scope, the zoom and pan, the selection and trace-overlay mode, the expanded hierarchy-tree nodes, and any annotations. `File → Open Session…` (++cmd+l++ / ++ctrl+l++) loads one back into the active tab; `File → Open Project…`, `netcrux --session <file>` and `netcrux <file>.netcrux` open it in a tab of its own. The format is documented in [Session file format](reference/session-format.md).

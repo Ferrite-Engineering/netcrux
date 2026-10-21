@@ -670,15 +670,15 @@
   "@settingsAutoReloadLabel": {
     "description": "Label for the auto-reload setting in Settings → General."
   },
-  "settingsAutoReloadAuto": "Reload automatically",
+  "settingsAutoReloadAuto": "Auto",
   "@settingsAutoReloadAuto": {
     "description": "Auto-reload mode option: re-elaborate whenever the source file changes."
   },
-  "settingsAutoReloadPrompt": "Prompt me",
+  "settingsAutoReloadPrompt": "Prompt",
   "@settingsAutoReloadPrompt": {
     "description": "Auto-reload mode option: show a snackbar when the source changes and let the user decide."
   },
-  "settingsAutoReloadOff": "Don't reload",
+  "settingsAutoReloadOff": "Off",
   "@settingsAutoReloadOff": {
     "description": "Auto-reload mode option: ignore source-file changes."
   },
