@@ -4,6 +4,7 @@
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
+import 'package:netcrux/domain/models/cdc/cdc_pulse_risk.dart';
 import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
 import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
 
@@ -29,6 +30,7 @@ class CdcCrossing {
     required this.severity,
     required this.confidence,
     this.synchronizerInstances = const <ElementId>[],
+    this.pulseRisk,
   });
 
   /// JSON round-trip constructor.
@@ -36,6 +38,7 @@ class CdcCrossing {
     final sigRaw = json['signalId'];
     final instances = json['synchronizerInstances'];
     return CdcCrossing(
+      pulseRisk: CdcPulseRisk.fromJsonString(json['pulseRisk']?.toString()),
       id: json['id']?.toString() ?? '',
       sourceDomainId: json['sourceDomainId']?.toString() ?? '',
       destinationDomainId: json['destinationDomainId']?.toString() ?? '',
@@ -101,6 +104,26 @@ class CdcCrossing {
   /// these as a sequence of register icons.
   final List<ElementId> synchronizerInstances;
 
+  /// Set when the crossing's source is a one-cycle pulse that the
+  /// destination clock can miss; see [CdcPulseRisk]. Null for a level,
+  /// a stretched pulse, a toggle, a handshake, a multi-bit crossing, or a
+  /// destination clock the netlist shows is fast enough. A pulse risk
+  /// raises [severity] to at least a warning ([severityWithPulseRisk]).
+  final CdcPulseRisk? pulseRisk;
+
+  /// [severityFor] with the pulse rule applied: a crossing carrying a
+  /// [CdcPulseRisk] is at least a warning, whatever its synchronizer.
+  static CdcSeverity severityWithPulseRisk(
+    CdcCrossingKind kind,
+    CdcSynchronizerStatus status,
+    CdcPulseRisk? pulseRisk,
+  ) {
+    final base = severityFor(kind, status);
+    if (pulseRisk == null) return base;
+    // Lower enum index is more severe.
+    return base.index <= CdcSeverity.warning.index ? base : CdcSeverity.warning;
+  }
+
   /// Deterministic severity derivation from the
   /// `(crossingKind × synchronizerStatus)` matrix.
   ///
@@ -164,7 +187,10 @@ class CdcCrossing {
     CdcSeverity? severity,
     CdcConfidence? confidence,
     List<ElementId>? synchronizerInstances,
+    CdcPulseRisk? pulseRisk,
+    bool clearPulseRisk = false,
   }) => CdcCrossing(
+    pulseRisk: clearPulseRisk ? null : (pulseRisk ?? this.pulseRisk),
     id: id ?? this.id,
     sourceDomainId: sourceDomainId ?? this.sourceDomainId,
     destinationDomainId: destinationDomainId ?? this.destinationDomainId,
@@ -191,6 +217,7 @@ class CdcCrossing {
     'synchronizerInstances': <Map<String, Object?>>[
       for (final i in synchronizerInstances) i.toJson(),
     ],
+    if (pulseRisk != null) 'pulseRisk': pulseRisk!.toJsonString(),
   };
 
   @override
@@ -206,6 +233,7 @@ class CdcCrossing {
     if (synchronizerStatus != other.synchronizerStatus) return false;
     if (severity != other.severity) return false;
     if (confidence != other.confidence) return false;
+    if (pulseRisk != other.pulseRisk) return false;
     if (synchronizerInstances.length != other.synchronizerInstances.length) {
       return false;
     }
@@ -229,6 +257,7 @@ class CdcCrossing {
     severity,
     confidence,
     Object.hashAll(synchronizerInstances),
+    pulseRisk,
   );
 
   @override
@@ -236,5 +265,6 @@ class CdcCrossing {
       'CdcCrossing(id: $id, $signalName, '
       '$sourceDomainId→$destinationDomainId, '
       'kind: ${crossingKind.name}, status: ${synchronizerStatus.name}, '
-      'severity: ${severity.name}, confidence: ${confidence.name})';
+      'severity: ${severity.name}, confidence: ${confidence.name}'
+      '${pulseRisk == null ? '' : ', pulseRisk: ${pulseRisk!.name}'})';
 }

@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/cdc/cdc_analysis_result.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
+import 'package:netcrux/domain/models/cdc/cdc_pulse_risk.dart';
 import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
 import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
 import 'package:netcrux/domain/models/cdc/clock_domain.dart';
@@ -205,6 +206,119 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       container.dispose();
     }
+  });
+
+  group('pulse risk', () {
+    CdcAnalysisResult pulseResult(CdcPulseRisk risk) {
+      final base = _seededResult();
+      return CdcAnalysisResult(
+        detectedDomains: base.detectedDomains,
+        detectedCrossings: <CdcCrossing>[
+          ...base.detectedCrossings,
+          CdcCrossing(
+            id: 'cross-3',
+            sourceDomainId: 'dom-A',
+            destinationDomainId: 'dom-B',
+            signalId: const ElementId(kind: ElementKind.signal, path: 'req_a'),
+            signalName: 'req_a',
+            crossingKind: CdcCrossingKind.singleBit,
+            synchronizerStatus: CdcSynchronizerStatus.properTwoFlopSync,
+            severity: CdcSeverity.warning,
+            confidence: CdcConfidence.high,
+            pulseRisk: risk,
+          ),
+        ],
+        analysisDiagnostics: const <String>[],
+        analysisDuration: Duration.zero,
+      );
+    }
+
+    ProviderContainer containerWith(CdcAnalysisResult result) {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(cdcAnalysisStateProvider.notifier).setResult(result);
+      return container;
+    }
+
+    testWidgets('unknown clock rates: the row says so and gives the fix', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _harness(
+          const CdcAnalysisPane(),
+          container: containerWith(pulseResult(CdcPulseRisk.clockRatesUnknown)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'req_a is a one-cycle pulse in clk_a. The netlist does not say how '
+          'fast clk_b runs compared with clk_a, so NetCrux cannot rule out '
+          'that the pulse starts and ends between two clk_b edges and is '
+          'lost, even through a synchronizer. Fix: stretch the pulse so it '
+          'lasts at least two clk_b cycles, send it as a toggle and turn it '
+          'back into a pulse in clk_b (a toggle synchronizer), or use a '
+          'request and acknowledge handshake.',
+        ),
+        findsOneWidget,
+      );
+      // Crossings without a pulse risk carry no explanation.
+      expect(find.textContaining('one-cycle pulse'), findsOneWidget);
+    });
+
+    testWidgets('a divided-down destination: the row names it slower', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _harness(
+          const CdcAnalysisPane(),
+          container: containerWith(pulseResult(CdcPulseRisk.destinationSlower)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining(
+          'req_a is a one-cycle pulse in clk_a, and clk_b is divided down '
+          'from clk_a, so it runs at half the rate or slower.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('toggle synchronizer'), findsOneWidget);
+    });
+
+    testWidgets('renders in every supported locale with the names intact', (
+      tester,
+    ) async {
+      for (final risk in CdcPulseRisk.values) {
+        for (final locale in L10N.supportedLocales) {
+          final container = ProviderContainer();
+          container
+              .read(cdcAnalysisStateProvider.notifier)
+              .setResult(pulseResult(risk));
+          await tester.pumpWidget(
+            _harness(
+              const CdcAnalysisPane(),
+              container: container,
+              locale: locale,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          final explanation = find.byWidgetPredicate(
+            (w) =>
+                w is Text &&
+                (w.data ?? '').contains('req_a') &&
+                (w.data ?? '').contains('clk_a') &&
+                (w.data ?? '').contains('clk_b'),
+          );
+          expect(explanation, findsOneWidget, reason: '$risk $locale');
+          final text = tester.widget<Text>(explanation).data!;
+          expect(text, isNot(contains('—')), reason: '$risk $locale');
+          await tester.pumpWidget(const SizedBox.shrink());
+          container.dispose();
+        }
+      }
+    });
   });
 
   testWidgets('empty state renders in every supported locale', (tester) async {

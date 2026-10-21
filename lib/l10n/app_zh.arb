@@ -1541,6 +1541,36 @@
       }
     }
   },
+  "cdcPulseRiskDestinationSlower": "{signal} 是 {source} 中只持续一个周期的脉冲，而 {destination} 由 {source} 分频得到，频率最多为其一半。即使经过同步器，脉冲也可能在两个 {destination} 时钟沿之间开始并结束，从而丢失。修复方法：将脉冲展宽到至少两个 {destination} 周期；或将其作为翻转信号发送，并在 {destination} 中还原为脉冲（翻转同步器）；或使用请求与应答握手。",
+  "@cdcPulseRiskDestinationSlower": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse and whose destination clock the netlist shows is divided down from the source clock. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcPulseRiskClockRatesUnknown": "{signal} 是 {source} 中只持续一个周期的脉冲。网表没有说明 {destination} 与 {source} 的快慢关系，因此 NetCrux 无法排除脉冲在两个 {destination} 时钟沿之间开始并结束而丢失的可能，即使经过同步器也是如此。修复方法：将脉冲展宽到至少两个 {destination} 周期；或将其作为翻转信号发送，并在 {destination} 中还原为脉冲（翻转同步器）；或使用请求与应答握手。",
+  "@cdcPulseRiskClockRatesUnknown": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse when the netlist does not relate the two clocks' rates. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "cdcCrossingKindSingleBit": "单比特",
   "@cdcCrossingKindSingleBit": {
     "description": "Label for CDC crossing kind: single-bit (control/status flag)."

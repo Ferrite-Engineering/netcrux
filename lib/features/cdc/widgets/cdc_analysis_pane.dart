@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/cdc/cdc_analysis_result.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
+import 'package:netcrux/domain/models/cdc/cdc_pulse_risk.dart';
 import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
 import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
 import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
@@ -22,7 +23,9 @@ import 'package:netcrux/shared/widgets/revealing_list_view.dart';
 /// pane renders the crossings grouped by source→destination domain
 /// pair, filtered by the state's active severity set. Each row
 /// surfaces the severity icon, the signal name, and a localized
-/// `kind · synchronizer status · confidence` subtitle.
+/// `kind · synchronizer status · confidence` subtitle. A crossing with a
+/// pulse risk (a one-cycle pulse the destination clock can miss) adds a
+/// plain-words explanation and the fix under the subtitle.
 ///
 /// The Pro overlay's `CdcAnalysisPanel` mounts this widget as its body
 /// and adds the panel chrome around it (tier badge + summary header,
@@ -84,6 +87,7 @@ class CdcAnalysisPane extends ConsumerWidget {
         return _CrossingRow(
           l10n: l10n,
           crossing: crossing,
+          pulseRiskText: _pulseRiskText(l10n, result, crossing),
           isHighlighted: crossing.id == state.selectedCrossingId,
           isFlashing: flashing,
           onTap: onSelectCrossing == null
@@ -159,10 +163,42 @@ class _GroupHeader extends StatelessWidget {
   }
 }
 
+/// The plain-words explanation of [crossing]'s pulse risk, naming its
+/// signal and both clocks, or null when it carries none.
+String? _pulseRiskText(
+  L10N l10n,
+  CdcAnalysisResult result,
+  CdcCrossing crossing,
+) {
+  final risk = crossing.pulseRisk;
+  if (risk == null) return null;
+  final source =
+      result.domainById(crossing.sourceDomainId)?.clockSignalName ??
+      crossing.sourceDomainId;
+  final destination =
+      result.domainById(crossing.destinationDomainId)?.clockSignalName ??
+      crossing.destinationDomainId;
+  switch (risk) {
+    case CdcPulseRisk.destinationSlower:
+      return l10n.cdcPulseRiskDestinationSlower(
+        crossing.signalName,
+        source,
+        destination,
+      );
+    case CdcPulseRisk.clockRatesUnknown:
+      return l10n.cdcPulseRiskClockRatesUnknown(
+        crossing.signalName,
+        source,
+        destination,
+      );
+  }
+}
+
 class _CrossingRow extends StatelessWidget {
   const _CrossingRow({
     required this.l10n,
     required this.crossing,
+    required this.pulseRiskText,
     required this.isHighlighted,
     required this.isFlashing,
     required this.onTap,
@@ -170,6 +206,10 @@ class _CrossingRow extends StatelessWidget {
 
   final L10N l10n;
   final CdcCrossing crossing;
+
+  /// The pulse-risk explanation shown under the subtitle, wrapped to as
+  /// many lines as it needs, or null for a crossing without one.
+  final String? pulseRiskText;
   final bool isHighlighted;
 
   /// True while the row answers a reveal request: a stronger tint that
@@ -225,6 +265,17 @@ class _CrossingRow extends StatelessWidget {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (pulseRiskText != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          pulseRiskText!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 11,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

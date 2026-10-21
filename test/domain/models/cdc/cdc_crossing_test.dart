@@ -5,6 +5,7 @@ import 'package:crux_cxp/crux_cxp.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
+import 'package:netcrux/domain/models/cdc/cdc_pulse_risk.dart';
 import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
 import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
 
@@ -58,6 +59,65 @@ void main() {
       expect(s, contains('CdcCrossing'));
       expect(s, contains('singleBit'));
       expect(s, contains('properTwoFlopSync'));
+    });
+
+    test('pulseRisk round-trips and is omitted from JSON when absent', () {
+      expect(sample().toJson().containsKey('pulseRisk'), isFalse);
+      expect(CdcCrossing.fromJson(sample().toJson()).pulseRisk, isNull);
+      for (final risk in CdcPulseRisk.values) {
+        final withRisk = sample().copyWith(pulseRisk: risk);
+        expect(withRisk.toJson()['pulseRisk'], risk.name);
+        expect(CdcCrossing.fromJson(withRisk.toJson()), equals(withRisk));
+        expect(withRisk == sample(), isFalse);
+        expect(withRisk.toString(), contains(risk.name));
+        expect(
+          withRisk.copyWith(clearPulseRisk: true).pulseRisk,
+          isNull,
+        );
+      }
+    });
+  });
+
+  group('CdcPulseRisk', () {
+    test('null stays null; an unknown tag claims the least', () {
+      expect(CdcPulseRisk.fromJsonString(null), isNull);
+      expect(
+        CdcPulseRisk.fromJsonString('garbage'),
+        CdcPulseRisk.clockRatesUnknown,
+      );
+    });
+  });
+
+  group('CdcCrossing.severityWithPulseRisk', () {
+    test('no pulse risk is the plain matrix', () {
+      for (final kind in CdcCrossingKind.values) {
+        for (final status in CdcSynchronizerStatus.values) {
+          expect(
+            CdcCrossing.severityWithPulseRisk(kind, status, null),
+            CdcCrossing.severityFor(kind, status),
+          );
+        }
+      }
+    });
+
+    test('a pulse risk raises info to warning and never lowers', () {
+      for (final risk in CdcPulseRisk.values) {
+        for (final kind in CdcCrossingKind.values) {
+          for (final status in CdcSynchronizerStatus.values) {
+            final base = CdcCrossing.severityFor(kind, status);
+            final raised = CdcCrossing.severityWithPulseRisk(
+              kind,
+              status,
+              risk,
+            );
+            expect(
+              raised,
+              base == CdcSeverity.info ? CdcSeverity.warning : base,
+              reason: '$risk $kind $status',
+            );
+          }
+        }
+      }
     });
   });
 

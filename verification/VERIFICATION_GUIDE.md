@@ -1493,6 +1493,21 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]`. `test/features/viewer/services/analysis_selection_probe_test.dart` group "instance paths" (a net path and a top-qualified cell path pick the second of two instances of one module, and an instance path outranks the current scope), plus the existing "selectCell" and "selectNet" groups for the module-qualified and bare forms.
 
+### 7.14 CDC pulse risk: the crossing model field and the row's explanation
+
+**What it does.** `CdcCrossing.pulseRisk` (`lib/domain/models/cdc/cdc_pulse_risk.dart`) marks a crossing whose source is a one-cycle pulse the destination clock can miss: `destinationSlower` when the netlist shows the destination clock is divided down from the source clock, `clockRatesUnknown` when the netlist does not relate the two clocks. It is null for every other crossing and is left out of the JSON when null, so older results and fixtures read unchanged; an unknown tag reads as `clockRatesUnknown`. `CdcCrossing.severityWithPulseRisk` applies the rule the Pro analyzer uses: a pulse risk raises an **Info** crossing to **Warning** and never lowers a severity. `CdcAnalysisPane` shows the explanation under the row's subtitle in plain words, naming the signal and both clocks, with the fix (stretch the pulse to at least two destination cycles, a toggle synchronizer, or a request and acknowledge handshake). The analysis that sets the field is the Pro overlay's.
+
+**Setup.** Open Core build for the model and the pane; the visible behaviour needs the Pro overlay, whose verification guide carries the `cdc_capture` steps.
+
+**Steps and expected behavior.**
+1. Pro: open `examples/cdc-capture/cdc-capture.netcrux-project` and run CDC. Expected: the `req_a` row (clk_a to clk_b) carries the amber warning icon and, under its `Single-bit · 2-flop sync · High confidence` subtitle, the sentence that begins "req_a is a one-cycle pulse in clk_a. The netlist does not say how fast clk_b runs compared with clk_a" and ends with the fix. Switch the language to each of the other four locales: the explanation is translated, and `req_a`, `clk_a` and `clk_b` appear in it unchanged.
+
+**Edge cases.**
+- A crossing with no pulse risk shows no explanation line.
+- A long explanation wraps; the signal name and the subtitle still end in an ellipsis when the pane is narrow.
+
+**Automation assessment.** `[Coverage: UNIT]` `test/domain/models/cdc/cdc_crossing_test.dart` (round-trip with and without the field, the unknown-tag reading, `severityWithPulseRisk` over every kind, status and risk). `[Coverage: WIDGET]` `test/features/cdc/widgets/cdc_analysis_pane_test.dart` group "pulse risk" (the exact English text of both risks, no line on the other rows, all five locales with the names intact and no em dash). The look in a narrow pane is `[Coverage: MANUAL]`.
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

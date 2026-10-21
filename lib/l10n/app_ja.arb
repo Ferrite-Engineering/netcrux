@@ -1541,6 +1541,36 @@
       }
     }
   },
+  "cdcPulseRiskDestinationSlower": "{signal} は {source} で 1 サイクルだけのパルスで、{destination} は {source} を分周したクロックのため、速度は半分以下です。シンクロナイザを通しても、パルスが 2 つの {destination} エッジの間で始まって終わり、失われることがあります。対処: パルスを {destination} の 2 サイクル以上に引き延ばす、トグルとして送り {destination} 側でパルスに戻す（トグルシンクロナイザ）、またはリクエストとアクノリッジのハンドシェイクを使います。",
+  "@cdcPulseRiskDestinationSlower": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse and whose destination clock the netlist shows is divided down from the source clock. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcPulseRiskClockRatesUnknown": "{signal} は {source} で 1 サイクルだけのパルスです。ネットリストからは {destination} が {source} と比べてどれだけ速いかがわからないため、パルスが 2 つの {destination} エッジの間で始まって終わり、失われる可能性を NetCrux は否定できません。シンクロナイザを通しても同じです。対処: パルスを {destination} の 2 サイクル以上に引き延ばす、トグルとして送り {destination} 側でパルスに戻す（トグルシンクロナイザ）、またはリクエストとアクノリッジのハンドシェイクを使います。",
+  "@cdcPulseRiskClockRatesUnknown": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse when the netlist does not relate the two clocks' rates. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "cdcCrossingKindSingleBit": "シングルビット",
   "@cdcCrossingKindSingleBit": {
     "description": "Label for CDC crossing kind: single-bit (control/status flag)."

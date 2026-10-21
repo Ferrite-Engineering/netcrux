@@ -1610,6 +1610,36 @@
       }
     }
   },
+  "cdcPulseRiskDestinationSlower": "{signal} is a one-cycle pulse in {source}, and {destination} is divided down from {source}, so it runs at half the rate or slower. The pulse can start and end between two {destination} edges and be lost, even through a synchronizer. Fix: stretch the pulse so it lasts at least two {destination} cycles, send it as a toggle and turn it back into a pulse in {destination} (a toggle synchronizer), or use a request and acknowledge handshake.",
+  "@cdcPulseRiskDestinationSlower": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse and whose destination clock the netlist shows is divided down from the source clock. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcPulseRiskClockRatesUnknown": "{signal} is a one-cycle pulse in {source}. The netlist does not say how fast {destination} runs compared with {source}, so NetCrux cannot rule out that the pulse starts and ends between two {destination} edges and is lost, even through a synchronizer. Fix: stretch the pulse so it lasts at least two {destination} cycles, send it as a toggle and turn it back into a pulse in {destination} (a toggle synchronizer), or use a request and acknowledge handshake.",
+  "@cdcPulseRiskClockRatesUnknown": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse when the netlist does not relate the two clocks' rates. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "cdcCrossingKindSingleBit": "Single-bit",
   "@cdcCrossingKindSingleBit": {
     "description": "Label for CDC crossing kind: single-bit (control/status flag)."

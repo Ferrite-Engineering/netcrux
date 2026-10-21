@@ -1541,6 +1541,36 @@
       }
     }
   },
+  "cdcPulseRiskDestinationSlower": "{signal}은(는) {source}에서 한 사이클만 유지되는 펄스이고, {destination}은(는) {source}를 분주한 클록이라 속도가 절반 이하입니다. 동기화기를 거치더라도 펄스가 두 {destination} 에지 사이에서 시작하고 끝나 사라질 수 있습니다. 해결: 펄스를 {destination} 두 사이클 이상으로 늘리거나, 토글로 보내 {destination}에서 다시 펄스로 바꾸거나(토글 동기화기), 요청과 응답 핸드셰이크를 사용하세요.",
+  "@cdcPulseRiskDestinationSlower": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse and whose destination clock the netlist shows is divided down from the source clock. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "cdcPulseRiskClockRatesUnknown": "{signal}은(는) {source}에서 한 사이클만 유지되는 펄스입니다. 넷리스트만으로는 {destination}이(가) {source}보다 얼마나 빠른지 알 수 없으므로, 펄스가 두 {destination} 에지 사이에서 시작하고 끝나 사라질 가능성을 NetCrux가 배제할 수 없습니다. 동기화기를 거쳐도 마찬가지입니다. 해결: 펄스를 {destination} 두 사이클 이상으로 늘리거나, 토글로 보내 {destination}에서 다시 펄스로 바꾸거나(토글 동기화기), 요청과 응답 핸드셰이크를 사용하세요.",
+  "@cdcPulseRiskClockRatesUnknown": {
+    "description": "Explanation under a CDC crossing row whose source is a one-cycle pulse when the netlist does not relate the two clocks' rates. {signal} is the crossing signal name; {source} and {destination} are clock signal names. Identifiers are not translated.",
+    "placeholders": {
+      "signal": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "cdcCrossingKindSingleBit": "단일 비트",
   "@cdcCrossingKindSingleBit": {
     "description": "Label for CDC crossing kind: single-bit (control/status flag)."
