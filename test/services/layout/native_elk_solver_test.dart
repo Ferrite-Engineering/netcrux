@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
@@ -197,6 +199,69 @@ void main() {
           ),
         ),
       );
+    });
+
+    // Ten thousand cells in one feedback loop: every depth-first walk in
+    // the layered pipeline goes ten thousand nodes deep. The engine walks
+    // with explicit stacks, so this lays out on the layout thread's default
+    // stack, with the large-scope options a real scope of this size gets.
+    test('lays out a ten-thousand-cell loop on the default stack', () {
+      if (!requireElkFfiLibrary()) return;
+      final solver = NativeElkSolver.open();
+      addTearDown(solver.dispose);
+      const n = 10000;
+      final children = <Map<String, Object?>>[
+        for (var i = 0; i < n; i++)
+          <String, Object?>{
+            'id': 'c$i',
+            'width': 80,
+            'height': 52,
+            'ports': <Map<String, Object?>>[
+              <String, Object?>{
+                'id': 'c$i:A',
+                'width': 4,
+                'height': 4,
+                'layoutOptions': <String, Object?>{'elk.port.side': 'WEST'},
+              },
+              <String, Object?>{
+                'id': 'c$i:Y',
+                'width': 4,
+                'height': 4,
+                'layoutOptions': <String, Object?>{'elk.port.side': 'EAST'},
+              },
+            ],
+            'layoutOptions': <String, Object?>{
+              'elk.portConstraints': 'FIXED_SIDE',
+            },
+          },
+      ];
+      final edges = <Map<String, Object?>>[
+        for (var i = 0; i < n; i++)
+          <String, Object?>{
+            'id': 'e$i',
+            'sources': <String>['c$i:Y'],
+            'targets': <String>['c${(i + 1) % n}:A'],
+          },
+      ];
+      final result =
+          jsonDecode(
+                solver.solve(
+                  jsonEncode(<String, Object?>{
+                    'id': 'root',
+                    'layoutOptions': <String, Object?>{
+                      'elk.algorithm': 'layered',
+                      'elk.direction': 'RIGHT',
+                      'elk.layered.thoroughness': '1',
+                      'elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
+                    },
+                    'children': children,
+                    'edges': edges,
+                  }),
+                ),
+              )
+              as Map<String, Object?>;
+      expect(result['children'], hasLength(n));
+      expect(result['edges'], hasLength(n));
     });
 
     test('round-trips a large document without corrupting UTF-8', () {

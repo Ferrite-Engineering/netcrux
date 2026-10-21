@@ -5,11 +5,12 @@
 //! ELK JSON document and returns the laid-out ELK JSON document, plus the
 //! allocator pair the caller uses for the byte buffers on both sides.
 //!
-//! The solve runs on a thread with a 256 MiB stack of its own. ELK Layered's
-//! depth-first cycle breaker and network-simplex tree walks recurse once per
-//! layer, so a ten-thousand-cell chain is ten thousand frames deep; the Dart
-//! worker isolate that calls in here has a stack no larger than 1 MiB, and
-//! that budget must never be what decides whether a scope lays out.
+//! The solve runs on a thread of its own, with Rust's default stack, so a
+//! panic inside it is contained and the stack it gets does not depend on the
+//! Dart worker isolate that calls in here. The vendored elkrs walks graphs
+//! with explicit stacks rather than recursion, so a ten-thousand-cell chain
+//! needs no more stack than a ten-cell one; its `tests/deep_graphs.rs` lays
+//! such chains out on a 1 MiB thread.
 
 use std::slice;
 
@@ -54,7 +55,6 @@ pub unsafe extern "C" fn elk_layout_json(
     let input = String::from_utf8_lossy(unsafe { slice::from_raw_parts(ptr, len) }).into_owned();
     let result = std::thread::Builder::new()
         .name("elk-layout".to_owned())
-        .stack_size(256 * 1024 * 1024)
         .spawn(move || {
             elkrs::create_elk()
                 .layout_json(&input)

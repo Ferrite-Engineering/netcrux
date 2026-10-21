@@ -86,43 +86,63 @@ impl ComponentsProcessor {
         Ok(result)
     }
 
-    /// The recursive `dfs`; traversal order is per node: ports in
-    /// order, per port predecessors then successors.
+    /// ELK's recursive `dfs`, run on an explicit stack so a long chain
+    /// cannot overflow the thread's stack. Visit order is unchanged: per
+    /// node, ports in order, per port predecessors then successors, each
+    /// neighbour entered before the next one is looked at.
     fn dfs(
         a: &mut LGraphArena,
         node: LNodeId,
         component: &mut Vec<LNodeId>,
         ext_port_sides: &mut EnumSet<PortSide>,
     ) {
+        // Each frame is a node's neighbours in visit order and how many of
+        // them have been handled. The walk never changes the graph's edges,
+        // so listing them on entry sees what the recursion saw lazily.
+        let mut stack: Vec<(Vec<LNodeId>, usize)> = Vec::new();
+        if let Some(frame) = Self::dfs_enter(a, node, component, ext_port_sides) {
+            stack.push(frame);
+        }
+        while let Some((neighbours, next)) = stack.last_mut() {
+            let Some(&n) = neighbours.get(*next) else {
+                stack.pop();
+                continue;
+            };
+            *next += 1;
+            if let Some(frame) = Self::dfs_enter(a, n, component, ext_port_sides) {
+                stack.push(frame);
+            }
+        }
+    }
+
+    /// The body of one `dfs` call before its loop: `None` when `node` was
+    /// already visited, otherwise its neighbours, still to be walked.
+    fn dfs_enter(
+        a: &mut LGraphArena,
+        node: LNodeId,
+        component: &mut Vec<LNodeId>,
+        ext_port_sides: &mut EnumSet<PortSide>,
+    ) -> Option<(Vec<LNodeId>, usize)> {
         if a.node(node).id != 0 {
-            return;
+            return None;
         }
         a.node_mut(node).id = 1;
         component.push(node);
         if a.node(node).node_type == NodeType::EXTERNAL_PORT {
             ext_port_sides.add(a.node(node).properties.get(&iprops::EXT_PORT_SIDE));
         }
-        let ports = a.node(node).ports.clone();
-        for port in ports {
+        let mut neighbours = Vec::new();
+        for &port in &a.node(node).ports {
             // predecessor ports (sources of incoming edges)...
-            let incoming = a.port(port).incoming_edges.clone();
-            for edge in incoming {
-                if let Some(src) = a.edge(edge).source {
-                    if let Some(n) = a.port(src).node {
-                        Self::dfs(a, n, component, ext_port_sides);
-                    }
-                }
+            for &edge in &a.port(port).incoming_edges {
+                neighbours.extend(a.edge(edge).source.and_then(|src| a.port(src).node));
             }
             // ...then successor ports (targets of outgoing edges)
-            let outgoing = a.port(port).outgoing_edges.clone();
-            for edge in outgoing {
-                if let Some(tgt) = a.edge(edge).target {
-                    if let Some(n) = a.port(tgt).node {
-                        Self::dfs(a, n, component, ext_port_sides);
-                    }
-                }
+            for &edge in &a.port(port).outgoing_edges {
+                neighbours.extend(a.edge(edge).target.and_then(|tgt| a.port(tgt).node));
             }
         }
+        Some((neighbours, 0))
     }
 
     /// Dispatch on whether the graph has

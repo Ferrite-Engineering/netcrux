@@ -302,6 +302,10 @@ fn compare_nodes_in_topo(
     }
 }
 
+/// ELK's recursive `dfs`, run on an explicit stack so a long chain cannot
+/// overflow the thread's stack. Each frame is a node, its outgoing edges and
+/// how many have been handled; a node is marked when its frame finishes, as
+/// the recursion marks it on return.
 fn dfs(
     a: &LGraphArena,
     start: LNodeId,
@@ -309,21 +313,29 @@ fn dfs(
     node_mark: &mut [bool],
     edge_mark: &mut [bool],
 ) {
-    if node_mark[a.node(v).id as usize] {
-        return;
-    }
-
-    for out in a.node_outgoing_edges(v) {
+    let enter = |v: LNodeId, node_mark: &[bool]| {
+        if node_mark[a.node(v).id as usize] {
+            return None;
+        }
+        Some((v, a.node_outgoing_edges(v), 0usize))
+    };
+    let mut stack = Vec::new();
+    stack.extend(enter(v, node_mark));
+    while let Some((v, outgoing, next)) = stack.last_mut() {
+        let Some(&out) = outgoing.get(*next) else {
+            node_mark[a.node(*v).id as usize] = true;
+            stack.pop();
+            continue;
+        };
+        *next += 1;
         let w = a.edge_target_node(out);
         for transitive in a.node_incoming_edges(w) {
             if a.edge_source_node(transitive) == start {
                 edge_mark[a.edge(transitive).id as usize] = true;
             }
         }
-        dfs(a, start, w, node_mark, edge_mark);
+        stack.extend(enter(w, node_mark));
     }
-
-    node_mark[a.node(v).id as usize] = true;
 }
 
 #[cfg(test)]

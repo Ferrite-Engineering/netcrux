@@ -36,12 +36,7 @@ pub(crate) fn force_layout(g: &mut ElkGraph, layout_node: NodeId) -> Result<(), 
     // create the random number generator based on the random seed option.
     let random_seed: i32 = fgraph.properties.get(&options::RANDOM_SEED);
     let mut random = if random_seed == 0 {
-        // seeded from the system clock, not reproducible
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos() as i64)
-            .unwrap_or(0);
-        JavaRandom::new(nanos)
+        JavaRandom::new(unseeded_seed())
     } else {
         JavaRandom::new(random_seed as i64)
     };
@@ -69,6 +64,24 @@ pub(crate) fn force_layout(g: &mut ElkGraph, layout_node: NodeId) -> Result<(), 
     importer::apply_layout(&arena, &fgraph, g, layout_node);
 
     Ok(())
+}
+
+/// The seed for `randomSeed = 0`, which asks for an unreproducible layout:
+/// the system clock, as ELK seeds `new Random()`.
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+fn unseeded_seed() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos() as i64)
+        .unwrap_or(0)
+}
+
+/// On `wasm32-unknown-unknown` there is no clock (`SystemTime::now` panics),
+/// so `randomSeed = 0` falls back to the fixed seed 1, the same seed
+/// ELK Layered uses for `randomSeed = 0` in this crate.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+fn unseeded_seed() -> i64 {
+    1
 }
 
 pub(crate) fn execute_node_micro_layout(g: &mut ElkGraph, layout_node: NodeId) {

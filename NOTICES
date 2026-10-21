@@ -199,7 +199,9 @@ above — a newer release may add or drop embedded modules.
 Component: elkrs, a native-Rust, byte-exact reimplementation of the Eclipse
            Layout Kernel 0.11.0 (all twelve algorithms; NetCrux uses
            `layered`)
-Version:   0.1.1 — upstream commit `2651159`, 2026-06-17
+Version:   0.1.1 — upstream commit `2651159`, 2026-06-17, plus the local
+           changes listed in `native/vendor/elkrs/VENDORED.md` (offered
+           upstream)
 Files:     `native/vendor/elkrs/` (the crate source, its 201-case golden
            corpus, the Java oracle that generated the goldens, and the
            differential fuzzer; see `VENDORED.md` there), built into

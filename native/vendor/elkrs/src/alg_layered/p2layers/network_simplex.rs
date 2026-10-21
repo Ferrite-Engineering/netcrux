@@ -103,24 +103,41 @@ fn connected_components(a: &mut LGraphArena, the_nodes: &[LNodeId]) -> VecDeque<
 
 /// Adds all nodes connected to
 /// `node` to `component_nodes`.
+///
+/// ELK's recursive walk, run on an explicit stack so a long chain cannot
+/// overflow the thread's stack. Each frame is a node's neighbours in visit
+/// order and how many have been handled; a neighbour is checked for a visit
+/// when its turn comes, as in the recursion, so the order is unchanged.
 fn connected_components_dfs(
     a: &LGraphArena,
     node: LNodeId,
     node_visited: &mut [bool],
     component_nodes: &mut Vec<LNodeId>,
 ) {
-    node_visited[a.node(node).id as usize] = true;
+    let enter = |node: LNodeId, node_visited: &mut [bool], component_nodes: &mut Vec<LNodeId>| {
+        node_visited[a.node(node).id as usize] = true;
 
-    // node is part of the current connected component
-    component_nodes.push(node);
+        // node is part of the current connected component
+        component_nodes.push(node);
 
-    // continue with next nodes, if not already visited
-    for &port in &a.node(node).ports {
-        for edge in a.port_connected_edges(port) {
-            let opposite = a.port(get_opposite(a, port, edge)).node.unwrap();
-            if !node_visited[a.node(opposite).id as usize] {
-                connected_components_dfs(a, opposite, node_visited, component_nodes);
+        // continue with next nodes, if not already visited
+        let mut opposites = Vec::new();
+        for &port in &a.node(node).ports {
+            for edge in a.port_connected_edges(port) {
+                opposites.push(a.port(get_opposite(a, port, edge)).node.unwrap());
             }
+        }
+        (opposites, 0usize)
+    };
+    let mut stack = vec![enter(node, node_visited, component_nodes)];
+    while let Some((opposites, next)) = stack.last_mut() {
+        let Some(&opposite) = opposites.get(*next) else {
+            stack.pop();
+            continue;
+        };
+        *next += 1;
+        if !node_visited[a.node(opposite).id as usize] {
+            stack.push(enter(opposite, node_visited, component_nodes));
         }
     }
 }

@@ -610,6 +610,57 @@ jobs:
         working-directory: native/vendor/elkrs
         run: cargo test --release
 
+  # The vendored elkrs on wasm32-unknown-unknown, the target a browser
+  # build of the native engine would use: it must compile, and its wasm
+  # tests (goldens, a netlist corpus case, the clock-free force seed, a
+  # ten-thousand-node chain on the default wasm stack) must pass under Node.
+  rust-wasm:
+    name: Rust (vendored elkrs on wasm32)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust (stable) with the wasm32 target
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/vendor/elkrs/target
+          key: rust-wasm-${{ hashFiles('native/vendor/elkrs/Cargo.lock') }}
+          restore-keys: rust-wasm-
+
+      - name: cargo check (wasm32-unknown-unknown)
+        working-directory: native/vendor/elkrs
+        run: cargo check --lib --target wasm32-unknown-unknown
+
+      # A pinned release binary, checked against a recorded SHA-256 before it
+      # runs, not an install script. wasm-pack fetches the wasm-bindgen test
+      # runner matching Cargo.lock. Bump the version and the digest together.
+      - name: Install wasm-pack (pinned, checksum-verified)
+        env:
+          WASM_PACK_VERSION: '0.13.1'
+          WASM_PACK_SHA256: 'c539d91ccab2591a7e975bcf82c82e1911b03335c80aa83d67ad25ed2ad06539'
+        run: |
+          set -euo pipefail
+          name="wasm-pack-v${WASM_PACK_VERSION}-x86_64-unknown-linux-musl"
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 3 -o wasm-pack.tar.gz \
+            "https://github.com/wasm-bindgen/wasm-pack/releases/download/v${WASM_PACK_VERSION}/${name}.tar.gz"
+          echo "${WASM_PACK_SHA256}  wasm-pack.tar.gz" | sha256sum -c -
+          tar -xzf wasm-pack.tar.gz "${name}/wasm-pack"
+          install -D -m 0755 "${name}/wasm-pack" "$HOME/.cargo/bin/wasm-pack"
+          wasm-pack --version
+
+      - name: Vendored elkrs wasm tests (Node)
+        run: wasm-pack test --node --release native/vendor/elkrs --test wasm
+
   supply-chain:
     name: Supply chain
     runs-on: ubuntu-latest

@@ -201,14 +201,27 @@ impl NGraph {
         cc_rep
     }
 
+    /// Marks every node reachable from `node`. ELK's recursive walk, run on
+    /// an explicit stack (node, its connected edges, how many are handled)
+    /// so a long chain cannot overflow the thread's stack.
     fn dfs(&self, node: NNodeId, mark: &mut [bool]) {
-        if mark[self.node(node).internal_id] {
-            return;
-        }
-        mark[self.node(node).internal_id] = true;
-        for edge in self.node(node).connected_edges() {
-            let other = self.edge(edge).other(node);
-            self.dfs(other, mark);
+        let enter = |node: NNodeId, mark: &mut [bool]| {
+            if mark[self.node(node).internal_id] {
+                return None;
+            }
+            mark[self.node(node).internal_id] = true;
+            Some((node, self.node(node).connected_edges(), 0usize))
+        };
+        let mut stack = Vec::new();
+        stack.extend(enter(node, mark));
+        while let Some((node, edges, next)) = stack.last_mut() {
+            let Some(&edge) = edges.get(*next) else {
+                stack.pop();
+                continue;
+            };
+            *next += 1;
+            let other = self.edge(edge).other(*node);
+            stack.extend(enter(other, mark));
         }
     }
 
@@ -583,17 +596,50 @@ impl<'g> NetworkSimplex<'g> {
 
     /// Determines a DFS-subtree of the graph by
     /// traversing tight edges only, returning the number of nodes in it.
+    ///
+    /// ELK's recursive walk, run on an explicit stack so a long chain cannot
+    /// overflow the thread's stack. A frame is what one call holds: its
+    /// node, the node's connected edges, how many are handled, and the
+    /// count so far. Edges are tested at the moment the recursion would
+    /// test them, so the same tree comes out.
     fn tight_tree_dfs(&mut self, node: NNodeId) -> usize {
-        let mut node_count = 1;
-        self.graph.node_mut(node).tree_node = true;
-        for edge in self.graph.node(node).connected_edges() {
+        struct Frame {
+            node: NNodeId,
+            edges: Vec<NEdgeId>,
+            next: usize,
+            node_count: usize,
+        }
+        fn enter(ns: &mut NetworkSimplex<'_>, node: NNodeId) -> Frame {
+            ns.graph.node_mut(node).tree_node = true;
+            Frame {
+                node,
+                edges: ns.graph.node(node).connected_edges(),
+                next: 0,
+                node_count: 1,
+            }
+        }
+        let mut stack = vec![enter(self, node)];
+        loop {
+            let frame = stack.last_mut().unwrap();
+            let Some(&edge) = frame.edges.get(frame.next) else {
+                let done = stack.pop().unwrap();
+                match stack.last_mut() {
+                    Some(parent) => {
+                        parent.node_count += done.node_count;
+                        continue;
+                    }
+                    None => return done.node_count,
+                }
+            };
+            frame.next += 1;
+            let node = frame.node;
             let internal_id = self.graph.edge(edge).internal_id;
             if !self.edge_visited[internal_id] {
                 self.edge_visited[internal_id] = true;
                 let opposite = self.graph.edge(edge).other(node);
                 if self.graph.edge(edge).tree_edge {
                     // edge is a tree edge already: follow this path
-                    node_count += self.tight_tree_dfs(opposite);
+                    stack.push(enter(self, opposite));
                 } else {
                     let e = self.graph.edge(edge);
                     let tight = e.delta
@@ -602,12 +648,11 @@ impl<'g> NetworkSimplex<'g> {
                         // edge is a tight non-tree edge
                         self.graph.edge_mut(edge).tree_edge = true;
                         self.tree_edges.push(edge);
-                        node_count += self.tight_tree_dfs(opposite);
+                        stack.push(enter(self, opposite));
                     }
                 }
             }
         }
-        node_count
     }
 
     /// The non-tree edge incident on the tree with a
@@ -633,21 +678,51 @@ impl<'g> NetworkSimplex<'g> {
     /// Postorder DFS-traversal assigning
     /// each node a unique traversal ID (`po_id`) and the lowest ID reachable
     /// through descending paths (`lowest_po_id`).
+    ///
+    /// ELK's recursive walk, run on an explicit stack so a long chain cannot
+    /// overflow the thread's stack. A frame is what one call holds: its
+    /// node, the node's connected edges, how many are handled, and the
+    /// lowest id seen so far; ids are handed out in the same post order.
     fn postorder_traversal(&mut self, node: NNodeId) -> i32 {
-        let mut lowest = i32::MAX;
-        for edge in self.graph.node(node).connected_edges() {
+        struct Frame {
+            node: NNodeId,
+            edges: Vec<NEdgeId>,
+            next: usize,
+            lowest: i32,
+        }
+        let frame = |ns: &Self, node: NNodeId| Frame {
+            node,
+            edges: ns.graph.node(node).connected_edges(),
+            next: 0,
+            lowest: i32::MAX,
+        };
+        let mut stack = vec![frame(self, node)];
+        loop {
+            let top = stack.last_mut().unwrap();
+            let Some(&edge) = top.edges.get(top.next) else {
+                let done = stack.pop().unwrap();
+                let nid = self.graph.node(done.node).internal_id;
+                self.po_id[nid] = self.post_order;
+                self.lowest_po_id[nid] = done.lowest.min(self.post_order);
+                self.post_order += 1;
+                let result = self.lowest_po_id[nid];
+                match stack.last_mut() {
+                    Some(parent) => {
+                        parent.lowest = parent.lowest.min(result);
+                        continue;
+                    }
+                    None => return result,
+                }
+            };
+            top.next += 1;
+            let node = top.node;
             let internal_id = self.graph.edge(edge).internal_id;
             if self.graph.edge(edge).tree_edge && !self.edge_visited[internal_id] {
                 self.edge_visited[internal_id] = true;
                 let other = self.graph.edge(edge).other(node);
-                lowest = lowest.min(self.postorder_traversal(other));
+                stack.push(frame(self, other));
             }
         }
-        let nid = self.graph.node(node).internal_id;
-        self.po_id[nid] = self.post_order;
-        self.lowest_po_id[nid] = lowest.min(self.post_order);
-        self.post_order += 1;
-        self.lowest_po_id[nid]
     }
 
     /// Whether the node is part of the head

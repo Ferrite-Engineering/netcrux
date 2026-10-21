@@ -45,6 +45,11 @@ pub fn process(a: &mut LGraphArena, graph: LGraphId) -> Result<(), String> {
     Ok(())
 }
 
+/// ELK's recursive `dfs`, run on an explicit stack so a long chain cannot
+/// overflow the thread's stack. Each frame is a node id, its outgoing edges
+/// grouped by target model order (in key order) and how many groups have
+/// been handled; groups are looked at in the same order and at the same
+/// moment as the recursion would, so the same edges are reversed.
 fn dfs(
     a: &mut LGraphArena,
     node: LNodeId,
@@ -53,9 +58,42 @@ fn dfs(
     edges_to_be_reversed: &mut Vec<LEdgeId>,
     group_model_order: bool,
 ) {
+    let a: &LGraphArena = a;
+    let mut stack: Vec<(usize, Vec<Vec<LEdgeId>>, usize)> = Vec::new();
+    stack.extend(dfs_enter(a, node, visited, active, group_model_order));
+    while let Some((nid, groups, next)) = stack.last_mut() {
+        let Some(group) = groups.get(*next) else {
+            active[*nid] = false;
+            stack.pop();
+            continue;
+        };
+        *next += 1;
+        let out = group[0];
+        if a.edge_is_self_loop(out) {
+            continue;
+        }
+        let target = a.edge_target_node(out);
+        let tid = a.node(target).id as usize;
+        if active[tid] {
+            edges_to_be_reversed.extend(group.iter().copied());
+        } else {
+            stack.extend(dfs_enter(a, target, visited, active, group_model_order));
+        }
+    }
+}
+
+/// The body of one `dfs` call before its loop: `None` when `node` was
+/// already visited, otherwise its frame.
+fn dfs_enter(
+    a: &LGraphArena,
+    node: LNodeId,
+    visited: &mut [bool],
+    active: &mut [bool],
+    group_model_order: bool,
+) -> Option<(usize, Vec<Vec<LEdgeId>>, usize)> {
     let nid = a.node(node).id as usize;
     if visited[nid] {
-        return;
+        return None;
     }
     visited[nid] = true;
     active[nid] = true;
@@ -82,20 +120,5 @@ fn dfs(
         }
     }
 
-    let keys: Vec<i32> = model_order_map.keys().copied().collect();
-    for key in keys {
-        let out = model_order_map[&key][0];
-        if a.edge_is_self_loop(out) {
-            continue;
-        }
-        let target = a.edge_target_node(out);
-        let tid = a.node(target).id as usize;
-        if active[tid] {
-            edges_to_be_reversed.extend(model_order_map[&key].iter().copied());
-        } else {
-            dfs(a, target, visited, active, edges_to_be_reversed, group_model_order);
-        }
-    }
-
-    active[nid] = false;
+    Some((nid, model_order_map.into_values().collect(), 0))
 }
