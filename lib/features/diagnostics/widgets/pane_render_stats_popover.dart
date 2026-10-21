@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:crux_ide_layout/crux_ide_layout.dart';
+import 'package:crux_workspace/crux_workspace.dart' as crux;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,8 @@ import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
+import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
 
 /// Per-pane Pane Render Stats affordance.
 ///
@@ -56,6 +59,26 @@ class _PaneRenderStatsButtonState extends ConsumerState<PaneRenderStatsButton> {
     );
   }
 
+  /// The container of the tab showing in this button's pane, or null when the
+  /// button is not inside a pane of a workspace (a bare scope, as in a test).
+  ProviderContainer? _activeTabContainer() {
+    final manager = ref.read(tabContainerManagerHolderProvider).manager;
+    final workspace = ref.read(netcruxWorkspaceProvider).value;
+    if (manager == null || workspace == null) return null;
+    final crux.PaneId pane;
+    try {
+      pane = ref.read(crux.paneIdProvider);
+    } on Object {
+      return null;
+    }
+    final tabs = workspace.tabsForPane(pane);
+    if (tabs.isEmpty) return null;
+    final active = workspace.panes.where((p) => p.id == pane).firstOrNull;
+    final activeId = active?.activeTabId;
+    final tab = tabs.where((t) => t.id == activeId).firstOrNull ?? tabs.first;
+    return manager.containerFor(tab.id);
+  }
+
   /// Opens the popover anchored to the button's own rect.
   ///
   /// Anchored rather than centred: the reading belongs to the pane whose tab
@@ -79,18 +102,27 @@ class _PaneRenderStatsButtonState extends ConsumerState<PaneRenderStatsButton> {
     final stats = ValueNotifier<PaneRenderStats>(
       ref.read(paneRenderStatsProvider),
     );
+    // Layout time is per TAB (the tab's laid-out graph writes it), unlike the
+    // paint readings, which are per pane: read it from the pane's active tab's
+    // container. Read from the pane's own scope it would resolve the root
+    // instance, which nothing writes.
+    final tabContainer = _activeTabContainer();
     final layout = ValueNotifier<LayoutTimingStats>(
-      ref.read(layoutTimingProvider),
+      tabContainer == null
+          ? ref.read(layoutTimingProvider)
+          : tabContainer.read(layoutTimingProvider),
     );
+    void onLayout(LayoutTimingStats? _, LayoutTimingStats next) =>
+        layout.value = next;
     final subscriptions = <ProviderSubscription<Object?>>[
       ref.listenManual<PaneRenderStats>(
         paneRenderStatsProvider,
         (_, next) => stats.value = next,
       ),
-      ref.listenManual<LayoutTimingStats>(
-        layoutTimingProvider,
-        (_, next) => layout.value = next,
-      ),
+      if (tabContainer == null)
+        ref.listenManual<LayoutTimingStats>(layoutTimingProvider, onLayout)
+      else
+        tabContainer.listen<LayoutTimingStats>(layoutTimingProvider, onLayout),
     ];
 
     final origin = box.localToGlobal(
