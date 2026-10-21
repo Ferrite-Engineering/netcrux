@@ -929,6 +929,9 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       // precisely so a peer on a newer protocol build can name one, so
       // an unrecognized kind selects nothing and the request is
       // ignored — it is never an error.
+      case KnownElementKind.property:
+      case KnownElementKind.timingPath:
+      case KnownElementKind.cell:
       case null:
         return null;
     }

@@ -154,6 +154,9 @@ class NetcruxNameResolver implements NameResolver {
       case KnownElementKind.rule:
       case KnownElementKind.test:
       case KnownElementKind.breakpoint:
+      case KnownElementKind.property:
+      case KnownElementKind.timingPath:
+      case KnownElementKind.cell:
       case null:
         return ElementId(kind: kind, path: normalized);
     }
@@ -191,6 +194,9 @@ class NetcruxNameResolver implements NameResolver {
       case KnownElementKind.rule:
       case KnownElementKind.test:
       case KnownElementKind.breakpoint:
+      case KnownElementKind.property:
+      case KnownElementKind.timingPath:
+      case KnownElementKind.cell:
       case null:
         return normalized;
     }
