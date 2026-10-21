@@ -2157,6 +2157,7 @@
   "actionShareSession": "세션 공유…",
   "actionJoinSession": "세션 참여…",
   "actionLeaveSession": "세션 나가기",
+  "actionExportReviewMinutes": "리뷰 회의록 내보내기…",
   "actionResetWorkspace": "워크스페이스 재설정…",
   "actionNextTab": "다음 탭",
   "actionPreviousTab": "이전 탭",

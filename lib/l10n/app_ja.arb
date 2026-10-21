@@ -2157,6 +2157,7 @@
   "actionShareSession": "セッションを共有…",
   "actionJoinSession": "セッションに参加…",
   "actionLeaveSession": "セッションを退出",
+  "actionExportReviewMinutes": "レビュー議事録をエクスポート…",
   "actionResetWorkspace": "ワークスペースをリセット…",
   "actionNextTab": "次のタブ",
   "actionPreviousTab": "前のタブ",

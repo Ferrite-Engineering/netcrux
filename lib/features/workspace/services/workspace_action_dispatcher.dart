@@ -529,6 +529,22 @@ class WorkspaceActionDispatcher {
         unawaited(
           _ref.read(schematicCollaborationServiceProvider).leaveSession(),
         );
+      // The minutes are a host's tool: Enterprise, gated here like hosting.
+      // With no overlay behind the opener the action says so instead of doing
+      // nothing.
+      case NetcruxAction.exportReviewMinutes:
+        if (_proActionAllowed(context, action)) {
+          final opener = _ref.read(reviewMinutesOpenerProvider);
+          if (opener == null) {
+            final l10n = L10N.of(context);
+            showCruxInfoSnack(
+              context,
+              l10n.actionRequiresPro(action.label(l10n)),
+            );
+          } else {
+            opener(context);
+          }
+        }
       case NetcruxAction.nextTab:
         unawaited(_switchTabBy(1));
       case NetcruxAction.previousTab:

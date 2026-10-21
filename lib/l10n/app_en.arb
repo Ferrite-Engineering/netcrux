@@ -2290,6 +2290,10 @@
   "@actionLeaveSession": {
     "description": "File menu and command palette label for leaving the live collaborative session (for its host, ending it). Same name as WaveCrux."
   },
+  "actionExportReviewMinutes": "Export Review Minutes…",
+  "@actionExportReviewMinutes": {
+    "description": "File menu and command palette label for exporting a collaborative session's notes as review minutes, in Markdown or CSV (Enterprise: a host's tool). Opens a preview. Same name as WaveCrux."
+  },
   "actionResetWorkspace": "Reset Workspace…",
   "@actionResetWorkspace": {
     "description": "File menu label for closing every tab and returning to the empty-canvas state"

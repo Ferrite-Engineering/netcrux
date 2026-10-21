@@ -72,9 +72,10 @@ enum NetcruxGatedFeature {
   /// Switching-activity heatmap and its colour scheme.
   activity,
 
-  /// Hosting a collaborative schematic session (Share Session) — Enterprise,
-  /// and the only value here whose required tier is not `pro`. Joining is free
-  /// in every edition and can never be denied, so this means "tried to host"
-  /// and nothing else.
+  /// A host's collaboration tools: hosting a collaborative schematic session
+  /// (Share Session) and exporting its review minutes. Enterprise, and the only
+  /// value here whose required tier is not `pro`. Joining and taking part are
+  /// free in every edition and can never be denied, so this means "tried to
+  /// host" or "tried to export the minutes" and nothing else.
   collaboration,
 }

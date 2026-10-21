@@ -308,6 +308,27 @@ void main() {
       _assertInCatalog(event);
     });
 
+    testWidgets('a denied Export Review Minutes records the same feature', (
+      tester,
+    ) async {
+      // The minutes are a host's tool, Enterprise like hosting, so a Pro
+      // licence is denied too and the hit is the one collaboration feature.
+      final (dispatcher, context) = await pumpDispatcher(
+        tester,
+        beta: false,
+        tier: LicenseTier.pro,
+      );
+
+      dispatcher.dispatch(context, NetcruxAction.exportReviewMinutes);
+      await tester.pump();
+
+      final event = telemetry.all('tier.gate_hit').single;
+      expect(event.properties['feature'], 'collaboration');
+      expect(event.properties['required'], 'enterprise');
+      _assertInCatalog(event);
+      expect(find.byType(CruxUpgradeDialog), findsOneWidget);
+    });
+
     testWidgets('Join Session and Leave Session never record a gate hit', (
       tester,
     ) async {

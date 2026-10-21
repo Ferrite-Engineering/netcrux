@@ -20,6 +20,16 @@ import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 /// participant, so a note keeps one layer on every machine it reaches.
 String collabSessionLayerId(String sessionId) => 'session:$sessionId';
 
+/// The session id a layer id from [collabSessionLayerId] names, or `null` for a
+/// layer id of any other shape.
+String? collabSessionIdOfLayer(String layerId) {
+  const prefix = 'session:';
+  if (!layerId.startsWith(prefix) || layerId.length == prefix.length) {
+    return null;
+  }
+  return layerId.substring(prefix.length);
+}
+
 /// Notes written during a collaborative session travel; notes that predate it
 /// never do. One tab's half of that, mounted inside each tab's provider scope.
 ///

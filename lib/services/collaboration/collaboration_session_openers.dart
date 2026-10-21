@@ -15,6 +15,23 @@ typedef ShareSessionOpener = void Function(BuildContext context);
 /// Joining is free in every edition; nothing gates this.
 typedef JoinSessionOpener = void Function(BuildContext context);
 
+/// Opens the preview of a collaborative session's review minutes, for the
+/// active tab.
+///
+/// The dispatcher has already applied the tier gate (the minutes are a host's
+/// tool, Enterprise) by the time this runs, so the opener only opens.
+typedef ReviewMinutesOpener = void Function(BuildContext context);
+
+/// Open-core extension point for File > Export Review Minutes….
+///
+/// Default is `null`: a build with no collaboration overlay has no minutes to
+/// export, and the dispatcher answers with the "requires NetCrux Pro" notice
+/// rather than doing nothing. The collaboration overlay binds it.
+final reviewMinutesOpenerProvider = Provider<ReviewMinutesOpener?>(
+  (_) => null,
+  name: 'reviewMinutesOpenerProvider',
+);
+
 /// Open-core extension point for File > Share Session….
 ///
 /// Default is a no-op, so the action stays discoverable (and badged) in an

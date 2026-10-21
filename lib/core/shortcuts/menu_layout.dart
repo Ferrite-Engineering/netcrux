@@ -94,11 +94,13 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.resetWorkspace,
     ],
     // The collaborative session, last in File as in WaveCrux. Leave Session
-    // greys out until a session is live.
+    // greys out until a session is live; Export Review Minutes until there
+    // are notes from a session to export.
     [
       NetcruxAction.shareSession,
       NetcruxAction.joinSession,
       NetcruxAction.leaveSession,
+      NetcruxAction.exportReviewMinutes,
     ],
   ],
 

@@ -154,6 +154,8 @@ void main() {
         NetcruxAction.shareSession,
         NetcruxAction.joinSession,
         NetcruxAction.leaveSession,
+        // Export Review Minutes is unbound as WaveCrux leaves it.
+        NetcruxAction.exportReviewMinutes,
         // Clear Recent Projects: File menu and palette, no shortcut (a chord
         // that empties a list does not belong one keystroke away).
         NetcruxAction.clearRecentProjects,
@@ -315,8 +317,10 @@ void main() {
 
     test('every other action stays Open Core by default', () {
       const proActions = <NetcruxAction>{
-        // Hosting a collaborative session is the one Enterprise action.
+        // Hosting a collaborative session and exporting its minutes are the
+        // Enterprise actions.
         NetcruxAction.shareSession,
+        NetcruxAction.exportReviewMinutes,
         NetcruxAction.showConeOfInfluenceFanin,
         NetcruxAction.showConeOfInfluenceFanout,
         NetcruxAction.showXTrace,

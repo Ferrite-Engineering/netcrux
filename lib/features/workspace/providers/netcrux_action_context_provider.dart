@@ -47,5 +47,6 @@ final netcruxActionContextProvider = Provider<NetcruxActionContext>((ref) {
     // it needs a real collaboration service on a desktop build.
     collaborationAvailable: ref.watch(collaborationAvailableProvider),
     inCollabSession: ref.watch(collabSessionLiveProvider),
+    hasSessionNotes: flags.hasSessionNotes,
   );
 }, name: 'netcruxActionContextProvider');

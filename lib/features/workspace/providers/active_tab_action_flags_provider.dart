@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/interfaces/annotation_store.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/activity/waveform_source.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
@@ -19,6 +20,7 @@ import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/providers/x_trace_result_notifier.dart';
 import 'package:netcrux/services/schematic/net_activity_color_override_provider.dart';
+import 'package:netcrux/services/session/annotation_state.dart';
 import 'package:netcrux/services/waveform/waveform_source_service_provider.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
@@ -50,6 +52,7 @@ class ActiveTabActionFlags {
     this.resetCrossingFocused = false,
     this.fsmFocused = false,
     this.activityColoringActive = false,
+    this.hasSessionNotes = false,
   });
 
   /// Whether the active tab has a non-empty laid-out schematic.
@@ -91,6 +94,11 @@ class ActiveTabActionFlags {
   /// Whether the active tab has an activity color override applied.
   final bool activityColoringActive;
 
+  /// Whether the active tab holds at least one note a collaborative session
+  /// wrote (a note in a session layer). Gates Export Review Minutes once the
+  /// session is over.
+  final bool hasSessionNotes;
+
   /// Returns a copy with the given fields replaced.
   ActiveTabActionFlags copyWith({
     bool? hasNetlist,
@@ -105,6 +113,7 @@ class ActiveTabActionFlags {
     bool? resetCrossingFocused,
     bool? fsmFocused,
     bool? activityColoringActive,
+    bool? hasSessionNotes,
   }) => ActiveTabActionFlags(
     hasNetlist: hasNetlist ?? this.hasNetlist,
     hasSelection: hasSelection ?? this.hasSelection,
@@ -119,6 +128,7 @@ class ActiveTabActionFlags {
     fsmFocused: fsmFocused ?? this.fsmFocused,
     activityColoringActive:
         activityColoringActive ?? this.activityColoringActive,
+    hasSessionNotes: hasSessionNotes ?? this.hasSessionNotes,
   );
 
   @override
@@ -135,7 +145,8 @@ class ActiveTabActionFlags {
       other.cdcCrossingFocused == cdcCrossingFocused &&
       other.resetCrossingFocused == resetCrossingFocused &&
       other.fsmFocused == fsmFocused &&
-      other.activityColoringActive == activityColoringActive;
+      other.activityColoringActive == activityColoringActive &&
+      other.hasSessionNotes == hasSessionNotes;
 
   @override
   int get hashCode => Object.hash(
@@ -151,6 +162,7 @@ class ActiveTabActionFlags {
     resetCrossingFocused,
     fsmFocused,
     activityColoringActive,
+    hasSessionNotes,
   );
 }
 
@@ -214,6 +226,9 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
     bool activityColoring(Map<String, Color>? overrides) =>
         overrides != null && overrides.isNotEmpty;
 
+    bool sessionNotes(AnnotationSnapshot snapshot) =>
+        snapshot.annotations.any((note) => note.sessionLayerId != null);
+
     final subs = <ProviderSubscription<Object?>>[
       container.listen<AsyncValue<LaidOutGraph?>>(
         currentLaidOutGraphProvider,
@@ -269,6 +284,11 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
           (s) => s.copyWith(activityColoringActive: activityColoring(next)),
         ),
       ),
+      container.listen<AnnotationSnapshot>(
+        annotationStateProvider,
+        (_, next) =>
+            _apply((s) => s.copyWith(hasSessionNotes: sessionNotes(next))),
+      ),
     ];
     for (final sub in subs) {
       ref.onDispose(sub.close);
@@ -299,6 +319,7 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
       activityColoringActive: activityColoring(
         container.read(netActivityColorOverrideProvider),
       ),
+      hasSessionNotes: sessionNotes(container.read(annotationStateProvider)),
     );
   }
 }

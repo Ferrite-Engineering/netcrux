@@ -379,6 +379,14 @@ enum NetcruxAction implements CruxAction {
   /// Leave the live collaborative session — or, for its host, end it.
   leaveSession,
 
+  /// Export a collaborative session's notes as review minutes: Markdown or CSV,
+  /// ordered and labelled by the schematic element each note is pinned to.
+  ///
+  /// A host's tool, so it is Enterprise: taking part in a session (joining,
+  /// following, writing notes) is free, and a guest may not export. The same
+  /// action WaveCrux has, under the same name.
+  exportReviewMinutes,
+
   /// Activate the next tab in the active pane, wrapping at the end.
   nextTab,
 
@@ -431,6 +439,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.shareSession:
       case NetcruxAction.joinSession:
       case NetcruxAction.leaveSession:
+      case NetcruxAction.exportReviewMinutes:
         return ActionCategory.file;
       // Settings and Quit live in the "App" category: on macOS the shared
       // menu bar renders them in the system application menu, and on
@@ -703,6 +712,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionJoinSession;
       case NetcruxAction.leaveSession:
         return l10n.actionLeaveSession;
+      case NetcruxAction.exportReviewMinutes:
+        return l10n.actionExportReviewMinutes;
       case NetcruxAction.nextTab:
         return l10n.actionNextTab;
       case NetcruxAction.previousTab:
@@ -760,8 +771,10 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
         return LicenseTier.pro;
-      // Hosting a collaborative session is the one Enterprise action.
+      // Hosting a collaborative session and exporting its minutes are the
+      // Enterprise actions: a host's tools. Taking part is free.
       case NetcruxAction.shareSession:
+      case NetcruxAction.exportReviewMinutes:
         return LicenseTier.enterprise;
       // Joining and leaving are free in every edition: a guest without a
       // licence is a full participant.
@@ -892,8 +905,11 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
         return NetcruxGatedFeature.activity;
-      // "Tried to host" — joining can never be denied, so it never reports.
+      // "Tried to host", or "tried to export a session's minutes" — both are
+      // the one priced feature, and joining can never be denied, so it never
+      // reports.
       case NetcruxAction.shareSession:
+      case NetcruxAction.exportReviewMinutes:
         return NetcruxGatedFeature.collaboration;
       case NetcruxAction.joinSession:
       case NetcruxAction.leaveSession:

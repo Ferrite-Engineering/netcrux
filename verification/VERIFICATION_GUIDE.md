@@ -2235,6 +2235,48 @@ This section *is* the tier-gate scenario. Both phases are covered by steps 4 and
 | Layer grouping, hide/show (canvas markers), delete as a unit, read-only Edit | **Strong** — `test/features/annotations/widgets/annotations_panel_layers_test.dart`. `[Coverage: WIDGET]` |
 | Session fields round-trip `.netcrux`; edit keeps them; a dirty Inspector draft raises the writing signal until it is saved, discarded or its tab closes; another participant's note is read-only rows | **Strong** — `test/domain/models/annotation_test.dart`, `test/features/inspector/widgets/annotation_inspector_section_test.dart`. `[Coverage: UNIT_TEST + WIDGET]` |
 
+### 19.4 Export Review Minutes — the open-core seam (from 1.2)
+
+- **What it does.** **File > Export Review Minutes…** (and the command palette)
+  is a `NetcruxAction`, the same action WaveCrux has under the same name. It is
+  a host's tool, so it is Enterprise and carries the ENT badge before the
+  click; taking part in a session is free and a guest may not export. The open
+  core owns the entry point, the tier gate (`allowProAction`, feature
+  `collaboration`) and `reviewMinutesOpenerProvider`, which is `null` here; the
+  overlay builds the minutes and their preview. It is enabled while a session
+  is live, or when the active tab holds notes a session wrote
+  (`ActiveTabActionFlags.hasSessionNotes`), and is not offered in the browser.
+- **Steps and expected behavior.**
+  1. Open-source desktop build, open the **File** menu. Expected: **Export
+     Review Minutes… (ENT)** is the last item of the last group, below Leave
+     Session; it has no keyboard shortcut. It is greyed with no session notes
+     in the active tab.
+  2. Load a `.netcrux` session whose annotations carry a `sessionLayerId`.
+     Expected: the item enables.
+  3. Choose it during the beta. Expected: a "requires NetCrux Pro" notice;
+     nothing opens.
+  4. Command palette, type "minutes". Expected: Export Review Minutes… with the
+     ENT badge.
+  5. Browser build. Expected: not offered anywhere.
+- **Tier-gate scenarios.**
+  - `kBetaPeriod = true`: the gate admits every tier; with no overlay the
+    "requires NetCrux Pro" notice, never a silent no-op.
+  - `kBetaPeriod = false`, Open Core / EDU / Pro licence: the upgrade dialog
+    naming Enterprise, and one `tier.gate_hit` with `feature: collaboration`,
+    `required: enterprise`.
+  - `kBetaPeriod = false`, Enterprise, no overlay: the "requires NetCrux Pro"
+    notice.
+
+### 19.4 Automation Assessment
+
+| Capability | Assessment |
+|------------|------------|
+| Enterprise tier and `collaboration` feature; File category; menu and palette surfaces; visible on desktop, hidden in the browser; enabled by a live session or session notes only | **Strong** — `test/core/shortcuts/netcrux_action_descriptors_test.dart` "collaborative sessions" group. `[Coverage: UNIT_TEST]` |
+| File-menu placement, last in the session group | **Strong** — `test/core/shortcuts/menu_layout_test.dart`. `[Coverage: UNIT_TEST]` |
+| Routes through the Pro-action gate and `reviewMinutesOpenerProvider`; with no opener, the notice | **Strong** — `test/features/workspace/services/workspace_action_dispatch_table_test.dart`, `test/services/collaboration/collaboration_session_openers_test.dart`. `[Coverage: WIDGET]` |
+| Denial at Open Core with the beta off records `collaboration` / `enterprise`; Enterprise and the beta never do | **Strong** — `test/services/telemetry/tier_gate_events_test.dart`. `[Coverage: WIDGET]` |
+| The active-tab flag follows session notes; session id from a layer id | **Strong** — `test/features/workspace/providers/active_tab_action_flags_provider_test.dart`, `test/features/collaboration/collab_annotation_sync_test.dart`. `[Coverage: UNIT_TEST]` |
+
 ## Adding a section
 
 Add a new top-level section the same day the corresponding feature ships. Do not pre-write speculative content — the section is created when an item is ready to be verified.

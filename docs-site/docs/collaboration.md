@@ -9,8 +9,9 @@ From NetCrux 1.1, joining a session is free; hosting is Enterprise. Only **Share
 | Host a session | <span class="tier tier-enterprise">Enterprise</span> | **File > Share Session…**, or the **Collaborate** button in the status bar |
 | Join a session | Everyone with the downloaded app (from 1.1) | **File > Join Session…**, or the **Collaborate** button |
 | Leave a session | Everyone in one | **File > Leave Session**, or the **×** on the session chip |
+| Export review minutes | <span class="tier tier-enterprise">Enterprise</span> (from 1.2) | **File > Export Review Minutes…** |
 
-**Share Session…** carries the Enterprise badge before you choose it, in the File menu, the command palette and the Collaborate menu. **Join Session…** carries none.
+**Share Session…** carries the Enterprise badge before you choose it, in the File menu, the command palette and the Collaborate menu. **Join Session…** carries none. From NetCrux 1.2, **Export Review Minutes…** carries the Enterprise badge in the File menu and the command palette.
 
 ## Starting a session {#share}
 
@@ -62,6 +63,17 @@ Annotations written during a session are the meeting's, and everyone in it sees 
 - **When the session ends.** If it left notes, NetCrux asks what to keep: **Keep all**, **Keep only mine** or **Discard**. Closing the question keeps all. Kept notes stay in their layer, keep their author's colour as it was during the session, and notes by other people stay read-only; your own become editable again.
 
 Taking part in notes needs no license: from NetCrux 1.1 a guest who joined for free writes notes like anyone else.
+
+## Review minutes {#minutes}
+
+From NetCrux 1.2, **File > Export Review Minutes…** (also in the command palette) turns a session's notes into a document you can paste into a review ticket. It is a host's tool, so it needs <span class="tier tier-enterprise">Enterprise</span>: a guest takes part in the session and its notes, and the host exports the record. The command is available while a session is running, and afterwards whenever the active tab holds notes that a session wrote.
+
+A preview opens with two formats, **Markdown** and **CSV**, and **Copy** puts the one you are looking at on the clipboard.
+
+- **What goes in.** The notes of one session: the running one, or else the most recent session whose notes the tab holds. A note you edited appears once, with its final text and the time it was first written. A note that was deleted does not appear.
+- **Order and labels.** Notes are anchored to the schematic, not to a time, so the minutes follow the schematic: notes on scopes first, then cells, pins, boundary ports and nets. Each note is labelled with what it is pinned to, for example **Cell `u_alu` (module `alu`)**, followed by its author and when it was written.
+- **Markdown notes stay Markdown.** A note with several lines (paragraphs, lists, code blocks) is written as an indented block under its numbered item, so it renders inside that item when you paste it. In the CSV, a note's text is one quoted field exactly as written, line breaks included.
+- **CSV columns.** `timestamp`, `author`, `kind`, `element`, `module`, `title`, `text`.
 
 ## Security and its limits {#security}
 

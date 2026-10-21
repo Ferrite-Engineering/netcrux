@@ -40,6 +40,7 @@ class NetcruxActionContext {
     this.isBrowser = false,
     this.collaborationAvailable = false,
     this.inCollabSession = false,
+    this.hasSessionNotes = false,
   });
 
   /// Whether the workspace has an active tab. Gates every action that
@@ -130,6 +131,12 @@ class NetcruxActionContext {
   /// greys out while none is.
   final bool inCollabSession;
 
+  /// Whether the active tab holds notes that a collaborative session wrote
+  /// (notes in a session layer), live or kept after it ended. With
+  /// [inCollabSession], what enables Export Review Minutes: there is a session
+  /// to write minutes of.
+  final bool hasSessionNotes;
+
   @override
   bool operator ==(Object other) =>
       other is NetcruxActionContext &&
@@ -149,7 +156,8 @@ class NetcruxActionContext {
       other.tabCountInActivePane == tabCountInActivePane &&
       other.isBrowser == isBrowser &&
       other.collaborationAvailable == collaborationAvailable &&
-      other.inCollabSession == inCollabSession;
+      other.inCollabSession == inCollabSession &&
+      other.hasSessionNotes == hasSessionNotes;
 
   @override
   int get hashCode => Object.hash(
@@ -170,5 +178,6 @@ class NetcruxActionContext {
     isBrowser,
     collaborationAvailable,
     inCollabSession,
+    hasSessionNotes,
   );
 }

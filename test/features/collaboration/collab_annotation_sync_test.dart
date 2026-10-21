@@ -124,6 +124,19 @@ void main() {
 
   Annotation noteNamed(String id) => notes().singleWhere((n) => n.id == id);
 
+  group('layer ids', () {
+    test('the session id comes back out of its layer id', () {
+      expect(collabSessionIdOfLayer(collabSessionLayerId('ABC123')), 'ABC123');
+      expect(collabSessionIdOfLayer(_layer), 'ABC123');
+    });
+
+    test('a layer id of another shape names no session', () {
+      expect(collabSessionIdOfLayer('session:'), isNull);
+      expect(collabSessionIdOfLayer('import:ABC123'), isNull);
+      expect(collabSessionIdOfLayer(''), isNull);
+    });
+  });
+
   group('out', () {
     testWidgets('a note written in the session is stamped and travels; one '
         'from before it never does', (tester) async {

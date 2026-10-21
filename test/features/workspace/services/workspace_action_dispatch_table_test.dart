@@ -191,6 +191,7 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.configureActivityScheme: _Routing.opener,
   NetcruxAction.shareSession: _Routing.opener,
   NetcruxAction.joinSession: _Routing.opener,
+  NetcruxAction.exportReviewMinutes: _Routing.opener,
 
   NetcruxAction.leaveSession: _Routing.collaborationService,
 };
@@ -311,6 +312,9 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
     ),
     joinSessionOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.joinSession),
+    ),
+    reviewMinutesOpenerProvider.overrideWithValue(
+      (_) => record(NetcruxAction.exportReviewMinutes),
     ),
   ];
 }
@@ -534,6 +538,84 @@ void main() {
       await tester.pump();
 
       expect(fired, pro);
+    });
+
+    // A `requiredTier: enterprise` request evaluates Enterprise: neither an
+    // open-core nor a Pro licence opens a host's tool post-beta, Enterprise
+    // opens all of them.
+    for (final (tier, opens) in const [
+      (LicenseTier.openCore, false),
+      (LicenseTier.pro, false),
+      (LicenseTier.enterprise, true),
+    ]) {
+      testWidgets(
+        'post-beta ${tier.name} '
+        '${opens ? 'admits' : 'denies'} every Enterprise opener action',
+        (tester) async {
+          final enterprise = _actionsRouted(
+            _Routing.opener,
+          ).where((a) => a.requiredTier == LicenseTier.enterprise).toList();
+          expect(enterprise, contains(NetcruxAction.exportReviewMinutes));
+
+          final fired = <NetcruxAction>[];
+          final (dispatcher, context, _) = await pumpDispatcher(
+            tester,
+            overrides: [
+              betaPeriodProvider.overrideWithValue(false),
+              licenseTierProvider.overrideWith((_) => tier),
+              proOverlayInstalledProvider.overrideWithValue(true),
+              ..._recordingOpeners(fired),
+            ],
+          );
+          for (final action in enterprise) {
+            dispatcher.dispatch(context, action);
+          }
+          await tester.pump();
+
+          expect(fired, opens ? enterprise : isEmpty);
+        },
+      );
+    }
+
+    testWidgets('Export Review Minutes with no overlay says it needs Pro', (
+      tester,
+    ) async {
+      // Admitted (beta), but nothing is bound behind the opener: the answer is
+      // the notice, not silence.
+      final (dispatcher, context, _) = await pumpDispatcher(
+        tester,
+        overrides: [
+          betaPeriodProvider.overrideWithValue(true),
+          proOverlayInstalledProvider.overrideWithValue(false),
+        ],
+      );
+
+      dispatcher.dispatch(context, NetcruxAction.exportReviewMinutes);
+      await tester.pump();
+
+      expect(
+        find.text('Export Review Minutes… requires NetCrux Pro.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Export Review Minutes with an overlay and no opener says it '
+        'needs Pro', (tester) async {
+      final (dispatcher, context, _) = await pumpDispatcher(
+        tester,
+        overrides: [
+          betaPeriodProvider.overrideWithValue(true),
+          proOverlayInstalledProvider.overrideWithValue(true),
+        ],
+      );
+
+      dispatcher.dispatch(context, NetcruxAction.exportReviewMinutes);
+      await tester.pump();
+
+      expect(
+        find.text('Export Review Minutes… requires NetCrux Pro.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('open-core opener actions dispatch at every tier', (

@@ -133,6 +133,16 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isVisible: _collaborationAvailable,
     isEnabled: _inCollabSession,
   ),
+  // Export Review Minutes is a host's tool, so like Share it is badged
+  // Enterprise and stays discoverable in a desktop open-core build, where
+  // activating it says the feature needs NetCrux Pro. It is enabled while a
+  // session is live or the active tab holds notes a session wrote, so there is
+  // always something to write minutes of.
+  NetcruxAction.exportReviewMinutes => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _desktopOnly,
+    isEnabled: _sessionToMinute,
+  ),
 
   // ── Close Tab — browsable, needs a tab to close ──────────────────────
   // Cmd/Ctrl+W's action (suite keyboard-parity pass). Menu + palette
@@ -495,6 +505,8 @@ bool _collaborationAvailable(NetcruxActionContext c) =>
     c.collaborationAvailable && !c.isBrowser;
 bool _inCollabSession(NetcruxActionContext c) => c.inCollabSession;
 bool _notInCollabSession(NetcruxActionContext c) => !c.inCollabSession;
+bool _sessionToMinute(NetcruxActionContext c) =>
+    c.inCollabSession || c.hasSessionNotes;
 bool _requiresTab(NetcruxActionContext c) => c.hasOpenTab;
 bool _requiresMultipleTabs(NetcruxActionContext c) =>
     c.tabCountInActivePane > 1;

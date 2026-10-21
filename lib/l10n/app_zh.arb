@@ -2157,6 +2157,7 @@
   "actionShareSession": "分享会话…",
   "actionJoinSession": "加入会话…",
   "actionLeaveSession": "离开会话",
+  "actionExportReviewMinutes": "导出评审纪要…",
   "actionResetWorkspace": "重置工作区…",
   "actionNextTab": "下一个标签页",
   "actionPreviousTab": "上一个标签页",

@@ -275,6 +275,9 @@ void main() {
         // Leave Session is gated on a live collaborative session, which the
         // workspace context does not model; its own group covers it.
         if (action == NetcruxAction.leaveSession) continue;
+        // Export Review Minutes is gated on a session or session notes, which
+        // the workspace context does not model either.
+        if (action == NetcruxAction.exportReviewMinutes) continue;
         expect(
           isActionEnabled(action, loaded),
           isTrue,
@@ -575,6 +578,59 @@ void main() {
         paletteActionsFor(live),
         isNot(contains(NetcruxAction.joinSession)),
       );
+    });
+
+    test(
+      'Export Review Minutes is a File-menu and palette Enterprise tool',
+      () {
+        const action = NetcruxAction.exportReviewMinutes;
+        expect(action.category, ActionCategory.file);
+        expect(descriptorFor(action).surfaces, {
+          NetcruxActionSurface.menu,
+          NetcruxActionSurface.palette,
+        });
+        // A host's tool, like hosting: Enterprise, reported as the one
+        // collaboration feature.
+        expect(action.requiredTier, LicenseTier.enterprise);
+        expect(action.gatedFeature, NetcruxGatedFeature.collaboration);
+      },
+    );
+
+    test(
+      'Export Review Minutes stays discoverable and is hidden in a browser',
+      () {
+        // Badged and visible in a desktop open-core build, where choosing it says
+        // the feature needs NetCrux Pro; a browser has no sessions to minute.
+        expect(
+          isActionVisible(NetcruxAction.exportReviewMinutes, empty),
+          isTrue,
+        );
+        expect(
+          isActionVisible(
+            NetcruxAction.exportReviewMinutes,
+            const NetcruxActionContext(isBrowser: true),
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test('Export Review Minutes needs a session or the notes one wrote', () {
+      const action = NetcruxAction.exportReviewMinutes;
+      expect(isActionEnabled(action, overlay), isFalse);
+      expect(isActionEnabled(action, live), isTrue);
+      // After the session, the tab's own session notes are what is left.
+      expect(
+        isActionEnabled(
+          action,
+          const NetcruxActionContext(
+            collaborationAvailable: true,
+            hasSessionNotes: true,
+          ),
+        ),
+        isTrue,
+      );
+      expect(paletteActionsFor(live), contains(action));
     });
   });
 }

@@ -7,6 +7,8 @@ import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/annotation.dart';
+import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/cdc/cdc_analysis_result.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing.dart';
 import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
@@ -20,6 +22,7 @@ import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart'
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/workspace/providers/active_tab_action_flags_provider.dart';
+import 'package:netcrux/services/session/annotation_state.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
@@ -173,6 +176,44 @@ void main() {
     tab.read(traceOverlayProvider.notifier).clear();
     await Future<void>.delayed(Duration.zero);
     expect(sub.read().hasTraceOverlay, isFalse);
+  });
+
+  test('a note a session wrote is mirrored; a private note is not', () async {
+    await setUpHarness();
+    final sub = root.listen(activeTabActionFlagsProvider, (_, _) {});
+    addTearDown(sub.close);
+
+    final tabId = await root
+        .read(netcruxWorkspaceProvider.notifier)
+        .openTab(displayName: 'a', payload: NetcruxTabPayload.empty);
+    await root.read(netcruxWorkspaceProvider.future);
+    final tab = manager.containerFor(tabId);
+    expect(sub.read().hasSessionNotes, isFalse);
+
+    Annotation note({String? layer}) => Annotation(
+      id: 'n',
+      targetKind: AnnotationTargetKind.cell,
+      targetId: 'u_alu',
+      body: 'x',
+      createdAtMillis: 1,
+      updatedAtMillis: 1,
+      sessionLayerId: layer,
+    );
+
+    // Written outside any session: Export Review Minutes has nothing to say.
+    tab.read(annotationStateProvider.notifier).setAnnotations([note()]);
+    await Future<void>.delayed(Duration.zero);
+    expect(sub.read().hasSessionNotes, isFalse);
+
+    tab.read(annotationStateProvider.notifier).setAnnotations([
+      note(layer: 'session:ABC123'),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    expect(sub.read().hasSessionNotes, isTrue);
+
+    tab.read(annotationStateProvider.notifier).setAnnotations(const []);
+    await Future<void>.delayed(Duration.zero);
+    expect(sub.read().hasSessionNotes, isFalse);
   });
 
   test('a focused CDC crossing is mirrored, so Escape stays enabled', () async {
