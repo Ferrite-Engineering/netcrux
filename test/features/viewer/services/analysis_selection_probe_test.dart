@@ -104,7 +104,97 @@ NetlistModel _model() {
   );
 }
 
+/// One module instantiated twice: `top` holds `u_a` and `u_b`, both of
+/// module `sync`, each with its own `meta` net and `ff1` cell. Yosys numbers
+/// bits per module, so the two instances' `meta` share bit 9; only the
+/// instance path tells them apart.
+NetlistModel _twoInstanceModel() {
+  Cell instance(String name, int bit) => Cell(
+    name: name,
+    type: 'sync',
+    parameters: const {},
+    attributes: const {},
+    portDirections: const {'D': PortDirection.input},
+    connections: {
+      'D': [NetBit(bit)],
+    },
+  );
+  final top = Module(
+    name: 'top',
+    attributes: const <String, String>{'top': '1'},
+    ports: const <String, Port>{},
+    cells: <String, Cell>{
+      'u_src': const Cell(
+        name: 'u_src',
+        type: r'$dff',
+        parameters: {},
+        attributes: {},
+        portDirections: {'Q': PortDirection.output},
+        connections: {
+          'Q': [NetBit(5)],
+        },
+      ),
+      'u_a': instance('u_a', 5),
+      'u_b': instance('u_b', 5),
+    },
+    nets: const <String, Net>{
+      'async_data': Net(
+        name: 'async_data',
+        bits: [NetBit(5)],
+        attributes: {},
+      ),
+    },
+  );
+  return NetlistModel(
+    creator: 'probe-test',
+    modules: <String, Module>{'top': top, 'sync': _model().modules['sync']!},
+  );
+}
+
 void main() {
+  group('instance paths', () {
+    ProviderContainer twoInstances() {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container
+          .read(hierarchyTreeProvider.notifier)
+          .setModel(_twoInstanceModel());
+      return container;
+    }
+
+    test('a net path picks the instance it names, not the first one', () {
+      final container = twoInstances();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.selectNet('u_b.meta'), isTrue);
+      expect(container.read(hierarchyTreeProvider).selected!.path, <String>[
+        'u_b',
+      ]);
+    });
+
+    test('a top-qualified cell path picks the instance it names', () {
+      final container = twoInstances();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.selectCell('top.u_b.ff1'), isTrue);
+      expect(container.read(hierarchyTreeProvider).selected!.path, <String>[
+        'u_b',
+      ]);
+      expect(
+        container.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'ff1'),
+      );
+    });
+
+    test('an instance path outranks the current scope', () {
+      final container = twoInstances();
+      final probe = AnalysisSelectionProbe(container);
+      expect(probe.selectCell('top.u_a.ff1'), isTrue);
+      expect(probe.selectCell('top.u_b.ff1'), isTrue);
+      expect(container.read(hierarchyTreeProvider).selected!.path, <String>[
+        'u_b',
+      ]);
+    });
+  });
+
   ProviderContainer makeContainer() {
     final container = ProviderContainer();
     addTearDown(container.dispose);

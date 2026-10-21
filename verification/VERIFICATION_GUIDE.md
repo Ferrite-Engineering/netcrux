@@ -1477,6 +1477,22 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]` `[Coverage: WIDGET]`. `test/domain/models/annotation_test.dart` (`moduleName` round trip), `test/domain/models/session/netcrux_session_test.dart`, `test/services/schematic/schematic_annotation_markers_provider_test.dart`, `test/features/viewer/rendering/annotation_badge_layout_test.dart` (corner rule for cells, pins and boundary ports, bands, hit test, 3:1 contrast of disc and glyph on all six presets), `test/features/viewer/rendering/schematic_annotation_badge_paint_test.dart` (an annotated cell only, mid and detail but not overview, an unchanged pass with no markers), `test/features/viewer/widgets/schematic_gesture_handler_test.dart` (a badge click opens the note and selects; the body away from the badge only selects) and `test/features/workspace/widgets/netcrux_right_dock_test.dart` (the kind docks as a closable tab, labelled in all five locales).
 
+### 7.13 Analysis selection probe: an instance path names one scope
+
+**What it does.** `AnalysisSelectionProbe.selectCell` and `selectNet` (`lib/features/viewer/services/analysis_selection_probe.dart`) are the row-click bridge every analysis panel uses. A module instantiated twice has two scopes with the same cell and net names, so a module-qualified path cannot say which one a row means. A path whose qualifiers are instance names from the top now resolves to exactly that scope: `u_sync.meta` for a net, `top.u_sync.ff1` for a cell (the top module's name in front is optional). That match outranks the current scope. Bare names and module-qualified names (`sync.meta`) resolve as before: the current scope first, then the first scope of the named module, then any scope.
+
+**Setup.** Open Core build: the probe is reached from the Pro analysis panels, so the visible behaviour needs the Pro overlay, whose verification guide carries the hierarchical CDC steps.
+
+**Steps and expected behavior.**
+1. Pro: open a design that instantiates one module twice in different clock domains (the Pro overlay's hierarchical CDC fixture, `hier_reused_bits.v`) and run CDC. Click the `flag_a` crossing. Expected: the view stays in the top scope with `flag_a` selected. Push into `u_raw_dst`, then click the crossing row again. Expected: the view returns to the top scope and selects `flag_a` there.
+
+**Edge cases.**
+- A path whose qualifiers are not instance names (`sync.meta`) falls through to the module-qualified walk.
+- A top-qualified path with no instance segments (`top.u_src`) names the top scope.
+- An instance path whose leaf is absent from that scope falls through to the earlier order.
+
+**Automation assessment.** `[Coverage: UNIT]`. `test/features/viewer/services/analysis_selection_probe_test.dart` group "instance paths" (a net path and a top-qualified cell path pick the second of two instances of one module, and an instance path outranks the current scope), plus the existing "selectCell" and "selectNet" groups for the module-qualified and bare forms.
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

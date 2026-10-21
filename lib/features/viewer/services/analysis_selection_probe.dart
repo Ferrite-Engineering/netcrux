@@ -28,14 +28,16 @@ import 'package:netcrux/services/schematic/wire_selection_builder.dart';
 /// the selection highlight and arms Cross-Probe's "Send selection"
 /// (the CXP resolver reads `selectedElementProvider`).
 ///
-/// Path conventions: the Pro analyzers emit either bare leaf names
-/// (`async_data`), module-qualified names (`fifo.wr_ptr` — module NAME,
-/// not instance path), or dotted register paths. The probes therefore
-/// resolve the LEAF against the current scope first, and only when the
-/// leaf is absent there do they walk the instance hierarchy for a scope
-/// whose module (a) matches the path's qualifier when one is present
-/// and (b) contains the leaf — then navigate the tab's scope to it
-/// before selecting. All mutations run through the per-tab notifiers,
+/// Path conventions: the Pro analyzers emit bare leaf names for top-level
+/// nets (`async_data`), instance paths below the top (`u_sync.meta` for a
+/// net, `top.u_sync.ff1` for a cell), and older callers emit
+/// module-qualified names (`fifo.wr_ptr` — module NAME, not instance
+/// path). A path whose qualifiers spell an instance path from the top
+/// resolves to exactly that scope; otherwise the probes resolve the LEAF
+/// against the current scope first, and only when the leaf is absent there
+/// do they walk the instance hierarchy for a scope whose module (a)
+/// matches the path's qualifier when one is present and (b) contains the
+/// leaf — then navigate the tab's scope to it before selecting. All mutations run through the per-tab notifiers,
 /// and callers invoke the probes from user-event handlers (row taps),
 /// never from build — preserving the no-mutation-during-build
 /// invariant.
@@ -239,11 +241,12 @@ class AnalysisSelectionProbe {
   }
 
   /// Resolves the hierarchy scope that contains [path]'s leaf, testing
-  /// containment with [contains]. Preference order: the current scope,
-  /// then a breadth-first walk of the instance hierarchy — filtered to
-  /// modules matching the path's qualifier segment when one is present,
-  /// with an unqualified retry as fallback. Bounded so a pathological
-  /// hierarchy cannot stall a tap handler.
+  /// containment with [contains]. Preference order: the instance the path
+  /// spells out when its qualifiers are instance names from the top, then
+  /// the current scope, then a breadth-first walk of the instance
+  /// hierarchy — filtered to modules matching the path's qualifier segment
+  /// when one is present, with an unqualified retry as fallback. Bounded so
+  /// a pathological hierarchy cannot stall a tap handler.
   (HierarchyNode, String)? _locate(
     String path,
     bool Function(Module module, String leaf) contains,
@@ -257,6 +260,16 @@ class AnalysisSelectionProbe {
     final tree = tab.read(hierarchyTreeProvider);
     final model = tree.model;
     if (model == null) return null;
+
+    // 0. An instance path (`u_sync.meta`, or `top.u_sync.ff1` with the top
+    // module's name in front) names exactly one scope. Two instances of the
+    // same module are told apart only this way, so it outranks the current
+    // scope.
+    final spelled = _instanceScopeOf(model, segments);
+    if (spelled != null) {
+      final module = spelled.resolve(model);
+      if (module != null && contains(module, leaf)) return (spelled, leaf);
+    }
 
     // 1. Current scope wins — no navigation needed.
     final current = tree.selected;
@@ -277,6 +290,30 @@ class AnalysisSelectionProbe {
     final anywhere = _search(model, (node, module) => contains(module, leaf));
     if (anywhere != null) return (anywhere, leaf);
     return null;
+  }
+
+  /// The scope [segments] spell out as an instance path, or null when they
+  /// do not. Every segment but the leaf must be an instance name, walked
+  /// from the top; a leading segment equal to the top module's name is
+  /// skipped first. A bare leaf spells nothing (the current scope decides
+  /// it), and neither does a path whose qualifiers are module names
+  /// (`sync.meta`), which the qualified walk resolves.
+  static HierarchyNode? _instanceScopeOf(
+    NetlistModel model,
+    List<String> segments,
+  ) {
+    if (segments.length < 2) return null;
+    final root = HierarchyNode.rootOf(model);
+    if (root == null) return null;
+    var node = root;
+    var start = 0;
+    if (segments.first == root.moduleName) start = 1;
+    for (var i = start; i < segments.length - 1; i++) {
+      final child = node.child(model, segments[i]);
+      if (child == null) return null;
+      node = child;
+    }
+    return node;
   }
 
   /// Breadth-first hierarchy walk returning the first node accepted by
