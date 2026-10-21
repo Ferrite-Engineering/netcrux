@@ -75,6 +75,9 @@ class PaneRenderStatsButton extends ConsumerWidget {
     unawaited(
       showCruxDialog<void>(
         context: context,
+        // A reading, not a task: no scrim, and a click outside or Escape
+        // closes it.
+        blocking: false,
         builder: (_) => UncontrolledProviderScope(
           container: container,
           child: Stack(

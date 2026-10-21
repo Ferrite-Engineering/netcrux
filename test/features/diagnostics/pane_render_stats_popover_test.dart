@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
@@ -71,9 +72,7 @@ void main() {
       final container = await _pump(tester);
       container
           .read(layoutTimingProvider.notifier)
-          .completed(
-            const Duration(milliseconds: 250),
-          );
+          .completed(const Duration(milliseconds: 250));
 
       await tester.tap(find.byKey(const Key('paneRenderStatsButton')));
       await tester.pumpAndSettle();
@@ -122,6 +121,33 @@ void main() {
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
 
+      expect(find.text(l10n.paneRenderStatsTitle), findsNothing);
+    });
+
+    testWidgets('has no scrim and closes on a click outside', (tester) async {
+      await _pump(tester);
+      await tester.tap(find.byKey(const Key('paneRenderStatsButton')));
+      await tester.pumpAndSettle();
+
+      final barrier = tester.widget<ModalBarrier>(
+        find.byType(ModalBarrier).last,
+      );
+      expect(barrier.color?.a ?? 0, 0);
+
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      await tester.tapAt(const Offset(20, 400));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.paneRenderStatsTitle), findsNothing);
+    });
+
+    testWidgets('closes on Escape', (tester) async {
+      await _pump(tester);
+      await tester.tap(find.byKey(const Key('paneRenderStatsButton')));
+      await tester.pumpAndSettle();
+
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
       expect(find.text(l10n.paneRenderStatsTitle), findsNothing);
     });
 
