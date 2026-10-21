@@ -41,7 +41,7 @@ VHDL is lowered to Verilog first: NetCrux runs `ghdl --synth --out=verilog <vhdl
 
 ### The layout engine {#layout-engine}
 
-The elaborated netlist is laid out by the **Eclipse Layout Kernel**. On desktop NetCrux runs a native port of it, built into the app, so a scope of a few thousand cells lays out in well under a second on Linux, macOS and Windows alike and needs a fraction of the memory the JavaScript build did. The web edition runs the JavaScript build, elkjs, in the browser's own engine.
+The elaborated netlist is laid out by the **Eclipse Layout Kernel**. On desktop NetCrux runs a native port of it, built into the app, so a scope of a few thousand cells lays out in well under a second on Linux, macOS and Windows alike and needs a fraction of the memory the JavaScript build did. The web edition runs the JavaScript build, elkjs, in the browser's own engine; from NetCrux 1.2 it runs the same native port instead, compiled to WebAssembly and solving in a background worker, so a large scope lays out several times faster in a fraction of the memory, the page stays responsive while it does, and selecting another scope stops the solve. If the browser cannot load the WebAssembly engine, the web edition falls back to elkjs and says so in the browser console.
 
 The JavaScript build also ships inside the desktop app as a fallback. NetCrux prints the engine it started on stderr when the first layout of a tab begins (`netcrux: layout engine: native (elkrs …)`), and setting `NETCRUX_LAYOUT_ENGINE=elkjs` in the environment keeps elkjs for a comparison; on the fallback, a scope past roughly a thousand cells can take minutes, and on Windows, where the fallback runs on an interpreter, it may hit the layout timeout.
 

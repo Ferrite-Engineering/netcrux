@@ -19,11 +19,11 @@ import 'package:netcrux/domain/models/netlist/port_direction.dart';
 // when the native library cannot start. Web never reaches it.
 import 'package:netcrux/services/layout/elk_solver_stub.dart'
     if (dart.library.io) 'package:netcrux/services/layout/elk_solver_io.dart';
-// Conditional import: on web the elkjs solve runs natively in the
-// browser (the browser is a JS engine — no flutter_js, no isolate). Off
-// web `kElkWebSolverAvailable` is false and the isolate path is used.
+// Conditional import: on web the solve runs in the browser, the elkrs port
+// as WebAssembly in a Web Worker (no flutter_js, no isolate). Off web
+// `kElkWebSolverAvailable` is false and the isolate path is used.
 import 'package:netcrux/services/layout/elk_web_solver_stub.dart'
-    if (dart.library.html) 'package:netcrux/services/layout/elk_web_solver_web.dart';
+    if (dart.library.js_interop) 'package:netcrux/services/layout/elk_web_solver_web.dart';
 import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
 
 /// Narrow seam over [JavascriptRuntime] — exposing only what
@@ -710,20 +710,29 @@ class ElkLayoutService {
     return layout;
   }
 
-  /// Whether a solve is running on the worker right now.
-  bool get hasLayoutInFlight => _isolate?.hasInFlight ?? false;
+  /// Whether a solve is running on the worker (isolate, or Web Worker on web)
+  /// right now.
+  bool get hasLayoutInFlight => kElkWebSolverAvailable
+      ? elkWebLayoutInFlight
+      : _isolate?.hasInFlight ?? false;
 
   /// Abandons the solve in flight, if any, so a scope nobody is looking at
   /// any more stops burning a core. The abandoned [layout] call completes
   /// with a [LayoutException]; the next call starts a fresh worker. A no-op
   /// when nothing is in flight, so the warm worker survives ordinary
   /// navigation.
-  void cancelInFlightLayout() => _isolate?.cancelInFlight();
+  void cancelInFlightLayout() {
+    if (kElkWebSolverAvailable) {
+      cancelElkOnWeb();
+    } else {
+      _isolate?.cancelInFlight();
+    }
+  }
 
-  /// Runs the elkjs solve for [inputJson] and returns the result JSON string,
-  /// in-process against the injected host (tests) or on the worker isolate
-  /// (production). [timeout] bounds the worker path only: the in-process host
-  /// is a test seam and the browser awaits elkjs's own Promise.
+  /// Runs the solve for [inputJson] and returns the result JSON string,
+  /// in-process against the injected host (tests), on the worker isolate
+  /// (desktop) or in the browser's Web Worker (web). [timeout] bounds the
+  /// worker paths only: the in-process host is a test seam.
   Future<String> _solve(String inputJson, {required Duration timeout}) async {
     if (_solverFactory != null) {
       return (_solver ??= _solverFactory()).solve(inputJson);
@@ -732,13 +741,13 @@ class ElkLayoutService {
       await _ensureInitialized();
       return runElkLayoutOnHost(_host!, inputJson);
     }
-    // On web the browser runs the vendored elkjs natively and awaits its
-    // real layout Promise — there is no flutter_js (needs `dart:ffi`) and
-    // no `Isolate.spawn` (unsupported on web). Off web this is compiled
-    // out (`kElkWebSolverAvailable` is a const `false`) and the solve runs
-    // on the background isolate.
+    // On web the elkrs port runs as WebAssembly in a Web Worker, with elkjs
+    // on the page as the fallback when the module cannot load; there is no
+    // `dart:ffi` and no `Isolate.spawn` there. Off web this is compiled out
+    // (`kElkWebSolverAvailable` is a const `false`) and the solve runs on the
+    // background isolate.
     if (kElkWebSolverAvailable) {
-      return await solveElkOnWeb(inputJson, _loadElkSource);
+      return await solveElkOnWeb(inputJson, _loadElkSource, timeout: timeout);
     }
     return await (_isolate ??= _ElkLayoutIsolate(_loadElkSource)).layout(
       inputJson,

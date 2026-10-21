@@ -22,5 +22,10 @@ void main() {
         throwsA(isA<UnsupportedError>()),
       );
     });
+
+    test('has nothing in flight and cancel is a no-op off-web', () {
+      cancelElkOnWeb();
+      expect(elkWebLayoutInFlight, isFalse);
+    });
   });
 }

@@ -158,21 +158,32 @@ fn identify_hyperedges(a: &mut LGraphArena, graph: LGraphId) {
     }
 }
 
+/// Gives `index` to every unmarked port reachable from `p` through edges and
+/// through the other ports of long-edge dummies. Java recurses once per
+/// port, which overflows a small stack on a long chain of dummies; this walks
+/// an explicit stack instead. The walk only writes `index` to the ports it
+/// reaches, and the set it reaches does not depend on the order it visits
+/// them in, so the result is the recursive version's.
 fn dfs(a: &mut LGraphArena, p: LPortId, index: i32) {
     a.port_mut(p).id = index;
-    // follow edges connected to the same port (predecessor/successor ports)
-    for p2 in port_connected_ports(a, p) {
-        if a.port(p2).id == -1 {
-            dfs(a, p2, index);
+    let mut stack = vec![p];
+    while let Some(p) = stack.pop() {
+        // follow edges connected to the same port (predecessor/successor ports)
+        for p2 in port_connected_ports(a, p) {
+            if a.port(p2).id == -1 {
+                a.port_mut(p2).id = index;
+                stack.push(p2);
+            }
         }
-    }
-    // follow edges connected to the same long edge dummy
-    let node = a.port(p).node.unwrap();
-    if a.node(node).node_type == NodeType::LONG_EDGE {
-        let node_ports = a.node(node).ports.clone();
-        for p2 in node_ports {
-            if p2 != p && a.port(p2).id == -1 {
-                dfs(a, p2, index);
+        // follow edges connected to the same long edge dummy
+        let node = a.port(p).node.unwrap();
+        if a.node(node).node_type == NodeType::LONG_EDGE {
+            let node_ports = a.node(node).ports.clone();
+            for p2 in node_ports {
+                if p2 != p && a.port(p2).id == -1 {
+                    a.port_mut(p2).id = index;
+                    stack.push(p2);
+                }
             }
         }
     }

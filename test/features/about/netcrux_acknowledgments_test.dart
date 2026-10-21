@@ -47,11 +47,14 @@ Future<void> _openDialog(WidgetTester tester) async {
 
 void main() {
   group('vendored license list', () {
-    test('names elkjs and points at the shipped EPL text', () {
-      expect(kNetcruxVendoredLicenses, hasLength(1));
-      final elk = kNetcruxVendoredLicenses.single;
-      expect(elk.packageName, contains('elkjs'));
-      expect(elk.licenseAssetPath, 'assets/elk/LICENSE.epl-2.0.txt');
+    test('names elkjs and the elkrs port, each with the shipped EPL text', () {
+      expect(
+        kNetcruxVendoredLicenses.map((l) => l.packageName.split(' ').first),
+        <String>['elkjs', 'elkrs'],
+      );
+      for (final license in kNetcruxVendoredLicenses) {
+        expect(license.licenseAssetPath, 'assets/elk/LICENSE.epl-2.0.txt');
+      }
     });
 
     test('registers into LicenseRegistry alongside the pub packages', () async {
@@ -69,6 +72,14 @@ void main() {
       expect(elk, hasLength(1));
       expect(
         elk.single.paragraphs.first.text,
+        contains('Eclipse Public License'),
+      );
+      final port = entries.where(
+        (e) => e.packages.any((p) => p.contains('elkrs')),
+      );
+      expect(port, hasLength(1));
+      expect(
+        port.single.paragraphs.first.text,
         contains('Eclipse Public License'),
       );
     });

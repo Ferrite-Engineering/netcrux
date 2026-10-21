@@ -122,10 +122,12 @@ Version:   0.9.3 — per the commit that vendored it (`0f48b4b`, "downloaded
            carries no in-file version marker.
 File:      `assets/elk/elk.bundled.js` (~1.5 MB), declared as a Flutter
            asset in `pubspec.yaml`
-Role:      Schematic graph layout. On desktop the bundle is executed
-           in-process by `flutter_js` (§3); on web it runs natively in the
-           browser (`elk_web_solver_web.dart`). It therefore ships in every
-           NetCrux distribution.
+Role:      Schematic graph layout fallback. On desktop the bundle is
+           executed in-process by `flutter_js` (§3) when the native port
+           (§2.1) cannot start or `NETCRUX_LAYOUT_ENGINE=elkjs` asks for it;
+           on web it runs natively in the browser
+           (`elk_web_solver_web.dart`) when the WebAssembly build of the
+           port (§2.1) cannot load. It ships in every NetCrux distribution.
 License:   EPL-2.0 (Eclipse Public License 2.0)
 Upstream:  https://github.com/kieler/elkjs
            https://github.com/eclipse-elk/elk
@@ -194,7 +196,7 @@ To refresh the bundle, download the pinned elkjs release from the upstream
 project and replace `assets/elk/elk.bundled.js`, then re-check the banners
 above — a newer release may add or drop embedded modules.
 
-2.1 Native port: elkrs, wrapped by elk_ffi
+2.1 Native port: elkrs, wrapped by elk_ffi (desktop) and elk_wasm (web)
 
 Component: elkrs, a native-Rust, byte-exact reimplementation of the Eclipse
            Layout Kernel 0.11.0 (all twelve algorithms; NetCrux uses
@@ -206,14 +208,20 @@ Files:     `native/vendor/elkrs/` (the crate source, its 201-case golden
            corpus, the Java oracle that generated the goldens, and the
            differential fuzzer; see `VENDORED.md` there), built into
            `libelk_ffi.so` / `libelk_ffi.dylib` / `elk_ffi.dll` by the
-           first-party wrapper crate in `native/elk_ffi/` (Apache-2.0, this
-           repository's LICENSE)
-Role:      The desktop schematic layout engine. Same ELK JSON contract as
-           the bundle above, byte-identical output for NetCrux's inputs
-           (held to that by `test/services/layout/native_elk_parity_test.dart`),
-           at native speed and memory. The elkjs bundle stays as the browser
-           engine and as the desktop fallback selectable with
-           `NETCRUX_LAYOUT_ENGINE=elkjs`.
+           first-party wrapper crate in `native/elk_ffi/`, and into the web
+           build's `wasm/elk_wasm_bg.wasm` (with its wasm-bindgen glue
+           `wasm/elk_wasm.js`) by the first-party wrapper crate in
+           `native/elk_wasm/`, run by `web/wasm/elk_wasm_worker.js` (both
+           wrappers and the worker Apache-2.0, this repository's LICENSE)
+Role:      The schematic layout engine on desktop and, from 1.2, on web.
+           Same ELK JSON contract as the bundle above, the same layout as
+           elkjs for NetCrux's inputs (held to that by
+           `test/services/layout/native_elk_parity_test.dart` on desktop and
+           `test/services/layout/elk_wasm_web_test.dart` in the browser), at
+           native speed and memory. The elkjs bundle stays as the fallback on
+           both: on desktop when the library cannot start or
+           `NETCRUX_LAYOUT_ENGINE=elkjs` asks for it, on web when the
+           WebAssembly module cannot load.
 License:   Labelled Apache-2.0 by its author. It is a translation of
            Eclipse Layout Kernel source, which is EPL-2.0, so NetCrux treats
            the vendored tree as EPL-2.0, the licence it already accepts for
@@ -225,10 +233,12 @@ Upstream:  https://github.com/depetrol/elkrs
            https://crates.io/crates/elkrs
            https://github.com/eclipse-elk/elk (the ported source)
 Author:    depetrol (the port); Kiel University and others (ELK)
-Changes:   none (see `native/vendor/elkrs/VENDORED.md`)
+Changes:   the local changes listed in `native/vendor/elkrs/VENDORED.md`
 Crates:    the port depends on `indexmap`, `serde` and `serde_json`, all
-           dual MIT / Apache-2.0; the wrapper adds nothing else. Resolved
-           versions are in `native/elk_ffi/Cargo.lock`.
+           dual MIT / Apache-2.0; `elk_ffi` adds nothing else, and
+           `elk_wasm` adds `wasm-bindgen` and `console_error_panic_hook`,
+           both dual MIT / Apache-2.0. Resolved versions are in
+           `native/elk_ffi/Cargo.lock` and `native/elk_wasm/Cargo.lock`.
 
 Verbatim license text of the port as labelled (Apache-2.0):
 
@@ -286,7 +296,8 @@ Verbatim license text of the port as labelled (Apache-2.0):
   On macOS and iOS, `flutter_js` uses the operating system's own
   JavaScriptCore (a Swift plugin, no bundled engine), so no QuickJS binary
   ships in the macOS distribution. On web, NetCrux does not use `flutter_js`
-  at all — elkjs runs directly in the browser's JavaScript engine.
+  at all: the layout runs as WebAssembly (§2.1), and its elkjs fallback runs
+  directly in the browser's JavaScript engine.
 
 
 --------------------------------------------------------------------------

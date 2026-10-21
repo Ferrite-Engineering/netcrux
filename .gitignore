@@ -95,3 +95,11 @@ docs-site/site/
 
 # Rust build output of the native layout engine and its vendored crate.
 native/**/target/
+
+# The web layout engine, built by `dart run tool/build_web_wasm.dart`:
+# wasm-pack's output, the copies beside the committed worker script, and the
+# copy `tool/run_web_tests.sh` stages for the browser tests.
+native/elk_wasm/pkg/
+web/wasm/elk_wasm.js
+web/wasm/elk_wasm_bg.wasm
+test/.web_wasm/

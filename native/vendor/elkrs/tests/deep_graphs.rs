@@ -13,10 +13,34 @@ use serde_json::{Value, json};
 
 #[path = "support/chain.rs"]
 mod support;
+#[path = "support/netlist.rs"]
+#[allow(dead_code)]
+mod netlist;
 
 use support::{chain, large_scope_options};
 
 const STACK: usize = 1024 * 1024;
+
+/// The real-netlist corpus on a 128 KiB thread. A browser runs wasm on the
+/// engine's own stack, with frames several times a native build's, so a walk
+/// that recurses per node overflows there on graphs this size long before a
+/// native 1 MiB thread notices. Two such walks, the hyperedge dummy merger's
+/// port walk and Brandes-Koepf's `place_block`, overflowed on these netlists.
+#[test]
+fn netlist_corpus_on_a_tight_stack() {
+    let dir = netlist::corpus_dir().expect("goldens/netlists is present");
+    let cases = netlist::cases(&dir);
+    assert!(!cases.is_empty());
+    for (name, input) in cases {
+        let laid_out = std::thread::Builder::new()
+            .stack_size(128 * 1024)
+            .spawn(move || elkrs::create_elk().layout_json(&input).is_ok())
+            .expect("spawn")
+            .join()
+            .expect("layout thread panicked");
+        assert!(laid_out, "{name} did not lay out");
+    }
+}
 
 /// Lays `input` out on a 1 MiB thread and returns the node count of the
 /// result. A stack overflow aborts the test binary, which fails the run.

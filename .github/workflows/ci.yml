@@ -533,10 +533,50 @@ jobs:
       - name: Generate l10n
         run: flutter gen-l10n
 
+      # The web layout engine: the vendored elkrs port compiled to
+      # WebAssembly (native/elk_wasm) and copied into web/wasm/, where the web
+      # tests and the web build pick it up. Built from source on every run;
+      # the artefacts are not committed.
+      - name: Install Rust (stable) with the wasm32 target
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust build artifacts (web layout engine)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/elk_wasm/target
+          key: rust-elk-wasm-${{ hashFiles('native/elk_wasm/Cargo.lock') }}
+          restore-keys: rust-elk-wasm-
+
+      # The same pinned, checksum-verified binary the rust-wasm job installs.
+      - name: Install wasm-pack (pinned, checksum-verified)
+        env:
+          WASM_PACK_VERSION: '0.13.1'
+          WASM_PACK_SHA256: 'c539d91ccab2591a7e975bcf82c82e1911b03335c80aa83d67ad25ed2ad06539'
+        run: |
+          set -euo pipefail
+          name="wasm-pack-v${WASM_PACK_VERSION}-x86_64-unknown-linux-musl"
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 3 -o wasm-pack.tar.gz \
+            "https://github.com/wasm-bindgen/wasm-pack/releases/download/v${WASM_PACK_VERSION}/${name}.tar.gz"
+          echo "${WASM_PACK_SHA256}  wasm-pack.tar.gz" | sha256sum -c -
+          tar -xzf wasm-pack.tar.gz "${name}/wasm-pack"
+          install -D -m 0755 "${name}/wasm-pack" "$HOME/.cargo/bin/wasm-pack"
+          wasm-pack --version
+
+      - name: Build the web layout engine + size gate
+        run: dart run tool/build_web_wasm.dart
+
       - name: Web tests (headless Chrome)
         # The `@TestOn('browser')` files the VM test job skips: the web
         # viewer's no-Yosys, no-isolate, no-CXP branches only compile with
-        # kIsWeb true. ubuntu-latest ships Chrome.
+        # kIsWeb true, and the layout engine runs as WebAssembly in a Web
+        # Worker (parity with the stored elkjs references, cancel, the elkjs
+        # fallback). ubuntu-latest ships Chrome.
         run: tool/run_web_tests.sh
 
       - name: Build web (release)
@@ -547,7 +587,10 @@ jobs:
           test -f build/web/index.html
           test -f build/web/main.dart.js
           test -f build/web/flutter_bootstrap.js
-          ls -la build/web/
+          test -f build/web/wasm/elk_wasm_worker.js
+          test -f build/web/wasm/elk_wasm.js
+          test -f build/web/wasm/elk_wasm_bg.wasm
+          ls -la build/web/ build/web/wasm/
 
       - name: Upload web artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -594,8 +637,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             native/elk_ffi/target
+            native/elk_wasm/target
             native/vendor/elkrs/target
-          key: rust-lint-${{ hashFiles('native/elk_ffi/Cargo.lock', 'native/vendor/elkrs/Cargo.lock') }}
+          key: rust-lint-${{ hashFiles('native/elk_ffi/Cargo.lock', 'native/elk_wasm/Cargo.lock', 'native/vendor/elkrs/Cargo.lock') }}
           restore-keys: rust-lint-
 
       - name: Check formatting (elk_ffi)
@@ -605,6 +649,18 @@ jobs:
       - name: Clippy (elk_ffi, deny warnings)
         working-directory: native/elk_ffi
         run: cargo clippy --release -- -D warnings
+
+      - name: Check formatting (elk_wasm)
+        working-directory: native/elk_wasm
+        run: cargo fmt -- --check
+
+      - name: Clippy (elk_wasm, deny warnings)
+        working-directory: native/elk_wasm
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: elk_wasm tests (host)
+        working-directory: native/elk_wasm
+        run: cargo test --release
 
       - name: Vendored elkrs test suite
         working-directory: native/vendor/elkrs

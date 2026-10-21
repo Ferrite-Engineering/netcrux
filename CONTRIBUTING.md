@@ -102,9 +102,18 @@ is on your `PATH` before running elaboration flows locally. Tests that
 require a real Yosys binary skip with an explanatory message when it is
 absent, so the suite is green on a machine without it.
 
-The browser build lays schematics out with a vendored `elkjs` bundle
-(`assets/elk/elk.bundled.js`); see [`NOTICES`](NOTICES) for its license and
-for the procedure to refresh it.
+The browser build lays schematics out with the vendored elkrs port compiled
+to WebAssembly. Build it before `flutter build web` or the browser tests:
+
+```sh
+rustup target add wasm32-unknown-unknown   # once; wasm-pack 0.13.1 too
+dart run tool/build_web_wasm.dart          # writes web/wasm/elk_wasm*.{js,wasm}
+tool/run_web_tests.sh                      # the @TestOn('browser') suite
+```
+
+Without it the browser build falls back to the vendored `elkjs` bundle
+(`assets/elk/elk.bundled.js`); see [`NOTICES`](NOTICES) for both licenses and
+for the procedure to refresh the bundle.
 
 ## Coding conventions
 

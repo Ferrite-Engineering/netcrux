@@ -15,9 +15,11 @@
   },
   // Provision app.netcrux.app as a custom domain on first deploy. Requires
   // the netcrux.app zone to be on this Cloudflare account (it hosts the
-  // marketing site). No COOP/COEP headers needed — the viewer lays out netlists
-  // with elkjs in a same-origin blob Web Worker (default CSP permits
-  // `worker-src blob:`); it uses no SharedArrayBuffer.
+  // marketing site). No COOP/COEP headers needed: the viewer lays out netlists
+  // with single-threaded WebAssembly (web/wasm/elk_wasm_bg.wasm, served as
+  // application/wasm) in a same-origin module Web Worker
+  // (web/wasm/elk_wasm_worker.js), falling back to elkjs on the page; it uses
+  // no SharedArrayBuffer.
   // NOTE: this Worker serves the REAL Flutter web build and lives at
   // app.<product>.app, matching app.wavecrux.app. The viewer./dashboard.
   // hostnames belong to the hand-written interactive DEMOS in the marketing-site

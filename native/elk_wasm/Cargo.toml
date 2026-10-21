@@ -1,0 +1,32 @@
+[package]
+name = "elk_wasm"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "WebAssembly build of the vendored elkrs port of the Eclipse Layout Kernel for the NetCrux web viewer: ELK JSON in, laid-out JSON out"
+
+[lib]
+# cdylib emits the `.wasm` that wasm-bindgen post-processes; rlib so the
+# crate's tests can link it on the host as well.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+elkrs = { path = "../vendor/elkrs" }
+# The same features as native/elk_ffi, so the two serialise the same value
+# to the same bytes.
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+
+[profile.release]
+# Speed over size: the solve is the cost a user waits for, and the module is
+# downloaded once and cached. wasm-opt in wasm-pack 0.13 lags the bulk-memory
+# operations current rustc emits, so it is off (below) and LTO does the work.
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

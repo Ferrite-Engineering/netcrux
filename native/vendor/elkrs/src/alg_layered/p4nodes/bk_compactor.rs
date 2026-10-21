@@ -29,6 +29,18 @@ struct ClassEdge {
     target: usize,
 }
 
+/// One block's walk in `BKCompactor::place_block`: the locals of Java's
+/// recursive `placeBlock`, kept on an explicit stack.
+struct PlaceBlockFrame {
+    root: LNodeId,
+    current_node: LNodeId,
+    thresh: f64,
+    is_initial_assignment: bool,
+    /// The neighbour and its block's root, while the walk waits for that
+    /// block to be placed.
+    pending: Option<(LNodeId, LNodeId)>,
+}
+
 pub struct BKCompactor {
     /// Specific threshold strategy to be used for execution.
     thresh_strategy: ThresholdStrategy,
@@ -151,6 +163,14 @@ impl BKCompactor {
     /// Blocks are placed based on their root node. This is done by going
     /// through all layers the block occupies and moving the whole block
     /// upwards / downwards if there are blocks that it overlaps with.
+    ///
+    /// Java places the neighbouring block by recursing from inside the walk
+    /// along this block, once per block in the chain, which overflows a small
+    /// stack on a large graph. This keeps the walks on an explicit stack of
+    /// [`PlaceBlockFrame`]s instead: a frame that needs its neighbour placed
+    /// first is suspended, the neighbour's frame runs to completion, and the
+    /// suspended frame resumes where the recursive call returned. Every step
+    /// happens in the recursive version's order, so the result is the same.
     fn place_block(
         &mut self,
         a: &LGraphArena,
@@ -163,51 +183,96 @@ impl BKCompactor {
         if bal.y[nid(a, root)].is_some() {
             return;
         }
+        let mut stack = vec![Self::begin_block(a, bal, root)];
+        while let Some(mut frame) = stack.pop() {
+            if let Some(neighbor_root) = self.walk_block(a, graph, ni, bal, &mut frame) {
+                stack.push(frame);
+                stack.push(Self::begin_block(a, bal, neighbor_root));
+            }
+        }
+    }
 
+    /// Marks the unplaced block `root` as placed at 0.0 (the initial
+    /// placement) and returns the frame that walks it.
+    fn begin_block(a: &LGraphArena, bal: &mut BKAlignedLayout, root: LNodeId) -> PlaceBlockFrame {
         // Initial placement
         // As opposed to the original algorithm we cannot rely on the fact
         // that 0.0 as initial block position is always feasible (KIPRA-1426).
-        let mut is_initial_assignment = true;
         bal.y[nid(a, root)] = Some(0.0);
+        PlaceBlockFrame {
+            root,
+            current_node: root,
+            thresh: if bal.vdir == Some(VDirection::Down) {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            },
+            is_initial_assignment: true,
+            pending: None,
+        }
+    }
 
+    /// Walks the block of `frame.root` from `frame.current_node`. Returns the
+    /// root of a neighbouring block that must be placed before the walk can
+    /// go on, with the walk suspended in `frame.pending`; returns `None` when
+    /// the block is placed.
+    fn walk_block(
+        &mut self,
+        a: &LGraphArena,
+        graph: LGraphId,
+        ni: &NeighborhoodInformation,
+        bal: &mut BKAlignedLayout,
+        frame: &mut PlaceBlockFrame,
+    ) -> Option<LNodeId> {
+        let root = frame.root;
         // Iterate through block and determine, where the block can be placed
         // (until we arrive at the block's root node again)
-        let mut current_node = root;
-        let mut thresh = if bal.vdir == Some(VDirection::Down) {
-            f64::NEG_INFINITY
-        } else {
-            f64::INFINITY
-        };
         loop {
-            let current_index_in_layer = ni.node_index[nid(a, current_node)];
-            let current_layer = a.node(current_node).layer.unwrap();
-            let current_layer_size = a.layer(current_layer).nodes.len() as i32;
+            let current_node = frame.current_node;
+            let neighbor_and_root = match frame.pending.take() {
+                // Resumed: the neighbouring block has just been placed.
+                Some(pending) => Some(pending),
+                None => {
+                    let current_index_in_layer = ni.node_index[nid(a, current_node)];
+                    let current_layer = a.node(current_node).layer.unwrap();
+                    let current_layer_size = a.layer(current_layer).nodes.len() as i32;
 
-            // If the node is the top or bottom node of its layer, it can be
-            // placed safely since it is the first to be placed in its layer.
-            // If it's not, we'll have to check its neighbours
-            if (bal.vdir == Some(VDirection::Down) && current_index_in_layer > 0)
-                || (bal.vdir == Some(VDirection::Up)
-                    && current_index_in_layer < current_layer_size - 1)
-            {
-                // Get the node which is above / below the current node as
-                // well as the root of its block
-                let neighbor = if bal.vdir == Some(VDirection::Up) {
-                    a.layer(current_layer).nodes[(current_index_in_layer + 1) as usize]
-                } else {
-                    a.layer(current_layer).nodes[(current_index_in_layer - 1) as usize]
-                };
-                let neighbor_root = bal.root[nid(a, neighbor)].unwrap();
+                    // If the node is the top or bottom node of its layer, it
+                    // can be placed safely since it is the first to be placed
+                    // in its layer. If it's not, we'll have to check its
+                    // neighbours
+                    if (bal.vdir == Some(VDirection::Down) && current_index_in_layer > 0)
+                        || (bal.vdir == Some(VDirection::Up)
+                            && current_index_in_layer < current_layer_size - 1)
+                    {
+                        // Get the node which is above / below the current
+                        // node as well as the root of its block
+                        let neighbor = if bal.vdir == Some(VDirection::Up) {
+                            a.layer(current_layer).nodes[(current_index_in_layer + 1) as usize]
+                        } else {
+                            a.layer(current_layer).nodes[(current_index_in_layer - 1) as usize]
+                        };
+                        let neighbor_root = bal.root[nid(a, neighbor)].unwrap();
 
-                // Ensure the neighbor was already placed
-                self.place_block(a, graph, ni, bal, neighbor_root);
+                        // Ensure the neighbor was already placed
+                        if bal.y[nid(a, neighbor_root)].is_none() {
+                            frame.pending = Some((neighbor, neighbor_root));
+                            return Some(neighbor_root);
+                        }
+                        Some((neighbor, neighbor_root))
+                    } else {
+                        None
+                    }
+                }
+            };
 
+            if let Some((neighbor, neighbor_root)) = neighbor_and_root {
                 // calculate threshold value for additional straight edges;
                 // this call has to be _after_ place block, otherwise the
                 // order of the elements in the postprocessing queue is wrong
-                thresh = self
+                frame.thresh = self
                     .thresh_strategy
-                    .calculate_threshold(a, bal, thresh, root, current_node);
+                    .calculate_threshold(a, bal, frame.thresh, root, current_node);
 
                 // Note that the two nodes and their blocks form a unit called
                 // class in the original algorithm. These are combinations of
@@ -223,6 +288,7 @@ impl BKCompactor {
                     // The minimal spacing between the two nodes depends on
                     // their node type
                     let spacing = spacings::vertical_spacing(a, current_node, neighbor);
+                    let thresh = frame.thresh;
 
                     // Determine the block's final position
                     if bal.vdir == Some(VDirection::Up) {
@@ -235,8 +301,8 @@ impl BKCompactor {
                             - a.node(current_node).size.y
                             - bal.inner_shift[nid(a, current_node)].unwrap();
 
-                        bal.y[nid(a, root)] = Some(if is_initial_assignment {
-                            is_initial_assignment = false;
+                        bal.y[nid(a, root)] = Some(if frame.is_initial_assignment {
+                            frame.is_initial_assignment = false;
                             f64::min(new_position, thresh)
                         } else {
                             f64::min(current_block_position, f64::min(new_position, thresh))
@@ -252,8 +318,8 @@ impl BKCompactor {
                             + a.node(current_node).margin.top
                             - bal.inner_shift[nid(a, current_node)].unwrap();
 
-                        bal.y[nid(a, root)] = Some(if is_initial_assignment {
-                            is_initial_assignment = false;
+                        bal.y[nid(a, root)] = Some(if frame.is_initial_assignment {
+                            frame.is_initial_assignment = false;
                             f64::max(new_position, thresh)
                         } else {
                             f64::max(current_block_position, f64::max(new_position, thresh))
@@ -306,19 +372,20 @@ impl BKCompactor {
                     }
                 }
             } else {
-                thresh = self
+                frame.thresh = self
                     .thresh_strategy
-                    .calculate_threshold(a, bal, thresh, root, current_node);
+                    .calculate_threshold(a, bal, frame.thresh, root, current_node);
             }
 
             // Get the next node in the block
-            current_node = bal.align[nid(a, current_node)].unwrap();
-            if current_node == root {
+            frame.current_node = bal.align[nid(a, current_node)].unwrap();
+            if frame.current_node == root {
                 break;
             }
         }
 
         self.thresh_strategy.finish_block(root);
+        None
     }
 
     /// Propagates shifts through the

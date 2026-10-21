@@ -97,6 +97,31 @@ jobs:
       - name: Generate l10n
         run: flutter gen-l10n
 
+      # The layout engine: the vendored elkrs port compiled to WebAssembly
+      # into web/wasm/, built from source for every deploy (not committed).
+      - name: Install Rust (stable) with the wasm32 target
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack (pinned, checksum-verified)
+        env:
+          WASM_PACK_VERSION: '0.13.1'
+          WASM_PACK_SHA256: 'c539d91ccab2591a7e975bcf82c82e1911b03335c80aa83d67ad25ed2ad06539'
+        run: |
+          set -euo pipefail
+          name="wasm-pack-v${WASM_PACK_VERSION}-x86_64-unknown-linux-musl"
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 3 -o wasm-pack.tar.gz \
+            "https://github.com/wasm-bindgen/wasm-pack/releases/download/v${WASM_PACK_VERSION}/${name}.tar.gz"
+          echo "${WASM_PACK_SHA256}  wasm-pack.tar.gz" | sha256sum -c -
+          tar -xzf wasm-pack.tar.gz "${name}/wasm-pack"
+          install -D -m 0755 "${name}/wasm-pack" "$HOME/.cargo/bin/wasm-pack"
+          wasm-pack --version
+
+      - name: Build the web layout engine + size gate
+        run: dart run tool/build_web_wasm.dart
+
       - name: Build web bundle
         run: |
           flutter build web \
@@ -108,6 +133,10 @@ jobs:
           set -euo pipefail
           test -f build/web/index.html
           test -f build/web/main.dart.js
+          # Without these the viewer silently lays out on the elkjs fallback.
+          test -f build/web/wasm/elk_wasm_worker.js
+          test -f build/web/wasm/elk_wasm.js
+          test -f build/web/wasm/elk_wasm_bg.wasm
           # The bundle must carry the locale data for all four CJK locales we
           # ship — a tree-shaking regression that dropped them would otherwise
           # only surface as English text in front of a user.

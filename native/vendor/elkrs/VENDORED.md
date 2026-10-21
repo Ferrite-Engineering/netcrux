@@ -23,9 +23,10 @@ on https://github.com/Ferrite-Engineering/elkrs, each on the one before:
 `netlist-corpus` (`ac1351b`), `explicit-stacks` (`27df83f`) and
 `wasm-seed-ci` (`1c0f2c1`). This tree is upstream `2651159` plus those three
 commits, file for file, except that the fork's `.github/workflows/wasm.yml`
-is not copied here (NetCrux's own CI runs the same steps). To see the whole
-diff, check out the fork and run `git diff 2651159 wasm-seed-ci`. When
-upstream merges them, re-vendor from upstream and delete this section.
+is not copied here (NetCrux's own CI runs the same steps), plus change 4
+below, which is carried here only so far. To see the first three, check out
+the fork and run `git diff 2651159 wasm-seed-ci`. When upstream merges them,
+re-vendor from upstream and delete this section.
 
 1. **Real-netlist corpus and benches.** `goldens/netlists/` holds four
    schematic scopes NetCrux lays out (PicoRV32, ISC; VexRiscv and its two
@@ -53,3 +54,16 @@ upstream merges them, re-vendor from upstream and delete this section.
    chain under Node (`wasm-pack test --node --release native/vendor/elkrs
    --test wasm`), and the NetCrux CI `rust` job runs it. Adds the wasm32-only
    dev-dependency `wasm-bindgen-test`.
+4. **Two more walks on explicit stacks**, found when the crate ran as
+   WebAssembly in a browser Web Worker (NetCrux's `native/elk_wasm`), where
+   the engine's stack is far tighter than a native thread's:
+   `HyperedgeDummyMerger`'s port walk (`dfs` in
+   `src/alg_layered/processors/hyperedge_dummy_merger.rs`) and
+   Brandes-Koepf's `place_block` (`src/alg_layered/p4nodes/bk_compactor.rs`,
+   now a stack of suspended block walks that resume in the recursive
+   order). The 201 goldens and the netlist corpus pass, and the output for
+   the corpus and NetCrux's own parity scopes is byte-identical to the tree
+   before this change. `tests/deep_graphs.rs` gains
+   `netlist_corpus_on_a_tight_stack`, the corpus on a 128 KiB thread, which
+   overflowed before. Not yet offered upstream; it belongs on top of
+   `wasm-seed-ci`.

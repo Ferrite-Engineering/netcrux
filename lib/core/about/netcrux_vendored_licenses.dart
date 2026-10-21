@@ -26,4 +26,12 @@ const List<CruxVendoredLicense> kNetcruxVendoredLicenses =
         packageName: 'elkjs (Eclipse Layout Kernel)',
         licenseAssetPath: 'assets/elk/LICENSE.epl-2.0.txt',
       ),
+      // The Rust port of the Eclipse Layout Kernel vendored under
+      // `native/vendor/elkrs`: the layout engine, built into `elk_ffi` on
+      // desktop and into `web/wasm/elk_wasm_bg.wasm` on web. A translation of
+      // EPL-2.0 source, so it carries the same Agreement.
+      CruxVendoredLicense(
+        packageName: 'elkrs (Eclipse Layout Kernel, Rust port)',
+        licenseAssetPath: 'assets/elk/LICENSE.epl-2.0.txt',
+      ),
     ];
