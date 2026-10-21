@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_ide_layout/crux_ide_layout.dart'
+    show cruxFocusIsInPushedRoute;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +23,12 @@ class _TextAwareShortcutManager extends ShortcutManager {
 
   @override
   KeyEventResult handleKeypress(BuildContext context, KeyEvent event) {
+    // A tab-modal dialog is pushed on the tab's own navigator, inside this
+    // manager's subtree, so every key the dialog does not use bubbles up
+    // here. The workspace's chords act on the canvas behind the dialog
+    // (Alt+Enter would open the Inspector, a bare `0` would fit the view), so
+    // none of them fire while focus is in a pushed route.
+    if (cruxFocusIsInPushedRoute()) return KeyEventResult.ignored;
     if (_isTextInputFocused() && _isBareLetter()) {
       return KeyEventResult.ignored;
     }

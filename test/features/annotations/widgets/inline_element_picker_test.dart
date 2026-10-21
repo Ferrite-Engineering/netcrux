@@ -92,12 +92,9 @@ Widget _harness({
           builder: (context) => ElevatedButton(
             onPressed: () async {
               // The fixture graph is supplied at the root ProviderScope in
-              // these tests, so a null container keeps the picker reading
-              // that scope directly.
-              final selection = await showInlineElementPicker(
-                context,
-                container: null,
-              );
+              // these tests; with no tab around it the picker opens on the
+              // window's navigator and reads that scope directly.
+              final selection = await showInlineElementPicker(context);
               if (context.mounted) Navigator.of(context).pop(selection);
             },
             child: const Text('open picker'),

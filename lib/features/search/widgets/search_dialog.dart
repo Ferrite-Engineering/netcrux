@@ -13,6 +13,7 @@ import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dar
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
+import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/search/design_search_service.dart';
 
@@ -29,31 +30,26 @@ class SearchDialog extends ConsumerStatefulWidget {
   /// Creates a search dialog.
   const SearchDialog({super.key});
 
-  /// Pushes the dialog onto the Navigator above [context].
+  /// Pushes the dialog onto the navigator of the tab [context] is in, else
+  /// the active tab's.
   ///
-  /// The dialog mounts under the root navigator, outside the active
-  /// tab's per-tab `UncontrolledProviderScope`, so its per-tab reads
-  /// (`hierarchyTreeProvider`, `selectedElementProvider`,
-  /// `traceOverlayProvider`) would otherwise resolve against the empty
-  /// root container — searching an empty model and applying selection to
-  /// no tab. [container] is the active tab's `ProviderContainer`; the
-  /// dialog subtree is wrapped in an [`UncontrolledProviderScope`] backed
-  /// by it so the search reads and mutates the active tab's state.
-  static Future<void> show(
-    BuildContext context, {
-    required ProviderContainer container,
-  }) {
+  /// The dialog reads and writes per-tab state (`hierarchyTreeProvider`,
+  /// `selectedElementProvider`, `traceOverlayProvider`), so it is tab-modal:
+  /// built on the tab's own navigator, under the tab's one scope. It covers
+  /// the tab's area, stays with its tab across a tab switch, and closes with
+  /// the tab. With no tab to search the root navigator is used and the
+  /// dialog sees an empty model.
+  static Future<void> show(BuildContext context) {
     // Re-entrancy guard: Cmd/Ctrl+F auto-repeat or a double-tap on the menu /
     // palette entry must not stack a second search dialog. Guarded inside the
-    // opener so every caller is covered.
+    // opener so every caller is covered. Keyed per tab: the dialog stays open,
+    // hidden, while another tab is active, and must not swallow Search there.
     return ModalGuard.run(
-      'search',
+      ActiveTab.guardKey(context, 'search'),
       () => showCruxDialog<void>(
         context: context,
-        builder: (_) => UncontrolledProviderScope(
-          container: container,
-          child: const SearchDialog(),
-        ),
+        navigator: ActiveTab.navigatorFor(context),
+        builder: (_) => const SearchDialog(),
       ),
     );
   }

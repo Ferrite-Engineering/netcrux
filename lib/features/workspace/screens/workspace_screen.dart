@@ -29,6 +29,7 @@ import 'package:netcrux/features/viewer/widgets/netcrux_toolbar.dart';
 import 'package:netcrux/features/workspace/providers/netcrux_action_context_provider.dart';
 import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/features/workspace/services/active_tab_container.dart';
+import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
 import 'package:netcrux/features/workspace/services/web_deep_link.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
 import 'package:netcrux/features/workspace/widgets/browser_empty_canvas_content.dart';
@@ -366,6 +367,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         provider: netcruxWorkspaceProvider,
         tabs: scope.tabContainerManager,
         panes: scope.paneContainerManager,
+        // Each tab's content sits on its own navigator, so a dialog that
+        // reads the tab's state is pushed there (`ActiveTab.navigatorFor`)
+        // under the tab's one scope instead of a second scope over its
+        // container.
+        tabNavigators: ref.read(tabNavigatorsProvider),
         strings: NetcruxViewerTabBarStrings(l10n),
         // Only show the tab-strip scroll chevrons when the strip actually
         // overflows — with a single tab they were inert arrows at each end of

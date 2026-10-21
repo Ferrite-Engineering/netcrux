@@ -52,6 +52,7 @@ import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/telemetry/netcrux_telemetry_overrides.dart';
 import 'package:netcrux/features/update/netcrux_update_overrides.dart';
 import 'package:netcrux/features/workspace/screens/workspace_screen.dart';
+import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/netcrux_color_theme_bootstrap.dart';
 import 'package:netcrux/plugins/extra_localizations_delegates_provider.dart';
@@ -345,7 +346,12 @@ Future<void> bootstrap({
   // the dead tab's container and bleed its state into the new tab.
   // Eviction is a property of the workspace's shape rather than a call
   // each site has to remember.
+  //
+  // The tab navigators go FIRST: a closing tab's dialogs are still mounted
+  // under that tab's container until the next frame, so they are popped (their
+  // futures complete) before the container manager disposes it.
   rootContainer.read(netcruxWorkspaceProvider.notifier)
+    ..addScopeReconciler(rootContainer.read(tabNavigatorsProvider))
     ..addScopeReconciler(tabContainerManager)
     ..addScopeReconciler(paneContainerManager);
 

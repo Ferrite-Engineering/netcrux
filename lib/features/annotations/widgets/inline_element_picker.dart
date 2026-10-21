@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
 /// Searchable picker for a single schematic element when the
@@ -197,12 +198,10 @@ class _Candidate {
 /// selected [AnnotationTarget] or null on cancel.
 ///
 /// The picker lists candidates from the per-tab
-/// `currentLaidOutGraphProvider`. The dialog mounts under the root
-/// navigator, outside the active tab's provider scope, so [container] —
-/// the active tab's `ProviderContainer` — is threaded through an
-/// [`UncontrolledProviderScope`] so the picker reads the active tab's
-/// graph rather than the empty root one. When [container] is null (no
-/// active tab) the picker renders its empty state.
+/// `currentLaidOutGraphProvider`, so it is tab-modal: built on the navigator
+/// of the tab [context] is in, else the active tab's, under that tab's one
+/// scope. It covers the tab's area and closes with the tab. With no tab open
+/// it opens on the root navigator and renders its empty state.
 ///
 /// `barrierDismissible: false`: a searchable picker holding a typed query
 /// (`_searchController`) is an editor, picker or anything else holding
@@ -213,18 +212,11 @@ class _Candidate {
 /// only through `openAddAnnotationDialog`
 /// (`annotation_actions.dart`), which is guarded at
 /// its own entry point, so a re-entrant call never reaches here.
-Future<AnnotationTarget?> showInlineElementPicker(
-  BuildContext context, {
-  required ProviderContainer? container,
-}) {
+Future<AnnotationTarget?> showInlineElementPicker(BuildContext context) {
   return showCruxDialog<AnnotationTarget>(
     context: context,
+    navigator: ActiveTab.navigatorFor(context),
     barrierDismissible: false,
-    builder: (_) => container == null
-        ? const InlineElementPicker()
-        : UncontrolledProviderScope(
-            container: container,
-            child: const InlineElementPicker(),
-          ),
+    builder: (_) => const InlineElementPicker(),
   );
 }

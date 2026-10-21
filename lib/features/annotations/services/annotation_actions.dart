@@ -20,6 +20,7 @@ import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dar
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/workspace/services/active_tab_container.dart';
+import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
 import 'package:netcrux/features/workspace/services/analysis_dock_actions.dart';
 import 'package:netcrux/services/session/annotation_store_provider.dart';
 
@@ -44,23 +45,28 @@ void openAddAnnotationDialog(
   AnnotationTarget? target,
 }) {
   unawaited(
-    ModalGuard.run('netcruxAddAnnotation', () async {
-      // Command-palette dispatch passes the root ref and no target. The
-      // active selection, the schematic graph and the drafts live in the
-      // active tab's per-tab container, so resolve it before reading any of
-      // them: reading through the root ref would see an empty selection and
-      // start a draft no tab shows. The context-menu path already supplies
-      // a resolved target and skips both fallbacks.
-      final tab =
-          ref.activeTabContainerOrNull(context) ??
-          ProviderScope.containerOf(context, listen: false);
-      final resolved =
-          target ??
-          _targetFromContainer(tab) ??
-          await showInlineElementPicker(context, container: tab);
-      if (resolved == null) return;
-      startAnnotationInInspector(tab, resolved);
-    }),
+    // Keyed per tab: the picker belongs to its tab and stays open, hidden,
+    // while another tab is active.
+    ModalGuard.run(
+      ActiveTab.guardKey(context, 'netcruxAddAnnotation'),
+      () async {
+        // Command-palette dispatch passes the root ref and no target. The
+        // active selection, the schematic graph and the drafts live in the
+        // active tab's per-tab container, so resolve it before reading any of
+        // them: reading through the root ref would see an empty selection and
+        // start a draft no tab shows. The context-menu path already supplies
+        // a resolved target and skips both fallbacks.
+        final tab =
+            ref.activeTabContainerOrNull(context) ??
+            ProviderScope.containerOf(context, listen: false);
+        final resolved =
+            target ??
+            _targetFromContainer(tab) ??
+            await showInlineElementPicker(context);
+        if (resolved == null) return;
+        startAnnotationInInspector(tab, resolved);
+      },
+    ),
   );
 }
 

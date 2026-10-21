@@ -508,6 +508,8 @@ class _SchematicGestureHandlerState
   /// edit, or an open menu, whose arrow keys would stop navigating it.
   void _takeFocusOnHover() {
     if (_focusNode.hasFocus) return;
+    // Never out of a tab-modal dialog the pointer happens to cross over.
+    if (cruxFocusIsInPushedRoute()) return;
     if (!SchematicGestureHandler.hoverMayTakeFocus(
       FocusManager.instance.primaryFocus,
     )) {
@@ -718,6 +720,9 @@ class _SchematicGestureHandlerState
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
+    // Keys typed in a tab-modal dialog are the dialog's, not the canvas's
+    // (Enter would push into the selected cell, the arrows would pan).
+    if (cruxFocusIsInPushedRoute()) return KeyEventResult.ignored;
     final key = event.logicalKey;
     // Everything the pointer does on an element has a key: Alt+Arrow selects
     // (the mouse click), Enter pushes into an instance (the double-click),

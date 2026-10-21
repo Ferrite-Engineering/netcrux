@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:crux_ide_layout/crux_ide_layout.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/diagnostics/providers/diagnostics_providers.dart';
@@ -30,12 +31,18 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 /// `PaneHost` mounts each pane's `ViewerTabBar` inside that pane's own
 /// `UncontrolledProviderScope`, so this resolves the right pane's stream
 /// without being told which pane it is.
-class PaneRenderStatsButton extends ConsumerWidget {
+class PaneRenderStatsButton extends ConsumerStatefulWidget {
   /// Creates the button.
   const PaneRenderStatsButton({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaneRenderStatsButton> createState() =>
+      _PaneRenderStatsButtonState();
+}
+
+class _PaneRenderStatsButtonState extends ConsumerState<PaneRenderStatsButton> {
+  @override
+  Widget build(BuildContext context) {
     if (!ref.watch(diagnosticsEnabledProvider)) return const SizedBox.shrink();
     final l10n = L10N.of(context);
 
@@ -61,12 +68,30 @@ class PaneRenderStatsButton extends ConsumerWidget {
     if (box == null || overlay == null) return;
 
     // The route is pushed onto a Navigator that lives ABOVE the pane's
-    // `UncontrolledProviderScope`, so the card would otherwise resolve the
-    // empty root-scope instances of the per-pane render stats and the
-    // per-tab layout timing — a popover reading zeros for a canvas that had
-    // painted. Capture this pane's container here, where we are still
-    // inside it, and re-scope the card onto it.
-    final container = ProviderScope.containerOf(context, listen: false);
+    // `UncontrolledProviderScope`, so a card that read the providers itself
+    // would resolve the empty root-scope instances of the per-pane render
+    // stats — a popover reading zeros for a canvas that had painted. A second
+    // scope over the pane's container is the one thing that must not be used
+    // to fix that (Riverpod flushes a container's rebuilds from every scope
+    // that mounts it, mid-build). The card reads no provider: this button,
+    // which is inside the pane's scope, listens for as long as the popover is
+    // open and hands the readings in.
+    final stats = ValueNotifier<PaneRenderStats>(
+      ref.read(paneRenderStatsProvider),
+    );
+    final layout = ValueNotifier<LayoutTimingStats>(
+      ref.read(layoutTimingProvider),
+    );
+    final subscriptions = <ProviderSubscription<Object?>>[
+      ref.listenManual<PaneRenderStats>(
+        paneRenderStatsProvider,
+        (_, next) => stats.value = next,
+      ),
+      ref.listenManual<LayoutTimingStats>(
+        layoutTimingProvider,
+        (_, next) => layout.value = next,
+      ),
+    ];
 
     final origin = box.localToGlobal(
       box.size.bottomLeft(Offset.zero),
@@ -78,37 +103,49 @@ class PaneRenderStatsButton extends ConsumerWidget {
         // A reading, not a task: no scrim, and a click outside or Escape
         // closes it.
         blocking: false,
-        builder: (_) => UncontrolledProviderScope(
-          container: container,
-          child: Stack(
-            children: [
-              Positioned(
-                // Clamped so a pane docked against the right edge does not
-                // push the card off-screen.
-                left: origin.dx.clamp(
-                  8.0,
-                  (overlay.size.width - 308).clamp(8, 8000),
-                ),
-                top: origin.dy + 4,
-                child: const _PaneRenderStatsCard(),
+        builder: (_) => Stack(
+          children: [
+            Positioned(
+              // Clamped so a pane docked against the right edge does not
+              // push the card off-screen.
+              left: origin.dx.clamp(
+                8.0,
+                (overlay.size.width - 308).clamp(8, 8000),
               ),
-            ],
-          ),
+              top: origin.dy + 4,
+              child: _PaneRenderStatsCard(stats: stats, layout: layout),
+            ),
+          ],
         ),
-      ),
+      ).whenComplete(() {
+        for (final subscription in subscriptions) {
+          subscription.close();
+        }
+      }),
     );
   }
 }
 
-class _PaneRenderStatsCard extends ConsumerWidget {
-  const _PaneRenderStatsCard();
+class _PaneRenderStatsCard extends StatelessWidget {
+  const _PaneRenderStatsCard({required this.stats, required this.layout});
+
+  final ValueListenable<PaneRenderStats> stats;
+  final ValueListenable<LayoutTimingStats> layout;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: Listenable.merge(<Listenable>[stats, layout]),
+    builder: (context, _) =>
+        _buildCard(context, paint: stats.value, layout: layout.value),
+  );
+
+  Widget _buildCard(
+    BuildContext context, {
+    required PaneRenderStats paint,
+    required LayoutTimingStats layout,
+  }) {
     final l10n = L10N.of(context);
     final theme = Theme.of(context);
-    final paint = ref.watch(paneRenderStatsProvider);
-    final layout = ref.watch(layoutTimingProvider);
     final painted = paint.frameNumber > 0;
 
     return Material(

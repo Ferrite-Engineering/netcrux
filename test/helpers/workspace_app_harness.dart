@@ -23,6 +23,7 @@ import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
@@ -148,6 +149,7 @@ class WorkspaceAppHarness {
     addTearDown(panes.dispose);
     root.read(tabContainerManagerHolderProvider).manager = tabs;
     root.read(netcruxWorkspaceProvider.notifier)
+      ..addScopeReconciler(root.read(tabNavigatorsProvider))
       ..addScopeReconciler(tabs)
       ..addScopeReconciler(panes);
 

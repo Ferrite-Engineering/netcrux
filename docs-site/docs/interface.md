@@ -61,6 +61,14 @@ The bottom **Diagnostics** panel lists the warnings and errors Yosys reported wh
 
 The **Search Design** dialog (++cmd+f++ / ++ctrl+f++) searches instance, cell and net names in every scope of the design, in **Substring**, **Glob** or **Regex** mode; choosing a result jumps to it on the canvas. The **command palette** (++cmd+shift+p++ / ++ctrl+shift+p++) is a fuzzy-filtered list of the actions available right now, each with its keyboard shortcut — every command on the menu bar is reachable from here without the mouse.
 
+## Dialogs belong to their tab {#tab-dialogs}
+
+Before NetCrux 1.2, every dialog covered the whole window. From NetCrux 1.2, a dialog that works on a tab's own design opens over that tab only: **Search Design**, and the element picker that **Add Annotation** opens when nothing is selected. The toolbar, the tab strip and the menus stay usable while one is open, and with two panes split side by side a dialog covers only the pane it belongs to, so the other pane keeps working.
+
+A tab's dialog stays with its tab. Switch to another tab and the dialog is hidden along with the tab it belongs to; switch back and it is where you left it. The other tab can open its own copy of the same dialog meanwhile. Closing a tab closes its dialog. ++escape++ closes only the dialog, and the keys you type in it, including ++alt+enter++ and the command palette's shortcut, stay in the dialog instead of acting on the schematic behind it.
+
+Dialogs that are about the whole app still cover the window: **Settings**, **About**, **App Diagnostics**, the command palette, and confirmation prompts.
+
 ## Tabs & split panes {#workspace}
 
 NetCrux is a **multi-tab workspace**: every design you open gets its own tab with its own scope, zoom, selection and overlay. ++cmd+w++ / ++ctrl+w++ closes the active tab (**Close Tab**) and ++cmd+shift+w++ / ++ctrl+shift+w++ is **Close Project**, which does the same. ++ctrl+tab++ and ++ctrl+shift+tab++ cycle tabs on every platform. Drag a tab to reorder it, or drop it on the other pane. **Split Pane Right** (++cmd+backslash++ / ++ctrl+backslash++) puts two canvases side by side, so you can compare two revisions at once. The workspace is saved automatically and its tabs come back at the next launch.

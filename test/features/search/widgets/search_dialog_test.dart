@@ -3,6 +3,7 @@
 
 import 'dart:io';
 
+import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -20,6 +21,7 @@ import 'package:netcrux/features/search/widgets/search_dialog.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
@@ -79,14 +81,20 @@ Future<void> _pumpDialog(
   );
 }
 
-/// Pumps a host route and opens the dialog through [SearchDialog.show], so
-/// activating a result pops a real dialog route instead of the app's only
-/// page. [container] plays the active tab's container.
+/// Pumps one tab's content on its own navigator (what `PaneHost` builds) and
+/// opens the dialog through [SearchDialog.show] from inside it, so activating
+/// a result pops a real dialog route instead of the app's only page.
+/// [container] plays the tab's container.
 Future<void> _pumpHostedDialog(
   WidgetTester tester,
   ProviderContainer container, {
   Locale locale = const Locale('en'),
 }) async {
+  final tabContainer = ProviderContainer(
+    parent: container,
+    overrides: [tabIdProvider.overrideWithValue(TabId.fromString('tab'))],
+  );
+  addTearDown(tabContainer.dispose);
   await tester.pumpWidget(
     MaterialApp(
       locale: locale,
@@ -97,13 +105,16 @@ Future<void> _pumpHostedDialog(
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: L10N.supportedLocales,
-      home: ProviderScope(
-        overrides: netcruxTelemetryTestOverrides(),
-        child: Scaffold(
-          body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => SearchDialog.show(context, container: container),
-              child: const Text('open'),
+      home: UncontrolledProviderScope(
+        container: tabContainer,
+        child: CruxTabNavigatorHost(
+          navigatorKey: GlobalKey<NavigatorState>(),
+          builder: (_) => Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => SearchDialog.show(context),
+                child: const Text('open'),
+              ),
             ),
           ),
         ),
@@ -190,14 +201,13 @@ void main() {
     });
   });
 
-  group('SearchDialog.show scopes to the passed active-tab container', () {
-    testWidgets('searches and applies to the passed container, not the '
-        'ambient root scope', (tester) async {
-      // Ambient root scope holds one design; the "active tab" container
-      // holds a different design. The dialog mounts under the root
-      // navigator (outside the tab scope), so before the container is
-      // threaded through it would read the root model and apply the
-      // selection to the root container.
+  group('SearchDialog.show is scoped to the tab it opens on', () {
+    testWidgets('searches and applies to the tab, not the ambient root '
+        'scope', (tester) async {
+      // Ambient root scope holds one design; the tab's own container holds a
+      // different design. The dialog is pushed on the tab's navigator, so it
+      // is built under the tab's scope and reads the tab's model, never the
+      // root one.
       final rootContainer = ProviderContainer(
         overrides: netcruxTelemetryTestOverrides(),
       );
@@ -206,8 +216,13 @@ void main() {
           .read(hierarchyTreeProvider.notifier)
           .setModel(_model(cellName: 'root_only_cell'));
 
+      final tabId = TabId.fromString('tab');
       final tabContainer = ProviderContainer(
-        overrides: netcruxTelemetryTestOverrides(),
+        parent: rootContainer,
+        overrides: [
+          tabIdProvider.overrideWithValue(tabId),
+          ...netcruxTabOverridesFactory(tabId),
+        ],
       );
       addTearDown(tabContainer.dispose);
       tabContainer
@@ -225,12 +240,17 @@ void main() {
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: L10N.supportedLocales,
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => TextButton(
-                  onPressed: () =>
-                      SearchDialog.show(context, container: tabContainer),
-                  child: const Text('open'),
+            home: UncontrolledProviderScope(
+              container: tabContainer,
+              child: CruxTabNavigatorHost(
+                navigatorKey: GlobalKey<NavigatorState>(),
+                builder: (_) => Scaffold(
+                  body: Builder(
+                    builder: (context) => TextButton(
+                      onPressed: () => SearchDialog.show(context),
+                      child: const Text('open'),
+                    ),
+                  ),
                 ),
               ),
             ),

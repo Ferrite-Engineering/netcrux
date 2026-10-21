@@ -646,11 +646,10 @@ class WorkspaceActionDispatcher {
 
   Future<void> _openSearch(BuildContext context) async {
     // The search dialog reads and applies per-tab state (hierarchy,
-    // selection, trace overlay). Resolve the active tab's container so
-    // it operates on the active tab rather than the empty root scope.
-    final container = _ref.activeTabContainerOrNull(context);
-    if (container == null) return;
-    await SearchDialog.show(context, container: container);
+    // selection, trace overlay), so it opens on the active tab's navigator.
+    // With no tab open there is nothing to search.
+    if (_ref.activeTabContainerOrNull(context) == null) return;
+    await SearchDialog.show(context);
   }
 
   // ---------------------------------------------------------------------------
