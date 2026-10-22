@@ -103,6 +103,7 @@ class _SeededRunner extends YosysRunner {
     YosysRunRequest request, {
     Duration? timeout,
     Future<void>? cancelSignal,
+    Map<String, String>? environment,
     void Function(String line)? onStderrLine,
   }) async => YosysRunSuccess(rawJson: rawJson, stdout: '', stderr: '');
 }
