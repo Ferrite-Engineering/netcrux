@@ -310,7 +310,8 @@ void main() {
         final inbound = await ackFuture.timeout(const Duration(seconds: 2));
         final ack = inbound.message as RequestHighlightAck;
         expect(ack.honored, isFalse);
-        expect(ack.reason, contains('quantum_flux_capacitor'));
+        expect(ack.reason, contains('Unsupported element kind'));
+        expect(ack.reason, isNot(contains('quantum_flux_capacitor')));
 
         // Selection is unchanged and the link is still usable.
         expect(

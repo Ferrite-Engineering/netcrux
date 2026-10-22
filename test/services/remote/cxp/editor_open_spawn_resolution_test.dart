@@ -77,7 +77,7 @@ void main() {
     final e = editor(windows(const <String>{}));
     final result = await open(e.service, 'helix {file}:{line}');
     expect(result.honored, isFalse);
-    expect(result.reason, 'Failed to launch "helix": not found on PATH');
+    expect(result.reason, 'Failed to launch the editor.');
     expect(e.launched, isEmpty);
   });
 

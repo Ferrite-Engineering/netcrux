@@ -84,10 +84,10 @@ class EditorOpenService {
     // editor's own option parser, and containment — not escaping — is what
     // closes it.
     if (!isAbsoluteSpawnPath(filePath)) {
-      return EditorOpenResult(
+      return const EditorOpenResult(
         honored: false,
         reason:
-            'Refusing to open "$filePath": only absolute file paths are '
+            'Refusing to open the file: only absolute file paths are '
             'opened in an editor.',
       );
     }
@@ -113,12 +113,11 @@ class EditorOpenService {
     // integer in a program name is no more the user's choice than a
     // peer-chosen path.
     if (_placeholder.hasMatch(tokens.first)) {
-      return EditorOpenResult(
+      return const EditorOpenResult(
         honored: false,
         reason:
-            'Editor command "${tokens.first}" substitutes into the '
-            'executable position; the executable must be a fixed program '
-            'name.',
+            'The editor command substitutes into the executable position; '
+            'the executable must be a fixed program name.',
       );
     }
     final substituted = tokens
@@ -138,10 +137,12 @@ class EditorOpenService {
         honored: false,
         reason: 'Editor exited with code ${result.exitCode}.',
       );
-    } on ProcessException catch (e) {
-      return EditorOpenResult(
+    } on ProcessException {
+      // The exception names the executable and every argument, the file path
+      // among them, so a fixed phrase goes on the wire.
+      return const EditorOpenResult(
         honored: false,
-        reason: 'Failed to launch "$executable": ${e.message}',
+        reason: 'Failed to launch the editor.',
       );
     }
   }

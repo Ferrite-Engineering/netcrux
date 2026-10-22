@@ -751,10 +751,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     // contract). Strip any `:port:`/`:net:`/`:cell:` marker and testbench/dotted
     // hierarchy and match the trailing segment against the current scope.
     if (!_isSignalLikeKind(kind)) {
-      return (
-        honored: false,
-        reason: 'Unsupported element kind ${kind.name}',
-      );
+      return (honored: false, reason: 'Unsupported element kind');
     }
     final leaf = _inboundLeaf(local);
     if (leaf.isNotEmpty && _applyLeafMatch(tabContainer, leaf)) {
@@ -1243,7 +1240,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     if (kind != kCxpSourceArtifactKind && kind != kCxpProjectArtifactKind) {
       return (
         honored: false,
-        reason: 'netcrux opens only source and project artifacts, not "$kind"',
+        reason: 'netcrux opens only source and project artifacts',
       );
     }
     final path =
@@ -1256,7 +1253,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     if (path == null) {
       return (
         honored: false,
-        reason: 'no $kind artifact recorded for design "${request.designId}"',
+        reason: 'no $kind artifact recorded for that design',
       );
     }
     // CXP §11's MUST: the artifact a receiver resolved through its own records
