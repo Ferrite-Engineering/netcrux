@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_annotations/crux_annotations_core.dart'
+    show CruxCalloutPlacement;
 import 'package:crux_dock/crux_dock.dart';
 import 'package:crux_ide_layout/crux_ide_layout.dart' show announceCrux;
 import 'package:crux_settings_ui/crux_settings_ui.dart' show CruxFormRow;
@@ -11,6 +13,7 @@ import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/annotations/providers/annotation_drafts_provider.dart';
 import 'package:netcrux/features/annotations/services/annotation_actions.dart';
+import 'package:netcrux/features/annotations/services/annotation_drift.dart';
 import 'package:netcrux/features/annotations/services/annotation_id_generator.dart';
 import 'package:netcrux/features/annotations/services/annotations_on_scope.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
@@ -351,6 +354,22 @@ class _AnnotationEditorState extends ConsumerState<_AnnotationEditor> {
       sessionLayerId: existing?.sessionLayerId,
       sessionLayerLabel: existing?.sessionLayerLabel,
       hidden: existing?.hidden ?? false,
+      // Where its callout sits is presentation, not content: an edit keeps it.
+      placement: existing?.placement ?? const CruxCalloutPlacement(),
+      // The witness is what the element was when the note was written, so an
+      // edit of the words keeps it; re-reading it here would silently clear
+      // a drift the note is reporting. A note that never had one (written
+      // before witnesses were recorded) gains one now.
+      witness:
+          existing?.witness ??
+          captureAnnotationWitness(
+            ref.read(hierarchyTreeProvider).model,
+            kind: draft.kind,
+            targetId: draft.targetId,
+            moduleName: existing == null
+                ? draft.moduleName
+                : existing.moduleName,
+          ),
     );
     final store = ref.read(annotationStoreProvider);
     if (existing == null) {

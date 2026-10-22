@@ -1771,6 +1771,11 @@
   },
   "actionConfigureActivityScheme": "配置活动色彩方案…",
   "actionToggleSlackOverlay": "显示时序裕量叠加",
+  "actionToggleAnnotationCallouts": "显示注释标注框",
+  "annotationsPanelOutsideScope": "{count, plural, =1{当前作用域之外 (1)} other{当前作用域之外 ({count})}}",
+  "annotationsPanelMissing": "{count, plural, =1{此设计中已不存在 (1)} other{此设计中已不存在 ({count})}}",
+  "annotationStatusDrifted": "已变化",
+  "annotationStatusDriftedSpoken": "已变化：写下此注释后，该元素已更改",
   "@actionConfigureActivityScheme": {
     "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
   },

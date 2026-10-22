@@ -235,6 +235,7 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
         'activity',
         'collaboration',
         'slack_overlay',
+        'annotation_callouts',
       ],
       // `LicenseTier.name` for the tier the FEATURE needs. Only two values
       // can occur: an open-core gate admits everyone and never denies, and

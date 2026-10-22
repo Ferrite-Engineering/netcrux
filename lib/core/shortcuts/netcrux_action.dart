@@ -318,6 +318,14 @@ enum NetcruxAction implements CruxAction {
   /// feature.
   toggleSlackOverlay,
 
+  /// Show or hide the annotation callouts on the schematic: each note drawn
+  /// beside its element as a balloon with a leader, a numbered dot at middle
+  /// zoom. Always discoverable and badged; an open-core build refuses it with
+  /// a "requires NetCrux Pro" notice, because only the Pro overlay mounts the
+  /// callout layer. Annotations themselves, the panel and the badges stay
+  /// free. Pro feature.
+  toggleAnnotationCallouts,
+
   /// Run a manual check against the public version manifest and report the
   /// outcome. Always runs, regardless of the Settings → General
   /// "Automatically check for updates" toggle. Open Core — every user is
@@ -486,6 +494,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.showActivityHeatmap:
       case NetcruxAction.clearActivityColoring:
       case NetcruxAction.toggleSlackOverlay:
+      case NetcruxAction.toggleAnnotationCallouts:
       case NetcruxAction.toggleTheme:
         return ActionCategory.view;
       case NetcruxAction.jumpToTop:
@@ -698,6 +707,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionConfigureActivityScheme;
       case NetcruxAction.toggleSlackOverlay:
         return l10n.actionToggleSlackOverlay;
+      case NetcruxAction.toggleAnnotationCallouts:
+        return l10n.actionToggleAnnotationCallouts;
       case NetcruxAction.checkForUpdates:
         return l10n.actionCheckForUpdates;
       case NetcruxAction.submitIssue:
@@ -781,6 +792,7 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
       case NetcruxAction.toggleSlackOverlay:
+      case NetcruxAction.toggleAnnotationCallouts:
         return LicenseTier.pro;
       // Hosting a collaborative session and exporting its minutes are the
       // Enterprise actions: a host's tools. Taking part is free.
@@ -918,6 +930,8 @@ extension NetcruxActionGatedFeature on NetcruxAction {
         return NetcruxGatedFeature.activity;
       case NetcruxAction.toggleSlackOverlay:
         return NetcruxGatedFeature.slackOverlay;
+      case NetcruxAction.toggleAnnotationCallouts:
+        return NetcruxGatedFeature.annotationCallouts;
       // "Tried to host", or "tried to export a session's minutes" — both are
       // the one priced feature, and joining can never be denied, so it never
       // reports.

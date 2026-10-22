@@ -234,6 +234,7 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   NetcruxAction.showResetDomainAnalysisPane ||
   NetcruxAction.showActivityHeatmap ||
   NetcruxAction.toggleSlackOverlay ||
+  NetcruxAction.toggleAnnotationCallouts ||
   NetcruxAction.configureActivityScheme => const NetcruxActionDescriptor(
     surfaces: _menuPalette,
     isEnabled: _requiresTab,

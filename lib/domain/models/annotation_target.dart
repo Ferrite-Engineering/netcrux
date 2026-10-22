@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_annotations/crux_annotations_core.dart';
 import 'package:meta/meta.dart';
 
 /// The kind of schematic element an [AnnotationTarget] names.
@@ -38,19 +39,20 @@ AnnotationTargetKind? annotationTargetKindFromName(Object? name) {
   return null;
 }
 
-/// A pre-populated target for the Add Annotation dialog.
+/// A schematic element an annotation is on: the pre-populated target for Add
+/// Annotation, and the anchor of a written note.
 ///
-/// When non-null, the opener mounts the dialog with the target fields
-/// already filled in (commonly because the user invoked the action from
-/// a schematic context menu on a specific element). When null, the
+/// When non-null on the opener, the new annotation starts with the target
+/// fields already filled in (commonly because the user invoked the action
+/// from a schematic context menu on a specific element). When null, the
 /// opener falls back to the active schematic selection.
+///
+/// This is NetCrux's [CruxAnnotationAnchor]: data coordinates, an element of a
+/// module, never a position on the canvas. A scope names no single element.
 @immutable
-class AnnotationTarget {
+class AnnotationTarget implements CruxAnnotationAnchor {
   /// Creates a target descriptor.
-  const AnnotationTarget({
-    required this.kind,
-    required this.targetId,
-  });
+  const AnnotationTarget({required this.kind, required this.targetId});
 
   /// Which kind of schematic element this targets.
   final AnnotationTargetKind kind;
@@ -59,4 +61,24 @@ class AnnotationTarget {
   /// `port:<name>` for boundary ports, edge id `e_N` for nets, dotted
   /// scope path for scopes).
   final String targetId;
+
+  @override
+  String? get elementId => kind == AnnotationTargetKind.scope ? null : targetId;
+
+  /// The two fields an annotation record already carries flat, under the
+  /// same keys.
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'targetKind': kind.name,
+    'targetId': targetId,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is AnnotationTarget &&
+      other.kind == kind &&
+      other.targetId == targetId;
+
+  @override
+  int get hashCode => Object.hash(kind, targetId);
 }

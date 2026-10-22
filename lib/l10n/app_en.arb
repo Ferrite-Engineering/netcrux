@@ -1860,6 +1860,36 @@
   "@actionToggleSlackOverlay": {
     "description": "Command palette / menu label for showing or hiding the slack overlay, which colors registers by the worst slack an implementation run states (Pro)."
   },
+  "actionToggleAnnotationCallouts": "Show Annotation Callouts",
+  "@actionToggleAnnotationCallouts": {
+    "description": "View menu / command palette label for showing or hiding annotation callouts on the schematic: each note drawn beside its element as a small balloon with a line to it (Pro)."
+  },
+  "annotationsPanelOutsideScope": "{count, plural, =1{Outside the current scope (1)} other{Outside the current scope ({count})}}",
+  "@annotationsPanelOutsideScope": {
+    "description": "Annotations panel group header over the notes whose element is in another module than the scope on the schematic. Opening a row navigates there. {count} is how many.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "annotationsPanelMissing": "{count, plural, =1{Missing from this design (1)} other{Missing from this design ({count})}}",
+  "@annotationsPanelMissing": {
+    "description": "Annotations panel group header over the notes whose element the loaded design no longer has (renamed or removed when the design was elaborated again). {count} is how many.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "annotationStatusDrifted": "Drifted",
+  "@annotationStatusDrifted": {
+    "description": "Small marker on an annotation whose element changed since the note was written (its type, parameters, or for a net its driver). The note may no longer hold."
+  },
+  "annotationStatusDriftedSpoken": "Drifted: the element changed since this note was written",
+  "@annotationStatusDriftedSpoken": {
+    "description": "What a screen reader adds to an annotation row whose element changed since the note was written."
+  },
   "activityHeatmapPaneEmptyTitle": "No switching activity loaded",
   "@activityHeatmapPaneEmptyTitle": {
     "description": "Open-core Switching Activity Heatmap pane empty-state title shown before a waveform is loaded or analysis is run."

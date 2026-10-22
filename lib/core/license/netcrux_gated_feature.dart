@@ -84,4 +84,10 @@ enum NetcruxGatedFeature {
   /// opening of a run or timing report for it (from the View menu, the
   /// overlay's own controls, or a peer that sent one).
   slackOverlay,
+
+  /// Annotation callouts on the schematic: each note drawn beside its element
+  /// with a leader, draggable and foldable, following the level of detail and
+  /// the scope. The annotations themselves, the panel and the corner badges
+  /// are free; only drawing the notes on the canvas is gated.
+  annotationCallouts,
 }

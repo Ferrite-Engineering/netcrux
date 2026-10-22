@@ -1,8 +1,10 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_annotations/crux_annotations_core.dart';
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
+import 'package:netcrux/domain/models/structural_witness.dart';
 
 /// A note pinned to a schematic element: an optional one-line [title] and
 /// an optional Markdown [body], at least one of them non-empty.
@@ -28,6 +30,8 @@ class Annotation {
     this.sessionLayerId,
     this.sessionLayerLabel,
     this.hidden = false,
+    this.placement = const CruxCalloutPlacement(),
+    this.witness,
   });
 
   /// Reads an annotation back from its JSON shape produced by
@@ -74,6 +78,8 @@ class Annotation {
       sessionLayerId: layerId is String && layerId.isNotEmpty ? layerId : null,
       sessionLayerLabel: layerLabel is String ? layerLabel : null,
       hidden: json['hidden'] == true,
+      placement: CruxCalloutPlacement.fromJson(json),
+      witness: StructuralWitness.fromJson(json[kCruxAnnotationWitnessKey]),
     );
   }
 
@@ -182,6 +188,24 @@ class Annotation {
   /// a time.
   final bool hidden;
 
+  /// Where the note's callout label sits relative to its element on the
+  /// schematic, in logical pixels, and whether it is folded to a numbered
+  /// dot. Dragging the label changes this and never the element the note is
+  /// on. Stored in the suite's shared record shape (`labelDx`, `labelDy`,
+  /// `collapsed`, each omitted at its default).
+  final CruxCalloutPlacement placement;
+
+  /// The element's structure when the note was written, or `null` for a note
+  /// on a scope, one written before witnesses were recorded, or one whose
+  /// element was not in the design on screen. Compared with the element as it
+  /// is now to mark the note drifted.
+  final StructuralWitness? witness;
+
+  /// The note's anchor in the suite's annotation contract: its element kind
+  /// and id, which name no single element for a scope.
+  AnnotationTarget get anchor =>
+      AnnotationTarget(kind: targetKind, targetId: targetId);
+
   /// Returns a copy with selected fields replaced. [updatedAtMillis]
   /// must be supplied explicitly — `copyWith` does *not* auto-bump it
   /// because the caller (the store) knows when the change happened.
@@ -202,6 +226,9 @@ class Annotation {
     String? sessionLayerId,
     String? sessionLayerLabel,
     bool? hidden,
+    CruxCalloutPlacement? placement,
+    StructuralWitness? witness,
+    bool clearWitness = false,
   }) {
     return Annotation(
       id: id ?? this.id,
@@ -218,11 +245,22 @@ class Annotation {
       sessionLayerId: sessionLayerId ?? this.sessionLayerId,
       sessionLayerLabel: sessionLayerLabel ?? this.sessionLayerLabel,
       hidden: hidden ?? this.hidden,
+      placement: placement ?? this.placement,
+      witness: clearWitness ? null : (witness ?? this.witness),
     );
   }
 
-  /// Round-trip JSON. Forward-compatible.
-  Map<String, Object?> toJson() => <String, Object?>{
+  /// Round-trip JSON. Forward-compatible: an older build ignores the
+  /// placement and witness keys it does not know.
+  Map<String, Object?> toJson() {
+    final json = _baseJson();
+    placement.writeInto(json);
+    final w = witness;
+    if (w != null) json[kCruxAnnotationWitnessKey] = w.toJson();
+    return json;
+  }
+
+  Map<String, Object?> _baseJson() => <String, Object?>{
     'id': id,
     'targetKind': targetKind.name,
     'targetId': targetId,
@@ -256,7 +294,9 @@ class Annotation {
         other.colorArgb == colorArgb &&
         other.sessionLayerId == sessionLayerId &&
         other.sessionLayerLabel == sessionLayerLabel &&
-        other.hidden == hidden;
+        other.hidden == hidden &&
+        other.placement == placement &&
+        other.witness == witness;
   }
 
   @override
@@ -275,6 +315,8 @@ class Annotation {
     sessionLayerId,
     sessionLayerLabel,
     hidden,
+    placement,
+    witness,
   );
 
   /// The line the Annotations panel shows for this annotation: the

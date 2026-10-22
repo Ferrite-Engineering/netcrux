@@ -133,6 +133,9 @@ void main() {
         // Slack overlay — palette / menu discoverable; no chord until usage
         // shows one is wanted.
         NetcruxAction.toggleSlackOverlay,
+        // Annotation callouts: View menu and palette, no chord yet, like the
+        // slack overlay beside it.
+        NetcruxAction.toggleAnnotationCallouts,
         // Beta-release infrastructure — Help-menu / palette /
         // About-box actions invoked a handful of times per release cycle.
         // A default chord would spend scarce keyboard real estate on
@@ -354,6 +357,7 @@ void main() {
         NetcruxAction.runActivityAnalysis,
         NetcruxAction.configureActivityScheme,
         NetcruxAction.toggleSlackOverlay,
+        NetcruxAction.toggleAnnotationCallouts,
       };
       for (final action in NetcruxAction.values) {
         if (proActions.contains(action)) continue;
@@ -467,6 +471,27 @@ void main() {
         );
       },
     );
+
+    test('the annotation callouts toggle is Pro tier, in View, with its own '
+        'feature, while annotations themselves stay Open Core', () {
+      expect(
+        NetcruxAction.toggleAnnotationCallouts.requiredTier,
+        LicenseTier.pro,
+      );
+      expect(
+        NetcruxAction.toggleAnnotationCallouts.gatedFeature,
+        NetcruxGatedFeature.annotationCallouts,
+      );
+      expect(
+        NetcruxAction.toggleAnnotationCallouts.category,
+        ActionCategory.view,
+      );
+      expect(NetcruxAction.addAnnotation.requiredTier, LicenseTier.openCore);
+      expect(
+        NetcruxAction.showAnnotationsPanel.requiredTier,
+        LicenseTier.openCore,
+      );
+    });
 
     test('Custom cell symbol actions are Pro tier', () {
       expect(

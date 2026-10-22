@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:netcrux/features/annotations/providers/annotation_drafts_provider.dart';
 import 'package:netcrux/features/annotations/providers/annotation_reveal_request.dart';
 import 'package:netcrux/features/annotations/providers/annotation_schematic_markers.dart';
+import 'package:netcrux/features/annotations/providers/annotation_statuses_provider.dart';
 import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
 import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.dart';
 import 'package:netcrux/features/diagnostics/providers/netlist_footprint_provider.dart';
@@ -150,16 +151,16 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // reveal request names an annotation of this tab, and the canvas markers
     // read the tab's annotations and its hierarchy.
     annotationStateProvider.overrideWith(AnnotationState.new),
-    annotationStoreProvider.overrideWith(
-      InSessionAnnotationStore.new,
-    ),
+    annotationStoreProvider.overrideWith(InSessionAnnotationStore.new),
     annotationSnapshotProvider.overrideWith(
       (ref) => ref.watch(annotationStateProvider),
     ),
     annotationRevealRequestProvider.overrideWith(AnnotationRevealRequest.new),
-    schematicAnnotationMarkersProvider.overrideWith(
-      annotationSchematicMarkers,
-    ),
+    schematicAnnotationMarkersProvider.overrideWith(annotationSchematicMarkers),
+    // Each note's status (drifted, outside the current scope, missing) is a
+    // view of the tab's annotations against the tab's design and scope, so
+    // it follows them.
+    annotationStatusesProvider.overrideWith(annotationStatusesForTab),
     // The Inspector's controller (its pending focus request and held draft),
     // the annotation it is asked to focus, and its unapplied annotation
     // drafts are this tab's: shared at root, an open in one tab would move

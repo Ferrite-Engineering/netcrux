@@ -49,9 +49,7 @@ import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 const CruxMenuLayout<NetcruxAction> kMenuLayout = {
   // ── File ──────────────────────────────────────────────────────────────────
   ActionCategory.file: [
-    [
-      NetcruxAction.newWorkspace,
-    ],
+    [NetcruxAction.newWorkspace],
     [
       NetcruxAction.openProject,
       NetcruxAction.openSourceFiles,
@@ -86,13 +84,8 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
     // File menu (suite keyboard-parity pass). NetCrux tabs *are* projects,
     // so Close Project closes the same active tab under its
     // project-flavored label at Cmd/Ctrl+Shift+W.
-    [
-      NetcruxAction.closeTab,
-      NetcruxAction.closeProject,
-    ],
-    [
-      NetcruxAction.resetWorkspace,
-    ],
+    [NetcruxAction.closeTab, NetcruxAction.closeProject],
+    [NetcruxAction.resetWorkspace],
     // The collaborative session, last in File as in WaveCrux. Leave Session
     // greys out until a session is live; Export Review Minutes until there
     // are notes from a session to export.
@@ -106,14 +99,8 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
 
   // ── View ──────────────────────────────────────────────────────────────────
   ActionCategory.view: [
-    [
-      NetcruxAction.openCommandPalette,
-    ],
-    [
-      NetcruxAction.zoomIn,
-      NetcruxAction.zoomOut,
-      NetcruxAction.zoomFitAll,
-    ],
+    [NetcruxAction.openCommandPalette],
+    [NetcruxAction.zoomIn, NetcruxAction.zoomOut, NetcruxAction.zoomFitAll],
     [
       NetcruxAction.toggleHierarchyTree,
       NetcruxAction.toggleInspector,
@@ -121,6 +108,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.showCrossProbePanel,
       NetcruxAction.crossProbeSelection,
       NetcruxAction.showAnnotationsPanel,
+      NetcruxAction.toggleAnnotationCallouts,
       NetcruxAction.showSourcePane,
       NetcruxAction.closeSourcePane,
       NetcruxAction.showDiffPane,
@@ -140,21 +128,13 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.focusOtherPane,
       NetcruxAction.moveTabToOtherPane,
     ],
-    [
-      NetcruxAction.nextTab,
-      NetcruxAction.previousTab,
-    ],
-    [
-      NetcruxAction.toggleTheme,
-    ],
+    [NetcruxAction.nextTab, NetcruxAction.previousTab],
+    [NetcruxAction.toggleTheme],
   ],
 
   // ── Navigate ──────────────────────────────────────────────────────────────
   ActionCategory.navigate: [
-    [
-      NetcruxAction.jumpToTop,
-      NetcruxAction.popOutScope,
-    ],
+    [NetcruxAction.jumpToTop, NetcruxAction.popOutScope],
     [
       NetcruxAction.showFanin,
       NetcruxAction.showFanout,
@@ -170,30 +150,19 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.showXTracePanel,
       NetcruxAction.clearXTrace,
     ],
-    [
-      NetcruxAction.openSourceForElement,
-    ],
-    [
-      NetcruxAction.navigatePrevDiff,
-      NetcruxAction.navigateNextDiff,
-    ],
-    [
-      NetcruxAction.clearOverlay,
-    ],
+    [NetcruxAction.openSourceForElement],
+    [NetcruxAction.navigatePrevDiff, NetcruxAction.navigateNextDiff],
+    [NetcruxAction.clearOverlay],
   ],
 
   // ── Search ────────────────────────────────────────────────────────────────
   ActionCategory.search: [
-    [
-      NetcruxAction.openSearch,
-    ],
+    [NetcruxAction.openSearch],
   ],
 
   // ── Tools ─────────────────────────────────────────────────────────────────
   ActionCategory.tools: [
-    [
-      NetcruxAction.addAnnotation,
-    ],
+    [NetcruxAction.addAnnotation],
     [
       NetcruxAction.openSymbolManager,
       NetcruxAction.importSymbolFromSvg,
@@ -212,10 +181,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.runResetDomainAnalysis,
       NetcruxAction.showResetCrossingForSelectedSignal,
     ],
-    [
-      NetcruxAction.runActivityAnalysis,
-      NetcruxAction.configureActivityScheme,
-    ],
+    [NetcruxAction.runActivityAnalysis, NetcruxAction.configureActivityScheme],
     // Tools ends with the diagnostics group in every product: the per-tab
     // surface (reveal + toggle), then the process-wide dialog — Tab
     // Diagnostics leads, matching WaveCrux's menu placement.
@@ -229,18 +195,10 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
   // ── Help ──────────────────────────────────────────────────────────────────
   // About and Check for Updates are hoisted into the macOS application menu.
   ActionCategory.help: [
-    [
-      NetcruxAction.openDocumentation,
-    ],
-    [
-      NetcruxAction.submitIssue,
-    ],
-    [
-      NetcruxAction.checkForUpdates,
-    ],
-    [
-      NetcruxAction.openAbout,
-    ],
+    [NetcruxAction.openDocumentation],
+    [NetcruxAction.submitIssue],
+    [NetcruxAction.checkForUpdates],
+    [NetcruxAction.openAbout],
   ],
 };
 

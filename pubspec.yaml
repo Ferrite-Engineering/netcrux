@@ -16,6 +16,11 @@ dependencies:
   # WaveCrux's WaveCruxAboutDialog for the canonical reference.
   crux_about_dialog:
     path: ./crux-shared/packages/crux_about_dialog
+  # The on-canvas annotation layer NetCrux shares with WaveCrux: the anchor
+  # contract, the drift status table the Annotations panel groups by, the
+  # callout placement codec on each annotation record, and the callout widgets.
+  crux_annotations:
+    path: ./crux-shared/packages/crux_annotations
   # Cross-suite About-box data shapes (ApplicationBranding / ApplicationBuildInfo
   # / ApplicationEdition) consumed by crux_about_dialog. NetCrux's
   # about_providers wire these onto package_info_plus + the active license tier.

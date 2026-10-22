@@ -29,6 +29,7 @@ import 'package:netcrux/services/flow/slack_overlay_opener.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
+import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
@@ -191,6 +192,7 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.clearActivityColoring: _Routing.opener,
   NetcruxAction.configureActivityScheme: _Routing.opener,
   NetcruxAction.toggleSlackOverlay: _Routing.opener,
+  NetcruxAction.toggleAnnotationCallouts: _Routing.opener,
   NetcruxAction.shareSession: _Routing.opener,
   NetcruxAction.joinSession: _Routing.opener,
   NetcruxAction.exportReviewMinutes: _Routing.opener,
@@ -311,6 +313,9 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
     ),
     toggleSlackOverlayOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.toggleSlackOverlay),
+    ),
+    toggleAnnotationCalloutsOpenerProvider.overrideWithValue(
+      (_) => record(NetcruxAction.toggleAnnotationCallouts),
     ),
     shareSessionOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.shareSession),

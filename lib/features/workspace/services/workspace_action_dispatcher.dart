@@ -68,6 +68,7 @@ import 'package:netcrux/services/file_open/file_open_service_provider.dart';
 import 'package:netcrux/services/flow/slack_overlay_opener.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
+import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/schematic/cone_of_influence_service_provider.dart';
 import 'package:netcrux/services/schematic/x_trace_service_provider.dart';
 import 'package:netcrux/services/session/session_controller.dart';
@@ -417,6 +418,19 @@ class WorkspaceActionDispatcher {
       case NetcruxAction.toggleSlackOverlay:
         if (_proActionAllowed(context, action)) {
           final toggle = _ref.read(toggleSlackOverlayOpenerProvider);
+          if (toggle == null) {
+            final l10n = L10N.of(context);
+            showCruxInfoSnack(
+              context,
+              l10n.actionRequiresPro(action.label(l10n)),
+            );
+          } else {
+            toggle(context);
+          }
+        }
+      case NetcruxAction.toggleAnnotationCallouts:
+        if (_proActionAllowed(context, action)) {
+          final toggle = _ref.read(toggleAnnotationCalloutsOpenerProvider);
           if (toggle == null) {
             final l10n = L10N.of(context);
             showCruxInfoSnack(

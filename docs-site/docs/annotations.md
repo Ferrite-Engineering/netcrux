@@ -48,6 +48,31 @@ An annotated cell carries a small round note badge on its top-right corner. An a
 
 Click a badge, or right-click the annotated element and choose **Show Annotation**, to open the Annotations tab (or bring it to the front) scrolled to that element's note, which flashes briefly.
 
+## Callouts on the schematic, from NetCrux 1.2 {#callouts}
+
+From NetCrux 1.2, NetCrux Pro can draw each annotation on the schematic itself, beside its element, the way WaveCrux draws notes on a waveform. Annotations, the Annotations tab and the badges stay free in every edition; drawing them on the canvas is a NetCrux Pro feature.
+
+Turn callouts on or off with `View → Show Annotation Callouts`, or **Show Annotation Callouts** in the command palette. In Open Core the entry carries a Pro badge and says that it requires NetCrux Pro.
+
+- **What a callout shows.** A small balloon with a line to the element, holding the note's number, its title (or the first line of its body) and the start of the body. Hover over the balloon to read the whole note, or press Enter on it to open the Annotations tab at that note; double-click its text to edit the note in the Inspector. The number is the note's place in the order the notes were written.
+- **Where it sits.** A callout on a cell, a pin or a boundary port starts just above the element's top-right corner; one on a net starts above the middle of its wire. Drag the balloon anywhere: the line stays attached to the element, and the note stays on the same element. NetCrux remembers where you put it, in the session file.
+- **Fold it to a dot.** Use the fold button on the balloon to reduce it to its numbered dot; click the dot to open it again. A folded note is still listed and still saved.
+- **Zoom.** Zoomed in far enough to read cell labels, callouts show their text. Zoomed out to where cells are drawn as plain symbols, each callout is its numbered dot, and clicking a dot opens the note in the Annotations tab. In the zoomed-out overview, where cells are coloured blocks, callouts are hidden.
+- **Scope.** Callouts follow the scope on screen. A note on an element inside a child module is drawn when that module is open, and is listed in the Annotations tab under **Outside the current scope** otherwise. A note on a whole scope has no callout.
+- **Busy schematics.** At most six callouts open as balloons at once; the rest are drawn as numbered dots.
+- **Keyboard.** Tab reaches each callout on the canvas. Enter opens the note in the Annotations tab, and Space folds or unfolds it. A screen reader announces the note's number, its title and its element.
+- **In a session.** Everyone in a collaborative session sees the same callouts in the same places. Moving or folding somebody else's note is not offered, as editing it is not.
+- **Exports.** Callouts are an on-screen aid: PNG and SVG exports of the schematic do not include them.
+
+## When the design changes, from NetCrux 1.2 {#drift}
+
+From NetCrux 1.2, every edition records what an element is when you annotate it: a cell's type and parameters, a pin's direction and width, a boundary port's direction and width, and what drives a net. When the design is elaborated again (after a source edit, for example), NetCrux compares each note's element with what it recorded:
+
+- **Drifted.** The element is still there but has changed, for example a register's width or a gate's type. The note's row in the Annotations tab is marked **Drifted**, and its callout is drawn in amber with a dashed line and italic text. The note is unchanged; it may simply describe the design as it was, so check whether it still holds. Editing a note's words keeps the record from when it was written, so the mark stays until the element matches again.
+- **Missing from this design.** The design no longer has the element (renamed or removed). The Annotations tab lists such notes in their own group at the end. Choosing one says the element is not in this design.
+
+Notes written before NetCrux 1.2 have no record to compare against and are never marked drifted; they gain one the next time you save an edit to them.
+
 ## Each design keeps its own {#per-design}
 
 Annotations belong to the design in the tab where you made them. Switch to another tab and the Annotations tab lists that design's annotations instead, and a cell's badge only appears on the design it was annotated in. NetCrux also records which module an element was annotated in, so a note on one module's `u_fifo` does not badge another module's `u_fifo`.

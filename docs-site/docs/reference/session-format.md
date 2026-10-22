@@ -87,6 +87,11 @@ Each entry names its element with a `targetKind` (`cell`, `port`, `boundaryPort`
 | `authorId` | From NetCrux 1.1: the session participant who wrote a note that belongs to somebody else. Such a note can be hidden or deleted but not edited. Absent for your own notes. |
 | `colorArgb` | From NetCrux 1.1: the author's colour when the note was written in a session, as a 32-bit ARGB integer, kept fixed so the note does not change colour in later sessions. |
 | `hidden` | From NetCrux 1.1: `true` while the note's layer is hidden from the schematic; absent otherwise. |
+| `labelDx`, `labelDy` | From NetCrux 1.2: where the note's callout label sits relative to its element on the schematic, in screen pixels at any zoom. Absent at the defaults (`0` and `-32`, just above the element). Moving the label never moves the note to another element. |
+| `collapsed` | From NetCrux 1.2: `true` while the note's callout is folded to a numbered dot; absent otherwise. |
+| `witness` | From NetCrux 1.2: what the element was when the note was written, as `{"facts": {...}}`: a cell's `type` and `param.<name>` values; a pin's cell type and parameters with `pin.direction` and `pin.width`; a boundary port's `direction` and `width`; a net's `driver`. After the design is elaborated again, a note whose element no longer matches is marked drifted. Absent for a note on a scope and for notes written before NetCrux 1.2. |
+
+The `labelDx`, `labelDy`, `collapsed` and `witness` fields use the same names and meaning as WaveCrux's annotation records. NetCrux 1.1 reads a note that has them and leaves them out when it saves the session again.
 
 An entry with a missing required field or an unknown `targetKind` is skipped and the rest of the session loads.
 

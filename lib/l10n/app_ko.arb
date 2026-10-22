@@ -1771,6 +1771,11 @@
   },
   "actionConfigureActivityScheme": "활동 색상 구성표 구성…",
   "actionToggleSlackOverlay": "슬랙 오버레이 표시",
+  "actionToggleAnnotationCallouts": "주석 말풍선 표시",
+  "annotationsPanelOutsideScope": "{count, plural, =1{현재 범위 밖 (1)} other{현재 범위 밖 ({count})}}",
+  "annotationsPanelMissing": "{count, plural, =1{이 설계에 없음 (1)} other{이 설계에 없음 ({count})}}",
+  "annotationStatusDrifted": "변경됨",
+  "annotationStatusDriftedSpoken": "변경됨: 이 주석을 작성한 뒤 요소가 바뀌었습니다",
   "@actionConfigureActivityScheme": {
     "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
   },

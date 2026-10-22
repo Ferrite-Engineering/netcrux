@@ -1771,6 +1771,11 @@
   },
   "actionConfigureActivityScheme": "活動カラースキームを構成…",
   "actionToggleSlackOverlay": "スラックオーバーレイを表示",
+  "actionToggleAnnotationCallouts": "注釈の吹き出しを表示",
+  "annotationsPanelOutsideScope": "{count, plural, =1{現在のスコープの外 (1)} other{現在のスコープの外 ({count})}}",
+  "annotationsPanelMissing": "{count, plural, =1{この設計にない (1)} other{この設計にない ({count})}}",
+  "annotationStatusDrifted": "変化あり",
+  "annotationStatusDriftedSpoken": "変化あり: この注釈を書いた後に要素が変わりました",
   "@actionConfigureActivityScheme": {
     "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
   },

@@ -26,6 +26,7 @@ import 'package:netcrux/services/diff/diff_pane_openers.dart';
 import 'package:netcrux/services/flow/slack_overlay_opener.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
+import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
@@ -82,6 +83,8 @@ void main() {
     NetcruxAction.configureActivityScheme,
     // The slack overlay's toggle.
     NetcruxAction.toggleSlackOverlay,
+    // The annotation callouts' toggle.
+    NetcruxAction.toggleAnnotationCallouts,
     // Diff group (was `_diffActionAllowed`).
     NetcruxAction.showDiffPane,
     NetcruxAction.loadComparisonNetlist,
@@ -427,6 +430,9 @@ List<Override> _spyOpenerOverrides(Set<NetcruxAction> fired) => <Override>[
   ),
   toggleSlackOverlayOpenerProvider.overrideWithValue(
     (_) => fired.add(NetcruxAction.toggleSlackOverlay),
+  ),
+  toggleAnnotationCalloutsOpenerProvider.overrideWithValue(
+    (_) => fired.add(NetcruxAction.toggleAnnotationCallouts),
   ),
 ];
 

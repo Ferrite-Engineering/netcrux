@@ -32,6 +32,7 @@ import 'package:netcrux/features/viewer/services/clear_schematic_paint.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_controller.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/schematic/net_name_lookup.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
 
@@ -341,6 +342,8 @@ class _SchematicGestureHandlerState
   /// selection (so the inspector and the context-menu actions agree
   /// on what was clicked), and shows the menu.
   Future<void> _onContextMenu(Offset globalPosition) async {
+    // A right-click on a callout is not a right-click on the element under it.
+    if (ref.read(canvasOverlayGestureClaimProvider)) return;
     // The PlatformContextMenu callback supplies the global position;
     // we need the canvas-local position for hit testing. Convert via
     // the render object so the conversion stays correct after the
@@ -401,7 +404,11 @@ class _SchematicGestureHandlerState
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
-    _pendingDoubleTapPosition = details.localPosition;
+    // A double-click on a callout is the callout's, never "pop out of this
+    // scope": the claim is set by the time the second press reaches here.
+    _pendingDoubleTapPosition = ref.read(canvasOverlayGestureClaimProvider)
+        ? null
+        : details.localPosition;
   }
 
   void _onDoubleTap() {
@@ -591,6 +598,10 @@ class _SchematicGestureHandlerState
     // A second pointer (trackpad pinch, second finger) means this is not a
     // click any more — cancel the pending selection.
     if (_activePointerCount > 1) _pressAborted = true;
+    // A callout drawn over the canvas took this pointer (its own Listener,
+    // deeper in the tree, saw the press first). The press is the callout's:
+    // it neither selects what lies beneath nor pans the canvas.
+    if (ref.read(canvasOverlayGestureClaimProvider)) return;
     // Middle button → pan. Left button → a click that selects, unless the
     // pointer moves past the tap slop, in which case it pans.
     final isMiddle = event.buttons & kMiddleMouseButton != 0;
@@ -955,10 +966,7 @@ class _SchematicGestureHandlerState
     if (bounds != null) {
       final transform = ref.read(viewportTransformProvider);
       final center =
-          Offset(
-                bounds.x + bounds.width / 2,
-                bounds.y + bounds.height / 2,
-              ) *
+          Offset(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2) *
               transform.zoom +
           transform.offset;
       if ((Offset.zero & box.size).contains(center)) anchor = center;

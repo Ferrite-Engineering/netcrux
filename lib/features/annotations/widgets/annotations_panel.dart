@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_annotations/crux_annotations.dart';
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
 import 'package:netcrux/features/annotations/providers/annotation_reveal_request.dart';
+import 'package:netcrux/features/annotations/providers/annotation_statuses_provider.dart';
 import 'package:netcrux/features/annotations/services/annotation_actions.dart';
 import 'package:netcrux/features/annotations/services/annotation_target_reveal.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -44,7 +46,8 @@ class AnnotationsPanel extends ConsumerWidget {
     final theme = Theme.of(context);
     final snapshot = ref.watch(annotationSnapshotProvider);
     final annotations = snapshot.annotations;
-    final rows = annotationPanelRows(annotations);
+    final statuses = ref.watch(annotationStatusesProvider);
+    final rows = annotationPanelRows(annotations, statuses: statuses);
     final revealId = ref.watch(annotationRevealRequestProvider);
     final revealIndex = revealId == null
         ? -1
@@ -99,6 +102,20 @@ class AnnotationsPanel extends ConsumerWidget {
                     itemBuilder: (context, i, {required flashing}) {
                       final row = rows[i];
                       final note = row.annotation;
+                      final group = row.groupStatus;
+                      if (group != null) {
+                        return CruxAnnotationGroup(
+                          key: ValueKey<String>(
+                            'annotationGroup-${group.name}',
+                          ),
+                          label: group == CruxAnnotationStatus.orphaned
+                              ? l10n.annotationsPanelOutsideScope(
+                                  row.layerNotes,
+                                )
+                              : l10n.annotationsPanelMissing(row.layerNotes),
+                          children: const <Widget>[],
+                        );
+                      }
                       if (note == null) {
                         return _LayerHeader(
                           layerId: row.layerId!,
@@ -109,6 +126,8 @@ class AnnotationsPanel extends ConsumerWidget {
                       return _AnnotationTile(
                         annotation: note,
                         flashing: flashing,
+                        drifted:
+                            statuses[note.id] == CruxAnnotationStatus.drifted,
                       );
                     },
                   ),
@@ -119,49 +138,80 @@ class AnnotationsPanel extends ConsumerWidget {
   }
 }
 
-/// One row of the Annotations panel: a note, or the header of a session
-/// layer.
+/// One row of the Annotations panel: a note, the header of a session layer,
+/// or the header of a status group ("Outside the current scope", "Missing
+/// from this design").
 @immutable
 class AnnotationPanelRow {
   /// A note row.
   const AnnotationPanelRow.note(Annotation this.annotation)
     : layerId = null,
       layerLabel = null,
-      layerNotes = 0;
+      layerNotes = 0,
+      groupStatus = null;
 
   /// A layer header row, over [layerNotes] notes.
   const AnnotationPanelRow.layer({
     required String this.layerId,
     required this.layerLabel,
     required this.layerNotes,
-  }) : annotation = null;
+  }) : annotation = null,
+       groupStatus = null;
 
-  /// The note, or `null` for a layer header.
+  /// A status group's header row, over [count] notes: the notes whose status
+  /// is [status], [CruxAnnotationStatus.orphaned] or
+  /// [CruxAnnotationStatus.unresolved].
+  const AnnotationPanelRow.group({
+    required CruxAnnotationStatus status,
+    required int count,
+  }) : groupStatus = status,
+       layerNotes = count,
+       annotation = null,
+       layerId = null,
+       layerLabel = null;
+
+  /// The note, or `null` for a header.
   final Annotation? annotation;
 
-  /// The layer a header heads, or `null` for a note.
+  /// The layer a header heads, or `null` for a note or a status group.
   final String? layerId;
 
   /// The layer's label.
   final String? layerLabel;
 
-  /// How many notes the layer holds.
+  /// How many notes the layer, or the status group, holds.
   final int layerNotes;
+
+  /// The status a group header heads, or `null` for a note or a layer.
+  final CruxAnnotationStatus? groupStatus;
 }
 
-/// The panel's rows: notes written outside any session first, then each
-/// session layer under its own header, in the order the layers first appear.
+/// The panel's rows: the notes the schematic on screen can show, then the
+/// notes outside the current scope, then the notes whose element the design
+/// no longer has, each group under its own header.
 ///
-/// A layer is one meeting's notes. Grouped, a week-old review reads as one
-/// named, collapsible thing with a date on it rather than as a dozen loose
-/// notes nobody remembers writing.
-List<AnnotationPanelRow> annotationPanelRows(List<Annotation> notes) {
+/// Within the first group, notes written outside any session come first,
+/// then each session layer under its own header, in the order the layers
+/// first appear. A layer is one meeting's notes. Grouped, a week-old review
+/// reads as one named, collapsible thing with a date on it rather than as a
+/// dozen loose notes nobody remembers writing.
+///
+/// [statuses] is the tab's `annotationStatusesProvider`; a note with no
+/// status (no design loaded) counts as shown, so the panel never hides a note
+/// it cannot classify.
+List<AnnotationPanelRow> annotationPanelRows(
+  List<Annotation> notes, {
+  Map<String, CruxAnnotationStatus> statuses =
+      const <String, CruxAnnotationStatus>{},
+}) {
+  final groups = cruxGroupByStatus(notes, (n) => statuses[n.id]);
+  final shown = groups.displayed;
   final rows = <AnnotationPanelRow>[
-    for (final n in notes)
+    for (final n in shown)
       if (n.sessionLayerId == null) AnnotationPanelRow.note(n),
   ];
   final layers = <String, List<Annotation>>{};
-  for (final n in notes) {
+  for (final n in shown) {
     final layer = n.sessionLayerId;
     if (layer != null) layers.putIfAbsent(layer, () => []).add(n);
   }
@@ -175,6 +225,15 @@ List<AnnotationPanelRow> annotationPanelRows(List<Annotation> notes) {
         ),
       )
       ..addAll(inLayer.map(AnnotationPanelRow.note));
+  }
+  for (final (status, inGroup) in <(CruxAnnotationStatus, List<Annotation>)>[
+    (CruxAnnotationStatus.orphaned, groups.orphaned),
+    (CruxAnnotationStatus.unresolved, groups.unresolved),
+  ]) {
+    if (inGroup.isEmpty) continue;
+    rows
+      ..add(AnnotationPanelRow.group(status: status, count: inGroup.length))
+      ..addAll(inGroup.map(AnnotationPanelRow.note));
   }
   return rows;
 }
@@ -262,11 +321,19 @@ class _LayerHeader extends ConsumerWidget {
 }
 
 class _AnnotationTile extends ConsumerWidget {
-  const _AnnotationTile({required this.annotation, required this.flashing});
+  const _AnnotationTile({
+    required this.annotation,
+    required this.flashing,
+    this.drifted = false,
+  });
   final Annotation annotation;
 
   /// True while the row answers a reveal request: a brief tint.
   final bool flashing;
+
+  /// True when the note's element changed since it was written: marked in
+  /// the drift amber, in words as well as colour, and spoken.
+  final bool drifted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -285,6 +352,7 @@ class _AnnotationTile extends ConsumerWidget {
     final kind = annotationTargetKindLabel(l10n, annotation.targetKind);
     final label = <String>[
       l10n.annotationsPanelRowSemantics(heading, kind, annotation.targetId),
+      if (drifted) l10n.annotationStatusDriftedSpoken,
       if (author != null) l10n.annotationsPanelRowAuthor(author),
       if (details.isNotEmpty) annotationSpokenText(details),
     ].join('. ');
@@ -325,6 +393,33 @@ class _AnnotationTile extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      // The suite's drift amber as the chip's ground and
+                      // border, the word in the theme's text colour, so it
+                      // reads in every palette and not by colour alone.
+                      if (drifted)
+                        Container(
+                          key: ValueKey<String>(
+                            'annotationDrifted-${annotation.id}',
+                          ),
+                          margin: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          decoration: BoxDecoration(
+                            color: kCruxAnnotationDriftedColor.withValues(
+                              alpha: 0.25,
+                            ),
+                            border: Border.all(
+                              color: kCruxAnnotationDriftedColor,
+                            ),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            l10n.annotationStatusDrifted,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       Text(
                         '$kind · ${annotation.targetId}'
                         '${author != null ? ' · $author' : ''}',

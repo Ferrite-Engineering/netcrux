@@ -39,6 +39,7 @@ import 'package:netcrux/services/collaboration/schematic_collaboration_service_p
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_registry_provider.dart';
 import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
+import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/schematic/cell_color_override_provider.dart';
 import 'package:netcrux/services/schematic/coi_filter_view_mode_provider.dart';
 import 'package:netcrux/services/schematic/net_activity_color_override_provider.dart';
@@ -78,52 +79,52 @@ class ProjectTabContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
     ref
-      ..listen<AsyncValue<NetlistModel?>>(
-        loadedNetlistProvider,
-        (previous, next) {
-          final model = next.value;
-          if (model == null) return;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!context.mounted) return;
-            // Only the design the tab settled on reaches the tree, and it is
-            // read again here rather than trusted from the change. A reload's
-            // loading state still carries the design it is replacing as its
-            // value, and when the replacement lands before the next frame —
-            // a small netlist, a cache hit — a session restore has already
-            // installed and navigated it by the time this runs. Handing the
-            // tree the carried value then would put the replaced design back
-            // and throw the restored scope to its root.
-            final current = ref.read(loadedNetlistProvider);
-            if (current.isLoading || !identical(current.value, model)) return;
-            // Only a model the tree does not already hold resets it. Whoever
-            // pushed this exact model in first — a session restore or a web
-            // deep link — has already navigated it, and a second setModel
-            // would throw that scope and expansion back to the root.
-            if (identical(ref.read(hierarchyTreeProvider).model, model)) return;
-            ref.read(hierarchyTreeProvider.notifier).setModel(model);
-          });
-          // Shared-workspace producer: publish this design's HDL source into
-          // the shared workspace (keyed by its input directory) so a peer that
-          // receives a cross-probe naming the same design can open NetCrux's
-          // source even with nothing loaded. Best-effort + gated on the CXP
-          // server running. The browser has neither peers nor a file system to
-          // derive a design id from, so it skips the step outright.
-          if (!ref.read(hdlElaborationSupportedProvider)) return;
-          final project = ref.read(currentProjectProvider);
-          final designId = cxpDesignIdForProject(project);
-          if (designId != null) {
-            unawaited(
-              publishDesignSourceArtifact(
-                ProviderScope.containerOf(context, listen: false),
-                serverRunning: ref.read(cruxCxpServerStatusProvider).running,
-                designId: designId,
-                sourcePath: project.sourceFiles.first,
-                topModule: model.topModule?.name ?? project.topModule,
-              ),
-            );
-          }
-        },
-      )
+      ..listen<AsyncValue<NetlistModel?>>(loadedNetlistProvider, (
+        previous,
+        next,
+      ) {
+        final model = next.value;
+        if (model == null) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          // Only the design the tab settled on reaches the tree, and it is
+          // read again here rather than trusted from the change. A reload's
+          // loading state still carries the design it is replacing as its
+          // value, and when the replacement lands before the next frame —
+          // a small netlist, a cache hit — a session restore has already
+          // installed and navigated it by the time this runs. Handing the
+          // tree the carried value then would put the replaced design back
+          // and throw the restored scope to its root.
+          final current = ref.read(loadedNetlistProvider);
+          if (current.isLoading || !identical(current.value, model)) return;
+          // Only a model the tree does not already hold resets it. Whoever
+          // pushed this exact model in first — a session restore or a web
+          // deep link — has already navigated it, and a second setModel
+          // would throw that scope and expansion back to the root.
+          if (identical(ref.read(hierarchyTreeProvider).model, model)) return;
+          ref.read(hierarchyTreeProvider.notifier).setModel(model);
+        });
+        // Shared-workspace producer: publish this design's HDL source into
+        // the shared workspace (keyed by its input directory) so a peer that
+        // receives a cross-probe naming the same design can open NetCrux's
+        // source even with nothing loaded. Best-effort + gated on the CXP
+        // server running. The browser has neither peers nor a file system to
+        // derive a design id from, so it skips the step outright.
+        if (!ref.read(hdlElaborationSupportedProvider)) return;
+        final project = ref.read(currentProjectProvider);
+        final designId = cxpDesignIdForProject(project);
+        if (designId != null) {
+          unawaited(
+            publishDesignSourceArtifact(
+              ProviderScope.containerOf(context, listen: false),
+              serverRunning: ref.read(cruxCxpServerStatusProvider).running,
+              designId: designId,
+              sourcePath: project.sourceFiles.first,
+              topModule: model.topModule?.name ?? project.topModule,
+            ),
+          );
+        }
+      })
       // ── collaborative presence ──────────────────────────────────────
       // Selection and scope are published on change rather than polled: both
       // are low-rate (a click, a breadcrumb push) so there is nothing to
@@ -311,6 +312,9 @@ class _SchematicCenter extends ConsumerWidget {
     final filterViewMode = ref.watch(coiFilterViewModeProvider);
 
     final canvasKey = ref.watch(schematicCanvasKeyProvider);
+    // The annotation callouts, drawn over the canvas and inside its gesture
+    // handler. Null in open core, where the canvas is left exactly as it was.
+    final calloutLayer = ref.watch(schematicCalloutLayerBuilderProvider);
     return laidOutAsync.when(
       // The scrollbars flank the gesture-handled canvas: dragging a thumb pans through the design's
       // laid-out bounds, and the thumbs track mouse/trackpad pan + zoom
@@ -328,36 +332,49 @@ class _SchematicCenter extends ConsumerWidget {
       // tree and the search dialog, which are real widgets with real
       // semantics; this label is what tells a reader the canvas has content
       // and roughly how much.
-      data: (laidOut) => SchematicScrollbars(
-        bounds: laidOut.layout.bounds,
-        child: SchematicGestureHandler(
-          child: Semantics(
-            label: L10N
-                .of(context)
-                .accessibilitySchematicActive(
-                  laidOut.graph.cells.length,
-                  laidOut.graph.edges.length,
-                ),
-            child: RepaintBoundary(
-              key: canvasKey,
-              child: SchematicCanvas(
-                laidOut: laidOut,
-                transform: transform,
-                selection: selection,
-                overlay: overlay,
-                cellBodyPainterFactory: cellBodyPainterFactory,
-                netActivityColorOverride: activityColorOverride,
-                cellColorOverride: cellColorOverride,
-                crossingOverlay: crossingOverlay,
-                annotationMarkers: annotationMarkers,
-                presenceOverlay: presenceOverlay,
-                filterViewMode: filterViewMode,
-                statsSink: _NotifierStatsSink(statsNotifier),
+      data: (laidOut) {
+        final canvas = Semantics(
+          label: L10N
+              .of(context)
+              .accessibilitySchematicActive(
+                laidOut.graph.cells.length,
+                laidOut.graph.edges.length,
               ),
+          child: RepaintBoundary(
+            key: canvasKey,
+            child: SchematicCanvas(
+              laidOut: laidOut,
+              transform: transform,
+              selection: selection,
+              overlay: overlay,
+              cellBodyPainterFactory: cellBodyPainterFactory,
+              netActivityColorOverride: activityColorOverride,
+              cellColorOverride: cellColorOverride,
+              crossingOverlay: crossingOverlay,
+              annotationMarkers: annotationMarkers,
+              presenceOverlay: presenceOverlay,
+              filterViewMode: filterViewMode,
+              statsSink: _NotifierStatsSink(statsNotifier),
             ),
           ),
-        ),
-      ),
+        );
+        return SchematicScrollbars(
+          bounds: laidOut.layout.bounds,
+          child: SchematicGestureHandler(
+            // Outside the RepaintBoundary the PNG export captures: a callout
+            // is an on-screen aid, not part of the exported schematic.
+            child: calloutLayer == null
+                ? canvas
+                : Stack(
+                    fit: StackFit.expand,
+                    children: <Widget>[
+                      canvas,
+                      Positioned.fill(child: Builder(builder: calloutLayer)),
+                    ],
+                  ),
+          ),
+        );
+      },
       loading: () => const _SchematicLayoutLoading(),
       error: (error, stackTrace) => SchematicErrorView(error: error),
     );
@@ -406,12 +423,9 @@ class _SchematicLayoutLoadingState
     // Repaint the elapsed readout a few times a second. The widget is
     // unmounted the instant the layout completes (the canvas swaps to the
     // data state), so the timer is naturally short-lived.
-    _ticker = Timer.periodic(
-      const Duration(milliseconds: 250),
-      (_) {
-        if (mounted) setState(() {});
-      },
-    );
+    _ticker = Timer.periodic(const Duration(milliseconds: 250), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
