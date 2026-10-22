@@ -46,7 +46,7 @@ From NetCrux 1.2 you can lay out just the neighbourhood of an element instead of
 
 1. **Start from a cell, pin, port or net.**
 
-    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search](navigating.md) and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead.
+    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead.
 
 2. **Read the cone.**
 
