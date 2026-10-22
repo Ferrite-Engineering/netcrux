@@ -146,6 +146,16 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
     },
   ),
   TelemetryCatalogEvent(
+    'cone_view.opened',
+    enumeratedValues: <String, List<String>>{
+      // `ConeViewDirection.values` under `telemetryEnumToken`.
+      'direction': <String>['fan_in', 'fan_in_and_fan_out'],
+      // Whether the walk had a depth limit (open core) or none (Pro). The
+      // depth itself is never sent.
+      'form': <String>['limited', 'transitive'],
+    },
+  ),
+  TelemetryCatalogEvent(
     'export.completed',
     enumeratedValues: <String, List<String>>{
       // `NetcruxExportKind.values`.

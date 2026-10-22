@@ -41,6 +41,7 @@ class NetcruxActionContext {
     this.collaborationAvailable = false,
     this.inCollabSession = false,
     this.hasSessionNotes = false,
+    this.inConeView = false,
   });
 
   /// Whether the workspace has an active tab. Gates every action that
@@ -137,6 +138,11 @@ class NetcruxActionContext {
   /// to write minutes of.
   final bool hasSessionNotes;
 
+  /// Whether the active tab's canvas shows a cone view rather than the
+  /// whole scope. Gates Show Whole Scope, and lets the unlimited cone view
+  /// re-lay the cone on show with nothing selected.
+  final bool inConeView;
+
   @override
   bool operator ==(Object other) =>
       other is NetcruxActionContext &&
@@ -157,7 +163,8 @@ class NetcruxActionContext {
       other.isBrowser == isBrowser &&
       other.collaborationAvailable == collaborationAvailable &&
       other.inCollabSession == inCollabSession &&
-      other.hasSessionNotes == hasSessionNotes;
+      other.hasSessionNotes == hasSessionNotes &&
+      other.inConeView == inConeView;
 
   @override
   int get hashCode => Object.hash(
@@ -179,5 +186,6 @@ class NetcruxActionContext {
     collaborationAvailable,
     inCollabSession,
     hasSessionNotes,
+    inConeView,
   );
 }

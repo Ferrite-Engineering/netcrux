@@ -40,6 +40,28 @@ Where the one-step overlay stops at the immediate neighbors, the **Cone of Influ
 
     Choose **Clear Cone of Influence** (or press ++escape++) to drop the overlay and return to the plain schematic.
 
+## Cone view, from NetCrux 1.2 {#cone-view}
+
+From NetCrux 1.2 you can lay out just the neighbourhood of an element instead of the whole scope. On a large flat netlist (a post-synthesis core with tens of thousands of cells in one module) the whole scope takes a while to lay out and is hard to read, while the question is usually local: what drives this pin. A cone view answers it with a small schematic of only the cells that matter.
+
+1. **Start from a cell, pin, port or net.**
+
+    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search](navigating.md) and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead.
+
+2. **Read the cone.**
+
+    The canvas shows the element and the cells that drive it, two levels deep, under their usual names. The bar above the canvas says what you are looking at, for example "Cone view of `u_alu`: 14 of 16384 cells". Selecting, tracing, Zoom to Selection, the Inspector and cross-probing work inside the cone as they do on the whole scope.
+
+3. **Change the direction or the depth.**
+
+    In the bar, choose **Fan-in** (what drives the element) or **Fan-in and fan-out** (what drives it and what it drives), and a depth of 1, 2, 3, 4, 6 or 8 levels. One level is the same set **Show Fanin** lights. **All levels** <span class="tier tier-pro">Pro</span> lays out the whole cone, as far as [Cone of Influence](#cone) walks; it is also `View > Cone View, All Levels`. To start a new cone from another cell, right-click it in the cone and choose **Cone View**: the direction and depth stay as you set them.
+
+4. **Go back to the whole scope.**
+
+    Choose **Show Whole Scope** in the bar or `View > Show Whole Scope`. The whole scope comes back from the layout cache, framed on the element you started from, with your selection kept. Moving to another scope (pushing into a cell, popping out, the Hierarchy or the breadcrumb) also ends the cone view.
+
+The cone view is in NetCrux Open Core, at every depth up to eight levels, in the desktop app and the web viewer. Panning moves over the cone only: the rest of the scope is not drawn, and wires that leave the cone are not shown. A clock or reset net too wide to draw in the whole scope is not drawn in the cone either. A cone view is not saved in a session or a workspace.
+
 ## X-Trace <span class="tier tier-pro">Pro</span> {#x-trace}
 
 **X-Trace** walks the driver chain backward from a selected element, one step at a time, and reports *why* the walk stopped rather than just where. Results land in the **X-Trace** panel, which lists the chain step by step — each row naming the net and the cell or boundary port that drives it — and clicking a row selects that element and reveals it on the canvas. A name Yosys generated, which embeds the whole source path, shows as its cell type and `file:line` (`$add  dsp_mac.v:77`, or `$add  dsp_mac.v:77  (Y)` for the net it drives); hover the row for the full name. The whole chain is highlighted on the schematic at the same time.

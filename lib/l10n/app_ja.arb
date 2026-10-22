@@ -2593,5 +2593,36 @@
   "timingPathFidelitySpan": "always ブロック",
   "timingPathFidelityUnmapped": "未マッピング",
   "menuShowTimingPathsThroughRegister": "このレジスタを通るタイミングパスを表示",
-  "menuShowTimingPathsNeedsSimcrux": "このレジスタを通るタイミングパスを表示するには、クロスプローブを有効にして SimCrux を起動してください。"
+  "menuShowTimingPathsNeedsSimcrux": "このレジスタを通るタイミングパスを表示するには、クロスプローブを有効にして SimCrux を起動してください。",
+  "actionShowConeView": "コーンビュー",
+  "actionShowConeViewAllLevels": "コーンビュー（全レベル）",
+  "actionExitConeView": "スコープ全体を表示",
+  "coneViewSummary": "{root} のコーンビュー: {scopeCells} セル中 {coneCells} セル",
+  "@coneViewSummary": {
+    "placeholders": {
+      "root": {
+        "type": "String"
+      },
+      "coneCells": {
+        "type": "int"
+      },
+      "scopeCells": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDirection": "コーンの方向",
+  "coneViewFanIn": "ファンイン",
+  "coneViewFanInAndFanOut": "ファンインとファンアウト",
+  "coneViewDepth": "コーンの深さ",
+  "coneViewDepthLevels": "{count} レベル",
+  "@coneViewDepthLevels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDepthAll": "全レベル",
+  "coneViewLayoutInProgress": "コーンビューをレイアウト中…"
 }

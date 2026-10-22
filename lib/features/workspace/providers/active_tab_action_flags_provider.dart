@@ -53,6 +53,7 @@ class ActiveTabActionFlags {
     this.fsmFocused = false,
     this.activityColoringActive = false,
     this.hasSessionNotes = false,
+    this.inConeView = false,
   });
 
   /// Whether the active tab has a non-empty laid-out schematic.
@@ -99,6 +100,10 @@ class ActiveTabActionFlags {
   /// session is over.
   final bool hasSessionNotes;
 
+  /// Whether the active tab's canvas shows a cone view rather than the
+  /// whole scope.
+  final bool inConeView;
+
   /// Returns a copy with the given fields replaced.
   ActiveTabActionFlags copyWith({
     bool? hasNetlist,
@@ -114,6 +119,7 @@ class ActiveTabActionFlags {
     bool? fsmFocused,
     bool? activityColoringActive,
     bool? hasSessionNotes,
+    bool? inConeView,
   }) => ActiveTabActionFlags(
     hasNetlist: hasNetlist ?? this.hasNetlist,
     hasSelection: hasSelection ?? this.hasSelection,
@@ -129,6 +135,7 @@ class ActiveTabActionFlags {
     activityColoringActive:
         activityColoringActive ?? this.activityColoringActive,
     hasSessionNotes: hasSessionNotes ?? this.hasSessionNotes,
+    inConeView: inConeView ?? this.inConeView,
   );
 
   @override
@@ -146,7 +153,8 @@ class ActiveTabActionFlags {
       other.resetCrossingFocused == resetCrossingFocused &&
       other.fsmFocused == fsmFocused &&
       other.activityColoringActive == activityColoringActive &&
-      other.hasSessionNotes == hasSessionNotes;
+      other.hasSessionNotes == hasSessionNotes &&
+      other.inConeView == inConeView;
 
   @override
   int get hashCode => Object.hash(
@@ -163,6 +171,7 @@ class ActiveTabActionFlags {
     fsmFocused,
     activityColoringActive,
     hasSessionNotes,
+    inConeView,
   );
 }
 
@@ -223,6 +232,9 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
       return graph != null && !graph.isEmpty;
     }
 
+    bool coneView(AsyncValue<LaidOutGraph?> laidOut) =>
+        laidOut.value?.cone != null;
+
     bool activityColoring(Map<String, Color>? overrides) =>
         overrides != null && overrides.isNotEmpty;
 
@@ -232,7 +244,12 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
     final subs = <ProviderSubscription<Object?>>[
       container.listen<AsyncValue<LaidOutGraph?>>(
         currentLaidOutGraphProvider,
-        (_, next) => _apply((s) => s.copyWith(hasNetlist: netlistLoaded(next))),
+        (_, next) => _apply(
+          (s) => s.copyWith(
+            hasNetlist: netlistLoaded(next),
+            inConeView: coneView(next),
+          ),
+        ),
       ),
       container.listen<Selection>(
         selectedElementProvider,
@@ -296,6 +313,7 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
 
     return ActiveTabActionFlags(
       hasNetlist: netlistLoaded(container.read(currentLaidOutGraphProvider)),
+      inConeView: coneView(container.read(currentLaidOutGraphProvider)),
       hasSelection: container.read(selectedElementProvider).isNotEmpty,
       hasTraceOverlay: !container.read(traceOverlayProvider).isEmpty,
       hasXTraceResult: !container.read(xTraceResultProvider).isEmpty,

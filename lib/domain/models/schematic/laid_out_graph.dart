@@ -7,6 +7,7 @@ import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
+import 'package:netcrux/domain/models/trace/cone_view.dart';
 
 /// A [SchematicGraph] paired with the [NetlistLayout] elkjs produced
 /// for it. Carries enough metadata that the renderer can paint
@@ -22,6 +23,7 @@ class LaidOutGraph {
     required this.graph,
     required this.layout,
     this.symbolCells = const <String, Set<String>>{},
+    this.cone,
   });
 
   /// Empty pair — empty schematic + empty layout. The renderer paints
@@ -48,6 +50,12 @@ class LaidOutGraph {
   /// which has no symbols.
   final Map<String, Set<String>> symbolCells;
 
+  /// The cone this graph is, when the canvas shows a cone view rather than
+  /// the whole scope: [graph] then holds only the cone's cells, boundary
+  /// ports and the wires among them, under the ids the whole scope gives
+  /// them. Null for a whole-scope layout.
+  final ConeViewExtent? cone;
+
   /// True when there is nothing to paint.
   bool get isEmpty => graph.isEmpty || layout.nodes.isEmpty;
 
@@ -57,10 +65,11 @@ class LaidOutGraph {
       (other is LaidOutGraph &&
           other.graph == graph &&
           other.layout == layout &&
+          other.cone == cone &&
           _symbolCellsEqual(other.symbolCells, symbolCells));
 
   @override
-  int get hashCode => Object.hash(graph, layout, symbolCells.length);
+  int get hashCode => Object.hash(graph, layout, symbolCells.length, cone);
 
   static bool _symbolCellsEqual(
     Map<String, Set<String>> a,

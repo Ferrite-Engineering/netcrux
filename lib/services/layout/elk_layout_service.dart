@@ -119,6 +119,27 @@ abstract interface class LayoutDiskCache {
 /// with more is drawn as an implied global net (clock, reset, enables).
 const int highFanoutEdgeCap = 32;
 
+/// The part of a scope a cone view lays out: the cells, boundary ports and
+/// wires [buildElkInput] keeps, by the ids the whole scope gives them.
+@immutable
+class ElkSubgraph {
+  /// Creates a sub-graph selection.
+  const ElkSubgraph({
+    required this.cellIds,
+    required this.boundaryPortIds,
+    required this.edgeIds,
+  });
+
+  /// The cells kept, by cell name.
+  final Set<String> cellIds;
+
+  /// The boundary ports kept, by `port:<name>` id.
+  final Set<String> boundaryPortIds;
+
+  /// The wires kept, by `netEdgeId` id.
+  final Set<String> edgeIds;
+}
+
 /// Builds the ELK-compatible input JSON for a single module out of a
 /// [NetlistModel]. Pure function — exposed at the top level so it can be
 /// unit-tested without spinning up a JS runtime.
@@ -133,17 +154,29 @@ const int highFanoutEdgeCap = 32;
 /// symbol, and its node takes that symbol's shape instead of the built-in
 /// one (see [symbolCellNodeSize] and [symbolPortCentres]). With no
 /// [symbols] the input is exactly what it was before symbols existed.
+///
+/// With [only], the input holds just that part of the scope: the cells,
+/// boundary ports and wires it names, each built exactly as for the whole
+/// scope and under the same id. A net too wide to route in the whole scope
+/// stays unrouted in the part, so a cone view draws a global net the way
+/// the whole scope does. With no [only] the input is the whole scope's,
+/// byte for byte, so the cached layouts of whole scopes keep their keys.
 Map<String, Object?> buildElkInput(
   Module module, {
   CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  ElkSubgraph? only,
 }) {
   final children = <Map<String, Object?>>[];
   final edges = <Map<String, Object?>>[];
+  var cellCount = 0;
 
   // Module ports become nodes on the boundary so ELK can route edges to
   // them as endpoints.
   for (final entry in module.ports.entries) {
     final port = entry.value;
+    if (only != null && !only.boundaryPortIds.contains('port:${port.name}')) {
+      continue;
+    }
     children.add(<String, Object?>{
       'id': 'port:${port.name}',
       'width': 16,
@@ -170,6 +203,8 @@ Map<String, Object?> buildElkInput(
   // because the importer reads only one of the two.
   for (final entry in module.cells.entries) {
     final cell = entry.value;
+    if (only != null && !only.cellIds.contains(cell.name)) continue;
+    cellCount++;
     // A cell drawn with a custom symbol gets a node of the drawing's shape
     // with its pins at the anchors; every other cell keeps the built-in
     // geometry below, byte for byte.
@@ -224,6 +259,7 @@ Map<String, Object?> buildElkInput(
   for (final group in enumerateNetEdges(module)) {
     if (group.edges.length > highFanoutEdgeCap) continue;
     for (final edge in group.edges) {
+      if (only != null && !only.edgeIds.contains(edge.id)) continue;
       edges.add(<String, Object?>{
         'id': edge.id,
         'sources': <String>[edge.sourcePortId],
@@ -251,7 +287,7 @@ Map<String, Object?> buildElkInput(
     'elk.direction': 'RIGHT',
     'elk.spacing.nodeNode': '20',
     'elk.layered.spacing.nodeNodeBetweenLayers': '30',
-    if (module.cells.length > largeScopeCellThreshold) ...<String, Object?>{
+    if (cellCount > largeScopeCellThreshold) ...<String, Object?>{
       'elk.layered.thoroughness': '1',
       'elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
     },
@@ -576,6 +612,7 @@ class ElkLayoutService {
     LayoutDiskCache? diskCache,
     this.maxMemCacheEntries = 16,
     this.maxMemCacheBytes = 64 * 1024 * 1024,
+    this.maxConeCacheEntries = 8,
   }) : // The public params are `hostFactory` / `diskCache`; an initializing
        // formal can't map them to the private fields without leaking the
        // underscore into the API.
@@ -646,9 +683,21 @@ class ElkLayoutService {
 
   int _memCacheBytes = 0;
 
+  /// Maximum number of cone-view layouts retained in [_coneCache].
+  final int maxConeCacheEntries;
+
+  /// In-session LRU memory cache of cone-view layouts (a layout of part of
+  /// a scope), keyed by [_cacheKey] like [_memCache] but separate from it,
+  /// so a run of cone views never pushes a whole scope's layout out.
+  final Map<String, NetlistLayout> _coneCache = <String, NetlistLayout>{};
+
   /// Number of layouts currently held in the in-session memory cache.
   @visibleForTesting
   int get memCacheLength => _memCache.length;
+
+  /// Number of cone-view layouts currently held in their memory cache.
+  @visibleForTesting
+  int get coneCacheLength => _coneCache.length;
 
   /// Summed size proxy of the layouts currently held in the memory cache.
   @visibleForTesting
@@ -677,13 +726,38 @@ class ElkLayoutService {
   /// Cells whose type has an entry in [symbols] are laid out in their custom
   /// symbol's shape (see [buildElkInput]); that changes the ELK input, and
   /// so the cache key, only for scopes that contain such a cell.
+  ///
+  /// With [only], the layout is of that part of the scope (a cone view; see
+  /// [buildElkInput]). Such a layout is cheap to solve again, so it is kept
+  /// in a small memory cache of its own ([maxConeCacheEntries]) and never
+  /// on disk: cone views never evict a whole scope's layout from either
+  /// cache, and the whole scope's layout survives any number of them.
   Future<NetlistLayout> layout(
     Module module, {
     CellSymbolGeometries symbols = CellSymbolGeometries.none,
+    ElkSubgraph? only,
   }) async {
-    final input = buildElkInput(module, symbols: symbols);
+    final input = buildElkInput(module, symbols: symbols, only: only);
     final inputJson = jsonEncode(input);
     final key = _cacheKey(inputJson);
+
+    if (only != null) {
+      final cone = _coneCache.remove(key);
+      if (cone != null) {
+        _coneCache[key] = cone;
+        return cone;
+      }
+      final resultJson = await _solve(
+        inputJson,
+        timeout: layoutTimeoutFor(elementCount: elkElementCount(input)),
+      );
+      final layout = _parseLayout(resultJson);
+      _coneCache[key] = layout;
+      while (_coneCache.length > maxConeCacheEntries) {
+        _coneCache.remove(_coneCache.keys.first);
+      }
+      return layout;
+    }
 
     final cached = _lookupMemCache(key);
     if (cached != null) return cached;
@@ -831,6 +905,7 @@ class ElkLayoutService {
     _isolate = null;
     _memCache.clear();
     _memCacheBytes = 0;
+    _coneCache.clear();
   }
 
   Future<void> _ensureInitialized() {

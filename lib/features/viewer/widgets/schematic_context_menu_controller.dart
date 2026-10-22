@@ -11,6 +11,7 @@ import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dar
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/services/cone_view_controller.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extensions_provider.dart';
@@ -30,6 +31,10 @@ enum SchematicContextMenuAction {
 
   /// Runs the fanout trace anchored on the right-clicked element.
   traceFanout,
+
+  /// Lays out the cone of the right-clicked element in place of the scope,
+  /// as View > Cone View does for the selection.
+  coneView,
 
   /// Selects the parent scope of the right-clicked element in the
   /// hierarchy tree on the left pane.
@@ -107,6 +112,10 @@ class SchematicContextMenuController {
         child: Text(l10n.contextMenuTraceFanout),
       ),
       PopupMenuItem<Object>(
+        value: SchematicContextMenuAction.coneView,
+        child: Text(l10n.actionShowConeView),
+      ),
+      PopupMenuItem<Object>(
         value: SchematicContextMenuAction.findInHierarchy,
         child: Text(l10n.contextMenuFindInHierarchy),
       ),
@@ -170,6 +179,8 @@ class SchematicContextMenuController {
       case SchematicContextMenuAction.traceFanout:
         ref.read(selectedElementProvider.notifier).select(target);
         traceController.showFanout();
+      case SchematicContextMenuAction.coneView:
+        ConeViewController(ref.read).enter(root: target);
       case SchematicContextMenuAction.findInHierarchy:
         _findInHierarchy();
       case SchematicContextMenuAction.openInInspector:

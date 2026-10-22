@@ -32,6 +32,7 @@ void main() {
     paneCount: 2,
     // Two tabs in the active pane, so Next / Previous Tab are live too.
     tabCountInActivePane: 2,
+    inConeView: true,
   );
 
   group('command-palette reachability', () {
@@ -268,6 +269,70 @@ void main() {
           reason: '$action must enable once something is selected',
         );
       }
+    });
+
+    test('the cone view needs a selection, not a laid-out scope', () {
+      // A scope too large to lay out quickly is the case the cone view is
+      // for, so a selection made from search while the layout runs is
+      // enough.
+      const selectedWhileLaying = NetcruxActionContext(
+        hasOpenTab: true,
+        hasSelection: true,
+      );
+      expect(
+        isActionEnabled(NetcruxAction.showConeView, selectedWhileLaying),
+        isTrue,
+      );
+      expect(
+        isActionEnabled(
+          NetcruxAction.showConeView,
+          const NetcruxActionContext(hasOpenTab: true, hasNetlist: true),
+        ),
+        isFalse,
+      );
+    });
+
+    test('every level needs a selection or a cone on show', () {
+      const inCone = NetcruxActionContext(hasOpenTab: true, inConeView: true);
+      expect(
+        isActionEnabled(NetcruxAction.showConeViewAllLevels, inCone),
+        isTrue,
+      );
+      expect(
+        isActionEnabled(
+          NetcruxAction.showConeViewAllLevels,
+          const NetcruxActionContext(hasOpenTab: true, hasNetlist: true),
+        ),
+        isFalse,
+      );
+    });
+
+    test('Show Whole Scope greys out until a cone is on show', () {
+      expect(isActionEnabled(NetcruxAction.exitConeView, loaded), isTrue);
+      expect(
+        isActionEnabled(
+          NetcruxAction.exitConeView,
+          const NetcruxActionContext(
+            hasOpenTab: true,
+            hasNetlist: true,
+            hasSelection: true,
+          ),
+        ),
+        isFalse,
+      );
+    });
+
+    test('the browser offers the cone view but not every level', () {
+      const browser = NetcruxActionContext(
+        hasOpenTab: true,
+        hasSelection: true,
+        isBrowser: true,
+      );
+      expect(isActionVisible(NetcruxAction.showConeView, browser), isTrue);
+      expect(
+        isActionVisible(NetcruxAction.showConeViewAllLevels, browser),
+        isFalse,
+      );
     });
 
     test('everything is enabled in the fully-loaded split-pane context', () {

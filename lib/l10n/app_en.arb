@@ -3311,5 +3311,65 @@
   "menuShowTimingPathsNeedsSimcrux": "Start SimCrux with cross-probing on to show the timing paths through this register.",
   "@menuShowTimingPathsNeedsSimcrux": {
     "description": "Tooltip of the disabled 'Show timing paths through this register' entry when no SimCrux is running with cross-probing on."
+  },
+  "actionShowConeView": "Cone View",
+  "@actionShowConeView": {
+    "description": "View menu, command palette and schematic context-menu label: lay out only the neighbourhood of the selected cell, pin or wire (its fan-in cone, or fan-in and fan-out, to a chosen depth) in place of the whole scope. Open Core."
+  },
+  "actionShowConeViewAllLevels": "Cone View, All Levels",
+  "@actionShowConeViewAllLevels": {
+    "description": "View menu and command palette label: lay out the whole cone of the selection with no depth limit. Pro feature, badged."
+  },
+  "actionExitConeView": "Show Whole Scope",
+  "@actionExitConeView": {
+    "description": "View menu, command palette and cone-view bar button: leave the cone view and lay out the whole scope again."
+  },
+  "coneViewSummary": "{scopeCells, plural, =1{Cone view of {root}: {coneCells} of 1 cell} other{Cone view of {root}: {coneCells} of {scopeCells} cells}}",
+  "@coneViewSummary": {
+    "description": "Text of the bar above the schematic while it shows a cone view, also announced to screen readers. {root} is the name of the cell, pin, port or net the cone grows from; {coneCells} the cells laid out; {scopeCells} the cells in the whole scope.",
+    "placeholders": {
+      "root": {
+        "type": "String"
+      },
+      "coneCells": {
+        "type": "int"
+      },
+      "scopeCells": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDirection": "Cone direction",
+  "@coneViewDirection": {
+    "description": "Accessible name of the segmented control in the cone-view bar that chooses between fan-in and fan-in and fan-out."
+  },
+  "coneViewFanIn": "Fan-in",
+  "@coneViewFanIn": {
+    "description": "Cone-view bar segment: the cone holds what drives the root."
+  },
+  "coneViewFanInAndFanOut": "Fan-in and fan-out",
+  "@coneViewFanInAndFanOut": {
+    "description": "Cone-view bar segment: the cone holds what drives the root and what the root drives."
+  },
+  "coneViewDepth": "Cone depth",
+  "@coneViewDepth": {
+    "description": "Accessible name of the pop-up button in the cone-view bar that chooses how many levels the cone walks."
+  },
+  "coneViewDepthLevels": "{count, plural, =1{1 level} other{{count} levels}}",
+  "@coneViewDepthLevels": {
+    "description": "A depth choice in the cone-view bar: how many levels of cells the cone walks from its root.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDepthAll": "All levels",
+  "@coneViewDepthAll": {
+    "description": "The depth choice in the cone-view bar with no limit: the whole cone. Pro; the tier suffix is appended in code."
+  },
+  "coneViewLayoutInProgress": "Laying out the cone view…",
+  "@coneViewLayoutInProgress": {
+    "description": "Progress message on the schematic canvas while the layout of a cone view runs."
   }
 }

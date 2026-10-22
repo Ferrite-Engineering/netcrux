@@ -21,6 +21,7 @@ import 'package:netcrux/features/project/providers/elaboration_diagnostics_provi
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/source_pane/providers/source_pane_state_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
+import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -89,6 +90,9 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     selectedElementProvider.overrideWith(SelectedElementNotifier.new),
     traceOverlayProvider.overrideWith(TraceOverlayNotifier.new),
     viewportTransformProvider.overrideWith(ViewportTransformNotifier.new),
+    // The tab's cone view: it reads the tab's hierarchy to end itself when
+    // the scope changes, and the tab's layout pipeline reads it.
+    coneViewProvider.overrideWith(ConeViewNotifier.new),
     // Per-tab pending "reveal this cell" request (search jump-to-element).
     // Scoped alongside the viewport + selection it drives so a reveal acts
     // on the focused tab's canvas.

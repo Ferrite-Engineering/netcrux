@@ -22,7 +22,8 @@ import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 ///
 /// - **File** — New | Open/Import | Save | Export | Close | Reset |
 ///   Collaborative session
-/// - **View** — Command Palette | Zoom | Panels | Panes | Tabs | Appearance
+/// - **View** — Command Palette | Zoom | Cone view | Panels | Panes | Tabs |
+///   Appearance
 /// - **Navigate** — Scope | Trace overlays + Zoom to Selection | Cone of
 ///   influence | X-trace | Diff
 /// - **Search** — Find
@@ -101,6 +102,13 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
   ActionCategory.view: [
     [NetcruxAction.openCommandPalette],
     [NetcruxAction.zoomIn, NetcruxAction.zoomOut, NetcruxAction.zoomFitAll],
+    // What the canvas lays out: the cone around the selection, or the
+    // whole scope again.
+    [
+      NetcruxAction.showConeView,
+      NetcruxAction.showConeViewAllLevels,
+      NetcruxAction.exitConeView,
+    ],
     [
       NetcruxAction.toggleHierarchyTree,
       NetcruxAction.toggleInspector,

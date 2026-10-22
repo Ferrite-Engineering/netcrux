@@ -2593,5 +2593,36 @@
   "timingPathFidelitySpan": "always 块",
   "timingPathFidelityUnmapped": "未映射",
   "menuShowTimingPathsThroughRegister": "显示经过此寄存器的时序路径",
-  "menuShowTimingPathsNeedsSimcrux": "启动 SimCrux 并开启交叉探测，即可显示经过此寄存器的时序路径。"
+  "menuShowTimingPathsNeedsSimcrux": "启动 SimCrux 并开启交叉探测，即可显示经过此寄存器的时序路径。",
+  "actionShowConeView": "锥视图",
+  "actionShowConeViewAllLevels": "锥视图（全部层级）",
+  "actionExitConeView": "显示整个作用域",
+  "coneViewSummary": "{root} 的锥视图：共 {scopeCells} 个单元，显示 {coneCells} 个",
+  "@coneViewSummary": {
+    "placeholders": {
+      "root": {
+        "type": "String"
+      },
+      "coneCells": {
+        "type": "int"
+      },
+      "scopeCells": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDirection": "锥方向",
+  "coneViewFanIn": "扇入",
+  "coneViewFanInAndFanOut": "扇入和扇出",
+  "coneViewDepth": "锥深度",
+  "coneViewDepthLevels": "{count} 层",
+  "@coneViewDepthLevels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDepthAll": "全部层级",
+  "coneViewLayoutInProgress": "正在布局锥视图…"
 }

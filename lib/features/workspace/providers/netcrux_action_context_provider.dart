@@ -48,5 +48,6 @@ final netcruxActionContextProvider = Provider<NetcruxActionContext>((ref) {
     collaborationAvailable: ref.watch(collaborationAvailableProvider),
     inCollabSession: ref.watch(collabSessionLiveProvider),
     hasSessionNotes: flags.hasSessionNotes,
+    inConeView: flags.inConeView,
   );
 }, name: 'netcruxActionContextProvider');

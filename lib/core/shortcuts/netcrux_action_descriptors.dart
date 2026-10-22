@@ -284,6 +284,24 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isEnabled: _requiresSelection,
   ),
 
+  // ── Cone view — menu + palette ──────────────────────────────────────
+  // Grows from the selection, so it needs one; it does not need the scope
+  // laid out, which is the point on a scope too large to lay out quickly.
+  // The unlimited form also re-lays a cone already on show at every level
+  // with nothing selected. Leaving greys out until a cone is on show.
+  NetcruxAction.showConeView => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isEnabled: _requiresSelection,
+  ),
+  NetcruxAction.showConeViewAllLevels => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isEnabled: _requiresSelectionOrConeView,
+  ),
+  NetcruxAction.exitConeView => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isEnabled: _requiresConeView,
+  ),
+
   // ── Zoom to Selection — toolbar + menu + palette, needs a selection ──
   // Frames the selection, plus whatever a trace overlay seeded from it
   // highlights. With nothing selected there is nothing to frame.
@@ -514,6 +532,9 @@ bool _requiresMultipleTabs(NetcruxActionContext c) =>
     c.tabCountInActivePane > 1;
 bool _requiresNetlist(NetcruxActionContext c) => c.hasNetlist;
 bool _requiresSelection(NetcruxActionContext c) => c.hasSelection;
+bool _requiresConeView(NetcruxActionContext c) => c.inConeView;
+bool _requiresSelectionOrConeView(NetcruxActionContext c) =>
+    c.hasSelection || c.inConeView;
 bool _requiresOverlayOrSelection(NetcruxActionContext c) =>
     c.hasTraceOverlay || c.hasSelection || c.hasCrossingSelection;
 bool _requiresTraceOverlay(NetcruxActionContext c) => c.hasTraceOverlay;

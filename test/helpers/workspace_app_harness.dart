@@ -45,22 +45,34 @@ class RowLayoutService extends ElkLayoutService {
   Future<NetlistLayout> layout(
     Module module, {
     CellSymbolGeometries symbols = CellSymbolGeometries.none,
-  }) async => NetlistLayout(
-    nodes: <NodePosition>[
-      for (final (i, name) in module.cells.keys.indexed)
-        NodePosition(
-          id: name,
-          bounds: BoundingBox(x: 40 + i * 120.0, y: 40, width: 80, height: 40),
-        ),
-    ],
-    edges: const <EdgeRoute>[],
-    bounds: BoundingBox(
-      x: 0,
-      y: 0,
-      width: 80 + module.cells.length * 120.0,
-      height: 120,
-    ),
-  );
+    ElkSubgraph? only,
+  }) async {
+    final names = <String>[
+      for (final name in module.cells.keys)
+        if (only == null || only.cellIds.contains(name)) name,
+    ];
+    return NetlistLayout(
+      nodes: <NodePosition>[
+        for (final (i, name) in names.indexed)
+          NodePosition(
+            id: name,
+            bounds: BoundingBox(
+              x: 40 + i * 120.0,
+              y: 40,
+              width: 80,
+              height: 40,
+            ),
+          ),
+      ],
+      edges: const <EdgeRoute>[],
+      bounds: BoundingBox(
+        x: 0,
+        y: 0,
+        width: 80 + names.length * 120.0,
+        height: 120,
+      ),
+    );
+  }
 }
 
 /// The real `NetcruxApp`, booted the way `bootstrap()` wires it, for tests

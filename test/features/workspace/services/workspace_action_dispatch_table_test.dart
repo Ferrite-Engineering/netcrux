@@ -105,6 +105,9 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.openSession: _Routing.tabScoped,
   NetcruxAction.showConeOfInfluenceFanin: _Routing.tabScoped,
   NetcruxAction.showConeOfInfluenceFanout: _Routing.tabScoped,
+  NetcruxAction.showConeView: _Routing.tabScoped,
+  NetcruxAction.showConeViewAllLevels: _Routing.tabScoped,
+  NetcruxAction.exitConeView: _Routing.tabScoped,
   NetcruxAction.showXTrace: _Routing.tabScoped,
   // Reads the active tab's selection; with no tab it reports that nothing is
   // selected.

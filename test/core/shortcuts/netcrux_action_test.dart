@@ -67,6 +67,12 @@ void main() {
         NetcruxAction.showConeOfInfluenceFanin,
         NetcruxAction.showConeOfInfluenceFanout,
         NetcruxAction.clearConeOfInfluence,
+        // Cone view: View menu, palette and the canvas context menu (which
+        // Shift+F10 opens on the keyboard); no chord until usage shows one
+        // is wanted, like the cone-of-influence actions beside it.
+        NetcruxAction.showConeView,
+        NetcruxAction.showConeViewAllLevels,
+        NetcruxAction.exitConeView,
         // X-trace — same rationale as cone-of-
         // influence: palette / menu discoverable, default chord
         // bindings deferred until usage patterns settle.
@@ -248,6 +254,20 @@ void main() {
       );
     });
 
+    test('the cone view is open core, its every-level form Pro', () {
+      expect(NetcruxAction.showConeView.requiredTier, LicenseTier.openCore);
+      expect(NetcruxAction.showConeView.gatedFeature, isNull);
+      expect(NetcruxAction.exitConeView.requiredTier, LicenseTier.openCore);
+      expect(
+        NetcruxAction.showConeViewAllLevels.requiredTier,
+        LicenseTier.pro,
+      );
+      expect(
+        NetcruxAction.showConeViewAllLevels.gatedFeature,
+        NetcruxGatedFeature.coi,
+      );
+    });
+
     test('Pro X-trace action requires LicenseTier.pro', () {
       expect(NetcruxAction.showXTrace.requiredTier, LicenseTier.pro);
     });
@@ -330,6 +350,7 @@ void main() {
         NetcruxAction.exportReviewMinutes,
         NetcruxAction.showConeOfInfluenceFanin,
         NetcruxAction.showConeOfInfluenceFanout,
+        NetcruxAction.showConeViewAllLevels,
         NetcruxAction.showXTrace,
         NetcruxAction.showSourcePane,
         NetcruxAction.openSourceForElement,

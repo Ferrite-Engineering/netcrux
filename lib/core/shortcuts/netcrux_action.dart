@@ -144,6 +144,19 @@ enum NetcruxAction implements CruxAction {
   /// (clearing is never gated).
   clearConeOfInfluence,
 
+  /// Lay out only the neighbourhood of the selection: its fan-in cone (or
+  /// fan-in and fan-out) to a chosen depth, in place of the whole scope.
+  /// Open Core, the same tier as fan-in and fan-out.
+  showConeView,
+
+  /// The cone view with no depth limit: the whole cone of the selection.
+  /// Pro feature, beside Cone of Influence.
+  showConeViewAllLevels,
+
+  /// Leave the cone view and show the whole scope again. Always available
+  /// (leaving is never gated).
+  exitConeView,
+
   /// Compute the X-trace causal chain backward from the currently
   /// selected net at the current simulation time. Pro feature —
   /// requires [LicenseTier.pro] (see
@@ -496,6 +509,11 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.toggleSlackOverlay:
       case NetcruxAction.toggleAnnotationCallouts:
       case NetcruxAction.toggleTheme:
+      // What the canvas lays out is a View choice: the whole scope, or the
+      // cone around the selection.
+      case NetcruxAction.showConeView:
+      case NetcruxAction.showConeViewAllLevels:
+      case NetcruxAction.exitConeView:
         return ActionCategory.view;
       case NetcruxAction.jumpToTop:
       case NetcruxAction.popOutScope:
@@ -635,6 +653,12 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionShowConeOfInfluenceFanout;
       case NetcruxAction.clearConeOfInfluence:
         return l10n.actionClearConeOfInfluence;
+      case NetcruxAction.showConeView:
+        return l10n.actionShowConeView;
+      case NetcruxAction.showConeViewAllLevels:
+        return l10n.actionShowConeViewAllLevels;
+      case NetcruxAction.exitConeView:
+        return l10n.actionExitConeView;
       case NetcruxAction.showXTrace:
         return l10n.actionShowXTrace;
       case NetcruxAction.showXTracePanel:
@@ -766,6 +790,9 @@ extension NetcruxActionRequiredTier on NetcruxAction {
     switch (this) {
       case NetcruxAction.showConeOfInfluenceFanin:
       case NetcruxAction.showConeOfInfluenceFanout:
+      // The cone view with no depth limit is the Cone of Influence walk laid
+      // out; its depth-limited forms are open core.
+      case NetcruxAction.showConeViewAllLevels:
       case NetcruxAction.showXTrace:
       case NetcruxAction.showSourcePane:
       case NetcruxAction.openSourceForElement:
@@ -837,6 +864,10 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.popOutScope:
       case NetcruxAction.showFanin:
       case NetcruxAction.showFanout:
+      // One-hop and depth-limited cone views are the same tier as fan-in
+      // and fan-out; leaving one is never gated.
+      case NetcruxAction.showConeView:
+      case NetcruxAction.exitConeView:
       case NetcruxAction.clearOverlay:
       case NetcruxAction.exportPng:
       case NetcruxAction.exportSvg:
@@ -893,6 +924,9 @@ extension NetcruxActionGatedFeature on NetcruxAction {
     switch (this) {
       case NetcruxAction.showConeOfInfluenceFanin:
       case NetcruxAction.showConeOfInfluenceFanout:
+      // The unlimited cone view is the Cone of Influence purchase seen on
+      // the layout rather than as an overlay.
+      case NetcruxAction.showConeViewAllLevels:
         return NetcruxGatedFeature.coi;
       case NetcruxAction.showXTrace:
         return NetcruxGatedFeature.xTrace;
@@ -973,6 +1007,8 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.popOutScope:
       case NetcruxAction.showFanin:
       case NetcruxAction.showFanout:
+      case NetcruxAction.showConeView:
+      case NetcruxAction.exitConeView:
       case NetcruxAction.clearOverlay:
       case NetcruxAction.exportPng:
       case NetcruxAction.exportSvg:

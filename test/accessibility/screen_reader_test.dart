@@ -33,9 +33,12 @@ import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
+import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/services/cone_view_controller.dart';
 import 'package:netcrux/features/workspace/screens/workspace_screen.dart';
 import 'package:netcrux/services/file_open/file_open_service.dart';
 import 'package:netcrux/services/file_open/file_open_service_provider.dart';
@@ -86,6 +89,7 @@ class _RowLayoutService extends ElkLayoutService {
   Future<NetlistLayout> layout(
     Module module, {
     CellSymbolGeometries symbols = CellSymbolGeometries.none,
+    ElkSubgraph? only,
   }) async => NetlistLayout(
     nodes: <NodePosition>[
       for (final (i, name) in module.cells.keys.indexed)
@@ -424,6 +428,62 @@ void main() {
         <String>['top 1 cell button expanded selected'],
       );
       expectFocusWalkGolden(walk, '$goldens/design_open.txt');
+      handle.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
+
+  testWidgets(
+    'in a cone view, the cone bar is named and every control a Tab stop',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      final dir = Directory.systemTemp.createTempSync('netcrux_a11y_src_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final source = File('${dir.path}/top.v')
+        ..writeAsStringSync('module top(); endmodule\n');
+      final tabs = await _pumpApp(
+        tester,
+        overrides: <Override>[
+          fileOpenServiceProvider.overrideWithValue(
+            _FakePickerService(<String>[source.path]),
+          ),
+          yosysAvailabilityProvider.overrideWith(
+            (ref) async =>
+                const YosysAvailability.notFound(reason: 'test stub'),
+          ),
+          elkLayoutServiceProvider.overrideWithValue(_RowLayoutService()),
+        ],
+      );
+      await _openDesign(tester, tabs, source);
+      final root = ProviderScope.containerOf(
+        tester.element(find.byType(WorkspaceScreen)),
+        listen: false,
+      );
+      final tab = tabs.containerFor(
+        root.read(netcruxWorkspaceProvider).value!.activeTabId!,
+      );
+      ConeViewController(
+        tab.read,
+      ).enter(root: const SelectedElement.cell(cellId: 'u_core'));
+      // The cone stays on show without a selection. With one, the toolbar's
+      // trace split button joins the walk, which this walk is not about.
+      tab.read(selectedElementProvider.notifier).clear();
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final walk = await walkFocus(tester);
+      expectCleanFocusWalk(walk, context: 'workspace in a cone view');
+      expect(
+        walk.stops.map((s) => s.line),
+        containsAll(<String>[
+          'Show Whole Scope button',
+          // The depth pop-up says what it chooses and its value.
+          'Cone depth button collapsed 2 levels',
+          '[Cone direction grouping] Fan-in button selected',
+        ]),
+      );
+      expectFocusWalkGolden(walk, '$goldens/cone_view.txt');
       handle.dispose();
     },
     variant: TargetPlatformVariant.only(TargetPlatform.windows),

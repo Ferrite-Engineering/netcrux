@@ -48,6 +48,7 @@ import 'package:netcrux/features/viewer/providers/x_trace_panel_visible_provider
 import 'package:netcrux/features/viewer/selection/schematic_keyboard_navigator.dart';
 import 'package:netcrux/features/viewer/services/clear_schematic_paint.dart';
 import 'package:netcrux/features/viewer/services/cone_of_influence_controller.dart';
+import 'package:netcrux/features/viewer/services/cone_view_controller.dart';
 import 'package:netcrux/features/viewer/services/schematic_export_controller.dart';
 import 'package:netcrux/features/viewer/services/trace_overlay_controller.dart';
 import 'package:netcrux/features/viewer/services/x_trace_controller.dart';
@@ -70,6 +71,7 @@ import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
 import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/schematic/cone_of_influence_service_provider.dart';
+import 'package:netcrux/services/schematic/transitive_cone_resolver_provider.dart';
 import 'package:netcrux/services/schematic/x_trace_service_provider.dart';
 import 'package:netcrux/services/session/session_controller.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
@@ -221,6 +223,19 @@ class WorkspaceActionDispatcher {
             .activeTabContainerOrNull(context)
             ?.read(traceOverlayProvider.notifier)
             .clear();
+      // The cone view lays out the selection's neighbourhood in place of the
+      // scope. The depth-limited form is open core; the unlimited form is
+      // Pro, gated here and walked by the resolver the Pro overlay binds.
+      case NetcruxAction.showConeView:
+        final c = _ref.activeTabContainerOrNull(context);
+        if (c != null) ConeViewController(c.read).enter();
+      case NetcruxAction.showConeViewAllLevels:
+        if (_proActionAllowed(context, action)) {
+          _dispatchConeViewAllLevels(context, action);
+        }
+      case NetcruxAction.exitConeView:
+        final c = _ref.activeTabContainerOrNull(context);
+        if (c != null) ConeViewController(c.read).exit();
       case NetcruxAction.showXTrace:
         if (_proActionAllowed(context, action)) {
           unawaited(_dispatchXTrace(context));
@@ -985,6 +1000,22 @@ class WorkspaceActionDispatcher {
     if (!context.mounted || count == null || count == 0) return;
     hideCruxSnack(context);
     showCruxInfoSnack(context, l10n.coneOfInfluenceCellCount(count));
+  }
+
+  /// Lays out the whole cone of the active tab's selection, or re-lays the
+  /// cone on show at every level when nothing is selected. The tier gate has
+  /// already admitted the action; with no resolver bound (a build without
+  /// the Pro overlay's walk) it says the feature requires NetCrux Pro rather
+  /// than showing the whole scope as if it were the cone.
+  void _dispatchConeViewAllLevels(BuildContext context, NetcruxAction action) {
+    final container = _ref.activeTabContainerOrNull(context);
+    if (container == null) return;
+    if (container.read(transitiveConeResolverProvider) == null) {
+      final l10n = L10N.of(context);
+      showCruxInfoSnack(context, l10n.actionRequiresPro(action.label(l10n)));
+      return;
+    }
+    ConeViewController(container.read).enter(transitive: true);
   }
 
   /// Dispatches the Pro X-trace causal-chain walk from the active

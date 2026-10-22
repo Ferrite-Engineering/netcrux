@@ -19,6 +19,7 @@ import 'package:netcrux/features/project/providers/current_laid_out_graph_provid
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/statistics/widgets/netcrux_stats_strip.dart';
+import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -27,6 +28,7 @@ import 'package:netcrux/features/viewer/providers/viewport_transform_notifier.da
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
 import 'package:netcrux/features/viewer/symbols/cell_body_painter_factory_provider.dart';
 import 'package:netcrux/features/viewer/widgets/breadcrumb_bar.dart';
+import 'package:netcrux/features/viewer/widgets/cone_view_banner.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_ide_layout.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_status_bar.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_gesture_handler.dart';
@@ -220,6 +222,8 @@ class ProjectTabContent extends ConsumerWidget {
             children: <Widget>[
               BreadcrumbBar(),
               Divider(height: 1),
+              // Present only while the canvas shows a cone view.
+              ConeViewBanner(),
               Expanded(child: _SchematicCenter()),
             ],
           );
@@ -439,10 +443,13 @@ class _SchematicLayoutLoadingState
     final l10n = L10N.of(context);
     final theme = Theme.of(context);
     final model = ref.watch(loadedNetlistProvider).value;
-    final module = model == null
-        ? null
-        : ref.watch(hierarchyTreeProvider).selected?.resolve(model);
+    final scope = ref.watch(hierarchyTreeProvider).selected;
+    final module = model == null ? null : scope?.resolve(model);
     final cellCount = module?.cells.length ?? 0;
+    // A cone view lays out a part of the scope, so the scope's cell count
+    // would overstate the work.
+    final cone = ref.watch(coneViewProvider);
+    final inCone = cone != null && cone.scope == scope;
     final seconds = (_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
     return Center(
       child: ConstrainedBox(
@@ -451,7 +458,9 @@ class _SchematicLayoutLoadingState
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(
-              l10n.schematicLayoutInProgress(cellCount),
+              inCone
+                  ? l10n.coneViewLayoutInProgress
+                  : l10n.schematicLayoutInProgress(cellCount),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),

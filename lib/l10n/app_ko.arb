@@ -2593,5 +2593,36 @@
   "timingPathFidelitySpan": "always 블록",
   "timingPathFidelityUnmapped": "매핑 없음",
   "menuShowTimingPathsThroughRegister": "이 레지스터를 지나는 타이밍 경로 표시",
-  "menuShowTimingPathsNeedsSimcrux": "이 레지스터를 지나는 타이밍 경로를 보려면 교차 프로브를 켜고 SimCrux를 시작하세요."
+  "menuShowTimingPathsNeedsSimcrux": "이 레지스터를 지나는 타이밍 경로를 보려면 교차 프로브를 켜고 SimCrux를 시작하세요.",
+  "actionShowConeView": "콘 보기",
+  "actionShowConeViewAllLevels": "콘 보기 (모든 단계)",
+  "actionExitConeView": "전체 스코프 표시",
+  "coneViewSummary": "{root}의 콘 보기: 셀 {scopeCells}개 중 {coneCells}개",
+  "@coneViewSummary": {
+    "placeholders": {
+      "root": {
+        "type": "String"
+      },
+      "coneCells": {
+        "type": "int"
+      },
+      "scopeCells": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDirection": "콘 방향",
+  "coneViewFanIn": "팬인",
+  "coneViewFanInAndFanOut": "팬인 및 팬아웃",
+  "coneViewDepth": "콘 깊이",
+  "coneViewDepthLevels": "{count}단계",
+  "@coneViewDepthLevels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coneViewDepthAll": "모든 단계",
+  "coneViewLayoutInProgress": "콘 보기 배치 중…"
 }

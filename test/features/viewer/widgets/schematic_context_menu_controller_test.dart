@@ -16,6 +16,7 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
 import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
@@ -27,6 +28,7 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
 import '../../../helpers/cxp_test_overrides.dart';
+import '../../../helpers/telemetry_test_overrides.dart';
 
 /// `top` with one child scope `u_cpu` (module `cpu`) so the hierarchy
 /// notifier has a real root to select and pop out of.
@@ -163,6 +165,28 @@ void main() {
       expect(h.container.read(selectedElementProvider).primary, target);
       expect(h.trace.fanoutCalls, 1);
       expect(h.trace.faninCalls, 0);
+    });
+
+    testWidgets('Cone View lays out the cone of the target', (tester) async {
+      final h = await pumpController(
+        tester,
+        overrides: netcruxTelemetryTestOverrides(),
+      );
+
+      await h.controller.dispatch(
+        context: h.context,
+        action: SchematicContextMenuAction.coneView,
+        target: target,
+      );
+
+      expect(h.container.read(selectedElementProvider).primary, target);
+      final shown = h.container.read(coneViewProvider);
+      expect(shown?.root, target);
+      expect(shown?.isTransitive, isFalse);
+      expect(
+        shown?.scope,
+        h.container.read(hierarchyTreeProvider).selected,
+      );
     });
   });
 
@@ -343,7 +367,7 @@ void main() {
       expect(find.byType(PopupMenuItem<Object>), findsNothing);
     });
 
-    testWidgets('renders the five built-in entries', (tester) async {
+    testWidgets('renders the six built-in entries', (tester) async {
       final h = await pumpController(
         tester,
         overrides: [
@@ -360,6 +384,7 @@ void main() {
       expect(find.text(l10n.contextMenuCopyPath), findsOneWidget);
       expect(find.text(l10n.contextMenuTraceFanin), findsOneWidget);
       expect(find.text(l10n.contextMenuTraceFanout), findsOneWidget);
+      expect(find.text(l10n.actionShowConeView), findsOneWidget);
       expect(find.text(l10n.contextMenuFindInHierarchy), findsOneWidget);
       expect(find.text(l10n.contextMenuProperties), findsOneWidget);
       expect(find.byType(PopupMenuDivider), findsNothing);
@@ -586,7 +611,7 @@ void main() {
         unawaitedShow(controller, hostContext);
         await tester.pumpAndSettle();
 
-        expect(find.byType(PopupMenuItem<Object>), findsNWidgets(5));
+        expect(find.byType(PopupMenuItem<Object>), findsNWidgets(6));
         expect(tester.takeException(), isNull, reason: 'locale $locale');
 
         await tester.tapAt(const Offset(700, 550));

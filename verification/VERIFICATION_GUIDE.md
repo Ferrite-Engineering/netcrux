@@ -681,6 +681,49 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
 
 ---
 
+## 4.7a Cone view: lay out the neighbourhood, not the scope (from 1.2)
+
+- **What it does.** **View > Cone View** (also the command palette, and **Cone View** in the schematic context menu of a cell, pin, wire or port) lays out only the cone of the selection in place of the whole scope: its fan-in, or fan-in and fan-out, to a chosen depth. A bar above the canvas says what the cone is ("Cone view of `u_alu`: 14 of 1599 cells"), and holds the direction (**Fan-in** / **Fan-in and fan-out**), the depth (1, 2, 3, 4, 6 or 8 levels, or **All levels**) and **Show Whole Scope**. One level is the same set the fan-in or fan-out trace lights. The depth-limited cone is open core; **All levels** (also **View > Cone View, All Levels**) is Pro, beside Cone of Influence. Design note: `docs/ARCHITECTURE.md` §6.6.
+- **Setup.** A loaded design. For the size steps, a large flat netlist: `test/fixtures/netlist/grid_100k/generated/grid_100k.netlist.json.gz` (100,000 flops in one scope; open it with **File > Open Netlist JSON…** after decompressing it) and the captured `picorv32` core.
+- **Steps and expected behavior.**
+  1. Select a cell in the middle of picorv32's top scope and choose **View > Cone View**. Expected: the canvas lays out a handful of cells (the cell and two levels of its drivers), framed; the bar reads "Cone view of <cell>: N of 1599 cells"; a screen reader announces the same sentence. The stats strip's layout time is the cone's.
+  2. In the bar choose **Fan-in and fan-out**, then **8 levels**. Expected: each choice lays the cone out again, larger. Choose **1 level**. Expected: exactly the cells **Show Fanin** lights on the whole scope for that cell.
+  3. Click a cell inside the cone, press `[`, `Z`, open the Inspector (Alt+Enter). Expected: they work as on the whole scope, with the scope's own names.
+  4. Right-click another cell in the cone and choose **Cone View**. Expected: the cone re-roots at that cell, keeping the direction and depth.
+  5. Pan away from the cone. Expected: blank canvas past the cone's bounds, the bar still there. Choose **Show Whole Scope** (bar, or **View > Show Whole Scope**). Expected: the whole scope comes back at once from the cache, framed on the cone's root, with the selection kept.
+  6. Enter a cone view, then push into a child instance, pop out or pick a scope in the Hierarchy. Expected: the cone view ends; returning to the scope shows it whole.
+  7. **Size.** Open `grid_100k`, wait for the whole scope, select a flop, choose **Cone View**. Expected: the cone is on screen in well under a second. Choose **Show Whole Scope**: back at once (cached). Open it again in a new tab and, while the whole scope is still laying out, pick a flop in **Search** and choose **Cone View**. Expected: the whole-scope solve stops and the cone appears; **Show Whole Scope** starts the whole scope again.
+  8. **Tier, Open Core build.** Choose **All levels** in the depth pop-up, and **View > Cone View, All Levels**. Expected: both carry the PRO mark and say "Cone View, All Levels requires NetCrux Pro."; the cone stays as it was. The depth-limited cone works with no licence, before and after the beta.
+  9. **Keyboard.** Shift+F10 on a focused cell opens the context menu with **Cone View**; Tab reaches the bar's three controls in order; the arrows move between the direction segments; Alt+Down opens the depth list.
+  10. **Web.** In the web viewer, **View > Cone View** works; **Cone View, All Levels** is not offered.
+- **Edge cases.** A cone view is not saved in a session or workspace; a restored tab shows the whole scope. A clock or reset net too wide to route in the scope stays unrouted in the cone. Wires that leave the cone are not drawn; their pins show unconnected. A search result outside the cone is framed once **Show Whole Scope** lays the scope out. A root that a reload removed shows the whole scope.
+- **Measured** (Apple M4 Pro, native engine, cold solve each, `flutter test test/benchmarks/cone_layout_bench_test.dart --dart-define=RUN_BENCHMARKS=true`; graph build is shared by both paths):
+
+  | Scope | Cells | Whole scope | Cone, fan-in 1 / 2 / 4 / 8 levels | Fan-in and fan-out, 2 / 8 levels | Cone walk | Graph build |
+  |---|---|---|---|---|---|---|
+  | `grid_100k` | 100,000 | 4,492 ms | 93 / 93 / 93 / 118 ms (2 to 9 cells) | 125 / 118 ms (5, 17 cells) | 40 to 82 ms | 196 ms |
+  | `chain_10k` | 10,000 | 466 ms | 10 / 7 / 10 / 9 ms | 8 / 10 ms | 3 to 6 ms | 31 ms |
+  | `picorv32` | 1,599 | 532 ms | 21 / 27 / 29 / 59 ms (5 to 386 cells) | 8 / 57 ms (15, 386 cells) | 2 to 7 ms | 37 ms |
+
+  The repository has no 16,000-cell dense netlist; a generated chain grid lays out far faster per cell than a dense post-synthesis netlist, so the whole-scope figure is a floor, and the cone figure holds for any scope whose cone is small.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | The walk: depth semantics, fan-in, fan-out, wire, pin and boundary roots, the boundary stops the walk, one level equals the one-step trace on every root, the cone sub-graph keeps the scope's ids and every wire between members | `[Coverage: UNIT]` (`test/services/schematic/cone_membership_test.dart`) |
+  | ELK input of part of a scope: naming everything is the whole scope byte for byte (whole-scope cache keys unchanged), kept elements built as in the scope, a too-wide net stays unrouted, cone layouts never touch the disk cache or evict the whole scope | `[Coverage: UNIT]` (`test/services/layout/elk_cone_layout_test.dart`) |
+  | The layout pipeline lays out the cone (fan-in, both ways), ignores a cone of another scope, shows the whole scope for every level with no resolver, walks with a bound resolver, and lays the whole scope out again on exit | `[Coverage: UNIT]` (`test/features/project/providers/current_laid_out_graph_provider_test.dart`, "in a cone view" group) |
+  | Per-tab state: show, adjust, exit; another scope ends it | `[Coverage: UNIT]` (`test/features/viewer/providers/cone_view_notifier_test.dart`, `test/services/workspace/netcrux_tab_overrides_test.dart`) |
+  | One funnel: entering from the selection or a root, keeping direction and depth, every level with nothing selected, `cone_view.opened` with its closed vocabulary and no design names, exit framing the root | `[Coverage: UNIT]` (`test/features/viewer/services/cone_view_controller_test.dart`) |
+  | View menu and palette: enabled by a selection without a layout, Show Whole Scope only in a cone, every level hidden on the web | `[Coverage: UNIT]` (`test/core/shortcuts/netcrux_action_descriptors_test.dart`, `test/core/shortcuts/netcrux_action_test.dart`) |
+  | Tier, both ways: the cone view at Open Core after the beta with no overlay; every level denied at Open Core after the beta, admitted at Pro and Enterprise, "requires NetCrux Pro" with no overlay or no walk bound (step 8) | `[Coverage: WIDGET]` (`test/features/workspace/services/cone_view_dispatch_test.dart`) |
+  | Context-menu entry (step 4) | `[Coverage: WIDGET]` (`test/features/viewer/widgets/schematic_context_menu_controller_test.dart`) |
+  | The bar: hidden for a whole scope, summary and announcement, direction and depth re-lay, All levels gated with its PRO suffix, Show Whole Scope, three Tab stops, locale sweep | `[Coverage: WIDGET]` (`test/features/viewer/widgets/cone_view_banner_test.dart`) |
+  | Focus walk of the workspace in a cone view: every stop named | `[Coverage: WIDGET]` (`test/accessibility/screen_reader_test.dart`, golden `test/accessibility/goldens/cone_view.txt`) |
+  | Size on a live canvas, interrupting a whole-scope solve, panning, scope changes (steps 5 to 7) | `[Coverage: MANUAL]` + the measured table above (`test/benchmarks/cone_layout_bench_test.dart`) |
+
+---
+
 ## 4.8 Export — PNG / SVG / JSON
 
 - **What it does.** The current scope exports three ways: PNG via `RenderRepaintBoundary.toImage` (`SchematicExportController.exportPng`, reading the per-tab `schematicCanvasKeyProvider`), SVG via programmatic generation (`SvgExporter`), and a JSON dump that re-emits the current scope's portion of the Yosys JSON.
