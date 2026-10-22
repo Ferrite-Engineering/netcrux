@@ -15,6 +15,10 @@
 // Messages to the page:
 //   {type: 'ready'}                         the module loaded
 //   {type: 'load-error', message}           it did not (the page falls back)
+//   {type: 'progress', id, phase, fraction} the solve reached a pipeline step:
+//                                           `phase` an elkrs phase name such
+//                                           as 'node placement', `fraction`
+//                                           the share done, NaN when unknown
 //   {type: 'result', id, json}              a laid-out ELK JSON document
 //   {type: 'error', id, message, fatal}     the input was rejected; `fatal`
 //                                           when the module trapped, after
@@ -22,8 +26,10 @@
 // Messages from the page:
 //   {id, input}                             an ELK JSON document to lay out
 //
-// Cancel is the page terminating this worker; there is nothing to clean up.
-// Single-threaded wasm, so the site needs no cross-origin isolation headers.
+// Progress messages are posted from inside the synchronous solve; the page
+// receives them while the solve continues. Cancel is the page terminating
+// this worker; there is nothing to clean up. Single-threaded wasm, so the
+// site needs no cross-origin isolation headers.
 
 // Messages are capped so a pathological error cannot flood the page.
 const MAX_MESSAGE = 2000;
@@ -33,16 +39,18 @@ function describe(err) {
   return text.length > MAX_MESSAGE ? text.slice(0, MAX_MESSAGE) + '...' : text;
 }
 
-let layoutJson = null;
+let layoutJsonWithProgress = null;
 
 self.onmessage = (event) => {
   const { id, input } = event.data || {};
-  if (layoutJson === null) {
+  if (layoutJsonWithProgress === null) {
     self.postMessage({ type: 'error', id, message: 'elk_wasm is not loaded', fatal: true });
     return;
   }
+  const progress = (phase, fraction) =>
+    self.postMessage({ type: 'progress', id, phase, fraction });
   try {
-    self.postMessage({ type: 'result', id, json: layoutJson(input) });
+    self.postMessage({ type: 'result', id, json: layoutJsonWithProgress(input, progress) });
   } catch (err) {
     self.postMessage({
       type: 'error',
@@ -57,7 +65,7 @@ self.onmessage = (event) => {
   try {
     const glue = await import('./elk_wasm.js');
     await glue.default({ module_or_path: new URL('./elk_wasm_bg.wasm', import.meta.url) });
-    layoutJson = glue.layoutJson;
+    layoutJsonWithProgress = glue.layoutJsonWithProgress;
     self.postMessage({ type: 'ready' });
   } catch (err) {
     self.postMessage({ type: 'load-error', message: describe(err) });

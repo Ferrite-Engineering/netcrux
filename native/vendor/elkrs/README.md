@@ -52,6 +52,20 @@ As a library:
 let out = elkrs::create_elk().layout_json(input_json)?;   // returns laid-out JSON
 ```
 
+With progress reports and a cancel token another thread can set (see
+`core::progress`; the output is the same as `layout_json`'s unless the run is
+cancelled, which returns `LayoutError::Cancelled` and no graph):
+
+```rust
+use elkrs::core::progress::{CancelToken, LayoutMonitor};
+
+let token = CancelToken::new();          // clone it to the thread that may cancel
+let monitor = LayoutMonitor::new()
+    .cancel_token(token.clone())
+    .on_progress(|p| eprintln!("{} {:?}", p.phase.name(), p.fraction));
+let out = elkrs::create_elk().layout_json_with_monitor(input_json, monitor)?;
+```
+
 The oracle (for regenerating goldens / diffing) needs JDK 17 + Maven:
 
 ```sh

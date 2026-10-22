@@ -2624,5 +2624,12 @@
     }
   },
   "coneViewDepthAll": "모든 단계",
-  "coneViewLayoutInProgress": "콘 보기 배치 중…"
+  "coneViewLayoutInProgress": "콘 보기 배치 중…",
+  "schematicLayoutPhaseCycleBreaking": "피드백 루프 해제 중",
+  "schematicLayoutPhaseLayering": "셀을 열에 배정하는 중",
+  "schematicLayoutPhaseCrossingMinimization": "배선 교차를 줄이는 중",
+  "schematicLayoutPhaseNodePlacement": "셀 배치 중",
+  "schematicLayoutPhaseEdgeRouting": "배선 경로 계산 중",
+  "schematicLayoutStopped": "배치를 중지했습니다.",
+  "schematicLayoutRetry": "다시 배치"
 }

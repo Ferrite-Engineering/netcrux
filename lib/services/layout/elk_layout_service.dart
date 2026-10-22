@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
@@ -99,6 +100,133 @@ class LayoutException implements Exception {
   String toString() => cause == null
       ? 'LayoutException: $message'
       : 'LayoutException: $message (cause: $cause)';
+}
+
+/// Thrown by [ElkLayoutService.layout] when the solve was abandoned through
+/// [ElkLayoutService.cancelInFlightLayout]: the user stopped it, or moved on
+/// to another scope or view. Not a failure; nothing went wrong with the
+/// input.
+class LayoutCancelledException extends LayoutException {
+  /// Creates the cancel signal.
+  const LayoutCancelledException() : super('layout cancelled');
+}
+
+/// The ELK Layered phase a running layout is in, in the order they run.
+enum LayoutPhase {
+  /// Reversing a few edges so that every cycle can be drawn one way.
+  cycleBreaking,
+
+  /// Assigning each node to a layer (a column, for a left-to-right
+  /// schematic).
+  layering,
+
+  /// Ordering the nodes in each layer so fewer edges cross; usually the
+  /// longest phase.
+  crossingMinimization,
+
+  /// Giving every node its final coordinates.
+  nodePlacement,
+
+  /// Routing the edges between the placed nodes.
+  edgeRouting;
+
+  /// The phase for an `elk_ffi` / `elk_wasm` progress code (1 to 5), or
+  /// `null` for 0 (no report yet) or a code this build does not know.
+  static LayoutPhase? fromCode(int code) =>
+      code >= 1 && code <= values.length ? values[code - 1] : null;
+
+  /// The phase for an elkrs phase name (`Phase::name`, e.g. `"node
+  /// placement"`), or `null` for a name this build does not know.
+  static LayoutPhase? fromName(String name) => switch (name) {
+    'cycle breaking' => cycleBreaking,
+    'layering' => layering,
+    'crossing minimization' => crossingMinimization,
+    'node placement' => nodePlacement,
+    'edge routing' => edgeRouting,
+    _ => null,
+  };
+}
+
+/// How far a running layout has got, as the engine reports it.
+@immutable
+class LayoutProgress {
+  /// Creates a progress report.
+  const LayoutProgress({required this.phase, this.fraction});
+
+  /// The phase about to run or running.
+  final LayoutPhase phase;
+
+  /// The share of the layout done, in [0, 1), or `null` when the engine
+  /// does not know it.
+  final double? fraction;
+
+  @override
+  bool operator ==(Object other) =>
+      other is LayoutProgress &&
+      other.phase == phase &&
+      other.fraction == fraction;
+
+  @override
+  int get hashCode => Object.hash(phase, fraction);
+
+  @override
+  String toString() => 'LayoutProgress(${phase.name}, $fraction)';
+}
+
+/// A solve running off the calling thread, started by [ElkJobSolver.start]:
+/// the caller polls it, may cancel it, and collects the result with
+/// [finish].
+abstract class ElkSolveJob {
+  /// Whether the result is ready, and the latest progress (`null` before
+  /// the engine's first report).
+  ({bool done, LayoutProgress? progress}) poll();
+
+  /// Asks the engine to stop at its next check. [finish] then throws
+  /// [LayoutCancelledException]. A no-op once the job is done.
+  void cancel();
+
+  /// The laid-out document, once [poll] has reported the job done. Throws
+  /// [LayoutCancelledException] for a cancelled job and [LayoutException]
+  /// when the engine rejected the input. Releases the job.
+  String finish();
+}
+
+/// An [ElkSolver] that can also run a solve in the background, with
+/// progress reports and a cooperative cancel: the native engine. elkjs
+/// cannot, so its worker is killed to cancel it.
+abstract class ElkJobSolver implements ElkSolver {
+  /// Starts laying out [inputJson] and returns at once.
+  ElkSolveJob start(String inputJson);
+}
+
+/// Polls [job] until it is done, passing each new progress report to
+/// [onProgress], and returns its result (see [ElkSolveJob.finish]).
+///
+/// The poll interval starts at a millisecond and doubles up to
+/// [maxInterval], so the result is collected within [maxInterval] of the
+/// engine finishing (a poll is an FFI call that reads two atomics, so
+/// polling often costs nothing a user could measure, while a coarse
+/// interval would add its own length to every layout).
+Future<String> driveElkSolveJob(
+  ElkSolveJob job, {
+  void Function(LayoutProgress progress)? onProgress,
+  Duration maxInterval = const Duration(milliseconds: 8),
+}) async {
+  var interval = const Duration(milliseconds: 1);
+  LayoutProgress? last;
+  while (true) {
+    final (:done, :progress) = job.poll();
+    if (progress != null && progress != last) {
+      last = progress;
+      onProgress?.call(progress);
+    }
+    if (done) return job.finish();
+    await Future<void>.delayed(interval);
+    if (interval < maxInterval) {
+      interval *= 2;
+      if (interval > maxInterval) interval = maxInterval;
+    }
+  }
 }
 
 /// Pluggable persistent store for solved layouts, keyed by a stable content
@@ -298,34 +426,6 @@ Map<String, Object?> buildElkInput(
     'children': children,
     'edges': edges,
   };
-}
-
-/// The number of things ELK has to place and route for [input], the output
-/// of [buildElkInput]: nodes plus edges. The size proxy behind
-/// [layoutTimeoutFor].
-int elkElementCount(Map<String, Object?> input) {
-  final children = input['children'];
-  final edges = input['edges'];
-  return (children is List ? children.length : 0) +
-      (edges is List ? edges.length : 0);
-}
-
-/// How long a solve of [elementCount] elements may run before the worker is
-/// killed and the scope reports "timed out".
-///
-/// Two minutes covers every scope a JIT engine lays out comfortably, then a
-/// minute per thousand elements up to twenty minutes: on the interpreter
-/// Linux falls back to and Windows always runs, a two-thousand-cell scope
-/// needs several minutes that a flat cap used to cut off. The wait is
-/// bounded rather than open-ended because the engine cannot be interrupted
-/// mid-solve, and it is not the user's only way out: leaving the scope
-/// abandons the solve through [ElkLayoutService.cancelInFlightLayout].
-Duration layoutTimeoutFor({required int elementCount}) {
-  const base = Duration(minutes: 2);
-  const perThousand = Duration(minutes: 1);
-  const cap = Duration(minutes: 20);
-  final total = base + perThousand * (elementCount ~/ 1000);
-  return total > cap ? cap : total;
 }
 
 /// The ELK `port.side` of a cell pin with [direction]: `WEST` for an input,
@@ -747,10 +847,7 @@ class ElkLayoutService {
         _coneCache[key] = cone;
         return cone;
       }
-      final resultJson = await _solve(
-        inputJson,
-        timeout: layoutTimeoutFor(elementCount: elkElementCount(input)),
-      );
+      final resultJson = await _solve(inputJson);
       final layout = _parseLayout(resultJson);
       _coneCache[key] = layout;
       while (_coneCache.length > maxConeCacheEntries) {
@@ -773,10 +870,7 @@ class ElkLayoutService {
       }
     }
 
-    final resultJson = await _solve(
-      inputJson,
-      timeout: layoutTimeoutFor(elementCount: elkElementCount(input)),
-    );
+    final resultJson = await _solve(inputJson);
     final layout = _parseLayout(resultJson);
     _storeMemCache(key, layout, resultJson.length);
     // Fire-and-forget: persisting must not delay the first paint.
@@ -788,28 +882,70 @@ class ElkLayoutService {
   /// right now.
   bool get hasLayoutInFlight => kElkWebSolverAvailable
       ? elkWebLayoutInFlight
-      : _isolate?.hasInFlight ?? false;
+      : _inProcessJob != null || (_isolate?.hasInFlight ?? false);
 
-  /// Abandons the solve in flight, if any, so a scope nobody is looking at
-  /// any more stops burning a core. The abandoned [layout] call completes
-  /// with a [LayoutException]; the next call starts a fresh worker. A no-op
-  /// when nothing is in flight, so the warm worker survives ordinary
-  /// navigation.
+  /// The progress of the solve in flight, as the engine reports it: `null`
+  /// when nothing is in flight or before the engine's first report, and
+  /// always `null` on elkjs, which reports none. The canvas's layout
+  /// progress view listens to it.
+  ValueListenable<LayoutProgress?> get progress => _progress;
+  final ValueNotifier<LayoutProgress?> _progress =
+      ValueNotifier<LayoutProgress?>(null);
+
+  /// Counts solves, so a solve that ends after a newer one started leaves
+  /// the newer one's [progress] alone.
+  int _solveGeneration = 0;
+
+  /// The in-process job of the [_solverFactory] seam, while one runs.
+  ElkSolveJob? _inProcessJob;
+
+  /// Abandons the solve in flight, if any: the user stopped it, or moved to
+  /// a scope or view that does not need it. The abandoned [layout] call
+  /// completes with a [LayoutCancelledException] at once. The native engine
+  /// stops at its next check, within a pipeline step, and its worker stays
+  /// warm for the next layout; elkjs cannot be interrupted, so its worker is
+  /// killed and the next call starts a fresh one. A no-op when nothing is in
+  /// flight, so the warm worker survives ordinary navigation.
   void cancelInFlightLayout() {
     if (kElkWebSolverAvailable) {
       cancelElkOnWeb();
     } else {
+      _inProcessJob?.cancel();
       _isolate?.cancelInFlight();
     }
   }
 
   /// Runs the solve for [inputJson] and returns the result JSON string,
-  /// in-process against the injected host (tests), on the worker isolate
-  /// (desktop) or in the browser's Web Worker (web). [timeout] bounds the
-  /// worker paths only: the in-process host is a test seam.
-  Future<String> _solve(String inputJson, {required Duration timeout}) async {
+  /// in-process against the injected solver or host (tests), on the worker
+  /// isolate (desktop) or in the browser's Web Worker (web), publishing the
+  /// engine's progress on [progress] while it runs.
+  Future<String> _solve(String inputJson) async {
+    final generation = ++_solveGeneration;
+    void report(LayoutProgress p) {
+      if (generation == _solveGeneration) _progress.value = p;
+    }
+
+    _progress.value = null;
+    try {
+      return await _solveWith(inputJson, report);
+    } finally {
+      if (generation == _solveGeneration) _progress.value = null;
+    }
+  }
+
+  Future<String> _solveWith(
+    String inputJson,
+    void Function(LayoutProgress progress) onProgress,
+  ) async {
     if (_solverFactory != null) {
-      return (_solver ??= _solverFactory()).solve(inputJson);
+      final solver = _solver ??= _solverFactory();
+      if (solver is! ElkJobSolver) return solver.solve(inputJson);
+      final job = _inProcessJob = solver.start(inputJson);
+      try {
+        return await driveElkSolveJob(job, onProgress: onProgress);
+      } finally {
+        if (identical(_inProcessJob, job)) _inProcessJob = null;
+      }
     }
     if (_hostFactory != null) {
       await _ensureInitialized();
@@ -821,11 +957,15 @@ class ElkLayoutService {
     // (`kElkWebSolverAvailable` is a const `false`) and the solve runs on the
     // background isolate.
     if (kElkWebSolverAvailable) {
-      return await solveElkOnWeb(inputJson, _loadElkSource, timeout: timeout);
+      return await solveElkOnWeb(
+        inputJson,
+        _loadElkSource,
+        onProgress: onProgress,
+      );
     }
     return await (_isolate ??= _ElkLayoutIsolate(_loadElkSource)).layout(
       inputJson,
-      timeout: timeout,
+      onProgress: onProgress,
     );
   }
 
@@ -898,6 +1038,8 @@ class ElkLayoutService {
   void dispose() {
     _host?.dispose();
     _host = null;
+    _inProcessJob?.cancel();
+    _progress.value = null;
     _solver?.dispose();
     _solver = null;
     _initialization = null;
@@ -1128,65 +1270,101 @@ class _ElkLayoutIsolate {
       _ready = null;
       throw LayoutException('elkjs isolate init failed: ${result['error']}');
     }
+    _cooperative = result['cooperative'] == true;
   }
 
   /// What [Future.any] yields when the solve was abandoned first.
   static const Object _cancelled = Object();
 
-  /// Completer for the solve in flight; completed by [dispose].
+  /// Whether the worker's engine stops on request (the native engine), so a
+  /// cancel can keep the worker; elkjs cannot, so its worker is killed.
+  bool _cooperative = false;
+
+  /// Completer for the solve in flight; completed by [cancelInFlight] and
+  /// [dispose].
   Completer<void>? _cancelInFlight;
+
+  /// The worker's id for the solve in flight, for its `cancel` command.
+  int? _inFlightId;
+  int _nextId = 0;
 
   /// Whether a solve is running on the worker right now.
   bool get hasInFlight => _cancelInFlight != null;
 
-  /// Runs one solve on the worker and returns its result JSON.
+  /// Runs one solve on the worker and returns its result JSON, passing the
+  /// engine's progress reports to [onProgress] as they arrive.
   ///
-  /// Three ways out besides a result: the worker reports an elkjs error,
-  /// [timeout] elapses (the worker is killed, since a solve that long has
-  /// hung or is hopeless on this engine), or [cancelInFlight] abandons it.
-  Future<String> layout(String inputJson, {required Duration timeout}) async {
+  /// Two ways out besides a result: the worker reports an engine error, or
+  /// [cancelInFlight] abandons the solve, which throws
+  /// [LayoutCancelledException]. There is no time limit: the progress view
+  /// shows the solve is moving, and the user can stop it or leave.
+  Future<String> layout(
+    String inputJson, {
+    void Function(LayoutProgress progress)? onProgress,
+  }) async {
     await _ensureReady();
     final reply = ReceivePort();
+    final progress = ReceivePort();
+    final id = _nextId++;
     final cancel = _cancelInFlight = Completer<void>();
+    _inFlightId = id;
+    progress.listen((message) {
+      final (phase, fraction) = message! as (int, double?);
+      onProgress?.call(
+        LayoutProgress(phase: LayoutPhase.values[phase], fraction: fraction),
+      );
+    });
     _commands!.send(<String, Object?>{
       'type': 'layout',
+      'id': id,
       'input': inputJson,
       'reply': reply.sendPort,
+      'progress': progress.sendPort,
     });
     try {
       final first = await Future.any<Object?>(<Future<Object?>>[
         reply.first,
         cancel.future.then((_) => _cancelled),
-      ]).timeout(timeout);
-      if (identical(first, _cancelled)) {
-        throw const LayoutException('elkjs layout cancelled');
-      }
+      ]);
+      if (identical(first, _cancelled)) throw const LayoutCancelledException();
       final result = first! as Map<Object?, Object?>;
+      if (result['cancelled'] == true) throw const LayoutCancelledException();
       if (result['ok'] != true) {
-        throw LayoutException('elkjs layout failed: ${result['error']}');
+        throw LayoutException('elk layout failed: ${result['error']}');
       }
       return result['result']! as String;
-    } on TimeoutException {
-      dispose();
-      throw const LayoutException('elkjs layout timed out');
     } finally {
       reply.close();
-      if (identical(_cancelInFlight, cancel)) _cancelInFlight = null;
+      progress.close();
+      if (identical(_cancelInFlight, cancel)) {
+        _cancelInFlight = null;
+        _inFlightId = null;
+      }
     }
   }
 
   /// Abandons the solve in flight, if any: the pending [layout] call
-  /// completes with a [LayoutException] and the worker is killed, because
-  /// the engine cannot be interrupted mid-solve. A no-op when idle, so the
-  /// warm worker is kept.
+  /// completes with a [LayoutCancelledException] at once. The native engine
+  /// is told to stop, which it does within a pipeline step, and the worker
+  /// stays warm; elkjs cannot be interrupted, so its worker is killed. A
+  /// no-op when idle, so the warm worker is kept.
   void cancelInFlight() {
-    if (_cancelInFlight == null) return;
-    dispose();
+    final cancel = _cancelInFlight;
+    if (cancel == null) return;
+    if (!_cooperative) {
+      dispose();
+      return;
+    }
+    _commands?.send(<String, Object?>{'type': 'cancel', 'id': _inFlightId});
+    _cancelInFlight = null;
+    _inFlightId = null;
+    if (!cancel.isCompleted) cancel.complete();
   }
 
   void dispose() {
     final cancel = _cancelInFlight;
     _cancelInFlight = null;
+    _inFlightId = null;
     if (cancel != null && !cancel.isCompleted) cancel.complete();
     _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
@@ -1194,40 +1372,79 @@ class _ElkLayoutIsolate {
     _errors?.close();
     _errors = null;
     _ready = null;
+    _cooperative = false;
   }
 }
 
 /// Entry point for the elk layout worker isolate. Owns one [ElkSolver],
-/// chosen by [createDefaultElkSolver] at `init`; services `init` and
-/// `layout` commands, replying on each message's port. The `init` reply
-/// carries the engine's description.
+/// chosen by [createDefaultElkSolver] at `init`; services `init`, `layout`,
+/// `cancel` and `dispose` commands, replying on each message's port. The
+/// `init` reply carries the engine's description and whether it stops on
+/// request.
+///
+/// A native solve runs as a job on the engine's own thread, so this isolate
+/// stays free while it runs: it polls the job, forwards its progress to the
+/// `layout` message's progress port, and passes a `cancel` for that job's id
+/// on to the engine. An elkjs solve runs synchronously here.
 Future<void> _elkIsolateEntry(SendPort handshake) async {
   final commands = ReceivePort();
   handshake.send(commands.sendPort);
   ElkSolver? solver;
-  await for (final message in commands) {
-    final command = message as Map<Object?, Object?>;
+  final jobs = <int, ElkSolveJob>{};
+  commands.listen((message) async {
+    final command = message! as Map<Object?, Object?>;
+    if (command['type'] == 'cancel') {
+      jobs[command['id']]?.cancel();
+      return;
+    }
     final reply = command['reply']! as SendPort;
     try {
       switch (command['type']) {
         case 'init':
-          solver = createDefaultElkSolver(command['source']! as String);
+          final created = solver = createDefaultElkSolver(
+            command['source']! as String,
+          );
           reply.send(<String, Object?>{
             'ok': true,
-            'engine': solver.engineDescription,
+            'engine': created.engineDescription,
+            'cooperative': created is ElkJobSolver,
           });
         case 'layout':
-          final result = solver!.solve(command['input']! as String);
-          reply.send(<String, Object?>{'ok': true, 'result': result});
+          final input = command['input']! as String;
+          final engine = solver!;
+          if (engine is! ElkJobSolver) {
+            reply.send(<String, Object?>{
+              'ok': true,
+              'result': engine.solve(input),
+            });
+            return;
+          }
+          final id = command['id']! as int;
+          final progress = command['progress'] as SendPort?;
+          final job = jobs[id] = engine.start(input);
+          try {
+            final result = await driveElkSolveJob(
+              job,
+              onProgress: (p) => progress?.send((p.phase.index, p.fraction)),
+            );
+            reply.send(<String, Object?>{'ok': true, 'result': result});
+          } finally {
+            jobs.remove(id);
+          }
         case 'dispose':
+          for (final job in jobs.values) {
+            job.cancel();
+          }
           solver?.dispose();
           reply.send(<String, Object?>{'ok': true});
           commands.close();
       }
+    } on LayoutCancelledException {
+      reply.send(<String, Object?>{'ok': false, 'cancelled': true});
     } on Object catch (e) {
       reply.send(<String, Object?>{'ok': false, 'error': '$e'});
     }
-  }
+  });
 }
 
 /// One entry in [ElkLayoutService]'s in-session LRU memory cache: the

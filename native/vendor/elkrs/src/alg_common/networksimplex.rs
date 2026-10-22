@@ -10,6 +10,8 @@
 
 use std::collections::VecDeque;
 
+use crate::core::progress;
+
 /// Index of an [`NNode`] in its [`NGraph`] arena.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct NNodeId(pub u32);
@@ -382,10 +384,11 @@ impl<'g> NetworkSimplex<'g> {
         self.initialize();
         // determine an initial feasible layering
         self.feasible_tree();
-        // improve the initial layering until it is optimal
+        // improve the initial layering until it is optimal; a cancelled run
+        // stops pivoting and keeps the feasible layering it has
         let mut e = self.leave_edge();
         let mut iter = 0;
-        while e.is_some() && iter < self.iteration_limit {
+        while e.is_some() && iter < self.iteration_limit && !progress::is_cancelled() {
             // current layering is not optimal
             let leave = e.unwrap();
             let enter = self.enter_edge(leave).expect("no entering edge found");
@@ -1029,6 +1032,43 @@ mod tests {
         NetworkSimplex::for_graph(&mut g).execute();
 
         assert_eq!(layers(&g, &[a, b, c, z, m]), vec![0, 1, 2, 3, 2]);
+    }
+
+    /// Same graph, cancelled before the first pivot: execution stops with
+    /// the initial feasible layering (m still in layer 1, every edge at
+    /// least its delta long), and the run reports the cancel.
+    #[test]
+    fn cancel_stops_pivoting_with_a_feasible_layering() {
+        use crate::core::progress::{self, CancelToken, LayoutError, LayoutMonitor};
+
+        let mut g = NGraph::new();
+        let a = g.add_node();
+        let b = g.add_node();
+        let c = g.add_node();
+        let z = g.add_node();
+        let m = g.add_node();
+        let edges = [
+            g.add_edge(a, b, 1.0, 1),
+            g.add_edge(a, m, 1.0, 1),
+            g.add_edge(b, c, 1.0, 1),
+            g.add_edge(c, z, 1.0, 1),
+            g.add_edge(m, z, 10.0, 1),
+        ];
+
+        let token = CancelToken::new();
+        let inside = token.clone();
+        let result = progress::run(LayoutMonitor::new().cancel_token(token), || {
+            inside.cancel();
+            NetworkSimplex::for_graph(&mut g).execute();
+            Ok(())
+        });
+
+        assert_eq!(result, Err(LayoutError::Cancelled));
+        assert_eq!(layers(&g, &[a, b, c, z, m]), vec![0, 1, 2, 3, 1]);
+        for e in edges {
+            let edge = g.edge(e);
+            assert!(g.node(edge.target).layer - g.node(edge.source).layer >= edge.delta);
+        }
     }
 
     /// Same graph as above, but with balancing: balancing only looks

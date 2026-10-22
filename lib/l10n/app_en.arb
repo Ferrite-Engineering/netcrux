@@ -3371,5 +3371,33 @@
   "coneViewLayoutInProgress": "Laying out the cone view…",
   "@coneViewLayoutInProgress": {
     "description": "Progress message on the schematic canvas while the layout of a cone view runs."
+  },
+  "schematicLayoutPhaseCycleBreaking": "Breaking feedback loops",
+  "@schematicLayoutPhaseCycleBreaking": {
+    "description": "Line under the schematic layout progress bar naming the layout phase that is running: the first one, which reverses a few wires so every loop in the design can be drawn left to right."
+  },
+  "schematicLayoutPhaseLayering": "Assigning cells to columns",
+  "@schematicLayoutPhaseLayering": {
+    "description": "Line under the schematic layout progress bar naming the layout phase that is running: the one that decides which column each cell goes in."
+  },
+  "schematicLayoutPhaseCrossingMinimization": "Reducing wire crossings",
+  "@schematicLayoutPhaseCrossingMinimization": {
+    "description": "Line under the schematic layout progress bar naming the layout phase that is running: the one that orders the cells in each column so fewer wires cross. Usually the longest phase."
+  },
+  "schematicLayoutPhaseNodePlacement": "Placing cells",
+  "@schematicLayoutPhaseNodePlacement": {
+    "description": "Line under the schematic layout progress bar naming the layout phase that is running: the one that gives every cell its final position."
+  },
+  "schematicLayoutPhaseEdgeRouting": "Routing wires",
+  "@schematicLayoutPhaseEdgeRouting": {
+    "description": "Line under the schematic layout progress bar naming the layout phase that is running: the last one, which draws the wires between the placed cells."
+  },
+  "schematicLayoutStopped": "Layout stopped.",
+  "@schematicLayoutStopped": {
+    "description": "Shown on the schematic canvas after the user pressed Cancel under the layout progress bar, in place of the schematic."
+  },
+  "schematicLayoutRetry": "Lay out again",
+  "@schematicLayoutRetry": {
+    "description": "Button under 'Layout stopped.' that starts the layout of the same scope again."
   }
 }

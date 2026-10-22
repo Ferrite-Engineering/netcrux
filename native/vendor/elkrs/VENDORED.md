@@ -18,14 +18,16 @@ which is public with the open core.
 
 ## Local changes
 
-Carried here since 2026-10-21 and offered upstream as three stacked branches
-on https://github.com/Ferrite-Engineering/elkrs, each on the one before:
-`netlist-corpus` (`ac1351b`), `explicit-stacks` (`27df83f`) and
-`wasm-seed-ci` (`1c0f2c1`). This tree is upstream `2651159` plus those three
-commits, file for file, except that the fork's `.github/workflows/wasm.yml`
-is not copied here (NetCrux's own CI runs the same steps), plus change 4
-below, which is carried here only so far. To see the first three, check out
-the fork and run `git diff 2651159 wasm-seed-ci`. When upstream merges them,
+Carried here since 2026-10-21 and offered upstream as stacked branches on
+https://github.com/Ferrite-Engineering/elkrs: `netlist-corpus` (`ac1351b`),
+`explicit-stacks` (`27df83f`) on it, and on that `wasm-seed-ci`
+(`1c0f2c1`) and `more-explicit-stacks` (`abceba3`); `u2-progress-cancel`
+(`d8c9761`) is on `wasm-seed-ci`. This tree is upstream `2651159` plus those
+five commits, file for file, except that the fork's
+`.github/workflows/wasm.yml` is not copied here (NetCrux's own CI runs the
+same steps). To see them, check out the fork and run
+`git diff 2651159 u2-progress-cancel` and
+`git diff explicit-stacks more-explicit-stacks`. When upstream merges them,
 re-vendor from upstream and delete this section.
 
 1. **Real-netlist corpus and benches.** `goldens/netlists/` holds four
@@ -65,5 +67,22 @@ re-vendor from upstream and delete this section.
    the corpus and NetCrux's own parity scopes is byte-identical to the tree
    before this change. `tests/deep_graphs.rs` gains
    `netlist_corpus_on_a_tight_stack`, the corpus on a 128 KiB thread, which
-   overflowed before. Not yet offered upstream; it belongs on top of
-   `wasm-seed-ci`.
+   overflowed before. Fork branch `more-explicit-stacks`.
+5. **Progress reports and cooperative cancel.** `src/core/progress.rs`
+   (new) holds a `LayoutMonitor`: an optional progress callback and an
+   optional `CancelToken` another thread can set, installed for one run on
+   the calling thread. `Elk::layout_json_with_monitor` and
+   `RecursiveGraphLayoutEngine::layout_with_monitor` take one and return
+   `LayoutError::Cancelled` (and no graph) for a cancelled run. ELK Layered
+   (`src/alg_layered/elk_layered.rs`) reports each pipeline step as one of
+   its five phases with the fraction of steps done, and checks the token at
+   every step; `p3order/layer_sweep.rs` checks it at each layer of a sweep
+   and `alg_common/networksimplex.rs` in its pivot loop, and the engine
+   before each graph it lays out. With no monitor every check is a no-op,
+   and a monitor only observes: the 201 goldens and the netlist corpus
+   pass, a monitored run of every golden and two corpus cases gives the
+   same bytes as `layout_json` (`tests/progress_cancel.rs`), and so do the
+   whole corpus and 5,000 random graphs against `2651159`. `native/elk_ffi`
+   runs each solve as a job on top of it, which is how NetCrux shows layout
+   progress and stops a solve on request. Fork branch
+   `u2-progress-cancel`.

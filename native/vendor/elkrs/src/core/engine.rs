@@ -3,6 +3,7 @@ use crate::graph::graph::{EdgeId, ElkGraph, NodeId};
 
 use crate::core::elkutil;
 use crate::core::options::*;
+use crate::core::progress::{self, LayoutError, LayoutMonitor};
 use crate::core::registry::{AlgorithmRegistry, GraphFeature};
 
 pub const DEFAULT_ALGORITHM_ID: &str = "org.eclipse.elk.layered";
@@ -24,6 +25,17 @@ impl<'r> RecursiveGraphLayoutEngine<'r> {
         let root = g.root;
         self.layout_recursively(g, root)?;
         Ok(())
+    }
+
+    /// [`Self::layout`] with progress reports and cooperative cancellation
+    /// (see [`crate::core::progress`]). On [`LayoutError::Cancelled`] the
+    /// graph is left part laid out and should be discarded.
+    pub fn layout_with_monitor(
+        &self,
+        g: &mut ElkGraph,
+        monitor: LayoutMonitor,
+    ) -> Result<(), LayoutError> {
+        progress::run(monitor, || self.layout(g))
     }
 
     fn resolve_algorithms(&self, g: &mut ElkGraph) -> Result<(), String> {
@@ -155,6 +167,7 @@ impl<'r> RecursiveGraphLayoutEngine<'r> {
         }
 
         // Run the algorithm on this node
+        progress::check_cancelled()?;
         let mut provider = (algorithm_data.create)();
         provider.layout(g, layout_node)?;
 

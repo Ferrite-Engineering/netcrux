@@ -649,40 +649,115 @@ void main() {
     });
   });
 
-  group('layoutTimeoutFor', () {
-    test('is two minutes for anything under a thousand elements', () {
-      expect(layoutTimeoutFor(elementCount: 0), const Duration(minutes: 2));
-      expect(layoutTimeoutFor(elementCount: 999), const Duration(minutes: 2));
+  group('LayoutPhase', () {
+    test('maps the engine codes 1 to 5 in pipeline order, else null', () {
+      expect(LayoutPhase.fromCode(0), isNull);
+      expect(<LayoutPhase?>[
+        for (var code = 1; code <= 5; code++) LayoutPhase.fromCode(code),
+      ], LayoutPhase.values);
+      expect(LayoutPhase.fromCode(6), isNull);
     });
 
-    test('adds a minute per thousand elements', () {
-      expect(layoutTimeoutFor(elementCount: 1000), const Duration(minutes: 3));
-      expect(layoutTimeoutFor(elementCount: 5600), const Duration(minutes: 7));
-    });
-
-    test('caps at twenty minutes', () {
+    test('maps the elkrs phase names, else null', () {
+      expect(LayoutPhase.fromName('cycle breaking'), LayoutPhase.cycleBreaking);
+      expect(LayoutPhase.fromName('layering'), LayoutPhase.layering);
       expect(
-        layoutTimeoutFor(elementCount: 100000),
-        const Duration(minutes: 20),
+        LayoutPhase.fromName('crossing minimization'),
+        LayoutPhase.crossingMinimization,
       );
+      expect(LayoutPhase.fromName('node placement'), LayoutPhase.nodePlacement);
+      expect(LayoutPhase.fromName('edge routing'), LayoutPhase.edgeRouting);
+      expect(LayoutPhase.fromName('wrapping'), isNull);
     });
   });
 
-  group('elkElementCount', () {
-    test('counts nodes plus edges of an ELK input', () {
-      final input = buildElkInput(
-        NetlistModel.fromJson(_andJson).modules['and2']!,
-      );
-      // and2: one cell plus three boundary ports, joined by three edges.
-      expect(elkElementCount(input), 7);
-      expect(
-        elkElementCount(input),
-        (input['children']! as List).length + (input['edges']! as List).length,
-      );
+  group('driveElkSolveJob', () {
+    test('passes each new report on once and returns the result', () async {
+      final job = _ScriptedJob(<LayoutProgress?>[
+        null,
+        const LayoutProgress(phase: LayoutPhase.cycleBreaking, fraction: 0),
+        const LayoutProgress(phase: LayoutPhase.cycleBreaking, fraction: 0),
+        const LayoutProgress(phase: LayoutPhase.layering, fraction: 0.25),
+        const LayoutProgress(phase: LayoutPhase.edgeRouting, fraction: 0.9),
+      ]);
+      final seen = <LayoutProgress>[];
+      final result = await driveElkSolveJob(job, onProgress: seen.add);
+      expect(result, '{"id":"root"}');
+      expect(seen.map((p) => p.phase), <LayoutPhase>[
+        LayoutPhase.cycleBreaking,
+        LayoutPhase.layering,
+        LayoutPhase.edgeRouting,
+      ]);
+      expect(job.finished, isTrue);
     });
 
-    test('tolerates an input without the lists', () {
-      expect(elkElementCount(const <String, Object?>{}), 0);
+    test('a cancelled job ends in LayoutCancelledException', () async {
+      final job = _ScriptedJob(List<LayoutProgress?>.filled(1000, null));
+      final solve = driveElkSolveJob(job);
+      job.cancel();
+      await expectLater(solve, throwsA(isA<LayoutCancelledException>()));
+    });
+  });
+
+  group('ElkLayoutService — a solver that runs jobs', () {
+    test('publishes progress while the solve runs, then clears it', () async {
+      final solver = _ScriptedJobSolver(<LayoutProgress?>[
+        const LayoutProgress(phase: LayoutPhase.cycleBreaking, fraction: 0),
+        const LayoutProgress(
+          phase: LayoutPhase.crossingMinimization,
+          fraction: 0.5,
+        ),
+      ]);
+      final service = ElkLayoutService(
+        solverFactory: () => solver,
+        assetLoader: (_) async => throw StateError('elkjs must not load'),
+      );
+      addTearDown(service.dispose);
+      final published = <LayoutProgress?>[];
+      service.progress.addListener(() => published.add(service.progress.value));
+
+      final layout = await service.layout(
+        NetlistModel.fromJson(_andJson).modules['and2']!,
+      );
+      expect(layout.nodes, isNotEmpty);
+      expect(published.whereType<LayoutProgress>().map((p) => p.phase), [
+        LayoutPhase.cycleBreaking,
+        LayoutPhase.crossingMinimization,
+      ]);
+      expect(service.progress.value, isNull);
+      expect(service.hasLayoutInFlight, isFalse);
+    });
+
+    test('cancelInFlightLayout stops the job: LayoutCancelledException, and '
+        'the next layout runs', () async {
+      final solver = _ScriptedJobSolver(
+        List<LayoutProgress?>.filled(
+          100000,
+          const LayoutProgress(phase: LayoutPhase.layering, fraction: 0.1),
+        ),
+      );
+      final service = ElkLayoutService(
+        solverFactory: () => solver,
+        assetLoader: (_) async => throw StateError('elkjs must not load'),
+      );
+      addTearDown(service.dispose);
+      final pending = service.layout(
+        NetlistModel.fromJson(_chainJson(4)).modules['chain']!,
+      );
+      while (service.progress.value == null) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+      expect(service.hasLayoutInFlight, isTrue);
+      service.cancelInFlightLayout();
+      await expectLater(pending, throwsA(isA<LayoutCancelledException>()));
+      expect(service.hasLayoutInFlight, isFalse);
+      expect(service.progress.value, isNull);
+
+      solver.script = <LayoutProgress?>[null];
+      final next = await service.layout(
+        NetlistModel.fromJson(_andJson).modules['and2']!,
+      );
+      expect(next.nodes, isNotEmpty);
     });
   });
 
@@ -702,6 +777,57 @@ const String _kLayoutJson =
     '{"id":"root","x":0,"y":0,"width":100,'
     '"height":100,"children":[{"id":"u_and","x":10,"y":10,"width":80,'
     '"height":32}],"edges":[]}';
+
+/// An [ElkSolveJob] that reports one entry of [script] per poll and is done
+/// after the last one, or at the first poll after [cancel].
+class _ScriptedJob implements ElkSolveJob {
+  _ScriptedJob(this.script, {this.result = '{"id":"root"}'});
+
+  final List<LayoutProgress?> script;
+  final String result;
+  int _polls = 0;
+  bool _cancelled = false;
+  bool finished = false;
+
+  @override
+  ({bool done, LayoutProgress? progress}) poll() {
+    final i = _polls++;
+    final progress = script.isEmpty
+        ? null
+        : script[i.clamp(0, script.length - 1)];
+    return (done: _cancelled || i >= script.length - 1, progress: progress);
+  }
+
+  @override
+  void cancel() => _cancelled = true;
+
+  @override
+  String finish() {
+    finished = true;
+    if (_cancelled) throw const LayoutCancelledException();
+    return result;
+  }
+}
+
+/// An [ElkJobSolver] whose jobs follow [script] and return [_kLayoutJson].
+class _ScriptedJobSolver implements ElkJobSolver {
+  _ScriptedJobSolver(this.script);
+
+  List<LayoutProgress?> script;
+
+  @override
+  String get engineDescription => 'scripted jobs';
+
+  @override
+  String solve(String inputJson) => _kLayoutJson;
+
+  @override
+  ElkSolveJob start(String inputJson) =>
+      _ScriptedJob(script, result: _kLayoutJson);
+
+  @override
+  void dispose() {}
+}
 
 /// In-memory [LayoutDiskCache] for the cache tests — stands in for the
 /// on-disk store so a cold service can read back what a warm one wrote.

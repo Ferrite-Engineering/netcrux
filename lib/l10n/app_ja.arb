@@ -2624,5 +2624,12 @@
     }
   },
   "coneViewDepthAll": "全レベル",
-  "coneViewLayoutInProgress": "コーンビューをレイアウト中…"
+  "coneViewLayoutInProgress": "コーンビューをレイアウト中…",
+  "schematicLayoutPhaseCycleBreaking": "フィードバックループを解消中",
+  "schematicLayoutPhaseLayering": "セルを列に割り当て中",
+  "schematicLayoutPhaseCrossingMinimization": "配線の交差を削減中",
+  "schematicLayoutPhaseNodePlacement": "セルを配置中",
+  "schematicLayoutPhaseEdgeRouting": "配線ルートを計算中",
+  "schematicLayoutStopped": "レイアウトを中止しました。",
+  "schematicLayoutRetry": "再レイアウト"
 }

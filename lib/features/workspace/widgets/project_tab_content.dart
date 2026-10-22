@@ -39,6 +39,8 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/collaboration/netlist_fingerprint.dart';
 import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_registry_provider.dart';
+import 'package:netcrux/services/layout/elk_layout_service.dart';
+import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
@@ -380,7 +382,14 @@ class _SchematicCenter extends ConsumerWidget {
         );
       },
       loading: () => const _SchematicLayoutLoading(),
-      error: (error, stackTrace) => SchematicErrorView(error: error),
+      // A cancelled layout is not a failure: say it stopped and offer to lay
+      // it out again. Once asked, the refresh keeps the cancel as its
+      // previous error while it runs, so show the progress instead.
+      error: (error, stackTrace) => error is! LayoutCancelledException
+          ? SchematicErrorView(error: error)
+          : laidOutAsync.isLoading
+          ? const _SchematicLayoutLoading()
+          : const _SchematicLayoutStopped(),
     );
   }
 }
@@ -400,14 +409,14 @@ class _NotifierStatsSink implements RenderStatsSink {
 
 /// Progress state shown while the ELK layout for the selected scope runs.
 ///
-/// The layout solve is offloaded to a background isolate (see
+/// The layout solve is offloaded to a background isolate or Web Worker (see
 /// `ElkLayoutService`), so the UI isolate stays free to animate this
-/// indicator — a large scope (e.g. a ~1 600-cell CPU core) takes a few
-/// seconds. Shows the cell count so the user understands why a big scope
-/// takes longer, an **indeterminate progress bar**, and an elapsed-seconds
-/// readout. The bar is indeterminate because elkjs is an opaque solve — it
-/// reports no incremental progress, so a true percentage isn't available;
-/// the elapsed counter is the honest "it's working" signal.
+/// indicator; a large scope (e.g. a ~1 600-cell CPU core) takes seconds.
+/// Shows the cell count so the user understands why a big scope takes
+/// longer, a progress bar with the phase the engine is in (elkrs reports
+/// both; elkjs reports neither, so the bar is then indeterminate), an
+/// elapsed-seconds readout, and Cancel, which stops the solve. There is no
+/// time limit: the bar shows the solve is moving, and the user decides.
 class _SchematicLayoutLoading extends ConsumerStatefulWidget {
   const _SchematicLayoutLoading();
 
@@ -451,6 +460,10 @@ class _SchematicLayoutLoadingState
     final cone = ref.watch(coneViewProvider);
     final inCone = cone != null && cone.scope == scope;
     final seconds = (_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
+    final service = ref.watch(elkLayoutServiceProvider);
+    final secondary = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 320),
@@ -465,16 +478,71 @@ class _SchematicLayoutLoadingState
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
-            const LinearProgressIndicator(),
-            const SizedBox(height: 8),
-            Text(
-              l10n.schematicLayoutElapsed(seconds),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            ValueListenableBuilder<LayoutProgress?>(
+              valueListenable: service.progress,
+              builder: (context, progress, _) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  LinearProgressIndicator(value: progress?.fraction),
+                  const SizedBox(height: 8),
+                  Text(
+                    progress == null
+                        ? l10n.schematicLayoutElapsed(seconds)
+                        : '${layoutPhaseLabel(l10n, progress.phase)} · '
+                              '${l10n.schematicLayoutElapsed(seconds)}',
+                    textAlign: TextAlign.center,
+                    style: secondary,
+                  ),
+                ],
               ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: service.cancelInFlightLayout,
+              child: Text(l10n.commonCancel),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The localized name of a layout [phase], for the progress view.
+String layoutPhaseLabel(L10N l10n, LayoutPhase phase) => switch (phase) {
+  LayoutPhase.cycleBreaking => l10n.schematicLayoutPhaseCycleBreaking,
+  LayoutPhase.layering => l10n.schematicLayoutPhaseLayering,
+  LayoutPhase.crossingMinimization =>
+    l10n.schematicLayoutPhaseCrossingMinimization,
+  LayoutPhase.nodePlacement => l10n.schematicLayoutPhaseNodePlacement,
+  LayoutPhase.edgeRouting => l10n.schematicLayoutPhaseEdgeRouting,
+};
+
+/// Shown in place of the schematic after the user cancelled its layout:
+/// says so, and lays the same scope out again on request. Moving to another
+/// scope or view works as usual.
+class _SchematicLayoutStopped extends ConsumerWidget {
+  const _SchematicLayoutStopped();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10N.of(context);
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            l10n.schematicLayoutStopped,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          FilledButton.tonal(
+            onPressed: () => ref.invalidate(currentLaidOutGraphProvider),
+            child: Text(l10n.schematicLayoutRetry),
+          ),
+        ],
       ),
     );
   }

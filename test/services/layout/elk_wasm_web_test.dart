@@ -203,27 +203,25 @@ void main() {
       expect(logs, isEmpty);
     }, timeout: const Timeout(Duration(minutes: 2)));
 
-    test('a solve past its timeout terminates the worker', () async {
+    test('the worker reports progress, phase by phase, and the same layout '
+        'as a solve that listens to none', () async {
       final input = await _inputFor(layoutParityScopes.last);
-      await expectLater(
-        solveElkOnWeb(
-          input,
-          _noElkjs,
-          timeout: const Duration(milliseconds: 200),
-        ),
-        throwsA(
-          isA<LayoutException>().having(
-            (e) => e.message,
-            'message',
-            contains('timed out'),
-          ),
-        ),
+      final reports = <LayoutProgress>[];
+      final watched = await solveElkOnWeb(
+        input,
+        _noElkjs,
+        onProgress: reports.add,
       );
+      expect(reports, isNotEmpty);
+      final phases = <LayoutPhase>{for (final p in reports) p.phase};
+      expect(phases, containsAll(LayoutPhase.values));
+      final fractions = <double>[for (final p in reports) p.fraction!];
+      for (var i = 1; i < fractions.length; i++) {
+        expect(fractions[i], greaterThanOrEqualTo(fractions[i - 1]));
+      }
+      expect(fractions.last, lessThan(1));
+      expect(await solveElkOnWeb(input, _noElkjs), watched);
       expect(elkWebLayoutInFlight, isFalse);
-      expect(
-        parseLayout(await solveElkOnWeb(_tiny, _noElkjs)).nodes,
-        hasLength(2),
-      );
     }, timeout: const Timeout(Duration(minutes: 2)));
 
     test('a rejected input is a LayoutException, not a fallback', () async {

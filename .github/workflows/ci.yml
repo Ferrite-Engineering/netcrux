@@ -648,7 +648,11 @@ jobs:
 
       - name: Clippy (elk_ffi, deny warnings)
         working-directory: native/elk_ffi
-        run: cargo clippy --release -- -D warnings
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: elk_ffi tests (the layout job ABI)
+        working-directory: native/elk_ffi
+        run: cargo test --release
 
       - name: Check formatting (elk_wasm)
         working-directory: native/elk_wasm

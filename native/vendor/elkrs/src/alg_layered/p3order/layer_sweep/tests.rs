@@ -161,6 +161,28 @@ fn two_layer_barycenter_sweep_other_seed() {
     assert_eq!(counter.count_crossings_between_layers(&a, &order[0], &order[1]), 0);
 }
 
+/// A run cancelled while crossing minimization is under way stops at the
+/// sweep's next layer instead of finishing its tries.
+#[test]
+fn cancelled_sweep_stops_with_the_cancel_error() {
+    use crate::core::progress::{self, CANCELLED, CancelToken, LayoutError, LayoutMonitor};
+
+    let mut a = LGraphArena::new();
+    let (g, _layers, _nodes, _ports) = build_two_layer_graph(&mut a);
+    let token = CancelToken::new();
+    let inside = token.clone();
+    let mut sweep_result = None;
+    let result = progress::run(LayoutMonitor::new().cancel_token(token), || {
+        inside.cancel();
+        let r = process(&mut a, g, &mut JavaRandom::new(1));
+        sweep_result = Some(r.clone());
+        r
+    });
+
+    assert_eq!(sweep_result, Some(Err(CANCELLED.to_string())));
+    assert_eq!(result, Err(LayoutError::Cancelled));
+}
+
 // ---------------------------------------------------------------------------
 // Greedy switch (ONE_SIDED_GREEDY_SWITCH / TWO_SIDED_GREEDY_SWITCH)
 

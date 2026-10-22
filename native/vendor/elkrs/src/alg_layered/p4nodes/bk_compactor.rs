@@ -270,9 +270,13 @@ impl BKCompactor {
                 // calculate threshold value for additional straight edges;
                 // this call has to be _after_ place block, otherwise the
                 // order of the elements in the postprocessing queue is wrong
-                frame.thresh = self
-                    .thresh_strategy
-                    .calculate_threshold(a, bal, frame.thresh, root, current_node);
+                frame.thresh = self.thresh_strategy.calculate_threshold(
+                    a,
+                    bal,
+                    frame.thresh,
+                    root,
+                    current_node,
+                );
 
                 // Note that the two nodes and their blocks form a unit called
                 // class in the original algorithm. These are combinations of
@@ -372,9 +376,13 @@ impl BKCompactor {
                     }
                 }
             } else {
-                frame.thresh = self
-                    .thresh_strategy
-                    .calculate_threshold(a, bal, frame.thresh, root, current_node);
+                frame.thresh = self.thresh_strategy.calculate_threshold(
+                    a,
+                    bal,
+                    frame.thresh,
+                    root,
+                    current_node,
+                );
             }
 
             // Get the next node in the block

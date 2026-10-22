@@ -102,6 +102,60 @@ const _feedbackJson = <String, Object?>{
   },
 };
 
+/// The ELK input NetCrux builds for module [name] of the Yosys [json].
+String _elkInputJson(Map<String, Object?> json, String name) =>
+    jsonEncode(buildElkInput(NetlistModel.fromJson(json).modules[name]!));
+
+/// [n] cells in one feedback loop, with the large-scope options a real
+/// scope of that size gets: every depth-first walk in the layered pipeline
+/// goes [n] nodes deep.
+String _loopInput(int n) {
+  final children = <Map<String, Object?>>[
+    for (var i = 0; i < n; i++)
+      <String, Object?>{
+        'id': 'c$i',
+        'width': 80,
+        'height': 52,
+        'ports': <Map<String, Object?>>[
+          <String, Object?>{
+            'id': 'c$i:A',
+            'width': 4,
+            'height': 4,
+            'layoutOptions': <String, Object?>{'elk.port.side': 'WEST'},
+          },
+          <String, Object?>{
+            'id': 'c$i:Y',
+            'width': 4,
+            'height': 4,
+            'layoutOptions': <String, Object?>{'elk.port.side': 'EAST'},
+          },
+        ],
+        'layoutOptions': <String, Object?>{
+          'elk.portConstraints': 'FIXED_SIDE',
+        },
+      },
+  ];
+  final edges = <Map<String, Object?>>[
+    for (var i = 0; i < n; i++)
+      <String, Object?>{
+        'id': 'e$i',
+        'sources': <String>['c$i:Y'],
+        'targets': <String>['c${(i + 1) % n}:A'],
+      },
+  ];
+  return jsonEncode(<String, Object?>{
+    'id': 'root',
+    'layoutOptions': <String, Object?>{
+      'elk.algorithm': 'layered',
+      'elk.direction': 'RIGHT',
+      'elk.layered.thoroughness': '1',
+      'elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
+    },
+    'children': children,
+    'edges': edges,
+  });
+}
+
 void main() {
   group('selectLayoutSolver', () {
     test('defaults to the native engine', () {
@@ -210,58 +264,62 @@ void main() {
       final solver = NativeElkSolver.open();
       addTearDown(solver.dispose);
       const n = 10000;
-      final children = <Map<String, Object?>>[
-        for (var i = 0; i < n; i++)
-          <String, Object?>{
-            'id': 'c$i',
-            'width': 80,
-            'height': 52,
-            'ports': <Map<String, Object?>>[
-              <String, Object?>{
-                'id': 'c$i:A',
-                'width': 4,
-                'height': 4,
-                'layoutOptions': <String, Object?>{'elk.port.side': 'WEST'},
-              },
-              <String, Object?>{
-                'id': 'c$i:Y',
-                'width': 4,
-                'height': 4,
-                'layoutOptions': <String, Object?>{'elk.port.side': 'EAST'},
-              },
-            ],
-            'layoutOptions': <String, Object?>{
-              'elk.portConstraints': 'FIXED_SIDE',
-            },
-          },
-      ];
-      final edges = <Map<String, Object?>>[
-        for (var i = 0; i < n; i++)
-          <String, Object?>{
-            'id': 'e$i',
-            'sources': <String>['c$i:Y'],
-            'targets': <String>['c${(i + 1) % n}:A'],
-          },
-      ];
       final result =
-          jsonDecode(
-                solver.solve(
-                  jsonEncode(<String, Object?>{
-                    'id': 'root',
-                    'layoutOptions': <String, Object?>{
-                      'elk.algorithm': 'layered',
-                      'elk.direction': 'RIGHT',
-                      'elk.layered.thoroughness': '1',
-                      'elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
-                    },
-                    'children': children,
-                    'edges': edges,
-                  }),
-                ),
-              )
-              as Map<String, Object?>;
+          jsonDecode(solver.solve(_loopInput(n))) as Map<String, Object?>;
       expect(result['children'], hasLength(n));
       expect(result['edges'], hasLength(n));
+    });
+
+    test(
+      'a job gives the same bytes as solve, reporting phases in order',
+      () async {
+        if (!requireElkFfiLibrary()) return;
+        final solver = NativeElkSolver.open();
+        addTearDown(solver.dispose);
+        for (final input in <String>[
+          _elkInputJson(_feedbackJson, 'loop'),
+          // One component, long enough that polls land in several phases.
+          _loopInput(3000),
+        ]) {
+          final seen = <LayoutProgress>[];
+          final viaJob = await driveElkSolveJob(
+            solver.start(input),
+            onProgress: seen.add,
+          );
+          expect(viaJob, solver.solve(input));
+          // Polling sees the latest report, so phases may be skipped, but
+          // never revisited, and the share done only grows.
+          expect(seen, isNotEmpty);
+          for (var i = 1; i < seen.length; i++) {
+            expect(
+              seen[i].phase.index,
+              greaterThanOrEqualTo(seen[i - 1].phase.index),
+            );
+            expect(
+              seen[i].fraction,
+              greaterThanOrEqualTo(seen[i - 1].fraction!),
+            );
+          }
+          expect(seen.last.phase, LayoutPhase.edgeRouting);
+          expect(seen.last.fraction, lessThan(1));
+        }
+      },
+    );
+
+    test('a cancelled job stops with LayoutCancelledException', () async {
+      if (!requireElkFfiLibrary()) return;
+      final solver = NativeElkSolver.open();
+      addTearDown(solver.dispose);
+      final job = solver.start(_loopInput(20000));
+      final cancelledAt = Stopwatch()..start();
+      job.cancel();
+      await expectLater(
+        driveElkSolveJob(job),
+        throwsA(isA<LayoutCancelledException>()),
+      );
+      // A twenty-thousand-cell loop takes seconds to lay out; the cancel
+      // lands at the engine's next check.
+      expect(cancelledAt.elapsed, lessThan(const Duration(seconds: 2)));
     });
 
     test('round-trips a large document without corrupting UTF-8', () {

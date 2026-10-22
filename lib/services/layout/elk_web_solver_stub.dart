@@ -9,6 +9,8 @@
 /// its entry points must never be reached.
 library;
 
+import 'package:netcrux/services/layout/elk_layout_service.dart';
+
 /// Whether the browser solver is available on this target. `false` off-web;
 /// the isolate path is used instead.
 const bool kElkWebSolverAvailable = false;
@@ -25,7 +27,7 @@ void cancelElkOnWeb() {}
 Future<String> solveElkOnWeb(
   String inputJson,
   Future<String> Function() loadSource, {
-  Duration? timeout,
+  void Function(LayoutProgress progress)? onProgress,
 }) {
   throw UnsupportedError(
     'solveElkOnWeb is not available on this platform; the layout solve '

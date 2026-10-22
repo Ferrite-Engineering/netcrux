@@ -81,6 +81,8 @@ extension type _Reply._(JSObject _) implements JSObject {
   external String? get json;
   external String? get message;
   external bool? get fatal;
+  external String? get phase;
+  external double? get fraction;
 }
 
 extension type _Request._(JSObject _) implements JSObject {
@@ -129,12 +131,16 @@ void _warn(String message) => _consoleWarn(message.toJS);
 Future<ElkWebEngine>? _engine;
 
 /// The live worker, or null when none is running (before the first solve,
-/// after a cancel, a timeout or a trap). The next wasm solve starts one.
+/// after a cancel or a trap). The next wasm solve starts one.
 _Worker? _worker;
 Future<void>? _workerReady;
 
 int _nextId = 0;
 final Map<int, Completer<String>> _pending = <int, Completer<String>>{};
+
+/// The progress listeners of the solves in [_pending], by id.
+final Map<int, void Function(LayoutProgress progress)> _listeners =
+    <int, void Function(LayoutProgress progress)>{};
 
 Future<void>? _elkjsInitialization;
 
@@ -178,22 +184,24 @@ bool get elkWebLayoutInFlight => _pending.isNotEmpty;
 /// the wasm engine.
 void cancelElkOnWeb() {
   if (_pending.isEmpty) return;
-  _discardWorker(const LayoutException('layout cancelled'));
+  _discardWorker(const LayoutCancelledException());
 }
 
-/// Solves [inputJson] and returns the laid-out ELK JSON. Throws
-/// [LayoutException] when the engine rejects the input, the solve is
-/// cancelled, [timeout] elapses (the worker is terminated) or nothing can
-/// start. [loadSource] reads the vendored elkjs, and is called only when the
-/// wasm module cannot load.
+/// Solves [inputJson] and returns the laid-out ELK JSON, passing the wasm
+/// engine's progress reports to [onProgress] as the worker posts them (elkjs
+/// reports none). Throws [LayoutCancelledException] when [cancelElkOnWeb]
+/// abandons it, and [LayoutException] when the engine rejects the input or
+/// nothing can start. There is no time limit: the user can stop the solve,
+/// and cancelling terminates the worker. [loadSource] reads the vendored
+/// elkjs, and is called only when the wasm module cannot load.
 Future<String> solveElkOnWeb(
   String inputJson,
   Future<String> Function() loadSource, {
-  Duration? timeout,
+  void Function(LayoutProgress progress)? onProgress,
 }) async {
   final engine = await (_engine ??= _chooseEngine());
   return switch (engine) {
-    ElkWebEngine.wasm => await _solveInWorker(inputJson, timeout),
+    ElkWebEngine.wasm => await _solveInWorker(inputJson, onProgress),
     ElkWebEngine.elkjs => await _solveWithElkjs(inputJson, loadSource),
   };
 }
@@ -265,7 +273,19 @@ void _onReply(_Reply reply, Completer<void> ready) {
       );
       if (!ready.isCompleted) ready.completeError(failure);
       _discardWorker(failure);
+    case 'progress':
+      final phase = LayoutPhase.fromName(reply.phase ?? '');
+      final fraction = reply.fraction;
+      if (phase != null) {
+        _listeners[reply.id]?.call(
+          LayoutProgress(
+            phase: phase,
+            fraction: fraction == null || fraction.isNaN ? null : fraction,
+          ),
+        );
+      }
     case 'result':
+      _listeners.remove(reply.id);
       final completer = _pending.remove(reply.id);
       final json = reply.json ?? '';
       if (json.isEmpty) {
@@ -283,6 +303,7 @@ void _onReply(_Reply reply, Completer<void> ready) {
         // A trapped module is not reusable: fail everything queued on it.
         _discardWorker(failure);
       } else {
+        _listeners.remove(reply.id);
         _pending.remove(reply.id)?.completeError(failure);
       }
   }
@@ -295,25 +316,22 @@ void _discardWorker(LayoutException failure) {
   _workerReady = null;
   final pending = List<Completer<String>>.of(_pending.values);
   _pending.clear();
+  _listeners.clear();
   for (final completer in pending) {
     if (!completer.isCompleted) completer.completeError(failure);
   }
 }
 
-Future<String> _solveInWorker(String inputJson, Duration? timeout) async {
+Future<String> _solveInWorker(
+  String inputJson,
+  void Function(LayoutProgress progress)? onProgress,
+) async {
   await _ensureWorker();
   final id = _nextId++;
   final completer = _pending[id] = Completer<String>();
+  if (onProgress != null) _listeners[id] = onProgress;
   _worker!.postMessage(_Request(id: id, input: inputJson));
-  if (timeout == null) return await completer.future;
-  return await completer.future.timeout(
-    timeout,
-    onTimeout: () {
-      const failure = LayoutException('layout timed out');
-      if (_pending.containsKey(id)) _discardWorker(failure);
-      throw failure;
-    },
-  );
+  return await completer.future;
 }
 
 // ── elkjs fallback ──────────────────────────────────────────────────────────

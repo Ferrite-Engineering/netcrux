@@ -11,11 +11,10 @@
 
 use serde_json::{Value, json};
 
+#[path = "support/netlist.rs"]
+mod netlist;
 #[path = "support/chain.rs"]
 mod support;
-#[path = "support/netlist.rs"]
-#[allow(dead_code)]
-mod netlist;
 
 use support::{chain, large_scope_options};
 

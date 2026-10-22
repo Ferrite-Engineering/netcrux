@@ -489,6 +489,7 @@ fn sweep_reducing_crossings(
     improved |= sweep_in_hierarchical_nodes(sweep, a, random, &first_layer, forward, first_sweep)?;
     let mut i = first_free(forward, length);
     while is_not_end(length, i, forward) {
+        crate::core::progress::check_cancelled()?;
         let first_try: bool =
             a.graph(lgraph).properties.get(&iprops::FIRST_TRY_WITH_INITIAL_ORDER);
         let second_try: bool =

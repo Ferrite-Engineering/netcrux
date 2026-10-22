@@ -86,11 +86,12 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
       : null;
 
   final service = ref.read(elkLayoutServiceProvider);
-  // Leaving this scope (a new selection rebuilds the provider) or closing
-  // the tab abandons a solve still running for it: the engine cannot be
-  // interrupted, so the worker is killed and the next scope starts a fresh
-  // one. Without this a slow scope kept a core busy for the whole timeout
-  // after the user had moved on, and the next layout queued behind it.
+  // Leaving this scope (a new selection rebuilds the provider), entering or
+  // leaving a cone view, or closing the tab abandons a solve still running
+  // for it. The native engine stops at its next check and its worker stays
+  // warm; elkjs cannot be interrupted, so its worker is killed. Without this
+  // a slow scope kept a core busy after the user had moved on, and the next
+  // layout queued behind it. The progress view's Cancel takes the same path.
   ref.onDispose(service.cancelInFlightLayout);
 
   TraceOverlay? members;

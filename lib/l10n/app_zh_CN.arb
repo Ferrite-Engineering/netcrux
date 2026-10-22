@@ -2624,5 +2624,12 @@
     }
   },
   "coneViewDepthAll": "全部层级",
-  "coneViewLayoutInProgress": "正在布局锥视图…"
+  "coneViewLayoutInProgress": "正在布局锥视图…",
+  "schematicLayoutPhaseCycleBreaking": "正在消除反馈环路",
+  "schematicLayoutPhaseLayering": "正在将单元分配到各列",
+  "schematicLayoutPhaseCrossingMinimization": "正在减少连线交叉",
+  "schematicLayoutPhaseNodePlacement": "正在放置单元",
+  "schematicLayoutPhaseEdgeRouting": "正在布线",
+  "schematicLayoutStopped": "布局已停止。",
+  "schematicLayoutRetry": "重新布局"
 }

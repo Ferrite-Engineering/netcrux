@@ -2,6 +2,7 @@
 
 use crate::core::javacompat::JavaRandom;
 use crate::core::options::{ContentAlignment, PortSide, SizeConstraint, SizeOptions};
+use crate::core::progress::{self, Phase};
 use crate::graph::math::KVector;
 use crate::graph::properties::EnumSet;
 
@@ -19,11 +20,24 @@ pub fn do_layout(a: &mut LGraphArena, lgraph: LGraphId) -> Result<(), String> {
     let mut random = make_random(a, lgraph);
 
     let pipeline = configurator::prepare_graph_for_layout(a, lgraph)?;
+    let phases = step_phases(&pipeline);
 
     let mut components = ComponentsProcessor::split(a, lgraph)?;
-    for &component in &components {
-        layout(a, component, &pipeline, &mut random)?;
+    // Progress counts pipeline steps across all components.
+    let total_steps = components.len() * pipeline.len();
+    for (index, &component) in components.iter().enumerate() {
+        let steps_done = index * pipeline.len();
+        layout(
+            a,
+            component,
+            &pipeline,
+            &phases,
+            &mut random,
+            steps_done,
+            total_steps,
+        )?;
     }
+    progress::check_cancelled()?;
     ComponentsProcessor::combine(a, &mut components, lgraph)?;
 
     resize_graph(a, lgraph);
@@ -65,10 +79,15 @@ fn hierarchical_layout(a: &mut LGraphArena, lgraph: LGraphId) -> Result<(), Stri
 
     // Get list of processors for each graph, since they can be different.
     let mut graphs_and_algorithms: Vec<(LGraphId, Vec<PipelineStep>, usize)> = Vec::new();
+    let mut phases: Vec<Vec<Phase>> = Vec::new();
     for &g in &graphs {
         let pipeline = configurator::prepare_graph_for_layout(a, g)?;
+        phases.push(step_phases(&pipeline));
         graphs_and_algorithms.push((g, pipeline, 0));
     }
+    // Progress counts pipeline steps across all graphs, run or skipped.
+    let total_steps: usize = phases.iter().map(Vec::len).sum();
+    let mut steps_done = 0;
 
     // The root graph is the last one in the bottom-up list.
     let root_index = graphs_and_algorithms.len() - 1;
@@ -90,12 +109,16 @@ fn hierarchical_layout(a: &mut LGraphArena, lgraph: LGraphId) -> Result<(), Stri
                 let is_root = a.graph(graph).parent_node.is_none();
 
                 if !is_hierarchical {
+                    progress::checkpoint(phases[gi][step], fraction(steps_done, total_steps))?;
                     run_step(a, graph, processor, &mut random)?;
                     graphs_and_algorithms[gi].2 += 1;
+                    steps_done += 1;
                 } else if is_root {
                     // Hierarchy-aware processor runs once on the root.
+                    progress::checkpoint(phases[gi][step], fraction(steps_done, total_steps))?;
                     run_step(a, graph, processor, &mut random)?;
                     graphs_and_algorithms[gi].2 += 1;
+                    steps_done += 1;
                     // Continue with the graph at the bottom of the hierarchy.
                     break;
                 } else {
@@ -104,6 +127,7 @@ fn hierarchical_layout(a: &mut LGraphArena, lgraph: LGraphId) -> Result<(), Stri
                     // on its behalf) and resumes at the next processor on the
                     // following visit.
                     graphs_and_algorithms[gi].2 += 1;
+                    steps_done += 1;
                     break;
                 }
             }
@@ -199,13 +223,41 @@ fn review_and_correct_hierarchical_processors(
     Ok(())
 }
 
+/// The phase each pipeline step reports progress under: a phase step its
+/// own, an intermediate processor the phase it prepares for (the last phase
+/// for processors that run after it).
+fn step_phases(pipeline: &[PipelineStep]) -> Vec<Phase> {
+    let mut phases = vec![Phase::EdgeRouting; pipeline.len()];
+    let mut next = Phase::EdgeRouting;
+    for (index, step) in pipeline.iter().enumerate().rev() {
+        next = match step {
+            PipelineStep::Intermediate(_) => next,
+            PipelineStep::CycleBreaking(_) => Phase::CycleBreaking,
+            PipelineStep::Layering(_) => Phase::Layering,
+            PipelineStep::CrossingMinimization(_) => Phase::CrossingMinimization,
+            PipelineStep::NodePlacement(_) => Phase::NodePlacement,
+            PipelineStep::EdgeRouting(_) => Phase::EdgeRouting,
+        };
+        phases[index] = next;
+    }
+    phases
+}
+
+fn fraction(steps_done: usize, total_steps: usize) -> Option<f64> {
+    (total_steps > 0).then(|| steps_done as f64 / total_steps as f64)
+}
+
 fn layout(
     a: &mut LGraphArena,
     lgraph: LGraphId,
     pipeline: &[PipelineStep],
+    phases: &[Phase],
     random: &mut JavaRandom,
+    steps_done: usize,
+    total_steps: usize,
 ) -> Result<(), String> {
-    for &step in pipeline {
+    for (index, &step) in pipeline.iter().enumerate() {
+        progress::checkpoint(phases[index], fraction(steps_done + index, total_steps))?;
         match step {
             PipelineStep::Intermediate(strategy) => {
                 processors::process(strategy, a, lgraph, random)?

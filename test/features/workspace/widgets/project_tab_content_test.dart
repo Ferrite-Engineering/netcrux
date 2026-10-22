@@ -20,6 +20,8 @@ import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart'
 import 'package:netcrux/features/viewer/widgets/netcrux_ide_layout.dart';
 import 'package:netcrux/features/workspace/widgets/project_tab_content.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/layout/elk_layout_service.dart';
+import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
@@ -43,6 +45,83 @@ class _AnsweredNetlist extends LoadedNetlist {
     builds.add(answer);
     return answer.future;
   }
+}
+
+/// One AND gate between three ports: the module the progress test lays out.
+const _and2Json = <String, Object?>{
+  'creator': 'Yosys test',
+  'modules': <String, Object?>{
+    'and2': <String, Object?>{
+      'attributes': <String, Object?>{'top': '1'},
+      'ports': <String, Object?>{
+        'a': <String, Object?>{
+          'direction': 'input',
+          'bits': <Object>[2],
+        },
+        'y': <String, Object?>{
+          'direction': 'output',
+          'bits': <Object>[3],
+        },
+      },
+      'cells': <String, Object?>{
+        'u_and': <String, Object?>{
+          'hide_name': 0,
+          'type': r'$and',
+          'parameters': <String, Object?>{},
+          'attributes': <String, Object?>{},
+          'port_directions': <String, Object?>{'A': 'input', 'Y': 'output'},
+          'connections': <String, Object?>{
+            'A': <Object>[2],
+            'Y': <Object>[3],
+          },
+        },
+      },
+      'netnames': <String, Object?>{},
+    },
+  },
+};
+
+/// A solver whose jobs sit in crossing minimization, 40 % through, until
+/// they are cancelled; counts the cancels.
+class _EndlessJobSolver implements ElkJobSolver {
+  int cancels = 0;
+
+  @override
+  String get engineDescription => 'endless jobs';
+
+  @override
+  String solve(String inputJson) => throw UnimplementedError();
+
+  @override
+  ElkSolveJob start(String inputJson) => _EndlessJob(this);
+
+  @override
+  void dispose() {}
+}
+
+class _EndlessJob implements ElkSolveJob {
+  _EndlessJob(this._solver);
+
+  final _EndlessJobSolver _solver;
+  bool _cancelled = false;
+
+  @override
+  ({bool done, LayoutProgress? progress}) poll() => (
+    done: _cancelled,
+    progress: const LayoutProgress(
+      phase: LayoutPhase.crossingMinimization,
+      fraction: 0.4,
+    ),
+  );
+
+  @override
+  void cancel() {
+    if (!_cancelled) _solver.cancels++;
+    _cancelled = true;
+  }
+
+  @override
+  String finish() => throw const LayoutCancelledException();
 }
 
 /// `top` instantiates `u_cpu` (a `cpu`), which instantiates `u_alu`.
@@ -253,6 +332,127 @@ void main() {
       expect(tree.model, same(after), reason: 'the replaced design came back');
       expect(tree.selected?.path, const <String>['u_cpu']);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('layout progress and Cancel', () {
+    testWidgets('the bar follows the engine, Cancel stops the solve, and Lay '
+        'out again starts it over', (tester) async {
+      final solver = _EndlessJobSolver();
+      final service = ElkLayoutService(
+        solverFactory: () => solver,
+        assetLoader: (_) async => throw StateError('elkjs must not load'),
+      );
+      final module = NetlistModel.fromJson(_and2Json).modules['and2']!;
+      var layouts = 0;
+      final root = ProviderContainer(
+        overrides: [
+          ...netcruxCxpOffTestOverrides(),
+          yosysAvailabilityProvider.overrideWith(
+            (ref) async => const YosysAvailability.available(
+              executablePath: 'yosys',
+              versionString: 'test stub',
+            ),
+          ),
+          sourceFilePollIntervalProvider.overrideWithValue(null),
+          elkLayoutServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(root.dispose);
+      final builds = <Completer<NetlistModel?>>[];
+      final manager = TabContainerManager(
+        rootContainer: root,
+        overridesFactory: (id) => [
+          for (final override in netcruxTabOverridesFactory(id))
+            if (override.origin != loadedNetlistProvider &&
+                override.origin != currentLaidOutGraphProvider)
+              override,
+          loadedNetlistProvider.overrideWith(() => _AnsweredNetlist(builds)),
+          // The real provider's solve path, without the graph around it.
+          currentLaidOutGraphProvider.overrideWith((ref) async {
+            final layoutService = ref.read(elkLayoutServiceProvider);
+            ref.onDispose(layoutService.cancelInFlightLayout);
+            layouts++;
+            await layoutService.layout(module);
+            return LaidOutGraph.empty;
+          }),
+        ],
+      );
+      addTearDown(manager.dispose);
+      final tab = manager.containerFor(TabId.generate());
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: tab,
+          child: const MaterialApp(
+            localizationsDelegates: [
+              L10N.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: L10N.supportedLocales,
+            home: Scaffold(body: ProjectTabContent()),
+          ),
+        ),
+      );
+      tab.read(currentProjectProvider.notifier).setSourceFiles(const <String>[
+        '/design/top.v',
+      ]);
+      final loading = tab.read(loadedNetlistProvider.future);
+      builds.last.complete(_seed());
+      await loading;
+
+      Future<void> runFor(Duration time) async {
+        const step = Duration(milliseconds: 50);
+        for (var t = Duration.zero; t < time; t += step) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+      }
+
+      await runFor(const Duration(milliseconds: 500));
+      expect(layouts, 1);
+      expect(find.textContaining('Reducing wire crossings'), findsOneWidget);
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, 0.4);
+
+      await tester.tap(find.text('Cancel'));
+      await runFor(const Duration(milliseconds: 200));
+      expect(solver.cancels, 1);
+      expect(find.text('Layout stopped.'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+
+      await tester.tap(find.text('Lay out again'));
+      await runFor(const Duration(milliseconds: 500));
+      expect(layouts, 2);
+      expect(find.textContaining('Reducing wire crossings'), findsOneWidget);
+
+      // End stopped, so no solve or ticker outlives the test.
+      await tester.tap(find.text('Cancel'));
+      await runFor(const Duration(milliseconds: 200));
+      expect(solver.cancels, 2);
+      expect(find.text('Layout stopped.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    test('every phase has a label in every supported locale', () async {
+      for (final locale in const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh'),
+        Locale('ja'),
+        Locale('ko'),
+      ]) {
+        final l10n = await L10N.delegate.load(locale);
+        final labels = <String>{
+          for (final phase in LayoutPhase.values) layoutPhaseLabel(l10n, phase),
+        };
+        expect(labels, hasLength(LayoutPhase.values.length), reason: '$locale');
+        expect(labels.every((l) => l.isNotEmpty), isTrue);
+        expect(l10n.schematicLayoutStopped, isNotEmpty);
+        expect(l10n.schematicLayoutRetry, isNotEmpty);
+      }
     });
   });
 
