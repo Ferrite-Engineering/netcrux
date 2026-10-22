@@ -72,7 +72,7 @@ void main() {
         isA<PendingTelemetryService>(),
       );
       await container.read(telemetryConsentReadyProvider.future);
-      expect(container.read(telemetryEnabledProvider), isFalse);
+      expect(container.read(telemetryGateProvider), isNot(TelemetryGate.open));
       expect(
         container.read(telemetryServiceProvider),
         isA<PendingTelemetryService>(),
@@ -95,7 +95,7 @@ void main() {
 
     test('a beta build resolves to the no-op service', () {
       final container = netcruxContainer(extra: inBeta());
-      expect(container.read(telemetryEnabledProvider), isFalse);
+      expect(container.read(telemetryGateProvider), isNot(TelemetryGate.open));
       expect(
         container.read(telemetryServiceProvider),
         isA<NoopTelemetryService>(),
@@ -107,7 +107,7 @@ void main() {
       container.read(telemetryConsentStoreProvider.notifier).state =
           TelemetryConsentState.enabled;
 
-      expect(container.read(telemetryEnabledProvider), isFalse);
+      expect(container.read(telemetryGateProvider), isNot(TelemetryGate.open));
       expect(
         container.read(telemetryServiceProvider),
         isA<NoopTelemetryService>(),
@@ -131,7 +131,7 @@ void main() {
       container.read(telemetryConsentStoreProvider.notifier).state =
           TelemetryConsentState.enabled;
 
-      expect(container.read(telemetryEnabledProvider), isFalse);
+      expect(container.read(telemetryGateProvider), isNot(TelemetryGate.open));
       expect(
         container.read(telemetryServiceProvider),
         isA<NoopTelemetryService>(),
@@ -201,41 +201,41 @@ void main() {
           // events wait for its answer rather than being discarded, and still
           // nothing transmits. Every other closed cell is a real no.
           final waits = !beta && !dev && consent == TelemetryConsentState.unset;
-          test(
-            'beta=$beta dev=$dev consent=${consent.name} → '
-            '${expected
-                ? 'live'
-                : waits
-                ? 'pending'
-                : 'no-op'}',
-            () async {
-              final container = netcruxContainer(
-                extra: [
-                  telemetryBetaPeriodProvider.overrideWithValue(beta),
-                  telemetryDevModeProvider.overrideWithValue(dev),
-                ],
-              );
-              container.read(telemetryConsentStoreProvider.notifier).state =
-                  consent;
-              // The matrix states the settled behaviour. Under the dev flag
-              // `unset` counts as consent only once the store has read its
-              // persisted value back — before that a stored refusal wears the
-              // same value, which is how a `disabled` installation transmitted
-              // (D3). `NetcruxTelemetryStorage` reads SharedPreferences, so the
-              // window is real here, not a package-level abstraction.
-              await container.read(telemetryConsentReadyProvider.future);
+          test('beta=$beta dev=$dev consent=${consent.name} → '
+              '${expected
+                  ? 'live'
+                  : waits
+                  ? 'pending'
+                  : 'no-op'}', () async {
+            final container = netcruxContainer(
+              extra: [
+                telemetryBetaPeriodProvider.overrideWithValue(beta),
+                telemetryDevModeProvider.overrideWithValue(dev),
+              ],
+            );
+            container.read(telemetryConsentStoreProvider.notifier).state =
+                consent;
+            // The matrix states the settled behaviour. Under the dev flag
+            // `unset` counts as consent only once the store has read its
+            // persisted value back — before that a stored refusal wears the
+            // same value, which is how a `disabled` installation transmitted
+            // (D3). `NetcruxTelemetryStorage` reads SharedPreferences, so the
+            // window is real here, not a package-level abstraction.
+            await container.read(telemetryConsentReadyProvider.future);
 
-              expect(container.read(telemetryEnabledProvider), expected);
-              expect(
-                container.read(telemetryServiceProvider),
-                expected
-                    ? isA<LiveTelemetryService>()
-                    : waits
-                    ? isA<PendingTelemetryService>()
-                    : isA<NoopTelemetryService>(),
-              );
-            },
-          );
+            expect(
+              container.read(telemetryGateProvider) == TelemetryGate.open,
+              expected,
+            );
+            expect(
+              container.read(telemetryServiceProvider),
+              expected
+                  ? isA<LiveTelemetryService>()
+                  : waits
+                  ? isA<PendingTelemetryService>()
+                  : isA<NoopTelemetryService>(),
+            );
+          });
         }
       }
     }
