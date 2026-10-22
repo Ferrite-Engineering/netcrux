@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:netcrux/domain/models/analysis/analysis_panel_kind.dart';
 import 'package:netcrux/features/viewer/providers/analysis_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
@@ -25,16 +26,27 @@ import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
 /// containers are parented to the root container, so opening and closing
 /// resolve the same instance from any context.
 void openAnalysisDock(BuildContext context, AnalysisPanelKind kind) {
-  final container = ProviderScope.containerOf(context, listen: false);
-  final layout = container.read(panelLayoutProvider);
+  openAnalysisDockWith(
+    ProviderScope.containerOf(context, listen: false).read,
+    kind,
+  );
+}
+
+/// Reads a provider: a `ProviderContainer.read` or a `Ref.read`.
+typedef ProviderReader = T Function<T>(ProviderListenable<T> provider);
+
+/// [openAnalysisDock] for a caller with no [BuildContext], such as a request
+/// from a peer: it needs only a way to read the root-scoped dock providers.
+void openAnalysisDockWith(ProviderReader read, AnalysisPanelKind kind) {
+  final layout = read(panelLayoutProvider);
   if ((layout.inspectorWidth ?? 0) < _comfortableDockWidth) {
     unawaited(
-      container
-          .read(panelLayoutProvider.notifier)
-          .setInspectorWidth(_comfortableDockWidth),
+      read(
+        panelLayoutProvider.notifier,
+      ).setInspectorWidth(_comfortableDockWidth),
     );
   }
-  container.read(analysisDockProvider.notifier).open(kind);
+  read(analysisDockProvider.notifier).open(kind);
 }
 
 /// Right-pane width the dock widens to on open when the pane is

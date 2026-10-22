@@ -1856,6 +1856,10 @@
   "@actionConfigureActivityScheme": {
     "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
   },
+  "actionToggleSlackOverlay": "Show Slack Overlay",
+  "@actionToggleSlackOverlay": {
+    "description": "Command palette / menu label for showing or hiding the slack overlay, which colors registers by the worst slack an implementation run states (Pro)."
+  },
   "activityHeatmapPaneEmptyTitle": "No switching activity loaded",
   "@activityHeatmapPaneEmptyTitle": {
     "description": "Open-core Switching Activity Heatmap pane empty-state title shown before a waveform is loaded or analysis is run."
@@ -2478,6 +2482,10 @@
   "dockTabSource": "Source",
   "@dockTabSource": {
     "description": "Right-dock tab label for the RTL source panel, which shows the source file behind the selected schematic element."
+  },
+  "dockTabSlack": "Slack",
+  "@dockTabSlack": {
+    "description": "Right-dock tab label for the slack overlay panel, which lists the registers of an implementation run with their worst slack."
   },
   "dockTabAnnotations": "Annotations",
   "@dockTabAnnotations": {

@@ -104,6 +104,7 @@ const Set<String> _proOnlyEvents = <String>{
   'source_pane.opened',
   'filter_view.enabled',
   'cxp.open_in_wavecrux',
+  'flow.overlay.opened',
 };
 
 /// Catalog entries recorded by a shared package rather than by a call site in

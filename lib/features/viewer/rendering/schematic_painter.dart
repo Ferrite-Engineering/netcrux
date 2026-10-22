@@ -93,6 +93,7 @@ class SchematicCanvas extends LeafRenderObjectWidget {
     this.overlay = TraceOverlay.empty,
     this.cellBodyPainterFactory = defaultCellBodyPainterFactory,
     this.netActivityColorOverride,
+    this.cellColorOverride,
     this.crossingOverlay,
     this.annotationMarkers,
     this.presenceOverlay,
@@ -135,6 +136,12 @@ class SchematicCanvas extends LeafRenderObjectWidget {
   /// `netActivityColorOverrideProvider` entry in `docs/ARCHITECTURE.md`
   /// §10.
   final Map<String, Color>? netActivityColorOverride;
+
+  /// Optional per-cell color map keyed by [SchematicCell.id]: each cell it
+  /// names is drawn with a translucent fill and an outline in the supplied
+  /// color, over the cell body and the wires. `null` (the open-core
+  /// default) skips the pass. See `cellColorOverrideProvider`.
+  final Map<String, Color>? cellColorOverride;
 
   /// Optional severity-coded crossing overlay published by the Pro
   /// overlay's CDC + Reset-domain features. When non-null, the
@@ -187,6 +194,7 @@ class SchematicCanvas extends LeafRenderObjectWidget {
       overlay: overlay,
       cellBodyPainterFactory: cellBodyPainterFactory,
       netActivityColorOverride: netActivityColorOverride,
+      cellColorOverride: cellColorOverride,
       crossingOverlay: crossingOverlay,
       annotationMarkers: annotationMarkers,
       presenceOverlay: presenceOverlay,
@@ -209,6 +217,7 @@ class SchematicCanvas extends LeafRenderObjectWidget {
       ..overlay = overlay
       ..cellBodyPainterFactory = cellBodyPainterFactory
       ..netActivityColorOverride = netActivityColorOverride
+      ..cellColorOverride = cellColorOverride
       ..crossingOverlay = crossingOverlay
       ..annotationMarkers = annotationMarkers
       ..presenceOverlay = presenceOverlay
@@ -231,6 +240,7 @@ class SchematicCanvasRenderObject extends RenderBox {
     CellBodyPainterFactory cellBodyPainterFactory =
         defaultCellBodyPainterFactory,
     Map<String, Color>? netActivityColorOverride,
+    Map<String, Color>? cellColorOverride,
     SchematicCrossingOverlay? crossingOverlay,
     SchematicAnnotationMarkers? annotationMarkers,
     CollabPresenceOverlay? presenceOverlay,
@@ -244,6 +254,7 @@ class SchematicCanvasRenderObject extends RenderBox {
        _overlay = overlay,
        _cellBodyPainterFactory = cellBodyPainterFactory,
        _netActivityColorOverride = netActivityColorOverride,
+       _cellColorOverride = cellColorOverride,
        _crossingOverlay = crossingOverlay,
        _annotationMarkers = annotationMarkers,
        _presenceOverlay = presenceOverlay,
@@ -499,6 +510,21 @@ class SchematicCanvasRenderObject extends RenderBox {
     markNeedsPaint();
   }
 
+  Map<String, Color>? _cellColorOverride;
+
+  /// Per-cell color map (keyed by [SchematicCell.id]) an overlay publishes
+  /// through `cellColorOverrideProvider`. Drawn as a pass after the cells,
+  /// wires and boundary ports and before the crossing overlay, so a
+  /// crossing's outline stays on top of it. The cost is O(map entries) per
+  /// frame: each id is resolved through [NetlistLayout.findNode]'s index.
+  /// `null` (open-core default) skips the pass entirely.
+  Map<String, Color>? get cellColorOverride => _cellColorOverride;
+  set cellColorOverride(Map<String, Color>? value) {
+    if (identical(value, _cellColorOverride)) return;
+    _cellColorOverride = value;
+    markNeedsPaint();
+  }
+
   SchematicCrossingOverlay? _crossingOverlay;
 
   /// Severity-coded crossing overlay published by the Pro overlay's
@@ -602,6 +628,10 @@ class SchematicCanvasRenderObject extends RenderBox {
       // Labels of cells drawn with a custom symbol sit outside the drawing,
       // where wires may pass, so they paint over the wires on a backing.
       _paintOutsideCellLabels(canvas);
+      final cellColors = _cellColorOverride;
+      if (cellColors != null && cellColors.isNotEmpty) {
+        _paintCellColors(canvas, cellColors, visibleRect);
+      }
       // Crossing overlay paints last, on top of everything the passes
       // above drew — including the per-cell selection accent, which
       // _paintCells strokes inline. Drawn as the crossing net's wires
@@ -1507,6 +1537,37 @@ class SchematicCanvasRenderObject extends RenderBox {
       if (band == LodBand.detail && isHighlighted) {
         _paintBoundaryLabel(canvas, rect, port, band);
       }
+    }
+  }
+
+  // ── Per-cell color override ─────────────────────────────────────
+
+  /// Draws each cell [colors] names with a translucent fill and a stroked
+  /// outline in its color, two marks so the color alone does not set the cell
+  /// apart. A cell outside [visibleRect], or one the layout does not place in
+  /// this scope, is skipped. O([colors]) per frame, not O(cells).
+  void _paintCellColors(
+    Canvas canvas,
+    Map<String, Color> colors,
+    Rect visibleRect,
+  ) {
+    final fill = Paint()..style = PaintingStyle.fill;
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+    for (final entry in colors.entries) {
+      final position = _laidOut.layout.findNode(entry.key);
+      if (position == null) continue;
+      final rect = Rect.fromLTWH(
+        position.bounds.x,
+        position.bounds.y,
+        position.bounds.width,
+        position.bounds.height,
+      );
+      if (!visibleRect.overlaps(rect)) continue;
+      canvas
+        ..drawRect(rect, fill..color = entry.value.withValues(alpha: 0.35))
+        ..drawRect(rect.inflate(1.5), outline..color = entry.value);
     }
   }
 

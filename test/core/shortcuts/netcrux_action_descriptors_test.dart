@@ -189,6 +189,7 @@ void main() {
         NetcruxAction.showResetDomainAnalysisPane,
         NetcruxAction.showFsmBubbleDiagram,
         NetcruxAction.showActivityHeatmap,
+        NetcruxAction.toggleSlackOverlay,
         NetcruxAction.addAnnotation,
         NetcruxAction.openSourceForElement,
         NetcruxAction.clearOverlay,

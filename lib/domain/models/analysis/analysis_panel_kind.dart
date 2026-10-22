@@ -35,6 +35,11 @@ enum AnalysisPanelKind {
   /// so both directions of the source link stay in view (Pro).
   source,
 
+  /// The slack overlay: the registers of a loaded implementation run, with
+  /// their worst slack, a legend and a table of the same data. Docked beside
+  /// the schematic whose registers it colours (Pro).
+  slack,
+
   /// The design's annotations: titled Markdown notes on schematic elements.
   /// Docked beside the schematic so a row click lands on the element while
   /// the list stays in view, and the badge on an annotated cell opens it at
@@ -59,7 +64,8 @@ extension AnalysisPanelKindTier on AnalysisPanelKind {
     AnalysisPanelKind.fsmResults ||
     AnalysisPanelKind.activity ||
     AnalysisPanelKind.diff ||
-    AnalysisPanelKind.source => true,
+    AnalysisPanelKind.source ||
+    AnalysisPanelKind.slack => true,
   };
 }
 

@@ -1770,6 +1770,7 @@
     "description": "Command palette / menu label for clearing the per-edge activity color override on the schematic (Open Core; never gated)."
   },
   "actionConfigureActivityScheme": "配置活动色彩方案…",
+  "actionToggleSlackOverlay": "显示时序裕量叠加",
   "@actionConfigureActivityScheme": {
     "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
   },
@@ -2256,6 +2257,7 @@
   "dockTabActivity": "活动",
   "dockTabDiff": "差异",
   "dockTabSource": "源代码",
+  "dockTabSlack": "时序裕量",
   "dockTabAnnotations": "注释",
   "dockCollapseTooltip": "隐藏面板",
   "accessibilityRightDockRegion": "详情停靠区",

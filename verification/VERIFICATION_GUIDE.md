@@ -1537,6 +1537,28 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]` `test/domain/models/cdc/cdc_crossing_test.dart` (round-trip with and without the field, the unknown-tag reading, `severityWithPulseRisk` over every kind, status and risk). `[Coverage: WIDGET]` `test/features/cdc/widgets/cdc_analysis_pane_test.dart` group "pulse risk" (the exact English text of both risks, no line on the other rows, all five locales with the names intact and no em dash). The look in a narrow pane is `[Coverage: MANUAL]`.
 
+### 7.15 Slack overlay seams: the per-cell color map, the toggle, the dock tab
+
+**What it does.** Three open-core pieces carry the Pro slack overlay, which colors the registers of an implementation run by the worst slack the run states:
+
+- `cellColorOverrideProvider` (`lib/services/schematic/cell_color_override_provider.dart`) is a seam of its own beside the net map the activity heatmap owns, so coloring cells never fades or recolors a wire. A `Map<String, Color>?` keyed by `SchematicCell.id`. The painter draws each named cell with a translucent fill and a stroked outline in its color (two marks, so color alone does not set the cell apart), after the cells, wires and boundary ports and before the crossing overlay, in every LOD band. Open core resolves it to `null` and the pass is skipped, so ordinary rendering issues exactly the same draw calls as before.
+- `NetcruxAction.toggleSlackOverlay` (View, **Show Slack Overlay**, `NetcruxGatedFeature.slackOverlay`, token `slack_overlay`) is Pro. It stays enabled and badged wherever it is listed; a denied tier opens the upgrade dialog and records `tier.gate_hit`, and a build without the overlay says it requires NetCrux Pro. `toggleSlackOverlayOpenerProvider` (`lib/services/flow/slack_overlay_opener.dart`) is null in open core.
+- `AnalysisPanelKind.slack` is the dock kind, labelled **Slack** (`dockTabSlack`) in all five locales, a Pro panel like the other analyses.
+- `FileOpenService.pickTimingReport` and `pickFlowRunFolder` are the pickers the overlay opens a run with.
+- `flow.overlay.opened` is in the telemetry catalog with no properties; the overlay records it when a run is opened.
+
+**Setup.** Open Core build with a design open. The visible behaviour needs the Pro overlay, whose verification guide carries the end-to-end steps.
+
+**Steps and expected behavior.**
+1. Open Core, any design: `View → Show Slack Overlay`. Expected: the badge beside the item, and the notice that it requires NetCrux Pro. No panel, no dialog during the beta; after the beta, with a licence that does not admit it, the upgrade dialog.
+2. Open Core: send `request_open_artifact{timing_report, <absolute path to a report.json>}` from a peer. Expected: the same Pro notice naming the implementation run, `honored: false`.
+
+**Edge cases.**
+- A cell the map names that is not in the scope on screen is skipped.
+- With no map, an empty map, or a map naming only cells that are not on the layout, the canvas issues the same draw calls in the same order as without the seam.
+
+**Automation assessment.** `[Coverage: UNIT]` `[Coverage: WIDGET]`. `test/services/schematic/cell_color_override_provider_test.dart` (null default, the supplied map, and that the net map stays null), `test/features/viewer/rendering/schematic_cell_color_paint_test.dart` (fill and outline, translucent fill, every band, two cells, an unchanged pass with no map, the pass on top of the ordinary one), `test/services/flow/slack_overlay_opener_test.dart` (null seam, an overlay's opener is called), `test/features/workspace/screens/workspace_screen_gating_test.dart` (the toggle reaches its opener at Pro, is denied at Open Core after the beta with the upgrade dialog, is admitted during the beta, and says it requires NetCrux Pro with no overlay), `test/core/shortcuts/netcrux_action_test.dart` (tier, feature and category), `test/domain/models/analysis/analysis_panel_kind_test.dart`, `test/static/telemetry_catalog_conformance_test.dart` (`slack_overlay` is reachable from a denial site; `flow.overlay.opened` is a Pro-recorded event).
+
 ## 8. Color Theming & Customization (suite-wide)
 
 NetCrux adopts `crux_theme`'s preset-driven theming the same way WaveCrux does: `cruxColorThemeProvider` holds the active `CruxColorTheme`, a `NetcruxCruxColorThemeNotifier` override bridges between `AppSettings.core.activeThemeName` / `themeOverrides` and that provider, and the root `MaterialApp` runs every base theme through `applyChromeTokens(...)` while driving `themeMode` via `themeModeFromBrightness(...)`. End-users see the same Settings → Appearance section across the four-app suite.

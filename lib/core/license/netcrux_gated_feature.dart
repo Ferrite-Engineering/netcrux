@@ -78,4 +78,10 @@ enum NetcruxGatedFeature {
   /// free in every edition and can never be denied, so this means "tried to
   /// host" or "tried to export the minutes" and nothing else.
   collaboration,
+
+  /// The slack overlay: registers coloured by the worst slack an
+  /// implementation run states, with its legend and its table, and the
+  /// opening of a run or timing report for it (from the View menu, the
+  /// overlay's own controls, or a peer that sent one).
+  slackOverlay,
 }

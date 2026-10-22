@@ -88,6 +88,7 @@ class NetcruxRightDock extends ConsumerWidget {
     AnalysisPanelKind.activity => Icons.bar_chart,
     AnalysisPanelKind.diff => Icons.compare_arrows,
     AnalysisPanelKind.source => Icons.code,
+    AnalysisPanelKind.slack => Icons.timer_outlined,
     AnalysisPanelKind.annotations => Icons.sticky_note_2_outlined,
   };
 
@@ -106,6 +107,7 @@ String analysisPanelLabel(L10N l10n, AnalysisPanelKind kind) => switch (kind) {
   AnalysisPanelKind.activity => l10n.dockTabActivity,
   AnalysisPanelKind.diff => l10n.dockTabDiff,
   AnalysisPanelKind.source => l10n.dockTabSource,
+  AnalysisPanelKind.slack => l10n.dockTabSlack,
   AnalysisPanelKind.annotations => l10n.dockTabAnnotations,
 };
 

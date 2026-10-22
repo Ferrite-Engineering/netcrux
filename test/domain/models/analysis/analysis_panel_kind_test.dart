@@ -26,6 +26,7 @@ void main() {
       AnalysisPanelKind.activity: NetcruxAction.showActivityHeatmap,
       AnalysisPanelKind.diff: NetcruxAction.showDiffPane,
       AnalysisPanelKind.source: NetcruxAction.showSourcePane,
+      AnalysisPanelKind.slack: NetcruxAction.toggleSlackOverlay,
       AnalysisPanelKind.annotations: NetcruxAction.showAnnotationsPanel,
     };
     shownBy.forEach((kind, action) {

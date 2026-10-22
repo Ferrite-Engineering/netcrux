@@ -25,6 +25,7 @@ import 'package:netcrux/services/cdc/cdc_pane_openers.dart';
 import 'package:netcrux/services/collaboration/collaboration_session_openers.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
+import 'package:netcrux/services/flow/slack_overlay_opener.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
@@ -189,6 +190,7 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.runActivityAnalysis: _Routing.opener,
   NetcruxAction.clearActivityColoring: _Routing.opener,
   NetcruxAction.configureActivityScheme: _Routing.opener,
+  NetcruxAction.toggleSlackOverlay: _Routing.opener,
   NetcruxAction.shareSession: _Routing.opener,
   NetcruxAction.joinSession: _Routing.opener,
   NetcruxAction.exportReviewMinutes: _Routing.opener,
@@ -306,6 +308,9 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
     ),
     configureActivitySchemeOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.configureActivityScheme),
+    ),
+    toggleSlackOverlayOpenerProvider.overrideWithValue(
+      (_) => record(NetcruxAction.toggleSlackOverlay),
     ),
     shareSessionOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.shareSession),

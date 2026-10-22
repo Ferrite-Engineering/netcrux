@@ -23,6 +23,7 @@ import 'package:netcrux/services/activity/activity_heatmap_pane_openers.dart';
 import 'package:netcrux/services/cdc/cdc_pane_openers.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/diff/diff_pane_openers.dart';
+import 'package:netcrux/services/flow/slack_overlay_opener.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
@@ -79,6 +80,8 @@ void main() {
     NetcruxAction.showActivityHeatmap,
     NetcruxAction.runActivityAnalysis,
     NetcruxAction.configureActivityScheme,
+    // The slack overlay's toggle.
+    NetcruxAction.toggleSlackOverlay,
     // Diff group (was `_diffActionAllowed`).
     NetcruxAction.showDiffPane,
     NetcruxAction.loadComparisonNetlist,
@@ -421,6 +424,9 @@ List<Override> _spyOpenerOverrides(Set<NetcruxAction> fired) => <Override>[
   ),
   configureActivitySchemeOpenerProvider.overrideWithValue(
     (_) => fired.add(NetcruxAction.configureActivityScheme),
+  ),
+  toggleSlackOverlayOpenerProvider.overrideWithValue(
+    (_) => fired.add(NetcruxAction.toggleSlackOverlay),
   ),
 ];
 

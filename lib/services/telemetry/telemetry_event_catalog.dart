@@ -234,6 +234,7 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
         'waveform',
         'activity',
         'collaboration',
+        'slack_overlay',
       ],
       // `LicenseTier.name` for the tier the FEATURE needs. Only two values
       // can occur: an open-core gate admits everyone and never denies, and
@@ -282,6 +283,11 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
   // the single discovered peer whose `productName` is the hardcoded `wavecrux`,
   // so a `peer` dimension would have exactly one value.
   TelemetryCatalogEvent('cxp.open_in_wavecrux'),
+  // A run or timing report was opened into the slack overlay, from the
+  // picker or from a peer. No properties: never a path, a register, a slack
+  // or a count. Opening, not toggling: a toggle that opens an empty panel is
+  // not use, and a denied open is `tier.gate_hit`'s.
+  TelemetryCatalogEvent('flow.overlay.opened'),
 ];
 
 /// Every catalog event name, for the source-scanning conformance test.

@@ -311,6 +311,13 @@ enum NetcruxAction implements CruxAction {
   /// Open the activity color-scheme picker (Pro). Pro feature.
   configureActivityScheme,
 
+  /// Show or hide the slack overlay: the registers coloured by the worst slack
+  /// an implementation run states, with its legend and its table. Always
+  /// discoverable and badged; an open-core build refuses it with a "requires
+  /// NetCrux Pro" notice, because only the Pro overlay mounts the panel. Pro
+  /// feature.
+  toggleSlackOverlay,
+
   /// Run a manual check against the public version manifest and report the
   /// outcome. Always runs, regardless of the Settings → General
   /// "Automatically check for updates" toggle. Open Core — every user is
@@ -478,6 +485,7 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.clearResetAnalysisSelection:
       case NetcruxAction.showActivityHeatmap:
       case NetcruxAction.clearActivityColoring:
+      case NetcruxAction.toggleSlackOverlay:
       case NetcruxAction.toggleTheme:
         return ActionCategory.view;
       case NetcruxAction.jumpToTop:
@@ -688,6 +696,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionClearActivityColoring;
       case NetcruxAction.configureActivityScheme:
         return l10n.actionConfigureActivityScheme;
+      case NetcruxAction.toggleSlackOverlay:
+        return l10n.actionToggleSlackOverlay;
       case NetcruxAction.checkForUpdates:
         return l10n.actionCheckForUpdates;
       case NetcruxAction.submitIssue:
@@ -770,6 +780,7 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.showActivityHeatmap:
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
+      case NetcruxAction.toggleSlackOverlay:
         return LicenseTier.pro;
       // Hosting a collaborative session and exporting its minutes are the
       // Enterprise actions: a host's tools. Taking part is free.
@@ -905,6 +916,8 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
         return NetcruxGatedFeature.activity;
+      case NetcruxAction.toggleSlackOverlay:
+        return NetcruxGatedFeature.slackOverlay;
       // "Tried to host", or "tried to export a session's minutes" — both are
       // the one priced feature, and joining can never be denied, so it never
       // reports.

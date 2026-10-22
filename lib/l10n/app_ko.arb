@@ -1770,6 +1770,7 @@
     "description": "Command palette / menu label for clearing the per-edge activity color override on the schematic (Open Core; never gated)."
   },
   "actionConfigureActivityScheme": "활동 색상 구성표 구성…",
+  "actionToggleSlackOverlay": "슬랙 오버레이 표시",
   "@actionConfigureActivityScheme": {
     "description": "Command palette / menu label for opening the activity color scheme picker (Pro)."
   },
@@ -2256,6 +2257,7 @@
   "dockTabActivity": "활동",
   "dockTabDiff": "차이",
   "dockTabSource": "소스",
+  "dockTabSlack": "슬랙",
   "dockTabAnnotations": "주석",
   "dockCollapseTooltip": "패널 숨기기",
   "accessibilityRightDockRegion": "세부 정보 독",

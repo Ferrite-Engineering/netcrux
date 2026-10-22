@@ -6,6 +6,7 @@ import 'package:crux_shortcut_action/crux_shortcut_action.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/core/license/netcrux_gated_feature.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/shortcut_bindings.dart';
 
@@ -129,6 +130,9 @@ void main() {
         NetcruxAction.runActivityAnalysis,
         NetcruxAction.clearActivityColoring,
         NetcruxAction.configureActivityScheme,
+        // Slack overlay — palette / menu discoverable; no chord until usage
+        // shows one is wanted.
+        NetcruxAction.toggleSlackOverlay,
         // Beta-release infrastructure — Help-menu / palette /
         // About-box actions invoked a handful of times per release cycle.
         // A default chord would spend scarce keyboard real estate on
@@ -349,6 +353,7 @@ void main() {
         NetcruxAction.showActivityHeatmap,
         NetcruxAction.runActivityAnalysis,
         NetcruxAction.configureActivityScheme,
+        NetcruxAction.toggleSlackOverlay,
       };
       for (final action in NetcruxAction.values) {
         if (proActions.contains(action)) continue;
@@ -447,6 +452,21 @@ void main() {
         LicenseTier.openCore,
       );
     });
+
+    test(
+      'the slack overlay toggle is Pro tier and reports its own feature',
+      () {
+        expect(NetcruxAction.toggleSlackOverlay.requiredTier, LicenseTier.pro);
+        expect(
+          NetcruxAction.toggleSlackOverlay.gatedFeature,
+          NetcruxGatedFeature.slackOverlay,
+        );
+        expect(
+          NetcruxAction.toggleSlackOverlay.category,
+          ActionCategory.view,
+        );
+      },
+    );
 
     test('Custom cell symbol actions are Pro tier', () {
       expect(

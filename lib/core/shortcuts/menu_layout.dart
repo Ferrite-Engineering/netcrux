@@ -132,6 +132,7 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.clearResetAnalysisSelection,
       NetcruxAction.showActivityHeatmap,
       NetcruxAction.clearActivityColoring,
+      NetcruxAction.toggleSlackOverlay,
     ],
     [
       NetcruxAction.splitPaneRight,

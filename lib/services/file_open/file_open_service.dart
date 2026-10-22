@@ -170,6 +170,32 @@ class FileOpenService {
     return FileOpenResult(<String>[path]);
   }
 
+  /// Prompts the user for the timing report of an implementation run: the
+  /// `report.json` a place-and-route tool writes. Returns the picked path or
+  /// [FileOpenResult.cancelled].
+  Future<FileOpenResult> pickTimingReport({
+    required String dialogTitle,
+  }) async {
+    final file = await FilePicker.pickFile(
+      dialogTitle: dialogTitle,
+      type: FileType.custom,
+      allowedExtensions: const <String>['json'],
+    );
+    final path = file?.path;
+    if (path == null) return const FileOpenResult.cancelled();
+    return FileOpenResult(<String>[path]);
+  }
+
+  /// Prompts the user for the folder of an implementation run. Returns the
+  /// picked path or [FileOpenResult.cancelled].
+  Future<FileOpenResult> pickFlowRunFolder({
+    required String dialogTitle,
+  }) async {
+    final path = await FilePicker.getDirectoryPath(dialogTitle: dialogTitle);
+    if (path == null) return const FileOpenResult.cancelled();
+    return FileOpenResult(<String>[path]);
+  }
+
   /// Prompts the user for a `.netcrux-workspace` named workspace file.
   /// Returns the picked path or [FileOpenResult.cancelled].
   Future<FileOpenResult> pickWorkspace({required String dialogTitle}) async {

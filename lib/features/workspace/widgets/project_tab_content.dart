@@ -39,6 +39,7 @@ import 'package:netcrux/services/collaboration/schematic_collaboration_service_p
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_registry_provider.dart';
 import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
+import 'package:netcrux/services/schematic/cell_color_override_provider.dart';
 import 'package:netcrux/services/schematic/coi_filter_view_mode_provider.dart';
 import 'package:netcrux/services/schematic/net_activity_color_override_provider.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
@@ -303,6 +304,7 @@ class _SchematicCenter extends ConsumerWidget {
     ref.watch(customCellSymbolSnapshotProvider);
     final cellBodyPainterFactory = ref.watch(cellBodyPainterFactoryProvider);
     final activityColorOverride = ref.watch(netActivityColorOverrideProvider);
+    final cellColorOverride = ref.watch(cellColorOverrideProvider);
     final crossingOverlay = ref.watch(schematicCrossingOverlayProvider);
     final annotationMarkers = ref.watch(schematicAnnotationMarkersProvider);
     final presenceOverlay = ref.watch(collabPresenceOverlayProvider);
@@ -345,6 +347,7 @@ class _SchematicCenter extends ConsumerWidget {
                 overlay: overlay,
                 cellBodyPainterFactory: cellBodyPainterFactory,
                 netActivityColorOverride: activityColorOverride,
+                cellColorOverride: cellColorOverride,
                 crossingOverlay: crossingOverlay,
                 annotationMarkers: annotationMarkers,
                 presenceOverlay: presenceOverlay,
