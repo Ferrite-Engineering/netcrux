@@ -153,7 +153,7 @@ From NetCrux 1.2 no reason repeats a path: the two "not found" reasons read
 `the scope was not found in the open design` and `the element was not found
 in the open design`.
 
-### Formal and implementation-flow results (from NetCrux 1.2)
+### Formal and implementation-flow results (from NetCrux 1.2) {#formal-flow}
 
 From NetCrux 1.2, NetCrux also acts on what SimCrux's formal verification and
 implementation-flow results send, and advertises the kinds as

@@ -26,6 +26,66 @@ Every edition can **receive** cross-probes. When another suite tool asks NetCrux
 
     A peer's subscription filter is tested against **every** element a message references, not just the first one, so a multi-element selection routes the same way whatever order it was made in. And a **cleared** selection reaches every subscriber, whatever filters they carry, so a peer is never left holding a stale highlight after the selection it was told about has been withdrawn.
 
+## Formal and implementation-flow results, from NetCrux 1.2 {#formal-flow}
+
+From NetCrux 1.2, SimCrux's formal verification and implementation-flow results
+can send NetCrux what they found, and NetCrux acts on it in every edition. The
+exact message vocabulary is in the
+[CXP integration reference](integrations/cxp.md#formal-flow).
+
+### Receiving a property {#receive-property}
+
+When a formal property fails in SimCrux, **Show in NetCrux** sends the first
+signal the property reads. NetCrux finds it in the scope its path names, selects
+it, and draws its one-step fan-in, the logic that feeds it. The fan-in is drawn
+only when the message says the signal belongs to a formal property (it carries
+the property's kind or its label); a signal sent without either is selected and
+nothing more. The path is never matched by its last segment in some other scope:
+a name that is not there is declined with a reason, not guessed.
+
+<span class="tier tier-pro">Pro</span> A property sent as itself, as
+`<file>:<line>`, shows the cone of every signal the property reads, unioned. It
+is read only from a source file of the design you have open. Open core answers
+that it requires NetCrux Pro, in a message. The cone sits under the same Pro
+feature as the [cone of influence](analysis.md).
+
+### Receiving timing paths {#receive-timing}
+
+When you select a timing path in SimCrux's Flow Runs, NetCrux highlights the
+path's registers together, in the scope of the path's endpoint, and the Inspector
+shows **Timing path from SimCrux**: how the registers were mapped, the start and
+end registers, which of them sit in another scope or are not in this design, and
+the statements. **Dismiss** removes it. It lands in the tab that is active when
+it arrives. A timing path sent on its own, with no registers beside it, is
+declined, because its id is opaque.
+
+### Fidelity labels {#fidelity}
+
+Synthesis restructures logic, so a path is never tied to an exact line. The
+label on a timing path says how near the mapping got, exactly as SimCrux sent
+it, and NetCrux never upgrades it:
+
+| Label | What it says |
+|---|---|
+| Register | The end is a register your RTL names |
+| Statement | The end is the statement that assigns a register |
+| Block | Only the block that contains it is known |
+| Unmapped | No source location survives synthesis |
+
+### Showing timing paths through a register {#show-paths}
+
+On a register in the schematic, the context menu offers **Show timing paths
+through this register**, beside **Cross-probe to**. It sends SimCrux the
+register's RTL name, and SimCrux shows the paths that start or end there. It is
+free in every edition. With no SimCrux running it is disabled and its tooltip
+says to start SimCrux.
+
+### Slack overlay {#slack}
+
+<span class="tier tier-pro">Pro</span> NetCrux Pro can colour the registers of
+the open design by the slack an implementation run reports. See
+[Slack overlay](slack-overlay.md).
+
 ## Originating cross-probes {#originate}
 
 Every edition can send, too. With **Broadcast selection automatically** on, each selection change is announced to connected peers. The **Cross-Probe** panel (`View → Show Cross-Probe Panel`, ++cmd+shift+x++ / ++ctrl+shift+x++, or the toolbar button) lists the discovered peers — each with a **Send selection to this peer** button that asks that peer to highlight what you have selected — plus unreachable peers and a log of recent events.
