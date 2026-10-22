@@ -2521,5 +2521,70 @@
   "fileWatcherIgnore": "忽略",
   "@fileWatcherIgnore": {
     "description": "Button on the source-changed prompt that dismisses it without reloading. Same key and meaning as WaveCrux."
-  }
+  },
+  "cxpPropertyConeFeature": "属性影响锥",
+  "cxpPropertyConeFromPeer": "来自 {peer} 的属性影响锥",
+  "@cxpPropertyConeFromPeer": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "cxpFlowArtifactFeature": "打开实现运行",
+  "cxpFlowArtifactFromPeer": "来自 {peer} 的实现运行",
+  "@cxpFlowArtifactFromPeer": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathTitle": "来自 {peer} 的时序路径",
+  "@inspectorTimingPathTitle": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathAnnouncement": "来自 {peer} 的时序路径，映射：{mapping}",
+  "@inspectorTimingPathAnnouncement": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      },
+      "mapping": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathMapping": "映射",
+  "inspectorTimingPathStart": "起点",
+  "inspectorTimingPathEnd": "终点",
+  "inspectorTimingPathStatements": "语句",
+  "inspectorTimingPathOtherScope": "{name}（在其他作用域中）",
+  "@inspectorTimingPathOtherScope": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNotFound": "{name}（不在此设计中）",
+  "@inspectorTimingPathNotFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNothingHere": "此路径的寄存器均不在打开的设计中。",
+  "inspectorTimingPathDismiss": "关闭",
+  "timingPathFidelityRegister": "最近的寄存器",
+  "timingPathFidelityStatement": "语句",
+  "timingPathFidelitySpan": "always 块",
+  "timingPathFidelityUnmapped": "未映射",
+  "menuShowTimingPathsThroughRegister": "显示经过此寄存器的时序路径",
+  "menuShowTimingPathsNeedsSimcrux": "启动 SimCrux 并开启交叉探测，即可显示经过此寄存器的时序路径。"
 }

@@ -2521,5 +2521,70 @@
   "fileWatcherIgnore": "無視",
   "@fileWatcherIgnore": {
     "description": "Button on the source-changed prompt that dismisses it without reloading. Same key and meaning as WaveCrux."
-  }
+  },
+  "cxpPropertyConeFeature": "プロパティの影響範囲",
+  "cxpPropertyConeFromPeer": "{peer} からのプロパティの影響範囲",
+  "@cxpPropertyConeFromPeer": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "cxpFlowArtifactFeature": "実装実行を開く",
+  "cxpFlowArtifactFromPeer": "{peer} からの実装実行",
+  "@cxpFlowArtifactFromPeer": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathTitle": "{peer} からのタイミングパス",
+  "@inspectorTimingPathTitle": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathAnnouncement": "{peer} からのタイミングパス、マッピング: {mapping}",
+  "@inspectorTimingPathAnnouncement": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      },
+      "mapping": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathMapping": "マッピング",
+  "inspectorTimingPathStart": "始点",
+  "inspectorTimingPathEnd": "終点",
+  "inspectorTimingPathStatements": "ステートメント",
+  "inspectorTimingPathOtherScope": "{name}（別のスコープ）",
+  "@inspectorTimingPathOtherScope": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNotFound": "{name}（この設計にはありません）",
+  "@inspectorTimingPathNotFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNothingHere": "このパスのレジスタはいずれも開いている設計にありません。",
+  "inspectorTimingPathDismiss": "閉じる",
+  "timingPathFidelityRegister": "最も近いレジスタ",
+  "timingPathFidelityStatement": "ステートメント",
+  "timingPathFidelitySpan": "always ブロック",
+  "timingPathFidelityUnmapped": "未マッピング",
+  "menuShowTimingPathsThroughRegister": "このレジスタを通るタイミングパスを表示",
+  "menuShowTimingPathsNeedsSimcrux": "このレジスタを通るタイミングパスを表示するには、クロスプローブを有効にして SimCrux を起動してください。"
 }

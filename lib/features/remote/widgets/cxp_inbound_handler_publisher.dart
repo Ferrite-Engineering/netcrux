@@ -3,10 +3,13 @@
 
 import 'dart:async';
 
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/features/remote/providers/cxp_active_document_provider.dart';
 import 'package:netcrux/features/remote/providers/cxp_inbound_handler_holder_provider.dart';
+import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/remote/cxp/cxp_inbound_handler.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/shared/widgets/workspace_managers_scope.dart';
@@ -51,12 +54,23 @@ class _CxpInboundHandlerPublisherState
       final handler = NetcruxCxpRequestHandler(
         rootContainer: container,
         activeTabContainerLookup: _activeTabContainer,
+        notice: _notice,
       );
       _container = container;
       _handler = handler;
       container.read(netcruxInboundHandlerHolderProvider.notifier).handler =
           handler;
     });
+  }
+
+  /// A toast about a request a peer started, in the app's language. The
+  /// toast is the context-free one: the request did not come from a gesture
+  /// in any widget.
+  void _notice(String Function(L10N l10n) message) {
+    if (!mounted) return;
+    final l10n = Localizations.of<L10N>(context, L10N);
+    if (l10n == null) return;
+    CruxToasts.showInfo(message(l10n));
   }
 
   ProviderContainer? _activeTabContainer() {
@@ -95,5 +109,11 @@ class _CxpInboundHandlerPublisherState
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    // Keeps the active design announced to peers for as long as the
+    // workspace is up (CXP §8.1 `active_document`). Listened, not watched:
+    // nothing here redraws when it changes.
+    ref.listen(cxpActiveDocumentSyncProvider, (_, _) {});
+    return widget.child;
+  }
 }

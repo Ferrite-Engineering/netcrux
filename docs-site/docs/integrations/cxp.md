@@ -149,6 +149,34 @@ when you are debugging an integration: `No active tab`, `No design loaded`
 `Element <x> not found in current design`, `Could not resolve element
 path`, `Unsupported element kind <kind>`, `No editor command configured.`,
 `Editor exited with code <n>.`, `Failed to launch "<exe>": <message>`.
+From NetCrux 1.2 no reason repeats a path: the two "not found" reasons read
+`the scope was not found in the open design` and `the element was not found
+in the open design`.
+
+### Formal and implementation-flow results (from NetCrux 1.2)
+
+From NetCrux 1.2, NetCrux also acts on what SimCrux's formal verification and
+implementation-flow results send, and advertises the kinds as
+`cxp.accepts:cell`, `cxp.accepts:property` and `cxp.accepts:timing_path`.
+
+| Kind | Element kind | Effect |
+| --- | --- | --- |
+| `request_highlight` | `signal` or `net` whose path starts with the top module | Found in the scope the path names, which is then shown. It is never matched by its last segment in another scope; a name that is not there is `honored: false`. |
+| `request_highlight` | `signal` with `formal.property_kind` or `formal.property_label` | A formal property's failing signal: selected, and its one-step fanin drawn. NetCrux Pro's cone of influence widens it. |
+| `request_highlight` | `cell` | Selected by its netlist name in its scope and centred. |
+| `request_highlight` | `property` | The cone of every signal the property reads, a NetCrux Pro feature. Open core answers `honored: false` and says so in a message. NetCrux reads the property only from a source file of the design you have open. |
+| `request_highlight` | `timing_path` | `honored: false`: a timing path's id is opaque, so NetCrux acts on the registers that travel beside it in a selection. |
+| `notify_selection` | `timing_path` with `signal` and `source` elements | The path's registers are highlighted together in the endpoint's scope, and the Inspector shows **Timing path from SimCrux**: how the registers were mapped (nearest register, statement, always block or unmapped, exactly as sent), the start and end registers, which of them are in another scope or not in this design, and the statements. **Dismiss** removes it. It lands in the tab that is active when it arrives. |
+| `request_open_artifact` | `flow_run`, `timing_report` | Read by NetCrux Pro. The path must be absolute and name a directory (a run) or a file (a report); open core answers `honored: false` and says so in a message. |
+
+On a register, the schematic menu also offers **Show timing paths through
+this register**, beside **Cross-probe to**. It sends SimCrux the register's
+RTL name as a `signal`, and SimCrux shows the paths through it. It is free in
+every edition. With no SimCrux running it is disabled and its tooltip says to
+start SimCrux.
+
+Each NetCrux window announces the name of the design in its active tab, so
+another product's **Cross-probe to** menu can tell two NetCrux windows apart.
 
 ## Path formats — the interop contract {#path-formats}
 
@@ -161,6 +189,15 @@ This is the part another tool has to get right.
 | `net` | `top.parent.netName`; an anonymous wire is `top.parent:net:<edgeId>` |
 | `scope` | `top.parent.cellName` |
 | `source` | `file:///abs/path.v#L<line>[:C<column>]` |
+| `signal` (from NetCrux 1.2) | `top.parent.netName`, an RTL name |
+| `cell` (from NetCrux 1.2) | `top.<flat cell name>`, as the netlist names the cell |
+| `property` (from NetCrux 1.2) | `<file>:<line>[:<col>]`, relative to the project root |
+| `timing_path` (from NetCrux 1.2) | `<run id>/<rank>`, opaque |
+
+From NetCrux 1.2 a name with a `.` or `/` in it is written as a Verilog
+escaped identifier, `top.\cnt.q ` (a backslash, the name, a space), and read
+back as one name. A Yosys `$`-name is always the last segment, and a
+generate-block index such as `gen_lane[1]` stays on its segment.
 
 A selected register or flip-flop cell is sent as a `net` named after its
 output (the RTL register name), because that is the name a waveform carries.

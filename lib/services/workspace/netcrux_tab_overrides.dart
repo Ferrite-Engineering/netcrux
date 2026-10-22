@@ -13,6 +13,7 @@ import 'package:netcrux/features/diagnostics/providers/netlist_footprint_provide
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
+import 'package:netcrux/features/inspector/providers/received_timing_path_provider.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
@@ -166,5 +167,8 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     inspectorControllerProvider.overrideWith(buildInspectorController),
     inspectorFocusRequestProvider.overrideWith(InspectorFocusRequest.new),
     annotationDraftsProvider.overrideWith(AnnotationDraftsNotifier.new),
+    // A timing path a peer sent names registers of the design in the tab it
+    // was shown in, and its Inspector section belongs to that tab.
+    receivedTimingPathProvider.overrideWith(ReceivedTimingPathNotifier.new),
   ];
 }

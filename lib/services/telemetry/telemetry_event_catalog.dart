@@ -159,6 +159,18 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
     },
     boolProperties: <String>['honored'],
   ),
+  // A timing path from an implementation run that a peer's selection
+  // carried. `fidelity` is the `crux.mapping` the sender stated
+  // (`TimingPathFidelity.values`; anything unregistered counts as
+  // `unmapped`), and `resolved` is whether any of its registers is in the
+  // open design. Never a register name, a path or a slack.
+  TelemetryCatalogEvent(
+    'flow.path.highlighted',
+    enumeratedValues: <String, List<String>>{
+      'fidelity': <String>['register', 'statement', 'span', 'unmapped'],
+    },
+    boolProperties: <String>['resolved'],
+  ),
 
   // ── recorded by the shared telemetry package ───────────────────────────
   // `crux_telemetry`'s `TelemetryUncaughtErrorCounter` records this from the

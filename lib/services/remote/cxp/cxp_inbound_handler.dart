@@ -6,31 +6,45 @@ import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart';
+import 'package:crux_license/crux_license.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
+import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
+import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
+import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
+import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
+import 'package:netcrux/features/inspector/providers/received_timing_path_provider.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
+import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.dart';
+import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/file_open/crux_project_resolution.dart';
 import 'package:netcrux/services/filelist/filelist_reader.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/project/netcrux_project_path_resolver.dart';
+import 'package:netcrux/services/remote/cxp/cxp_design_names.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
 import 'package:netcrux/services/remote/cxp/editor_open_service.dart';
+import 'package:netcrux/services/remote/cxp/flow_artifact_opener.dart';
+import 'package:netcrux/services/remote/cxp/inbound_property.dart';
+import 'package:netcrux/services/remote/cxp/inbound_property_cone.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_name_resolver.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
+import 'package:netcrux/services/schematic/trace_service.dart';
 import 'package:netcrux/services/schematic/wire_selection_builder.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:path/path.dart' as p;
@@ -50,6 +64,18 @@ typedef SelectionFramer = bool Function(ProviderContainer tab);
 bool _zoomToSelection(ProviderContainer tab) =>
     ZoomToSelectionController(tab).run();
 
+/// Tells the user about a request a peer started, as a toast built from the
+/// app's strings: a request has no `BuildContext`, so whoever builds the
+/// handler supplies the strings and the toast (the publisher passes the
+/// context-free `CruxToasts.showInfo`).
+typedef CxpInboundNotice = void Function(String Function(L10N l10n) message);
+
+/// The reason a directed request names an element the open design does not
+/// have. It never repeats the element's path (CXP §9.11's rule for reasons,
+/// applied to every acknowledgement).
+const String kCxpElementNotInDesign =
+    'the element was not found in the open design';
+
 /// What NetCrux does when a peer asks (`cruxCxpRequestHandlerProvider`), for the
 /// v1 request messages it honours:
 ///
@@ -58,9 +84,15 @@ bool _zoomToSelection(ProviderContainer tab) =>
 ///     [`ElementKind.port`] / [`ElementKind.net`] the handler updates
 ///     the per-tab selection. For [`ElementKind.source`] the handler
 ///     hands off to the [`EditorOpenService`].
+///     A `signal` or `net` rooted at the top is found in the scope it names;
+///     a formal property's failing signal also shows its fanin; a `cell` is
+///     selected by its netlist name; a `property` is the Pro union cone
+///     ([inboundPropertyConeProvider]); a `timing_path` is declined.
 ///   - [`RequestOpenSource`] — shell out to the configured editor.
-///   - [`RequestOpenArtifact`] — open a `source` or `project` artifact.
-///   - [`NotifySelection`] — a peer's live selection gossip.
+///   - [`RequestOpenArtifact`] — open a `source` or `project` artifact, or
+///     hand a `flow_run` / `timing_report` to [flowArtifactOpenerProvider].
+///   - [`NotifySelection`] — a peer's live selection gossip, or a timing
+///     path from an implementation run, shown in the Inspector.
 ///
 /// Each request method returns whether it was honoured, and why not; the shared
 /// runtime sends the acknowledgement and asks for the user's attention, so this
@@ -78,9 +110,14 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     EditorOpenService? editorService,
     NameResolver? nameResolver,
     SelectionFramer? selectionFramer,
+    CxpInboundNotice? notice,
+    this._revealInspector,
   }) : _editorService = editorService ?? EditorOpenService(),
        _frame = selectionFramer ?? _zoomToSelection,
-       _nameResolver = nameResolver ?? const NetcruxNameResolver();
+       _nameResolver = nameResolver ?? const NetcruxNameResolver(),
+       _notice = notice ?? _noNotice;
+
+  static void _noNotice(String Function(L10N l10n) message) {}
 
   /// CXP §11's rooted rule, read from the root container so this handler
   /// applies the very instance the workspace store applies to the
@@ -106,6 +143,8 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
   final EditorOpenService _editorService;
   final NameResolver _nameResolver;
   final SelectionFramer _frame;
+  final CxpInboundNotice _notice;
+  final void Function()? _revealInspector;
 
   /// Deferred post-open highlight subscriptions/timers. A shared-workspace open
   /// loads a design's source into a tab and elaboration then runs
@@ -134,13 +173,356 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     RequestHighlight request,
     PeerIdentity from,
   ) async {
+    final element = request.element;
+    if (element.kind == ElementKind.property) {
+      final result = await _highlightProperty(element, from);
+      _recordCrossProbe(honored: result.honored);
+      return CruxCxpHandlerResult(
+        honored: result.honored,
+        reason: result.reason,
+      );
+    }
+    if (element.kind == ElementKind.timingPath) {
+      // CXP §8.2: a timing path's id is opaque, and NetCrux acts only on the
+      // registers beside it, which a directed request cannot carry. The path
+      // arrives whole in the sender's selection.
+      _recordCrossProbe(honored: false);
+      return const CruxCxpHandlerResult(
+        honored: false,
+        reason:
+            'a timing path is shown from the selection that names its '
+            'registers; send its signal instead',
+      );
+    }
+    final tab = activeTabContainerLookup();
     final result = await _resolveAndAct(
-      request.element,
+      element,
       request.metadata,
       frame: true,
     );
+    // The failing signal of a formal property (Formal's "Show in NetCrux"):
+    // selected, and its single-step fanin shown, free at every tier. The
+    // multi-step cone is the Pro cone-of-influence the user widens to.
+    if (result.honored &&
+        result.reason == null &&
+        tab != null &&
+        _isFormalSignal(request)) {
+      _whenScopeLaidOut(tab, (laidOut) {
+        final selection = tab.read(selectedElementProvider);
+        if (selection.isEmpty) return;
+        tab
+            .read(traceOverlayProvider.notifier)
+            .set(
+              const TraceService().compute(
+                laidOut: laidOut,
+                selection: selection.primary,
+                mode: TraceOverlayMode.fanin,
+              ),
+            );
+      });
+    }
     return CruxCxpHandlerResult(honored: result.honored, reason: result.reason);
   }
+
+  /// A formal property a peer sent (CXP `property`, `<file>:<line>`): the
+  /// union fanin cone of every signal it reads, NetCrux Pro's `coi`.
+  ///
+  /// Finding the property and its signals is free and runs first, so a
+  /// property this design does not have is declined the same at every tier.
+  /// The cone is the overlay's: without it the answer is the "requires
+  /// NetCrux Pro" toast, and with it a licence that does not admit the cone
+  /// gets a toast naming the tier. Nobody in this window asked, so a denial
+  /// is never the upgrade dialog.
+  Future<({bool honored, String? reason})> _highlightProperty(
+    ElementId element,
+    PeerIdentity from,
+  ) async {
+    final tab = activeTabContainerLookup();
+    if (tab == null) return (honored: false, reason: 'No active tab');
+    final model = tab.read(hierarchyTreeProvider).model;
+    if (model == null) return (honored: false, reason: 'No design loaded');
+    final location = PropertyLocation.parse(element.path);
+    if (location == null) {
+      return (
+        honored: false,
+        reason: 'the property is not a project-relative <file>:<line>',
+      );
+    }
+    final source = designSourceFor(
+      tab.read(currentProjectProvider).sourceFiles,
+      location,
+    );
+    if (source == null) {
+      return (
+        honored: false,
+        reason: 'the property is not in a source file of the open design',
+      );
+    }
+    final statement = await readPropertyStatement(source, location.line);
+    final reads = statement == null
+        ? null
+        : placePropertyReads(
+            model: model,
+            current: tab.read(hierarchyTreeProvider).selected,
+            location: location,
+            identifiers: propertyIdentifiers(statement),
+          );
+    if (reads == null || reads.isEmpty) {
+      return (honored: false, reason: 'the property reads no signal here');
+    }
+
+    final peer = cruxCxpDisplayName(from.productName);
+    // The null seam: only the Pro overlay binds the cone, so a null one is
+    // a build without it.
+    final cone = rootContainer.read(inboundPropertyConeProvider);
+    if (cone == null) {
+      _notice((l10n) => l10n.actionRequiresPro(l10n.cxpPropertyConeFeature));
+      return (honored: false, reason: 'the property cone needs NetCrux Pro');
+    }
+    final denied = cone.deniedTier();
+    if (denied != null) {
+      _notice(
+        (l10n) => l10n.upgradeDialogMessage(
+          l10n.cxpPropertyConeFromPeer(peer),
+          denied == LicenseTier.enterprise
+              ? l10n.upgradeDialogTierNameEnterprise
+              : l10n.upgradeDialogTierNamePro,
+        ),
+      );
+      return (
+        honored: false,
+        reason:
+            'the property cone needs NetCrux '
+            '${denied == LicenseTier.enterprise ? 'Enterprise' : 'Pro'}',
+      );
+    }
+
+    _showScope(tab, reads.scope);
+    final module = reads.scope.resolve(model)!;
+    final names = <String>[
+      ...reads.local,
+      ...cone.sameNetsInScope(
+        model: model,
+        scopePath: reads.scope.path,
+        names: reads.otherScopes,
+      ),
+    ];
+    final graph = const SchematicGraphBuilder().build(model, reads.scope);
+    final seeds = <SelectedElement>[];
+    Selection? selection;
+    for (final name in names) {
+      final net = findNetNamed(module, name);
+      final found = net == null ? null : selectionForNet(module, graph, net);
+      if (found == null) continue;
+      seeds.addAll(found.elements);
+      selection = selection == null
+          ? found
+          : Selection(
+              elements: <SelectedElement>{
+                ...selection.elements,
+                ...found.elements,
+              },
+              primary: selection.primary,
+            );
+    }
+    if (selection == null) {
+      return (honored: false, reason: 'the property reads no signal here');
+    }
+    tab.read(selectedElementProvider.notifier).replace(selection);
+    _whenScopeLaidOut(tab, (laidOut) {
+      unawaited(
+        cone.unionCone(laidOut, seeds).then((overlay) {
+          tab.read(traceOverlayProvider.notifier).set(overlay);
+        }, onError: (Object _) {}),
+      );
+    });
+    return (honored: true, reason: null);
+  }
+
+  /// A path from an implementation run, sent as one `notify_selection`
+  /// (CXP §8.2, Flow §9.1): the `timing_path`, `signal` elements for its
+  /// mapped registers, start first, and `source` elements for its
+  /// statements, with `crux.mapping` saying how the registers were mapped.
+  ///
+  /// Each register is placed by its full hierarchical name; the scope of the
+  /// path's last register (its endpoint) is shown, and every register in it
+  /// is highlighted. The path, the mapping the sender stated (never
+  /// upgraded) and where each register landed go to this tab's Inspector,
+  /// which is revealed without taking focus. A selection is not
+  /// acknowledged, so a register that is not in the design is said there.
+  Future<void> _handleTimingPath(
+    NotifySelection message,
+    PeerIdentity from,
+  ) async {
+    final fidelity = TimingPathFidelity.parse(
+      message.metadata[cxpMappingMetadataKey],
+    );
+    final tab = activeTabContainerLookup();
+    final model = tab?.read(hierarchyTreeProvider).model;
+    final signals = <String>[
+      for (final e in message.elements)
+        if (e.kind == ElementKind.signal) ?_nameResolver.toLocal(e),
+    ];
+    final statements = <String>[
+      for (final e in message.elements)
+        if (e.kind == ElementKind.source) _statementLabel(e.path),
+    ];
+    if (tab == null || model == null) {
+      _recordPathHighlighted(fidelity, resolved: false);
+      return;
+    }
+
+    final current = tab.read(hierarchyTreeProvider).selected;
+    final placed = <(String, CxpScopedName?)>[
+      for (final name in signals) (name, _placeRegister(model, current, name)),
+    ];
+    final shown = placed.reversed
+        .map((entry) => entry.$2?.scope)
+        .whereType<HierarchyNode>()
+        .firstOrNull;
+    final registers = <TimingPathRegister>[];
+    Selection? selection;
+    if (shown != null) {
+      final module = shown.resolve(model);
+      final graph = const SchematicGraphBuilder().build(model, shown);
+      for (final (name, scoped) in placed) {
+        if (scoped == null) {
+          registers.add(
+            TimingPathRegister(
+              name: name,
+              place: TimingPathRegisterPlace.notFound,
+            ),
+          );
+          continue;
+        }
+        if (scoped.scope != shown || module == null) {
+          registers.add(
+            TimingPathRegister(
+              name: name,
+              place: TimingPathRegisterPlace.otherScope,
+            ),
+          );
+          continue;
+        }
+        final net = findNetNamed(module, scoped.leaf)!;
+        final found = selectionForNet(module, graph, net);
+        if (found != null) {
+          selection = selection == null
+              ? found
+              : Selection(
+                  elements: <SelectedElement>{
+                    ...selection.elements,
+                    ...found.elements,
+                  },
+                  primary: found.primary,
+                );
+        }
+        registers.add(
+          TimingPathRegister(name: name, place: TimingPathRegisterPlace.shown),
+        );
+      }
+      _showScope(tab, shown);
+      if (selection != null) {
+        tab.read(selectedElementProvider.notifier).replace(selection);
+        _revealElement(tab, selection.primary);
+      }
+    } else {
+      registers.addAll(<TimingPathRegister>[
+        for (final name in signals)
+          TimingPathRegister(
+            name: name,
+            place: TimingPathRegisterPlace.notFound,
+          ),
+      ]);
+    }
+
+    final path = ReceivedTimingPath(
+      peer: cruxCxpDisplayName(from.productName),
+      fidelity: fidelity,
+      registers: registers,
+      statements: statements,
+    );
+    tab.read(receivedTimingPathProvider.notifier).show(path);
+    _revealInspectorTab();
+    _recordPathHighlighted(fidelity, resolved: path.resolved);
+    if (path.resolved) _requestAttentionForSelection();
+  }
+
+  /// Places a register name a timing path carries: in the scope its rooted
+  /// name names, or, for a name not rooted at this design's top, in the
+  /// scope on screen by its leaf. Null when the design has no such net.
+  static CxpScopedName? _placeRegister(
+    NetlistModel model,
+    HierarchyNode? current,
+    String name,
+  ) {
+    final placed =
+        scopeOfHierarchicalName(model, name) ??
+        (current == null
+            ? null
+            : CxpScopedName(scope: current, leaf: _inboundLeaf(name)));
+    if (placed == null || placed.leaf.isEmpty) return null;
+    final module = placed.scope.resolve(model);
+    if (module == null || findNetNamed(module, placed.leaf) == null) {
+      return null;
+    }
+    return placed;
+  }
+
+  /// A statement's `source` element as a short label: the file's name and
+  /// the line (`div.v:21`). Display only: nothing is opened from it.
+  static String _statementLabel(String path) {
+    final hash = path.indexOf('#L');
+    final file = hash < 0 ? path : path.substring(0, hash);
+    final fragment = hash < 0 ? '' : path.substring(hash + 2);
+    final line = fragment.split(':').first;
+    final name = p.posix.basename(file.replaceAll(r'\', '/'));
+    return line.isEmpty ? name : '$name:$line';
+  }
+
+  /// Shows this tab's Inspector without moving focus, so a received path is
+  /// readable without a gesture.
+  void _revealInspectorTab() {
+    final reveal = _revealInspector;
+    if (reveal != null) {
+      reveal();
+      return;
+    }
+    try {
+      rootContainer
+          .read(rightDockTabProvider.notifier)
+          .reveal(kRightDockTabInspector);
+    } on Object {
+      // No dock in this build (a headless harness): the section is still
+      // there when the Inspector is opened.
+    }
+  }
+
+  /// `flow.path.highlighted`: whether a path that arrived landed on
+  /// anything, and how it was mapped. Never a name or a path.
+  void _recordPathHighlighted(
+    TimingPathFidelity fidelity, {
+    required bool resolved,
+  }) {
+    rootContainer
+        .read(telemetryServiceProvider)
+        .record(
+          TelemetryEvent(
+            'flow.path.highlighted',
+            properties: <String, Object?>{
+              'fidelity': fidelity.token,
+              'resolved': resolved,
+            },
+          ),
+        );
+  }
+
+  /// Whether [request] names a formal property's failing signal: a `signal`
+  /// that carries the property's registered `formal.` keys.
+  static bool _isFormalSignal(RequestHighlight request) =>
+      request.element.kind == ElementKind.signal &&
+      (request.metadata.containsKey(cxpFormalPropertyKindMetadataKey) ||
+          request.metadata.containsKey(cxpFormalPropertyLabelMetadataKey));
 
   /// Handles an inbound `notify_selection`, a peer's live selection gossip.
   /// The mirror of WaveCrux's `handleInboundSelection`: resolve the first
@@ -148,8 +530,16 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
   /// workspace when it isn't loaded). It is fire-and-forget, so nothing is
   /// acknowledged and the runtime asks for no attention: the one attention
   /// request here is this handler's own, gated on the user's setting.
+  ///
+  /// A selection that names a `timing_path` is a whole path from an
+  /// implementation run (Flow): its registers are highlighted together and
+  /// the path is shown in the Inspector.
   @override
   void selection(NotifySelection message, PeerIdentity from) {
+    if (message.elements.any((e) => e.kind == ElementKind.timingPath)) {
+      unawaited(_handleTimingPath(message, from));
+      return;
+    }
     unawaited(_handleNotifySelection(message));
   }
 
@@ -282,10 +672,27 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       if (!matched) {
         return (
           honored: false,
-          reason: 'Scope $local not found in current design',
+          reason: 'the scope was not found in the open design',
         );
       }
       return (honored: true, reason: null);
+    }
+
+    // A cell of a netlist (CXP §8.2: `<top>.<flat cell name>`): found in the
+    // scope its path names, never by its leaf anywhere else.
+    if (element.kind == ElementKind.cell) {
+      return _applyCell(tabContainer, local);
+    }
+
+    // A signal or a named net whose path is rooted at this design's top
+    // (`top.u_div.cnt_q`) is looked up in the scope the path names, and that
+    // scope is shown. A name rooted elsewhere (a waveform's testbench path)
+    // keeps the leaf match below, in the scope on screen.
+    if ((element.kind == ElementKind.signal ||
+            element.kind == ElementKind.net) &&
+        !local.contains(':net:')) {
+      final rooted = _applyRooted(tabContainer, local);
+      if (rooted != null) return rooted;
     }
 
     // Everything else (net / port / instance / signal, plus any kind a newer
@@ -354,10 +761,131 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       return (honored: true, reason: null);
     }
 
-    return (
-      honored: false,
-      reason: 'Element $local not found in current design',
+    return (honored: false, reason: kCxpElementNotInDesign);
+  }
+
+  /// Resolves a hierarchical name rooted at the design's top in the scope it
+  /// names, shows that scope and selects the net (every drawn strand, or the
+  /// register driving it when it has none). Null when [local] is not rooted
+  /// at this design's top, so the caller keeps its own fallback; a rooted
+  /// name that is not in its scope is declined, never leaf-matched in
+  /// another scope.
+  ({bool honored, String? reason})? _applyRooted(
+    ProviderContainer tab,
+    String local,
+  ) {
+    final model = tab.read(hierarchyTreeProvider).model;
+    if (model == null) return null;
+    final scoped = scopeOfHierarchicalName(model, local);
+    if (scoped == null) return null;
+    final module = scoped.scope.resolve(model);
+    final net = module == null ? null : findNetNamed(module, scoped.leaf);
+    if (module == null || net == null) {
+      return (honored: false, reason: kCxpElementNotInDesign);
+    }
+    final graph = const SchematicGraphBuilder().build(model, scoped.scope);
+    final selection = selectionForNet(module, graph, net);
+    if (selection == null) {
+      return (honored: false, reason: 'the element is not drawn in its scope');
+    }
+    _showScope(tab, scoped.scope);
+    tab.read(selectedElementProvider.notifier).replace(selection);
+    _revealElement(tab, selection.primary);
+    return (honored: true, reason: null);
+  }
+
+  /// Selects the netlist cell [local] names (`<top>.<flat cell name>`) and
+  /// reveals it, in the scope the name's instance prefix names. A flattened
+  /// netlist keeps the whole flat name (`u_div.cnt_q_reg`) as one cell of the
+  /// top, which the walk finds because `u_div` is then not an instance.
+  ({bool honored, String? reason}) _applyCell(
+    ProviderContainer tab,
+    String local,
+  ) {
+    final model = tab.read(hierarchyTreeProvider).model;
+    if (model == null) return (honored: false, reason: 'No design loaded');
+    final scoped = scopeOfHierarchicalName(model, local);
+    final module = scoped?.scope.resolve(model);
+    if (scoped == null ||
+        module == null ||
+        !module.cells.containsKey(scoped.leaf)) {
+      return (honored: false, reason: kCxpElementNotInDesign);
+    }
+    final graph = const SchematicGraphBuilder().build(model, scoped.scope);
+    if (!graph.cells.any((c) => c.id == scoped.leaf)) {
+      return (honored: false, reason: 'the element is not drawn in its scope');
+    }
+    _showScope(tab, scoped.scope);
+    tab
+        .read(selectedElementProvider.notifier)
+        .select(SelectedElement.cell(cellId: scoped.leaf));
+    tab.read(revealRequestProvider.notifier).request(scoped.leaf);
+    return (honored: true, reason: null);
+  }
+
+  /// Makes [scope] the scope on screen when it is not already, and flashes
+  /// its hierarchy row so the move is visible.
+  void _showScope(ProviderContainer tab, HierarchyNode scope) {
+    final tree = tab.read(hierarchyTreeProvider);
+    if (tree.selected == scope) return;
+    tab.read(hierarchyTreeProvider.notifier).selectScope(scope);
+    tab.read(scopeFlashProvider.notifier).flash(scope.path);
+  }
+
+  /// Runs [action] with the laid-out schematic of the scope on screen, now
+  /// when it is laid out, or as soon as the layout lands (a scope that was
+  /// just shown lays out on a background isolate). Bounded like the deferred
+  /// select; [dispose] tears it down.
+  void _whenScopeLaidOut(
+    ProviderContainer tab,
+    void Function(LaidOutGraph laidOut) action,
+  ) {
+    ProviderSubscription<AsyncValue<LaidOutGraph>>? sub;
+    Timer? timer;
+    var done = false;
+
+    void cleanup() {
+      if (done) return;
+      done = true;
+      final localSub = sub;
+      if (localSub != null) {
+        _deferredSubs.remove(localSub);
+        localSub.close();
+      }
+      final localTimer = timer;
+      if (localTimer != null) {
+        _deferredTimers.remove(localTimer);
+        localTimer.cancel();
+      }
+    }
+
+    void attempt(AsyncValue<LaidOutGraph> value) {
+      if (done) return;
+      final laidOut = value.value;
+      final scope = tab.read(hierarchyTreeProvider).selected;
+      if (value.isLoading ||
+          laidOut == null ||
+          laidOut.isEmpty ||
+          scope == null ||
+          laidOut.graph.moduleName != scope.moduleName) {
+        return;
+      }
+      cleanup();
+      action(laidOut);
+    }
+
+    timer = Timer(const Duration(seconds: 15), cleanup);
+    _deferredTimers.add(timer);
+    sub = tab.listen<AsyncValue<LaidOutGraph>>(
+      currentLaidOutGraphProvider,
+      (_, next) => attempt(next),
+      fireImmediately: true,
     );
+    if (done) {
+      sub.close();
+    } else {
+      _deferredSubs.add(sub);
+    }
   }
 
   /// Matches a bare element [leaf] (e.g. `state`) against the active tab's
@@ -608,8 +1136,11 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       }
     }
     final tail = cut >= 0 ? path.substring(cut + markerLen) : path;
-    final leaf = tail.split('.').last;
-    return leaf.replaceFirst(_busBitSelectSuffix, '');
+    // Segments as the netlist names them: an escaped identifier (`\a.b `) or
+    // a `$`-name keeps its dots.
+    final segments = NetcruxNameResolver.splitHierarchicalPath(tail);
+    if (segments.isEmpty) return '';
+    return segments.last.replaceFirst(_busBitSelectSuffix, '');
   }
 
   /// A trailing numeric bit-select / slice on a signal leaf: `[7:0]`, `[3]`.
@@ -637,8 +1168,72 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     RequestOpenArtifact request,
     PeerIdentity from,
   ) async {
-    final result = await _resolveOpenArtifact(request);
+    final kind = request.artifactKind;
+    final result =
+        kind == kCxpFlowRunArtifactKind || kind == kCxpTimingReportArtifactKind
+        ? await _openFlowArtifact(request, from)
+        : await _resolveOpenArtifact(request);
     return CruxCxpHandlerResult(honored: result.honored, reason: result.reason);
+  }
+
+  /// A run directory (`flow_run`) or a run's timing report
+  /// (`timing_report`) a peer sent (CXP §9.10.2): the slack overlay's input,
+  /// a NetCrux Pro capability ([flowArtifactOpenerProvider]).
+  ///
+  /// Only the path on the message is considered (NetCrux keeps no record of
+  /// runs), held to the floor ([kCxpOpenArtifactContainment]) and to being
+  /// the right kind of entry: a directory for a run, a file for a report.
+  /// That is checked before the tier, so a malformed path is refused the
+  /// same in every build. Without the overlay the answer is the "requires
+  /// NetCrux Pro" toast; with it, a licence that does not admit it gets a
+  /// toast naming the tier. Reasons never repeat the path.
+  Future<({bool honored, String? reason})> _openFlowArtifact(
+    RequestOpenArtifact request,
+    PeerIdentity from,
+  ) async {
+    final kind = request.artifactKind;
+    final path = request.path;
+    if (path == null) {
+      return (honored: false, reason: 'no $kind path was sent');
+    }
+    final refusal = kCxpOpenArtifactContainment.refuse(path);
+    if (refusal != null) return (honored: false, reason: refusal);
+    final want = kind == kCxpFlowRunArtifactKind
+        ? FileSystemEntityType.directory
+        : FileSystemEntityType.file;
+    if (FileSystemEntity.typeSync(path) != want) {
+      return (
+        honored: false,
+        reason: kind == kCxpFlowRunArtifactKind
+            ? 'the run is not a directory here'
+            : 'the timing report is not a file here',
+      );
+    }
+    final opener = rootContainer.read(flowArtifactOpenerProvider);
+    if (opener == null) {
+      _notice((l10n) => l10n.actionRequiresPro(l10n.cxpFlowArtifactFeature));
+      return (honored: false, reason: 'opening a $kind needs NetCrux Pro');
+    }
+    final denied = opener.deniedTier();
+    if (denied != null) {
+      final peer = cruxCxpDisplayName(from.productName);
+      _notice(
+        (l10n) => l10n.upgradeDialogMessage(
+          l10n.cxpFlowArtifactFromPeer(peer),
+          denied == LicenseTier.enterprise
+              ? l10n.upgradeDialogTierNameEnterprise
+              : l10n.upgradeDialogTierNamePro,
+        ),
+      );
+      return (
+        honored: false,
+        reason:
+            'opening a $kind needs NetCrux '
+            '${denied == LicenseTier.enterprise ? 'Enterprise' : 'Pro'}',
+      );
+    }
+    final why = await opener.open(kind: kind, path: path);
+    return (honored: why == null, reason: why);
   }
 
   Future<({bool honored, String? reason})> _resolveOpenArtifact(

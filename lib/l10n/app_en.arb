@@ -3160,5 +3160,118 @@
   "fileWatcherIgnore": "Ignore",
   "@fileWatcherIgnore": {
     "description": "Button on the source-changed prompt that dismisses it without reloading. Same key and meaning as WaveCrux."
+  },
+  "cxpPropertyConeFeature": "Property cone",
+  "@cxpPropertyConeFeature": {
+    "description": "Label of the property cone a peer asks for (a formal property's union cone of influence), used inside the 'requires NetCrux Pro' toast when the Pro overlay is not installed."
+  },
+  "cxpPropertyConeFromPeer": "Property cone from {peer}",
+  "@cxpPropertyConeFromPeer": {
+    "description": "Label of a property cone a peer asked for, quoted in the toast that names the tier it needs. {peer} is the sending product (SimCrux).",
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "cxpFlowArtifactFeature": "Open implementation run",
+  "@cxpFlowArtifactFeature": {
+    "description": "Label of opening an implementation run or timing report a peer sent, used inside the 'requires NetCrux Pro' toast when the Pro overlay is not installed."
+  },
+  "cxpFlowArtifactFromPeer": "Implementation run from {peer}",
+  "@cxpFlowArtifactFromPeer": {
+    "description": "Label of an implementation run or timing report a peer sent, quoted in the toast that names the tier it needs. {peer} is the sending product.",
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathTitle": "Timing path from {peer}",
+  "@inspectorTimingPathTitle": {
+    "description": "Heading of the Inspector section that shows a timing path a peer sent. {peer} is the sending product (SimCrux).",
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathAnnouncement": "Timing path from {peer}, mapping: {mapping}",
+  "@inspectorTimingPathAnnouncement": {
+    "description": "Screen reader label of the received timing path section, spoken when a path arrives. {peer} is the sending product; {mapping} is one of the timingPathFidelity labels.",
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      },
+      "mapping": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathMapping": "Mapping",
+  "@inspectorTimingPathMapping": {
+    "description": "Row label in the received timing path section: how the path's registers were mapped to RTL."
+  },
+  "inspectorTimingPathStart": "Start",
+  "@inspectorTimingPathStart": {
+    "description": "Row label in the received timing path section for the path's start register."
+  },
+  "inspectorTimingPathEnd": "End",
+  "@inspectorTimingPathEnd": {
+    "description": "Row label in the received timing path section for the path's end register."
+  },
+  "inspectorTimingPathStatements": "Statements",
+  "@inspectorTimingPathStatements": {
+    "description": "Row label in the received timing path section for the path's source statements, shown as file:line."
+  },
+  "inspectorTimingPathOtherScope": "{name} (in another scope)",
+  "@inspectorTimingPathOtherScope": {
+    "description": "A register of a received timing path that is in the design but in a scope other than the one on screen. {name} is the register's RTL name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNotFound": "{name} (not in this design)",
+  "@inspectorTimingPathNotFound": {
+    "description": "A register of a received timing path that is not in the open design. {name} is the register's RTL name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNothingHere": "None of this path's registers is in the open design.",
+  "@inspectorTimingPathNothingHere": {
+    "description": "Note in the received timing path section when none of the path's registers is in the open design."
+  },
+  "inspectorTimingPathDismiss": "Dismiss",
+  "@inspectorTimingPathDismiss": {
+    "description": "Button that removes the received timing path section from the Inspector."
+  },
+  "timingPathFidelityRegister": "nearest register",
+  "@timingPathFidelityRegister": {
+    "description": "Mapping chip: the path's endpoint is an exact RTL register (crux.mapping register). Lowercase, as Flow's tier map words it."
+  },
+  "timingPathFidelityStatement": "statement",
+  "@timingPathFidelityStatement": {
+    "description": "Mapping chip: only the statement that drives the register is known (crux.mapping statement)."
+  },
+  "timingPathFidelitySpan": "always block",
+  "@timingPathFidelitySpan": {
+    "description": "Mapping chip: only an always or process block span is known (crux.mapping span)."
+  },
+  "timingPathFidelityUnmapped": "unmapped",
+  "@timingPathFidelityUnmapped": {
+    "description": "Mapping chip: no source location survived synthesis (crux.mapping unmapped, or no mapping sent)."
+  },
+  "menuShowTimingPathsThroughRegister": "Show timing paths through this register",
+  "@menuShowTimingPathsThroughRegister": {
+    "description": "Schematic context-menu entry on a register, beside Cross-probe to: asks SimCrux to show the timing paths through it. Free in every edition, no tier badge."
+  },
+  "menuShowTimingPathsNeedsSimcrux": "Start SimCrux with cross-probing on to show the timing paths through this register.",
+  "@menuShowTimingPathsNeedsSimcrux": {
+    "description": "Tooltip of the disabled 'Show timing paths through this register' entry when no SimCrux is running with cross-probing on."
   }
 }

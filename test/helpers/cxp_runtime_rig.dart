@@ -84,12 +84,16 @@ class AttachedCxpHandler {
     EditorOpenService? editorService,
     NameResolver? nameResolver,
     SelectionFramer? selectionFramer,
+    CxpInboundNotice? notice,
+    void Function()? revealInspector,
   }) : handler = NetcruxCxpRequestHandler(
          rootContainer: rootContainer,
          activeTabContainerLookup: activeTabContainerLookup,
          editorService: editorService,
          nameResolver: nameResolver,
          selectionFramer: selectionFramer,
+         notice: notice,
+         revealInspector: revealInspector,
        ) {
     server.handler = handler;
   }

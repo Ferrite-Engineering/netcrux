@@ -2521,5 +2521,70 @@
   "fileWatcherIgnore": "무시",
   "@fileWatcherIgnore": {
     "description": "Button on the source-changed prompt that dismisses it without reloading. Same key and meaning as WaveCrux."
-  }
+  },
+  "cxpPropertyConeFeature": "속성 영향 콘",
+  "cxpPropertyConeFromPeer": "{peer}에서 보낸 속성 영향 콘",
+  "@cxpPropertyConeFromPeer": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "cxpFlowArtifactFeature": "구현 실행 열기",
+  "cxpFlowArtifactFromPeer": "{peer}에서 보낸 구현 실행",
+  "@cxpFlowArtifactFromPeer": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathTitle": "{peer}에서 보낸 타이밍 경로",
+  "@inspectorTimingPathTitle": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathAnnouncement": "{peer}에서 보낸 타이밍 경로, 매핑: {mapping}",
+  "@inspectorTimingPathAnnouncement": {
+    "placeholders": {
+      "peer": {
+        "type": "String"
+      },
+      "mapping": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathMapping": "매핑",
+  "inspectorTimingPathStart": "시작",
+  "inspectorTimingPathEnd": "끝",
+  "inspectorTimingPathStatements": "구문",
+  "inspectorTimingPathOtherScope": "{name} (다른 스코프)",
+  "@inspectorTimingPathOtherScope": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNotFound": "{name} (이 설계에 없음)",
+  "@inspectorTimingPathNotFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorTimingPathNothingHere": "이 경로의 레지스터가 열린 설계에 하나도 없습니다.",
+  "inspectorTimingPathDismiss": "닫기",
+  "timingPathFidelityRegister": "가장 가까운 레지스터",
+  "timingPathFidelityStatement": "구문",
+  "timingPathFidelitySpan": "always 블록",
+  "timingPathFidelityUnmapped": "매핑 없음",
+  "menuShowTimingPathsThroughRegister": "이 레지스터를 지나는 타이밍 경로 표시",
+  "menuShowTimingPathsNeedsSimcrux": "이 레지스터를 지나는 타이밍 경로를 보려면 교차 프로브를 켜고 SimCrux를 시작하세요."
 }

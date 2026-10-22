@@ -56,6 +56,39 @@ void main() {
     }
   });
 
+  test('the Formal and Flow receivers are reached from the app', () {
+    const reached = <String, String>{
+      // The handler asks the overlay's seams; open core answers without one.
+      'rootContainer.read(inboundPropertyConeProvider)':
+          'lib/services/remote/cxp/cxp_inbound_handler.dart',
+      'rootContainer.read(flowArtifactOpenerProvider)':
+          'lib/services/remote/cxp/cxp_inbound_handler.dart',
+      // A received path is written per tab and shown by the Inspector.
+      'receivedTimingPathProvider.notifier).show(':
+          'lib/services/remote/cxp/cxp_inbound_handler.dart',
+      'receivedTimingPathProvider.overrideWith(':
+          'lib/services/workspace/netcrux_tab_overrides.dart',
+      'TimingPathInspectorSection()':
+          'lib/features/inspector/widgets/inspector_panel.dart',
+      // The originate entry sits beside "Cross-probe to".
+      'netcruxRegisterSignalSelectionOf(':
+          'lib/features/viewer/widgets/cross_probe_menu_entries.dart',
+      // The active design is announced for as long as the workspace is up,
+      // and toasts about peer-started requests reach the user.
+      'cxpActiveDocumentSyncProvider':
+          'lib/features/remote/widgets/cxp_inbound_handler_publisher.dart',
+      'notice: _notice':
+          'lib/features/remote/widgets/cxp_inbound_handler_publisher.dart',
+    };
+    for (final entry in reached.entries) {
+      expect(
+        sources[entry.value],
+        contains(entry.key),
+        reason: '${entry.key} is not reached from ${entry.value}',
+      );
+    }
+  });
+
   test("the request handler is installed from the app's root overrides", () {
     final overrides = sources['lib/features/remote/netcrux_cxp_overrides.dart'];
     expect(overrides, isNotNull);

@@ -31,6 +31,13 @@ const CruxCxpProductBinding kNetcruxCxpBinding = CruxCxpProductBinding(
     ElementKind.signal,
     ElementKind.scope,
     ElementKind.source,
+    // CXP 1.3 rev. 9: a netlist cell by its flat name, a formal property
+    // (its union cone is NetCrux Pro's; open core says so), and a timing
+    // path, which a directed request can only decline: a path arrives whole
+    // in the sender's selection, beside the registers NetCrux highlights.
+    ElementKind.cell,
+    ElementKind.property,
+    ElementKind.timingPath,
   ],
   nameResolver: NetcruxNameResolver(),
 );

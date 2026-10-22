@@ -14,8 +14,10 @@ import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
+import 'package:netcrux/features/inspector/providers/received_timing_path_provider.dart';
 import 'package:netcrux/features/inspector/services/pin_tie_text.dart';
 import 'package:netcrux/features/inspector/widgets/annotation_inspector_section.dart';
+import 'package:netcrux/features/inspector/widgets/timing_path_inspector_section.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -75,84 +77,106 @@ class InspectorPanel extends ConsumerWidget {
       ),
     };
 
-    return Material(
-      color: theme.colorScheme.surface,
-      child: CruxInspector<SelectedElement>(
-        selection: primary is SelectedElementNone ? null : primary,
-        controller: ref.watch(inspectorControllerProvider),
-        onEscape: () =>
-            focusSchematicCanvas(ref.read(schematicCanvasKeyProvider)),
-        emptyMessage: l10n.inspectorEmpty,
-        title: (element) => inspectorHeading(l10n, element),
-        heldMessage: (element) =>
-            l10n.inspectorHeldMessage(inspectorHeading(l10n, element)),
-        // "Go to source" is offered here as well as on the schematic context
-        // menu: the Inspector is where someone reading an element's details
-        // asks where it comes from. It is the Pro RTL source pane's action,
-        // so it carries the tier badge and goes through the same gate as the
-        // menu entry; the opener falls back to the active selection.
-        headerActions: (context, element) => <Widget>[
-          TextButton.icon(
-            onPressed: () {
-              if (!allowProAction(
-                context,
-                ref,
-                NetcruxAction.openSourceForElement,
-              )) {
-                return;
-              }
-              ref.read(openSourceForElementOpenerProvider)(context, ref);
-            },
-            icon: const Icon(Icons.code, size: 14),
-            label: Text(l10n.inspectorGoToSource),
-            style: TextButton.styleFrom(
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            ),
-          ),
-          const SizedBox(width: 4),
-          NetCruxFeatureTierBadge(
-            requiredTier: NetcruxAction.openSourceForElement.requiredTier,
-          ),
-        ],
-        sections: <CruxInspectorSectionBuilder<SelectedElement>>[
-          (context, element) => switch (element) {
-            SelectedElementCell(:final cellId) => _cellSection(
+    final timingPath = ref.watch(receivedTimingPathProvider) != null;
+    final inspector = CruxInspector<SelectedElement>(
+      selection: primary is SelectedElementNone ? null : primary,
+      controller: ref.watch(inspectorControllerProvider),
+      onEscape: () =>
+          focusSchematicCanvas(ref.read(schematicCanvasKeyProvider)),
+      emptyMessage: l10n.inspectorEmpty,
+      title: (element) => inspectorHeading(l10n, element),
+      heldMessage: (element) =>
+          l10n.inspectorHeldMessage(inspectorHeading(l10n, element)),
+      // "Go to source" is offered here as well as on the schematic context
+      // menu: the Inspector is where someone reading an element's details
+      // asks where it comes from. It is the Pro RTL source pane's action,
+      // so it carries the tier badge and goes through the same gate as the
+      // menu entry; the opener falls back to the active selection.
+      headerActions: (context, element) => <Widget>[
+        TextButton.icon(
+          onPressed: () {
+            if (!allowProAction(
               context,
               ref,
-              l10n,
-              schematic,
-              module,
-              cellId,
-              offerSymbolEditor: !overlayInstalled,
-            ),
-            SelectedElementPort(:final cellId, :final portName) => _portSection(
-              l10n,
-              schematic,
-              module,
-              cellId,
-              portName,
-            ),
-            SelectedElementBoundaryPort(:final portName) =>
-              _boundaryPortSection(l10n, module, portName),
-            SelectedElementWire() || SelectedElementNone() => null,
+              NetcruxAction.openSourceForElement,
+            )) {
+              return;
+            }
+            ref.read(openSourceForElementOpenerProvider)(context, ref);
           },
-          (context, element) => element is SelectedElementCell
-              ? _parametersSection(l10n, module, element.cellId)
-              : null,
-          (context, element) => element is SelectedElementCell
-              ? _portsSection(l10n, schematic, module, element.cellId)
-              : null,
-          (context, element) => element is SelectedElementWire
-              ? _wireSection(l10n, schematic, module, element)
-              : null,
-          ...pro,
-          (context, element) => resolves(element)
-              ? AnnotationInspectorSection(element: element)
-              : null,
-        ],
-      ),
+          icon: const Icon(Icons.code, size: 14),
+          label: Text(l10n.inspectorGoToSource),
+          style: TextButton.styleFrom(
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        NetCruxFeatureTierBadge(
+          requiredTier: NetcruxAction.openSourceForElement.requiredTier,
+        ),
+      ],
+      sections: <CruxInspectorSectionBuilder<SelectedElement>>[
+        (context, element) => switch (element) {
+          SelectedElementCell(:final cellId) => _cellSection(
+            context,
+            ref,
+            l10n,
+            schematic,
+            module,
+            cellId,
+            offerSymbolEditor: !overlayInstalled,
+          ),
+          SelectedElementPort(:final cellId, :final portName) => _portSection(
+            l10n,
+            schematic,
+            module,
+            cellId,
+            portName,
+          ),
+          SelectedElementBoundaryPort(:final portName) => _boundaryPortSection(
+            l10n,
+            module,
+            portName,
+          ),
+          SelectedElementWire() || SelectedElementNone() => null,
+        },
+        (context, element) => element is SelectedElementCell
+            ? _parametersSection(l10n, module, element.cellId)
+            : null,
+        (context, element) => element is SelectedElementCell
+            ? _portsSection(l10n, schematic, module, element.cellId)
+            : null,
+        (context, element) => element is SelectedElementWire
+            ? _wireSection(l10n, schematic, module, element)
+            : null,
+        ...pro,
+        (context, element) => resolves(element)
+            ? AnnotationInspectorSection(element: element)
+            : null,
+      ],
+    );
+    return Material(
+      color: theme.colorScheme.surface,
+      // A timing path a peer sent sits above the selection's sections, so
+      // it reads the same whatever is selected; bounded, so a long path
+      // never pushes the selection's details off the panel.
+      child: timingPath
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: const SingleChildScrollView(
+                    child: TimingPathInspectorSection(),
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(child: inspector),
+              ],
+            )
+          : inspector,
     );
   }
 }
