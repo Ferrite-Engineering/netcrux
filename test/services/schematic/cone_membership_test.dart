@@ -249,6 +249,32 @@ void main() {
       expect(cone.highlightedCellIds, <String>{'s', 'm', 't'});
     });
 
+    test('a cell id that occurs twice seeds from both occurrences', () {
+      // A malformed scope can repeat an id; the trace seeds from every
+      // occurrence, and so does the cone.
+      final graph = SchematicGraph(
+        moduleName: 'dup',
+        cells: <SchematicCell>[
+          _cell('d', <String>['A'], <String>[]),
+          _cell('d', <String>['B'], <String>[]),
+          _cell('x', <String>[], <String>['Y']),
+          _cell('z', <String>[], <String>['Y']),
+        ],
+        boundaryPorts: const <SchematicBoundaryPort>[],
+        edges: <SchematicEdge>[
+          _edge('e0', 'x:Y', 'd:A'),
+          _edge('e1', 'z:Y', 'd:B'),
+        ],
+      );
+      final cone = coneMembership(
+        graph,
+        const SelectedElement.cell(cellId: 'd'),
+        mode: ConeOfInfluenceMode.fanin,
+        depth: 1,
+      );
+      expect(cone.highlightedCellIds, <String>{'d', 'x', 'z'});
+    });
+
     test('zero levels is the root alone', () {
       final cone = coneMembership(
         _graph,

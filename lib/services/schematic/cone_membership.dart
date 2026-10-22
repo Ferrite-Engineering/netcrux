@@ -45,7 +45,7 @@ TraceOverlay coneMembership(
     );
   }
 
-  final seeds = _seedPins(graph, root, pinsByCell);
+  final seeds = _seedPins(graph, root);
   final visited = <String>{...seeds};
   var frontier = seeds.toSet();
   for (var level = 0; level < depth && frontier.isNotEmpty; level++) {
@@ -196,16 +196,17 @@ SchematicGraph coneSubgraph(SchematicGraph graph, TraceOverlay members) {
 
 /// The pins the walk from [root] starts at: every pin of a cell, the pin
 /// itself, both ends of every occurrence of a wire, or the boundary port.
-List<String> _seedPins(
-  SchematicGraph graph,
-  SelectedElement root,
-  Map<String, List<String>> pinsByCell,
-) {
+List<String> _seedPins(SchematicGraph graph, SelectedElement root) {
   switch (root) {
     case SelectedElementNone():
       return const <String>[];
     case SelectedElementCell(:final cellId):
-      return <String>[...?pinsByCell[cellId]];
+      // Every occurrence of the id seeds, as the trace does.
+      return <String>{
+        for (final cell in graph.cells)
+          if (cell.id == cellId)
+            for (final port in cell.ports) port.id,
+      }.toList();
     case SelectedElementPort(:final portId):
       return <String>[portId];
     case SelectedElementBoundaryPort(:final portId):
