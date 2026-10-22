@@ -88,6 +88,14 @@ jobs:
           key: pub-web-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-web-
 
+      # The restored `.dart_tool/` carries build_runner's incremental asset
+      # graph. A graph written before a file was deleted from a crux-shared
+      # package fails codegen with `InvalidOutputException … Tried to delete
+      # from package not in the build`. See ci.yml's analyze job.
+      - name: Drop the restored build_runner asset graph
+        shell: bash
+        run: rm -rf .dart_tool/build
+
       - name: Install dependencies
         run: flutter pub get
 

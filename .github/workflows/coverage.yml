@@ -95,6 +95,18 @@ jobs:
           key: pub-coverage-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-coverage-
 
+      # The exclusion above does not hold: actions/cache hands tar the
+      # `.dart_tool/` directory and tar recurses into it, so the restored
+      # cache still carries build_runner's incremental asset graph. A graph
+      # written before a file was deleted from a crux-shared package fails
+      # codegen with `InvalidOutputException … Tried to delete from package
+      # not in the build` (runs 39539675271 and 39717933299, for
+      # `crux_theme|lib/src/crux_chrome_colors.dart`). ci.yml's jobs drop
+      # the graph the same way (17d292e).
+      - name: Drop the restored build_runner asset graph
+        shell: bash
+        run: rm -rf .dart_tool/build
+
       - name: Install dependencies
         run: flutter pub get
 
