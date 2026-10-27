@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/providers/workspace_banner_widgets_provider.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
+import 'package:netcrux/features/annotation_callouts/schematic_callout_layer.dart';
 import 'package:netcrux/features/collaboration/collab_annotation_sync.dart';
 import 'package:netcrux/features/collaboration/collab_presence_overlay_provider.dart';
 import 'package:netcrux/features/collaboration/collab_presence_publisher.dart';
@@ -43,7 +44,6 @@ import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/reload/source_file_watcher_provider.dart';
 import 'package:netcrux/services/remote/cxp/cxp_workspace_link.dart';
-import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/schematic/cell_color_override_provider.dart';
 import 'package:netcrux/services/schematic/coi_filter_view_mode_provider.dart';
 import 'package:netcrux/services/schematic/net_activity_color_override_provider.dart';
@@ -318,9 +318,6 @@ class _SchematicCenter extends ConsumerWidget {
     final filterViewMode = ref.watch(coiFilterViewModeProvider);
 
     final canvasKey = ref.watch(schematicCanvasKeyProvider);
-    // The annotation callouts, drawn over the canvas and inside its gesture
-    // handler. Null in open core, where the canvas is left exactly as it was.
-    final calloutLayer = ref.watch(schematicCalloutLayerBuilderProvider);
     return laidOutAsync.when(
       // The scrollbars flank the gesture-handled canvas: dragging a thumb pans through the design's
       // laid-out bounds, and the thumbs track mouse/trackpad pan + zoom
@@ -369,15 +366,13 @@ class _SchematicCenter extends ConsumerWidget {
           child: SchematicGestureHandler(
             // Outside the RepaintBoundary the PNG export captures: a callout
             // is an on-screen aid, not part of the exported schematic.
-            child: calloutLayer == null
-                ? canvas
-                : Stack(
-                    fit: StackFit.expand,
-                    children: <Widget>[
-                      canvas,
-                      Positioned.fill(child: Builder(builder: calloutLayer)),
-                    ],
-                  ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                canvas,
+                const Positioned.fill(child: SchematicCalloutLayer()),
+              ],
+            ),
           ),
         );
       },

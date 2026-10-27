@@ -50,9 +50,9 @@ Click a badge, or right-click the annotated element and choose **Show Annotation
 
 ## Callouts on the schematic, from NetCrux 1.2 {#callouts}
 
-From NetCrux 1.2, NetCrux Pro can draw each annotation on the schematic itself, beside its element, the way WaveCrux draws notes on a waveform. Annotations, the Annotations tab and the badges stay free in every edition; drawing them on the canvas is a NetCrux Pro feature.
+From NetCrux 1.2, NetCrux draws each annotation on the schematic itself, beside its element, the way WaveCrux draws notes on a waveform. Annotation callouts are free in every edition, like the annotations, the Annotations tab and the badges.
 
-Turn callouts on or off with `View → Show Annotation Callouts`, or **Show Annotation Callouts** in the command palette. In Open Core the entry carries a Pro badge and says that it requires NetCrux Pro.
+Callouts are on by default. Turn them off or on with `View → Show Annotation Callouts`, or **Show Annotation Callouts** in the command palette.
 
 - **What a callout shows.** A small balloon with a line to the element, holding the note's number, its title (or the first line of its body) and the start of the body. Hover over the balloon to read the whole note, or press Enter on it to open the Annotations tab at that note; double-click its text to edit the note in the Inspector. The number is the note's place in the order the notes were written.
 - **Where it sits.** A callout on a cell, a pin or a boundary port starts just above the element's top-right corner; one on a net starts above the middle of its wire. Drag the balloon anywhere: the line stays attached to the element, and the note stays on the same element. NetCrux remembers where you put it, in the session file.

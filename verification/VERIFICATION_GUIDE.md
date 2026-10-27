@@ -1629,15 +1629,15 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 
 **Automation assessment.** `[Coverage: UNIT]` `[Coverage: WIDGET]`. `test/services/schematic/cell_color_override_provider_test.dart` (null default, the supplied map, and that the net map stays null), `test/features/viewer/rendering/schematic_cell_color_paint_test.dart` (fill and outline, translucent fill, every band, two cells, an unchanged pass with no map, the pass on top of the ordinary one), `test/services/flow/slack_overlay_opener_test.dart` (null seam, an overlay's opener is called), `test/features/workspace/screens/workspace_screen_gating_test.dart` (the toggle reaches its opener at Pro, is denied at Open Core after the beta with the upgrade dialog, is admitted during the beta, and says it requires NetCrux Pro with no overlay), `test/core/shortcuts/netcrux_action_test.dart` (tier, feature and category), `test/domain/models/analysis/analysis_panel_kind_test.dart`, `test/static/telemetry_catalog_conformance_test.dart` (`slack_overlay` is reachable from a denial site; `flow.overlay.opened` is a Pro-recorded event).
 
-### 7.16 Annotations, from 1.2: drift, scope grouping, and the callout seams
+### 7.16 Annotations, from 1.2: drift, scope grouping, and the callout claim
 
-**What it does.** Annotations stay free in every edition. From 1.2 open core adds what every edition needs to know whether a note still holds, and the seams the Pro callout layer plugs into:
+**What it does.** Annotations stay free in every edition. From 1.2 open core adds what every edition needs to know whether a note still holds, and the claim the callout layer (§7.16.1) takes a pointer with:
 
 - **Structural witness.** A new note records what its element is (`lib/features/annotations/services/annotation_drift.dart`): a cell's type and parameters, a pin's cell type and parameters with its direction and width, a boundary port's direction and width, a net's driver (a cell output with the cell's type, an input port, or none). A scope records nothing. Editing a note's words keeps its witness; a note written before 1.2 gains one on its next saved edit. Stored under `witness` in the session file.
 - **Status.** `annotationStatusesProvider` (per tab) applies the suite's shared decision table (`crux_annotations`) to each note against the design and the scope on screen: resolved, drifted (the element changed), outside the current scope (its module is not the one open), missing (the design has no such element), or on a whole scope.
 - **Panel.** The Annotations tab lists the notes the open scope can show first (session layers grouped as before), then **Outside the current scope (N)**, then **Missing from this design (N)**. A drifted note's row carries a **Drifted** marker, in the drift amber with the word in the text colour, and a screen reader hears it.
 - **Callout placement.** Each note carries `labelDx`, `labelDy` and `collapsed` in the suite's shared record shape, kept across edits; open core writes nothing for the defaults.
-- **Seams.** `schematicCalloutLayerBuilderProvider` (null: the canvas is unchanged) and `toggleAnnotationCalloutsOpenerProvider` (null) in `lib/services/schematic/annotation_callout_seams.dart`; `NetcruxAction.toggleAnnotationCallouts` (View, **Show Annotation Callouts**, `NetcruxGatedFeature.annotationCallouts`, token `annotation_callouts`) is Pro, badged, and says it requires NetCrux Pro with no overlay; `canvasOverlayGestureClaimProvider` lets a callout own a pointer, so the canvas gesture handler neither selects, pans, pops out of the scope nor opens the element menu for a press that began on one.
+- **Claim.** `canvasOverlayGestureClaimProvider` (`lib/services/schematic/annotation_callout_seams.dart`) lets a callout own a pointer, so the canvas gesture handler neither selects, pans, pops out of the scope nor opens the element menu for a press that began on one. `NetcruxAction.toggleAnnotationCallouts` (View, **Show Annotation Callouts**) is open core at every tier: no badge, no gate and no `tier.gate_hit` token.
 
 **Setup.** Open Core build. Open `examples/cdc-capture/cdc-capture.netcrux-project` (or any design with a submodule and a register), and keep its source open in an editor.
 
@@ -1648,7 +1648,7 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 4. Edit the drifted note's words and save. Expected: it still shows **Drifted**.
 5. Rename the child cell in the source and let the design elaborate again. Expected: its note moves to **Missing from this design (1)**; clicking it says the element is not in this design.
 6. With VoiceOver or NVDA, move onto the drifted row. Expected: it reads the title, then "Drifted: the element changed since this note was written", then the element and author.
-7. `View → Show Annotation Callouts` and the palette entry. Expected: the Pro badge, and the notice that it requires NetCrux Pro; nothing is drawn on the canvas. After the beta, at the open-core tier, the upgrade dialog first.
+7. `View → Show Annotation Callouts` and the palette entry. Expected: no Pro badge, at the open-core tier after the beta too; the callouts leave the canvas and return (§7.16.1).
 8. Open a 1.1 session file with annotations. Expected: every note loads, none is marked drifted, and saving writes no new fields for them until one is edited.
 
 **Edge cases.**
@@ -1656,7 +1656,41 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 - A note saved before the module was recorded is matched in the scope on screen first, then in any module of the design.
 - A malformed `witness` or a non-numeric `labelDx` loads the note without them.
 
-**Automation assessment.** `[Coverage: UNIT]` `[Coverage: WIDGET]`. `test/features/annotations/services/annotation_drift_test.dart` (each kind's witness read against a hand-written two-version design, the status of every case before and after re-elaboration, legacy notes, no design, the per-tab provider following the design), `test/domain/models/annotation_callout_fields_test.dart` (the record shape, 1.1 records, malformed fields, the anchor), `test/features/annotations/widgets/annotations_panel_status_groups_test.dart` (row order, the group headers, the drift marker and its spoken text, and every row, group and marker in open core with no overlay), `test/services/schematic/annotation_callout_seams_test.dart` (null seams, the claim, an overlay's toggle is called), `test/features/viewer/widgets/schematic_gesture_handler_overlay_claim_test.dart` (a click, a drag and a double click on a callout leave the selection, the camera and the scope alone; a click beside it selects), `test/features/workspace/screens/workspace_screen_gating_test.dart` and `test/core/shortcuts/netcrux_action_test.dart` (the toggle's tier both ways, feature and category). `[Coverage: MANUAL]` steps 3 to 6 (a real re-elaboration and a real screen reader).
+**Automation assessment.** `[Coverage: UNIT]` `[Coverage: WIDGET]`. `test/features/annotations/services/annotation_drift_test.dart` (each kind's witness read against a hand-written two-version design, the status of every case before and after re-elaboration, legacy notes, no design, the per-tab provider following the design), `test/domain/models/annotation_callout_fields_test.dart` (the record shape, 1.1 records, malformed fields, the anchor), `test/features/annotations/widgets/annotations_panel_status_groups_test.dart` (row order, the group headers, the drift marker and its spoken text, and every row, group and marker in open core with no overlay), `test/services/schematic/annotation_callout_seams_test.dart` (the claim), `test/features/viewer/widgets/schematic_gesture_handler_overlay_claim_test.dart` (a click, a drag and a double click on a callout leave the selection, the camera and the scope alone; a click beside it selects), `test/features/workspace/services/workspace_action_dispatch_table_test.dart` and `test/core/shortcuts/netcrux_action_test.dart` (the toggle works at every tier; open-core tier, no gated feature, View category). `[Coverage: MANUAL]` steps 3 to 6 (a real re-elaboration and a real screen reader).
+
+### 7.16.1 Annotation callouts (from 1.2, free at every tier)
+
+**What it does.** Each annotation on an element of the scope on screen is drawn beside its element, the way WaveCrux draws notes on a waveform, with the suite's shared callout layer (`crux_annotations`): a balloon with the note's number, heading and the start of its body, a leader to an anchor dot on the element, a dashed amber leader and italic text when the note has drifted. `lib/features/annotation_callouts/schematic_callout_layer.dart` is mounted over the canvas by `project_tab_content.dart`; `toggleAnnotationCallouts` (`lib/features/annotation_callouts/annotation_callouts_toggle.dart`) answers View > Show Annotation Callouts. Callouts are free in every edition and on by default. The anchor is data (a cell's or boundary port's top edge, a pin's box, a net's route middle), projected through the viewport every frame (`callout_projection.dart`). The label is dragged without moving the anchor and written once, when the drag ends; it folds to a numbered dot. Detail zoom draws balloons, mid zoom dots (a click opens the note in the Annotations panel), the overview nothing. Only notes the status table calls drawable are drawn, so a note inside a child module is drawn when that module is open. At most six balloons; the rest are dots. Each callout is one Tab stop named "Annotation N: heading, on kind element" (and "Drifted"); Enter opens the note in the panel, Space folds it. A note somebody else wrote in a session is neither dragged nor folded. The layer is outside the PNG export boundary and never reads the licence.
+
+**Setup.** Any build, any licence tier. Open `examples/cdc-capture/cdc-capture.netcrux-project`, which has submodules and registers.
+
+**Steps and expected behavior.**
+
+1. Add a titled note with a two-paragraph body on a register cell, one on one of its pins, one on an input port and one on a wire. Expected: four balloons, each above its element with a leader to a small dot on it, numbered 1 to 4 in the order written; each shows the title and the start of the body; hovering shows the whole note.
+2. Drag a balloon away. Expected: the leader stretches and stays on the element; pan and zoom: the balloon keeps its offset from the element. Save and reopen the session: the balloon is where you left it.
+3. Use the fold control on a balloon. Expected: it becomes its numbered dot; clicking the dot opens it again. Double-click a balloon's text: the Inspector opens on that note.
+4. Zoom out until cells lose their labels. Expected: every callout is a numbered dot; clicking one opens the Annotations tab at that note. Zoom out to the overview: no callouts.
+5. Add a note on a cell inside a child module, then return to the top scope. Expected: no callout for it there, and the Annotations tab lists it under **Outside the current scope**; open the child scope and its callout appears.
+6. Change the register's width in the source and let the design elaborate again. Expected: its callout's leader is dashed and amber, its text italic, and its row in the panel says **Drifted**.
+7. Add eight notes on one cell. Expected: six balloons and two dots.
+8. Tab from the hierarchy to the canvas and on. Expected: each callout is one stop, read as "Annotation N: heading, on Cell name" (with "Drifted" for a drifted one); Enter opens the note in the panel; Space folds and unfolds it; Enter never pushes into the cell under it.
+9. Press on a balloon over a cell, drag it, release; double-click it; right-click it. Expected: the selection, the camera and the scope do not change, and no element menu opens.
+10. `View → Show Annotation Callouts`. Expected: no Pro badge; the callouts disappear and a screen reader hears "Annotation callouts hidden"; again, they return.
+11. Export PNG and SVG. Expected: no callouts in either.
+12. In a collaborative session, the other participant's notes appear as callouts in the same places; their fold control is absent and dragging them does nothing.
+
+**Tier scenarios.**
+
+- Open Core licence, after the beta: the menu entry carries no badge, never opens the upgrade dialog, records no `tier.gate_hit`, and the callouts are drawn.
+- Pro, EDU and Enterprise licences, and the beta: drawn exactly the same.
+
+**Edge cases.**
+
+- A note whose element is not on the layout of the scope on screen (a net with no routed wire here) draws nothing and is still listed.
+- An anchor far outside the viewport draws nothing; one just outside it still draws its balloon if the balloon is on screen.
+- A hidden session layer's notes draw nothing.
+
+**Automation assessment.** `test/features/annotation_callouts/schematic_callout_layer_test.dart` (every tier, in and out of the beta, draws them; the View toggle, what is drawn per status, drift styling, the label above the element, the three levels of detail with the 24 × 24 dot target, drag written once and never moving the element, fold and unfold with the 24 × 24 control, somebody else's note, six balloons, Tab, Enter and Space, the spoken drift, and the pinned focus-walk transcript `test/features/annotation_callouts/goldens/annotation_callouts_focus_walk.txt`), `test/features/annotation_callouts/callout_projection_test.dart` (each kind's anchor against a hand-written layout, the level of detail, the excerpt), `test/static/annotation_callouts_reachability_test.dart` (the dispatcher, the canvas mount, the claim, no licence read in the layer, the per-tab statuses and the witness capture). `[Coverage: UNIT]` `[Coverage: WIDGET]` `[Coverage: STATIC]`. `[Coverage: MANUAL]` steps 2, 6, 8 to 12 on the real canvas (the real gesture handler and a real screen reader).
 
 ## 8. Color Theming & Customization (suite-wide)
 

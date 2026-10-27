@@ -2631,5 +2631,9 @@
   "schematicLayoutPhaseNodePlacement": "セルを配置中",
   "schematicLayoutPhaseEdgeRouting": "配線ルートを計算中",
   "schematicLayoutStopped": "レイアウトを中止しました。",
-  "schematicLayoutRetry": "再レイアウト"
+  "schematicLayoutRetry": "再レイアウト",
+  "annotationCalloutsShownAnnouncement": "注釈の吹き出しを表示しました",
+  "annotationCalloutsHiddenAnnouncement": "注釈の吹き出しを非表示にしました",
+  "annotationCalloutSemantics": "注釈 {number}: {heading}、{kind} {element}",
+  "annotationCalloutFoldTooltip": "番号付きの点にたたむ"
 }

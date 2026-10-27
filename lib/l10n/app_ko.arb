@@ -2631,5 +2631,9 @@
   "schematicLayoutPhaseNodePlacement": "셀 배치 중",
   "schematicLayoutPhaseEdgeRouting": "배선 경로 계산 중",
   "schematicLayoutStopped": "배치를 중지했습니다.",
-  "schematicLayoutRetry": "다시 배치"
+  "schematicLayoutRetry": "다시 배치",
+  "annotationCalloutsShownAnnouncement": "주석 말풍선을 표시했습니다",
+  "annotationCalloutsHiddenAnnouncement": "주석 말풍선을 숨겼습니다",
+  "annotationCalloutSemantics": "주석 {number}: {heading}, {kind} {element}",
+  "annotationCalloutFoldTooltip": "번호가 붙은 점으로 접기"
 }

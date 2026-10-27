@@ -1,0 +1,3 @@
+# Tab walk: 2 stops, cycles
+1. Annotation 1: Note a, on Cell u_alu button
+2. Annotation 2: Note b, on Cell u_reg. Drifted button

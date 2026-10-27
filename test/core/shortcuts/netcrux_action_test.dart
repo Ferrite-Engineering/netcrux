@@ -258,10 +258,7 @@ void main() {
       expect(NetcruxAction.showConeView.requiredTier, LicenseTier.openCore);
       expect(NetcruxAction.showConeView.gatedFeature, isNull);
       expect(NetcruxAction.exitConeView.requiredTier, LicenseTier.openCore);
-      expect(
-        NetcruxAction.showConeViewAllLevels.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.showConeViewAllLevels.requiredTier, LicenseTier.pro);
       expect(
         NetcruxAction.showConeViewAllLevels.gatedFeature,
         NetcruxGatedFeature.coi,
@@ -274,18 +271,12 @@ void main() {
 
     test('Pro RTL source pane actions require LicenseTier.pro', () {
       expect(NetcruxAction.showSourcePane.requiredTier, LicenseTier.pro);
-      expect(
-        NetcruxAction.openSourceForElement.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.openSourceForElement.requiredTier, LicenseTier.pro);
     });
 
     test('Pro Netlist Diff View actions require LicenseTier.pro', () {
       expect(NetcruxAction.showDiffPane.requiredTier, LicenseTier.pro);
-      expect(
-        NetcruxAction.loadComparisonNetlist.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.loadComparisonNetlist.requiredTier, LicenseTier.pro);
       expect(NetcruxAction.navigateNextDiff.requiredTier, LicenseTier.pro);
       expect(NetcruxAction.navigatePrevDiff.requiredTier, LicenseTier.pro);
     });
@@ -378,7 +369,6 @@ void main() {
         NetcruxAction.runActivityAnalysis,
         NetcruxAction.configureActivityScheme,
         NetcruxAction.toggleSlackOverlay,
-        NetcruxAction.toggleAnnotationCallouts,
       };
       for (final action in NetcruxAction.values) {
         if (proActions.contains(action)) continue;
@@ -391,10 +381,7 @@ void main() {
     });
 
     test('FSM bubble diagram actions are Pro tier', () {
-      expect(
-        NetcruxAction.showFsmBubbleDiagram.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.showFsmBubbleDiagram.requiredTier, LicenseTier.pro);
       expect(
         NetcruxAction.detectFsmForCurrentRegister.requiredTier,
         LicenseTier.pro,
@@ -411,14 +398,8 @@ void main() {
     });
 
     test('CDC analysis actions are Pro tier', () {
-      expect(
-        NetcruxAction.showCdcAnalysisPane.requiredTier,
-        LicenseTier.pro,
-      );
-      expect(
-        NetcruxAction.runCdcAnalysis.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.showCdcAnalysisPane.requiredTier, LicenseTier.pro);
+      expect(NetcruxAction.runCdcAnalysis.requiredTier, LicenseTier.pro);
       expect(
         NetcruxAction.showCdcCrossingForSelectedSignal.requiredTier,
         LicenseTier.pro,
@@ -451,22 +432,10 @@ void main() {
     });
 
     test('Switching Activity Heatmap actions are Pro tier', () {
-      expect(
-        NetcruxAction.openWaveformFile.requiredTier,
-        LicenseTier.pro,
-      );
-      expect(
-        NetcruxAction.closeWaveformFile.requiredTier,
-        LicenseTier.pro,
-      );
-      expect(
-        NetcruxAction.showActivityHeatmap.requiredTier,
-        LicenseTier.pro,
-      );
-      expect(
-        NetcruxAction.runActivityAnalysis.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.openWaveformFile.requiredTier, LicenseTier.pro);
+      expect(NetcruxAction.closeWaveformFile.requiredTier, LicenseTier.pro);
+      expect(NetcruxAction.showActivityHeatmap.requiredTier, LicenseTier.pro);
+      expect(NetcruxAction.runActivityAnalysis.requiredTier, LicenseTier.pro);
       expect(
         NetcruxAction.configureActivityScheme.requiredTier,
         LicenseTier.pro,
@@ -486,23 +455,17 @@ void main() {
           NetcruxAction.toggleSlackOverlay.gatedFeature,
           NetcruxGatedFeature.slackOverlay,
         );
-        expect(
-          NetcruxAction.toggleSlackOverlay.category,
-          ActionCategory.view,
-        );
+        expect(NetcruxAction.toggleSlackOverlay.category, ActionCategory.view);
       },
     );
 
-    test('the annotation callouts toggle is Pro tier, in View, with its own '
-        'feature, while annotations themselves stay Open Core', () {
+    test('the annotation callouts toggle is available at every tier, in View, '
+        'like the annotations themselves', () {
       expect(
         NetcruxAction.toggleAnnotationCallouts.requiredTier,
-        LicenseTier.pro,
+        LicenseTier.openCore,
       );
-      expect(
-        NetcruxAction.toggleAnnotationCallouts.gatedFeature,
-        NetcruxGatedFeature.annotationCallouts,
-      );
+      expect(NetcruxAction.toggleAnnotationCallouts.gatedFeature, isNull);
       expect(
         NetcruxAction.toggleAnnotationCallouts.category,
         ActionCategory.view,
@@ -515,14 +478,8 @@ void main() {
     });
 
     test('Custom cell symbol actions are Pro tier', () {
-      expect(
-        NetcruxAction.openSymbolManager.requiredTier,
-        LicenseTier.pro,
-      );
-      expect(
-        NetcruxAction.importSymbolFromSvg.requiredTier,
-        LicenseTier.pro,
-      );
+      expect(NetcruxAction.openSymbolManager.requiredTier, LicenseTier.pro);
+      expect(NetcruxAction.importSymbolFromSvg.requiredTier, LicenseTier.pro);
       expect(
         NetcruxAction.editSymbolForCurrentInstance.requiredTier,
         LicenseTier.pro,

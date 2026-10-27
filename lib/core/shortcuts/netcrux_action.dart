@@ -333,10 +333,8 @@ enum NetcruxAction implements CruxAction {
 
   /// Show or hide the annotation callouts on the schematic: each note drawn
   /// beside its element as a balloon with a leader, a numbered dot at middle
-  /// zoom. Always discoverable and badged; an open-core build refuses it with
-  /// a "requires NetCrux Pro" notice, because only the Pro overlay mounts the
-  /// callout layer. Annotations themselves, the panel and the badges stay
-  /// free. Pro feature.
+  /// zoom. Open core: available at every tier, like the annotations, the
+  /// panel and the badges.
   toggleAnnotationCallouts,
 
   /// Run a manual check against the public version manifest and report the
@@ -819,7 +817,6 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.runActivityAnalysis:
       case NetcruxAction.configureActivityScheme:
       case NetcruxAction.toggleSlackOverlay:
-      case NetcruxAction.toggleAnnotationCallouts:
         return LicenseTier.pro;
       // Hosting a collaborative session and exporting its minutes are the
       // Enterprise actions: a host's tools. Taking part is free.
@@ -861,6 +858,8 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.jumpToTop:
       case NetcruxAction.addAnnotation:
       case NetcruxAction.showAnnotationsPanel:
+      // Drawing the notes on the canvas is free, like the notes themselves.
+      case NetcruxAction.toggleAnnotationCallouts:
       case NetcruxAction.popOutScope:
       case NetcruxAction.showFanin:
       case NetcruxAction.showFanout:
@@ -964,8 +963,6 @@ extension NetcruxActionGatedFeature on NetcruxAction {
         return NetcruxGatedFeature.activity;
       case NetcruxAction.toggleSlackOverlay:
         return NetcruxGatedFeature.slackOverlay;
-      case NetcruxAction.toggleAnnotationCallouts:
-        return NetcruxGatedFeature.annotationCallouts;
       // "Tried to host", or "tried to export a session's minutes" — both are
       // the one priced feature, and joining can never be denied, so it never
       // reports.
@@ -976,6 +973,7 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.leaveSession:
       // Open-core actions. Their gate admits every tier, so no denial — and no
       // feature id — can ever be produced for them.
+      case NetcruxAction.toggleAnnotationCallouts:
       case NetcruxAction.addAnnotation:
       case NetcruxAction.showAnnotationsPanel:
       case NetcruxAction.openProject:

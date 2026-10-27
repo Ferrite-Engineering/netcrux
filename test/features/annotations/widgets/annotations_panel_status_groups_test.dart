@@ -10,10 +10,10 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/annotation.dart';
 import 'package:netcrux/domain/models/annotation_target.dart';
+import 'package:netcrux/features/annotation_callouts/annotation_callouts_toggle.dart';
 import 'package:netcrux/features/annotations/providers/annotation_statuses_provider.dart';
 import 'package:netcrux/features/annotations/widgets/annotations_panel.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
-import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/session/annotation_state.dart';
 
 Annotation _note(String id, {String? layer}) => Annotation(
@@ -139,14 +139,7 @@ void main() {
     tester,
   ) async {
     for (final (locale, outside, missing, drifted)
-        in <
-          (
-            Locale,
-            String,
-            String,
-            String,
-          )
-        >[
+        in <(Locale, String, String, String)>[
           (const Locale('zh', 'CN'), '当前作用域之外 (2)', '此设计中已不存在 (1)', '已变化'),
           (const Locale('ja'), '現在のスコープの外 (2)', 'この設計にない (1)', '変化あり'),
           (const Locale('ko'), '현재 범위 밖 (2)', '이 설계에 없음 (1)', '변경됨'),
@@ -161,8 +154,8 @@ void main() {
 
   // Tier law: annotations, their panel, their groups and the drift marker are
   // open core. Nothing here is overridden by a Pro overlay: no proOverrides,
-  // the beta flag off, the open-core tier, and the callout seams at their
-  // open-core defaults.
+  // the beta flag off, and the open-core tier. The callouts, drawn from the
+  // same notes, are on by default there too.
   testWidgets('every row, group and drift marker renders in open core', (
     tester,
   ) async {
@@ -173,8 +166,7 @@ void main() {
         licenseTierProvider.overrideWithValue(LicenseTier.openCore),
       ],
     );
-    expect(container.read(schematicCalloutLayerBuilderProvider), isNull);
-    expect(container.read(toggleAnnotationCalloutsOpenerProvider), isNull);
+    expect(container.read(annotationCalloutsVisibleProvider), isTrue);
     for (final id in _statuses.keys) {
       expect(
         find.byKey(ValueKey<String>('annotationRow-$id')),

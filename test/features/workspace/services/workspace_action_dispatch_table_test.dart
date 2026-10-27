@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/providers/pro_overlay_installed_provider.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
+import 'package:netcrux/features/annotation_callouts/annotation_callouts_toggle.dart';
 import 'package:netcrux/features/annotations/services/annotation_openers.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
@@ -29,7 +30,6 @@ import 'package:netcrux/services/flow/slack_overlay_opener.dart';
 import 'package:netcrux/services/fsm/fsm_pane_openers.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/reset_domain/reset_domain_pane_openers.dart';
-import 'package:netcrux/services/schematic/annotation_callout_seams.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
@@ -195,7 +195,7 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.clearActivityColoring: _Routing.opener,
   NetcruxAction.configureActivityScheme: _Routing.opener,
   NetcruxAction.toggleSlackOverlay: _Routing.opener,
-  NetcruxAction.toggleAnnotationCallouts: _Routing.opener,
+  NetcruxAction.toggleAnnotationCallouts: _Routing.panelLayout,
   NetcruxAction.shareSession: _Routing.opener,
   NetcruxAction.joinSession: _Routing.opener,
   NetcruxAction.exportReviewMinutes: _Routing.opener,
@@ -316,9 +316,6 @@ List<Override> _recordingOpeners(List<NetcruxAction> fired) {
     ),
     toggleSlackOverlayOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.toggleSlackOverlay),
-    ),
-    toggleAnnotationCalloutsOpenerProvider.overrideWithValue(
-      (_) => record(NetcruxAction.toggleAnnotationCallouts),
     ),
     shareSessionOpenerProvider.overrideWithValue(
       (_) => record(NetcruxAction.shareSession),
@@ -488,11 +485,9 @@ void main() {
         dispatcher.dispatch(context, action);
         await tester.pump();
 
-        expect(
-          fired,
-          <NetcruxAction>[action],
-          reason: '$action must fan out through its own opener, once',
-        );
+        expect(fired, <NetcruxAction>[
+          action,
+        ], reason: '$action must fan out through its own opener, once');
         expect(tester.takeException(), isNull);
       });
     }
@@ -561,33 +556,32 @@ void main() {
       (LicenseTier.pro, false),
       (LicenseTier.enterprise, true),
     ]) {
-      testWidgets(
-        'post-beta ${tier.name} '
-        '${opens ? 'admits' : 'denies'} every Enterprise opener action',
-        (tester) async {
-          final enterprise = _actionsRouted(
-            _Routing.opener,
-          ).where((a) => a.requiredTier == LicenseTier.enterprise).toList();
-          expect(enterprise, contains(NetcruxAction.exportReviewMinutes));
+      testWidgets('post-beta ${tier.name} '
+          '${opens ? 'admits' : 'denies'} every Enterprise opener action', (
+        tester,
+      ) async {
+        final enterprise = _actionsRouted(
+          _Routing.opener,
+        ).where((a) => a.requiredTier == LicenseTier.enterprise).toList();
+        expect(enterprise, contains(NetcruxAction.exportReviewMinutes));
 
-          final fired = <NetcruxAction>[];
-          final (dispatcher, context, _) = await pumpDispatcher(
-            tester,
-            overrides: [
-              betaPeriodProvider.overrideWithValue(false),
-              licenseTierProvider.overrideWith((_) => tier),
-              proOverlayInstalledProvider.overrideWithValue(true),
-              ..._recordingOpeners(fired),
-            ],
-          );
-          for (final action in enterprise) {
-            dispatcher.dispatch(context, action);
-          }
-          await tester.pump();
+        final fired = <NetcruxAction>[];
+        final (dispatcher, context, _) = await pumpDispatcher(
+          tester,
+          overrides: [
+            betaPeriodProvider.overrideWithValue(false),
+            licenseTierProvider.overrideWith((_) => tier),
+            proOverlayInstalledProvider.overrideWithValue(true),
+            ..._recordingOpeners(fired),
+          ],
+        );
+        for (final action in enterprise) {
+          dispatcher.dispatch(context, action);
+        }
+        await tester.pump();
 
-          expect(fired, opens ? enterprise : isEmpty);
-        },
-      );
+        expect(fired, opens ? enterprise : isEmpty);
+      });
     }
 
     testWidgets('Export Review Minutes with no overlay says it needs Pro', (
@@ -735,6 +729,30 @@ void main() {
         !before.diagnosticsVisible,
       );
     });
+
+    for (final tier in LicenseTier.values) {
+      testWidgets(
+        'the annotation callouts toggle is available at ${tier.name}',
+        (tester) async {
+          final (dispatcher, context, root) = await pumpDispatcher(
+            tester,
+            overrides: [
+              betaPeriodProvider.overrideWithValue(false),
+              licenseTierProvider.overrideWith((_) => tier),
+            ],
+          );
+          expect(root.read(annotationCalloutsVisibleProvider), isTrue);
+
+          dispatcher.dispatch(context, NetcruxAction.toggleAnnotationCallouts);
+          await tester.pump();
+          expect(root.read(annotationCalloutsVisibleProvider), isFalse);
+
+          dispatcher.dispatch(context, NetcruxAction.toggleAnnotationCallouts);
+          await tester.pump();
+          expect(root.read(annotationCalloutsVisibleProvider), isTrue);
+        },
+      );
+    }
 
     testWidgets('screen-callback actions route to the injected callbacks', (
       tester,

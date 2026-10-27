@@ -2631,5 +2631,9 @@
   "schematicLayoutPhaseNodePlacement": "正在放置单元",
   "schematicLayoutPhaseEdgeRouting": "正在布线",
   "schematicLayoutStopped": "布局已停止。",
-  "schematicLayoutRetry": "重新布局"
+  "schematicLayoutRetry": "重新布局",
+  "annotationCalloutsShownAnnouncement": "已显示注释标注框",
+  "annotationCalloutsHiddenAnnouncement": "已隐藏注释标注框",
+  "annotationCalloutSemantics": "注释 {number}：{heading}，位于{kind} {element}",
+  "annotationCalloutFoldTooltip": "折叠为编号圆点"
 }

@@ -3399,5 +3399,35 @@
   "schematicLayoutRetry": "Lay out again",
   "@schematicLayoutRetry": {
     "description": "Button under 'Layout stopped.' that starts the layout of the same scope again."
+  },
+  "annotationCalloutsShownAnnouncement": "Annotation callouts shown",
+  "@annotationCalloutsShownAnnouncement": {
+    "description": "Spoken when View > Show Annotation Callouts turns the callouts on: each annotation drawn beside its element on the schematic."
+  },
+  "annotationCalloutsHiddenAnnouncement": "Annotation callouts hidden",
+  "@annotationCalloutsHiddenAnnouncement": {
+    "description": "Spoken when View > Show Annotation Callouts turns the callouts off. The annotations themselves are kept and still listed in the Annotations panel."
+  },
+  "annotationCalloutSemantics": "Annotation {number}: {heading}, on {kind} {element}",
+  "@annotationCalloutSemantics": {
+    "description": "What a screen reader says for an annotation callout on the schematic. {number} is the callout's number (the note's place in the order the notes were written), {heading} the note's title or first line, {kind} the element kind (cell, port, net...) and {element} its id. Enter opens the note in the Annotations panel; Space folds or unfolds it.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "heading": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      },
+      "element": {
+        "type": "String"
+      }
+    }
+  },
+  "annotationCalloutFoldTooltip": "Fold to a numbered dot",
+  "@annotationCalloutFoldTooltip": {
+    "description": "Tooltip and spoken name of the control on an annotation callout's balloon that folds it to its numbered dot. Selecting the dot opens it again."
   }
 }
