@@ -76,7 +76,7 @@ jobs:
           channel: stable
           # Pinned, not tracked — keep in step with ci.yml and every other
           # workflow in the suite. See the note in ci.yml.
-          flutter-version: '3.47.5'
+          flutter-version: '3.47.7'
           cache: true
 
       - name: Cache pub dependencies
