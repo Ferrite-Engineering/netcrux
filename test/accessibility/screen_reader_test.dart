@@ -434,6 +434,55 @@ void main() {
   );
 
   testWidgets(
+    'with a cell selected, the toolbar trace split button is a named Tab stop',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      final dir = Directory.systemTemp.createTempSync('netcrux_a11y_src_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final source = File('${dir.path}/top.v')
+        ..writeAsStringSync('module top(); endmodule\n');
+      final tabs = await _pumpApp(
+        tester,
+        overrides: <Override>[
+          fileOpenServiceProvider.overrideWithValue(
+            _FakePickerService(<String>[source.path]),
+          ),
+          yosysAvailabilityProvider.overrideWith(
+            (ref) async =>
+                const YosysAvailability.notFound(reason: 'test stub'),
+          ),
+          elkLayoutServiceProvider.overrideWithValue(_RowLayoutService()),
+        ],
+      );
+      await _openDesign(tester, tabs, source);
+      final root = ProviderScope.containerOf(
+        tester.element(find.byType(WorkspaceScreen)),
+        listen: false,
+      );
+      final tab = tabs.containerFor(
+        root.read(netcruxWorkspaceProvider).value!.activeTabId!,
+      );
+      tab
+          .read(selectedElementProvider.notifier)
+          .select(const SelectedElement.cell(cellId: 'u_core'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final walk = await walkFocus(tester);
+      expectCleanFocusWalk(walk, context: 'workspace with a cell selected');
+      expect(
+        walk.stops.map((s) => s.line).where((l) => l.contains('Trace')),
+        isNotEmpty,
+        reason: 'the trace split button is a Tab stop once a cell is selected',
+      );
+      expectFocusWalkGolden(walk, '$goldens/cell_selected.txt');
+      handle.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.windows),
+  );
+
+  testWidgets(
     'in a cone view, the cone bar is named and every control a Tab stop',
     (tester) async {
       final handle = tester.ensureSemantics();
