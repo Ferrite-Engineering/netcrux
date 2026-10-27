@@ -45,7 +45,7 @@ abstract interface class NetlistDiffService {
 /// never emits on [diffsInvalidated].
 ///
 /// The open-core build registers this implementation and mounts nothing
-/// over it: [DiffPane] is mounted only by the Pro overlay. The
+/// over it: the diff pane is mounted only by the Pro overlay. The
 /// `loadComparisonNetlist` / `navigateNextDiff` / etc. actions stay
 /// discoverable in the menu bar / palette, and an open-core build refuses
 /// them with a "requires NetCrux Pro" notice (the Pro overlay's opener

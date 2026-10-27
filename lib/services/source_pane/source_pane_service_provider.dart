@@ -7,7 +7,7 @@ import 'package:netcrux/domain/interfaces/source_pane_service.dart';
 /// Riverpod provider exposing the active [SourcePaneService].
 ///
 /// Open-core resolves this to [NoopSourcePaneService] so the
-/// SourcePane widget renders an empty state and the dispatch path
+/// source pane (a Pro overlay widget) renders an empty state and the dispatch path
 /// (action → service → widget) is exercised in tests without the Pro
 /// overlay present. The Pro overlay registers a
 /// `ProSourcePaneService` via `proOverrides`.

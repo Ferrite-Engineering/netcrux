@@ -7,7 +7,7 @@ import 'package:netcrux/domain/interfaces/netlist_diff_service.dart';
 /// Riverpod provider exposing the active [NetlistDiffService].
 ///
 /// Open-core resolves this to [NoopNetlistDiffService] so the
-/// DiffPane widget renders its empty state and the dispatch path
+/// diff pane (a Pro overlay widget) renders its empty state and the dispatch path
 /// (action → service → widget) is exercised in tests without the
 /// Pro overlay present. The Pro overlay registers a concrete
 /// `ProNetlistDiffService` via `proOverrides`.

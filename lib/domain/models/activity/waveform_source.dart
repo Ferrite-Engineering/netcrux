@@ -7,7 +7,7 @@ import 'package:netcrux/domain/models/activity/waveform_format.dart';
 /// Stable identity of an opened waveform file.
 ///
 /// Returned by [WaveformSourceService.loadWaveform] and consumed by
-/// [ActivityAnalysisService.analyze] to key per-source caches.
+/// the Pro overlay's activity analysis to key per-source caches.
 ///
 /// The [fingerprint] is a cheap stable identifier derived from the
 /// file's size + a sample of its head bytes (the Pro loader uses
@@ -52,7 +52,7 @@ class WaveformSource {
   final DateTime loadedAt;
 
   /// Cheap stable identifier (hex string). Used by
-  /// [ActivityAnalysisService] to key its per-source analysis cache.
+  /// the Pro overlay's activity analysis to key its per-source cache.
   final String fingerprint;
 
   /// File size in bytes. Surfaced in the panel footer's "12.3 MiB"

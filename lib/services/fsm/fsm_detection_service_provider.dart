@@ -7,7 +7,7 @@ import 'package:netcrux/domain/interfaces/fsm_detection_service.dart';
 /// Riverpod provider exposing the active [FsmDetectionService].
 ///
 /// Open-core resolves this to [NoopFsmDetectionService] so the
-/// [FsmBubbleDiagramPane] widget renders its empty state and the
+/// FSM bubble diagram pane (a Pro overlay widget) renders its empty state and the
 /// dispatch path (action → service → widget) is exercised in tests
 /// without the Pro overlay present. The Pro overlay registers a
 /// concrete `ProFsmDetectionService` via `proOverrides`.

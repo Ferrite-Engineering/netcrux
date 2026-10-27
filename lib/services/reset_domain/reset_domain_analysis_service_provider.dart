@@ -8,7 +8,7 @@ import 'package:netcrux/domain/interfaces/reset_domain_analysis_service.dart';
 /// [ResetDomainAnalysisService].
 ///
 /// Open-core resolves this to [NoopResetDomainAnalysisService] so the
-/// `ResetDomainAnalysisPane` widget renders its empty state and the
+/// reset-domain analysis pane (a Pro overlay widget) renders its empty state and the
 /// dispatch path (action → service → widget) is exercised in tests
 /// without the Pro overlay present. The Pro overlay registers a
 /// concrete `ProResetDomainAnalysisService` via `proOverrides`.

@@ -7,7 +7,7 @@ import 'package:netcrux/domain/interfaces/clock_domain_analysis_service.dart';
 /// Riverpod provider exposing the active [ClockDomainAnalysisService].
 ///
 /// Open-core resolves this to [NoopClockDomainAnalysisService] so the
-/// [CdcAnalysisPane] widget renders its empty state and the dispatch
+/// CDC analysis pane (a Pro overlay widget) renders its empty state and the dispatch
 /// path (action → service → widget) is exercised in tests without the
 /// Pro overlay present. The Pro overlay registers a concrete
 /// `ProClockDomainAnalysisService` via `proOverrides`.

@@ -8,8 +8,8 @@
 /// (signals, scopes, rules, breakpoints, …), whereas
 /// [NetlistDiffElementKind] only enumerates the four element categories
 /// the diff engine compares within a NetCrux netlist. The narrower enum
-/// keeps the diff summary's cross-tabulation tidy and lets the open-core
-/// [DiffPane] render category-specific icons without translating from
+/// keeps the diff summary's cross-tabulation tidy and lets the Pro
+/// diff pane render category-specific icons without translating from
 /// CXP's broader vocabulary.
 enum NetlistDiffElementKind {
   /// A cell instance — Yosys `cells.<name>`.

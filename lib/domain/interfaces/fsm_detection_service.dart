@@ -82,7 +82,7 @@ abstract interface class FsmDetectionService {
 /// never emits on [detectionInvalidated].
 ///
 /// The open-core build registers this implementation and mounts nothing
-/// over it: [FsmBubbleDiagramPane] is mounted only by the Pro overlay. The
+/// over it: the FSM bubble diagram pane is mounted only by the Pro overlay. The
 /// `showFsmBubbleDiagram` / `detectFsmForCurrentRegister` /
 /// `runFsmDetectionAcrossDesign` actions stay discoverable in the menu bar /
 /// palette, and an open-core build refuses them with a "requires NetCrux

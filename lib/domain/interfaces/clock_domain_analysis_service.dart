@@ -61,7 +61,7 @@ abstract interface class ClockDomainAnalysisService {
 /// queries, and never emits on [analysisInvalidated].
 ///
 /// The open-core build registers this implementation and mounts nothing
-/// over it: [CdcAnalysisPane] is mounted only by the Pro overlay. The
+/// over it: the CDC analysis pane is mounted only by the Pro overlay. The
 /// `showCdcAnalysisPane` / `runCdcAnalysis` /
 /// `showCdcCrossingForSelectedSignal` actions stay discoverable in the menu
 /// bar / palette, and an open-core build refuses them with a "requires

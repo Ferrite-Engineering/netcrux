@@ -67,7 +67,7 @@ abstract interface class ResetDomainAnalysisService {
 /// queries, and never emits on [analysisInvalidated].
 ///
 /// The open-core build registers this implementation and mounts nothing
-/// over it: [ResetDomainAnalysisPane] is mounted only by the Pro overlay.
+/// over it: the reset-domain analysis pane is mounted only by the Pro overlay.
 /// The `showResetDomainAnalysisPane` / `runResetDomainAnalysis` /
 /// `showResetCrossingForSelectedSignal` actions stay discoverable in the
 /// menu bar / palette, and an open-core build refuses them with a "requires

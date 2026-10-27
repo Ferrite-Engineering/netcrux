@@ -55,7 +55,7 @@ class NetlistDiffKindCounts {
 ///
 /// The (kind × elementKind) matrix tells consumers at a glance how
 /// many elements of each category fell into each of the four buckets.
-/// The summary header in the open-core [DiffPane] renders directly off
+/// The summary header in the Pro diff pane renders directly off
 /// this object; the Pro `DiffPanePanel` uses it to populate filter-chip
 /// counters.
 ///

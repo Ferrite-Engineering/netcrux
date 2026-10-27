@@ -75,7 +75,7 @@ abstract interface class SourcePaneService {
 ///
 /// Every read returns the empty / not-found result. The open-core build
 /// registers this implementation and mounts nothing over it: the
-/// `SourcePane` is mounted only by the Pro overlay, and
+/// the source pane is mounted only by the Pro overlay, and
 /// [NetcruxAction.openSourceForElement] stays discoverable in the menu /
 /// palette while an open-core build refuses it with a "requires NetCrux
 /// Pro" notice. The Pro overlay swaps this out via `proOverrides`.

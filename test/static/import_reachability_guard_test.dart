@@ -78,106 +78,13 @@ class _Exemption {
   final String reason;
 }
 
-const _overlayPane =
-    'A pane body for a Pro-tier analysis. The open core ships the widget and '
-    'the no-op opener seam; the open-core build refuses the action with '
-    '"requires NetCrux Pro", so only the Pro overlay mounts the pane, inside '
-    'its docked panel.';
-
-const _overlayActivitySeam =
-    'Part of the switching-activity seam: the analysis interface, its value '
-    'types and the per-tab state the Pro heat-map panel reads. The open core '
-    'declares the seam; no open-core code reads it, because the only '
-    'activity surface is the Pro panel.';
-
 const _overlayNetlistShim =
     'A re-export shim for `crux_netlist`, kept so existing import paths '
     'resolve. The open core imports the sibling shims; the Pro overlay '
     'still imports this one.';
 
 const _exemptions = <_Exemption>[
-  // The switching-activity seam.
-  _Exemption(
-    'lib/domain/interfaces/activity_analysis_service.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/domain/models/activity/activity_analysis_options.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/domain/models/activity/activity_analysis_result.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/domain/models/activity/activity_normalization.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/domain/models/activity/waveform_time_range.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/features/activity/providers/activity_heatmap_state_provider.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-  _Exemption(
-    'lib/services/activity/activity_analysis_service_provider.dart',
-    _Consumer.proOverlay,
-    _overlayActivitySeam,
-  ),
-
-  // Pane bodies the Pro overlay's docked panels wrap.
-  _Exemption(
-    'lib/features/activity/widgets/activity_heatmap_pane.dart',
-    _Consumer.proOverlay,
-    _overlayPane,
-  ),
-  _Exemption(
-    'lib/features/cdc/widgets/cdc_analysis_pane.dart',
-    _Consumer.proOverlay,
-    _overlayPane,
-  ),
-  _Exemption(
-    'lib/features/diff/widgets/diff_pane.dart',
-    _Consumer.proOverlay,
-    _overlayPane,
-  ),
-  _Exemption(
-    'lib/features/diff/widgets/diff_row_label.dart',
-    _Consumer.proOverlay,
-    'What a Netlist Diff View row shows, imported by the diff pane body, '
-        'which only the Pro overlay mounts.',
-  ),
-  _Exemption(
-    'lib/features/fsm/widgets/fsm_bubble_diagram_pane.dart',
-    _Consumer.proOverlay,
-    _overlayPane,
-  ),
-  _Exemption(
-    'lib/features/reset_domain/widgets/reset_domain_analysis_pane.dart',
-    _Consumer.proOverlay,
-    _overlayPane,
-  ),
-  _Exemption(
-    'lib/features/source_pane/widgets/source_pane.dart',
-    _Consumer.proOverlay,
-    _overlayPane,
-  ),
-
   // Other open-core API only the Pro overlay calls.
-  _Exemption(
-    'lib/domain/models/diff/diff_element_address.dart',
-    _Consumer.proOverlay,
-    'Parses a diff row path into module and element name for the diff '
-        'pane and the Pro diff panel that routes Show in Schematic.',
-  ),
   _Exemption(
     'lib/services/workspace/active_project_file_path_provider.dart',
     _Consumer.proOverlay,

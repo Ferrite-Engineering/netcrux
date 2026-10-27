@@ -34,8 +34,8 @@ typedef CloseWaveformFileOpener =
     );
 
 /// Runs full-design activity analysis via
-/// [ActivityAnalysisService.analyze] using the current per-tab
-/// [activityHeatmapStateProvider]'s time range + color scheme,
+/// the Pro overlay's activity analysis using the current per-tab
+/// heat-map state's time range + color scheme,
 /// routes the result into the per-tab state notifier, and opens the
 /// panel.
 typedef RunActivityAnalysisOpener =
