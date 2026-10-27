@@ -314,11 +314,14 @@ jobs:
       # efc1e82b495cd9d35199ece822aba1082744b4ae): 2661 ran, 7 skipped. The
       # floor is the measured count less 0.5%; the ceiling is left as-is
       # since measured skips (7) are still within it.
+      #
+      # Re-measured 2026-10-27 on this runner (run 40528830486, commit
+      # 627ece2a4990b51dcbbbdd617cdf2828db9c9a2e): 3515 ran, 8 skipped.
       - name: Test count did not shrink
         if: runner.os == 'Linux'
         env:
           TEST_REPORT: build/test-results.json
-          MIN_TESTS: '2647'
+          MIN_TESTS: '3497'
           MAX_SKIPPED: '9'
         run: |
           python3 - "$TEST_REPORT" <<'PY'

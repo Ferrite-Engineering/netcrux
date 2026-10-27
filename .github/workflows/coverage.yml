@@ -46,7 +46,10 @@ jobs:
       # Measured 85.2% on this runner 2026-09-22 (run 35671825768, commit
       # efc1e82b495cd9d35199ece822aba1082744b4ae); floor set a couple of
       # points below to absorb measurement variance.
-      MIN_COVERAGE: '83'
+      #
+      # Re-measured 88.1% on this runner 2026-10-27 (run 40545140022, commit
+      # 627ece2a4990b51dcbbbdd617cdf2828db9c9a2e): floor 86.
+      MIN_COVERAGE: '86'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
