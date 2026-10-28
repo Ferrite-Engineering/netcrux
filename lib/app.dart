@@ -34,6 +34,7 @@ import 'package:netcrux/core/issue_reporter/netcrux_issue_reporter_strings.dart'
 import 'package:netcrux/core/platform/netcrux_linux_desktop_app.dart';
 import 'package:netcrux/core/platform_utils.dart';
 import 'package:netcrux/core/policy/netcrux_policy_keys.dart';
+import 'package:netcrux/core/providers/layered_overrides.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/telemetry/netcrux_telemetry_storage.dart';
 import 'package:netcrux/core/telemetry/netcrux_telemetry_strings.dart';
@@ -292,9 +293,10 @@ Future<void> bootstrap({
       ? await loadCruxCxpLaunchSettings(kNetcruxCxpBinding)
       : null;
   final rootContainer = ProviderContainer(
-    overrides: <Override>[
-      // Open-core overrides go here first. Pro overrides are spread last
-      // so later overrides win for any shared extension-point provider.
+    // Open-core overrides first, then the Pro overlay's. An overlay entry
+    // for a provider the open core also binds replaces the open-core entry
+    // (layeredOverrides) instead of appearing twice, which Riverpod refuses.
+    overrides: layeredOverrides(<Override>[
       if (cxpLaunchSettings != null)
         cruxCxpLaunchSettingsProvider.overrideWithValue(cxpLaunchSettings),
       cliLaunchIntentProvider.overrideWithValue(launchIntent),
@@ -315,18 +317,17 @@ Future<void> bootstrap({
       // semantics.
       netcruxCruxColorThemeOverride,
       ...netcruxAppOverrides,
-      ...extraOverrides,
-    ],
+    ], extraOverrides),
   );
   final tabContainerManager = TabContainerManager(
     rootContainer: rootContainer,
     // The Pro overlay's `extraTabOverrides` spread AFTER the open-core
     // list so later overrides win, matching the root-container conflict
     // semantics above. Open-core passes an empty list.
-    overridesFactory: (tabId) => <Override>[
-      ...netcruxTabOverridesFactory(tabId),
-      ...extraTabOverrides,
-    ],
+    overridesFactory: (tabId) => layeredOverrides(
+      netcruxTabOverridesFactory(tabId),
+      extraTabOverrides,
+    ),
   );
   final paneContainerManager = PaneContainerManager(
     rootContainer: rootContainer,
