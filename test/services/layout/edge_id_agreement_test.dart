@@ -31,8 +31,8 @@ import 'package:netcrux/features/viewer/selection/selection_bounds.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
-import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 import 'package:netcrux/services/schematic/trace_service.dart';
 import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 
@@ -73,7 +73,7 @@ _Laid _layOut(String fixture, String moduleName) {
   final node = _nodeFor(model, moduleName);
   final graph = const SchematicGraphBuilder().build(model, node);
   final input = buildElkInput(
-    withDeclaredCellPorts(model, node.resolve(model)!),
+    schematicScopeModule(model, node.resolve(model)!),
   );
   final elkEdges = <String, (String, String)>{
     for (final edge

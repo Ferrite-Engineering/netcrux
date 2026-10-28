@@ -12,7 +12,7 @@ Below the menu bar, the **toolbar** surfaces the commands you reach for constant
 
 The canvas is the center of the app and renders the elaborated netlist for the current scope:
 
-- **Cells** are drawn as symbols. AND, OR, NOT, multiplexer, flip-flop and latch primitives get recognizable gate symbols; submodule instances and every other cell type are labeled rectangles. A cell name too long for its symbol keeps its end and loses its start behind an ellipsis, the same as in the hierarchy tree.
+- **Cells** are drawn as symbols. AND, OR, NOT, multiplexer, flip-flop and latch primitives get recognizable gate symbols; submodule instances and every other cell type are labeled rectangles. A cell name too long for its symbol keeps its end and loses its start behind an ellipsis, the same as in the hierarchy tree. From NetCrux 1.2, two kinds of cell are left out of the drawing because no wire reaches them: memory-initialisation cells (`$meminit`, `$meminit_v2`), which record a memory's initial contents, and any cell whose every pin is tied to a constant. **Search** still finds them, and selecting one there shows it in the inspector.
 - **Wires** route between ports; the enclosing module's own ports sit on the boundary.
 - **Pins** keep to their faces: a cell's inputs are always on its left edge and its outputs on its right, even on a feedback loop or a pin with no wire. Every port the cell's module or primitive declares is drawn, so a port the netlist leaves unconnected shows as a bare pin rather than going missing. See [Pin stubs](#pin-stubs).
 - **Hierarchical instances** represent submodules — double-click one to push into it.

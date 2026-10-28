@@ -16,8 +16,8 @@ import 'package:netcrux/services/custom_cell_symbols/cell_symbol_geometry_provid
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/schematic/cone_membership.dart';
-import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 import 'package:netcrux/services/schematic/transitive_cone_resolver_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -115,9 +115,10 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   // `AsyncValue.isLoading` — a second flag could only ever disagree.
   final stopwatch = Stopwatch()..start();
   try {
-    // The same patched module the graph builder draws from, so every pin
-    // it adds for a declared-but-unconnected port has a place.
-    final patched = withDeclaredCellPorts(model, module);
+    // The same module the graph builder draws from, so every pin it adds
+    // for a declared-but-unconnected port has a place, and the cells it
+    // hides take no room.
+    final patched = schematicScopeModule(model, module);
     final shown = members == null ? graph : coneSubgraph(graph, members);
     final layout = await service.layout(
       patched,

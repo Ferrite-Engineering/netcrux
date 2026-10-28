@@ -13,8 +13,8 @@ import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
-import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 
 /// Thrown when a render request cannot be met: a scope path that names no
 /// scope, or a picture too large to paint.
@@ -64,7 +64,7 @@ HierarchyNode scopeAtPath(NetlistModel model, String path) {
 
 /// [node] of [model] laid out as the canvas lays a whole scope out: the graph
 /// from [SchematicGraphBuilder], the layout from [buildElkInput] over the same
-/// module with its declared-but-unconnected pins added, solved by [solve]
+/// module ([schematicScopeModule]), solved by [solve]
 /// (ELK JSON in, laid-out ELK JSON out; `NativeElkSolver.solve` on desktop).
 LaidOutGraph layOutScope(
   NetlistModel model,
@@ -78,7 +78,7 @@ LaidOutGraph layOutScope(
     );
   }
   final graph = const SchematicGraphBuilder().build(model, node);
-  final input = buildElkInput(withDeclaredCellPorts(model, module));
+  final input = buildElkInput(schematicScopeModule(model, module));
   final layout = NetlistLayout.fromJson(
     jsonDecode(solve(jsonEncode(input))) as Map<String, Object?>,
   );

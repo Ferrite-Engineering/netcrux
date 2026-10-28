@@ -12,8 +12,8 @@ import 'package:netcrux/domain/models/trace/cone_view.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
 import 'package:netcrux/services/schematic/cone_membership.dart';
-import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 
 import '../helpers/elk_ffi_library_gate.dart';
@@ -45,7 +45,7 @@ void main() {
       for (final name in fixtures.split(',')) {
         final model = _load(name);
         final node = HierarchyNode.rootOf(model)!;
-        final module = withDeclaredCellPorts(model, node.resolve(model)!);
+        final module = schematicScopeModule(model, node.resolve(model)!);
         final graphWatch = Stopwatch()..start();
         final graph = const SchematicGraphBuilder().build(model, node);
         graphWatch.stop();

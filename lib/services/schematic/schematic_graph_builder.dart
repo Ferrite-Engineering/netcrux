@@ -12,6 +12,7 @@ import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 
 /// Derives a renderable [SchematicGraph] for the scope addressed by a
 /// [HierarchyNode] in a [NetlistModel].
@@ -36,53 +37,20 @@ class SchematicGraphBuilder {
   /// model was replaced).
   ///
   /// Every port a cell's module or Yosys primitive declares is drawn, the
-  /// unconnected ones included ([withDeclaredCellPorts]); the layout
-  /// pipeline lays out the same patched module, so each pin has a place.
+  /// unconnected ones included, and the cells [isHiddenFromSchematic]
+  /// leaves out are not drawn ([schematicScopeModule]); the layout pipeline
+  /// lays out the same module, so each cell and pin has a place.
   SchematicGraph build(NetlistModel model, HierarchyNode node) {
     final resolved = node.resolve(model);
     if (resolved == null) return SchematicGraph.empty;
-    final module = withDeclaredCellPorts(model, resolved);
+    final module = schematicScopeModule(model, resolved);
     final driven = drivenNetIds(module);
     final initByNet = initValuesByNetId(module);
 
-    final cells = <SchematicCell>[];
-    for (final entry in module.cells.entries) {
-      final cell = entry.value;
-      final kind = cellKindFromYosysType(cell.type);
-      final ports = <SchematicPort>[];
-      // Yosys keeps `connections` in declaration order via
-      // LinkedHashMap; that order is the source of truth for the
-      // renderer's pin layout. We split sides by direction so the
-      // symbol painter doesn't have to guess.
-      for (final portEntry in cell.connections.entries) {
-        // Yosys may omit `port_directions` for known primitives —
-        // fall back to "input" so we don't lose the pin entirely.
-        final direction =
-            cell.portDirections[portEntry.key] ?? PortDirection.input;
-        ports.add(
-          SchematicPort(
-            id: '${cell.name}:${portEntry.key}',
-            name: portEntry.key,
-            direction: direction,
-            side: _sideForDirection(direction),
-            tie: pinTieFor(
-              portEntry.value,
-              direction: direction,
-              drivenNets: driven,
-            ),
-          ),
-        );
-      }
-      cells.add(
-        SchematicCell(
-          id: cell.name,
-          kind: kind,
-          type: cell.type,
-          ports: ports,
-          initValue: _initValueFor(cell, initByNet),
-        ),
-      );
-    }
+    final cells = <SchematicCell>[
+      for (final cell in module.cells.values)
+        _schematicCell(cell, driven, initByNet),
+    ];
 
     final boundaryPorts = <SchematicBoundaryPort>[
       for (final entry in module.ports.entries)
@@ -105,6 +73,60 @@ class SchematicGraphBuilder {
       cells: cells,
       boundaryPorts: boundaryPorts,
       edges: edges,
+    );
+  }
+
+  /// The cell [cellId] of [module] described as [build] would draw it, the
+  /// cells [build] leaves out included, or `null` when [module] has no such
+  /// cell.
+  ///
+  /// A cell the schematic hides ([isHiddenFromSchematic]) is still in the
+  /// netlist, and search still selects it; the Inspector describes it from
+  /// here, since the graph has no entry for it.
+  SchematicCell? cellOf(NetlistModel model, Module module, String cellId) {
+    if (!module.cells.containsKey(cellId)) return null;
+    final patched = withDeclaredCellPorts(model, module);
+    return _schematicCell(
+      patched.cells[cellId]!,
+      drivenNetIds(patched),
+      initValuesByNetId(patched),
+    );
+  }
+
+  SchematicCell _schematicCell(
+    Cell cell,
+    Set<int> driven,
+    Map<int, String> initByNet,
+  ) {
+    final ports = <SchematicPort>[];
+    // Yosys keeps `connections` in declaration order via LinkedHashMap; that
+    // order is the source of truth for the renderer's pin layout. We split
+    // sides by direction so the symbol painter doesn't have to guess.
+    for (final portEntry in cell.connections.entries) {
+      // Yosys may omit `port_directions` for known primitives: fall back
+      // to "input" so we don't lose the pin entirely.
+      final direction =
+          cell.portDirections[portEntry.key] ?? PortDirection.input;
+      ports.add(
+        SchematicPort(
+          id: '${cell.name}:${portEntry.key}',
+          name: portEntry.key,
+          direction: direction,
+          side: _sideForDirection(direction),
+          tie: pinTieFor(
+            portEntry.value,
+            direction: direction,
+            drivenNets: driven,
+          ),
+        ),
+      );
+    }
+    return SchematicCell(
+      id: cell.name,
+      kind: cellKindFromYosysType(cell.type),
+      type: cell.type,
+      ports: ports,
+      initValue: _initValueFor(cell, initByNet),
     );
   }
 

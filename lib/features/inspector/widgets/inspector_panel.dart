@@ -24,6 +24,7 @@ import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart
 import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
+import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
@@ -60,14 +61,26 @@ class InspectorPanel extends ConsumerWidget {
     final model = tree.model;
     final module = (model == null) ? null : tree.selected?.resolve(model);
     final schematic = laidOut.graph;
+    // A cell the schematic hides (a memory-init cell, or one wired only to
+    // constants) is still in the netlist, and search still selects it: the
+    // Inspector describes it from the model.
+    final cells = <String, SchematicCell?>{};
+    SchematicCell? cellNamed(String cellId) => cells.putIfAbsent(
+      cellId,
+      () =>
+          schematic.cells.where((c) => c.id == cellId).firstOrNull ??
+          (model == null || module == null
+              ? null
+              : const SchematicGraphBuilder().cellOf(model, module, cellId)),
+    );
     final overlayInstalled = ref.watch(proOverlayInstalledProvider);
     final pro = ref.watch(proInspectorSectionsProvider);
 
     bool resolves(SelectedElement element) => switch (element) {
       SelectedElementNone() => false,
-      SelectedElementCell(:final cellId) => schematic.cells.any(
-        (c) => c.id == cellId,
-      ),
+      SelectedElementCell(:final cellId) =>
+        module?.cells[cellId] != null ||
+            schematic.cells.any((c) => c.id == cellId),
       SelectedElementPort(:final cellId) =>
         module?.cells[cellId] != null ||
             schematic.cells.any((c) => c.id == cellId),
@@ -123,14 +136,12 @@ class InspectorPanel extends ConsumerWidget {
             context,
             ref,
             l10n,
-            schematic,
-            module,
-            cellId,
+            cellNamed(cellId),
             offerSymbolEditor: !overlayInstalled,
           ),
           SelectedElementPort(:final cellId, :final portName) => _portSection(
             l10n,
-            schematic,
+            cellNamed(cellId),
             module,
             cellId,
             portName,
@@ -146,7 +157,7 @@ class InspectorPanel extends ConsumerWidget {
             ? _parametersSection(l10n, module, element.cellId)
             : null,
         (context, element) => element is SelectedElementCell
-            ? _portsSection(l10n, schematic, module, element.cellId)
+            ? _portsSection(l10n, cellNamed(element.cellId), module)
             : null,
         (context, element) => element is SelectedElementWire
             ? _wireSection(l10n, schematic, module, element)
@@ -207,12 +218,9 @@ Widget? _cellSection(
   BuildContext context,
   WidgetRef ref,
   L10N l10n,
-  SchematicGraph schematic,
-  Module? module,
-  String cellId, {
+  SchematicCell? cell, {
   required bool offerSymbolEditor,
 }) {
-  final cell = schematic.cells.where((c) => c.id == cellId).firstOrNull;
   if (cell == null) return null;
   return CruxInspectorSection(
     title: l10n.inspectorCellHeader,
@@ -278,15 +286,9 @@ Widget? _parametersSection(L10N l10n, Module? module, String cellId) {
   );
 }
 
-Widget? _portsSection(
-  L10N l10n,
-  SchematicGraph schematic,
-  Module? module,
-  String cellId,
-) {
-  final cell = schematic.cells.where((c) => c.id == cellId).firstOrNull;
+Widget? _portsSection(L10N l10n, SchematicCell? cell, Module? module) {
   if (cell == null) return null;
-  final modCell = module?.cells[cellId];
+  final modCell = module?.cells[cell.id];
   return CruxInspectorListSection(
     title: l10n.inspectorPortsHeader,
     itemCount: cell.ports.length,
@@ -308,7 +310,7 @@ Widget? _portsSection(
 
 Widget? _portSection(
   L10N l10n,
-  SchematicGraph schematic,
+  SchematicCell? drawnCell,
   Module? module,
   String cellId,
   String portName,
@@ -317,12 +319,7 @@ Widget? _portSection(
   final bits = cell?.connections[portName] ?? const <BitRef>[];
   // The drawn pin carries the tie, and the direction of a declared port the
   // netlist left out of `connections`, which the raw cell lacks.
-  final drawn = schematic.cells
-      .where((c) => c.id == cellId)
-      .firstOrNull
-      ?.ports
-      .where((p) => p.name == portName)
-      .firstOrNull;
+  final drawn = drawnCell?.ports.where((p) => p.name == portName).firstOrNull;
   if (cell == null && drawn == null) return null;
   final direction =
       cell?.portDirections[portName] ?? drawn?.direction ?? PortDirection.input;

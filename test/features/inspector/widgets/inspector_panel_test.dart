@@ -12,16 +12,20 @@ import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
+import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
+import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/inspector/widgets/inspector_panel.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
@@ -265,6 +269,66 @@ void main() {
         expect(find.text(l10n.inspectorTieConstant('0')), findsOneWidget);
       });
     }
+  });
+
+  group('a cell the schematic hides', () {
+    // A memory-init cell is left out of the drawn graph but stays in the
+    // netlist, and search still selects it: the Inspector describes it from
+    // the model rather than going blank.
+    final model = NetlistModel.fromJson(const <String, Object?>{
+      'creator': 'hand-built',
+      'modules': <String, Object?>{
+        'regfile': <String, Object?>{
+          'attributes': <String, Object?>{'top': '1'},
+          'ports': <String, Object?>{},
+          'cells': <String, Object?>{
+            'init_0': <String, Object?>{
+              'hide_name': 0,
+              'type': r'$meminit_v2',
+              'parameters': <String, Object?>{'WORDS': '1'},
+              'attributes': <String, Object?>{},
+              'port_directions': <String, Object?>{},
+              'connections': <String, Object?>{
+                'ADDR': <Object>['0', '0'],
+                'DATA': <Object>['1', '0'],
+                'EN': <Object>['1', '1'],
+              },
+            },
+          },
+          'netnames': <String, Object?>{},
+        },
+      },
+    });
+
+    testWidgets('is described from the netlist', (tester) async {
+      final container = _container(
+        graph: LaidOutGraph(
+          graph: const SchematicGraphBuilder().build(
+            model,
+            HierarchyNode.rootOf(model)!,
+          ),
+          layout: _graph.layout,
+        ),
+      );
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier).setModel(model);
+      // The drawn graph has no entry for it.
+      expect(
+        const SchematicGraphBuilder()
+            .build(model, HierarchyNode.rootOf(model)!)
+            .cells,
+        isEmpty,
+      );
+      container
+          .read(selectedElementProvider.notifier)
+          .select(const SelectedElement.cell(cellId: 'init_0'));
+      await tester.pumpWidget(_wrap(container, const Locale('en')));
+      await tester.pumpAndSettle();
+      expect(find.text('No selection'), findsNothing);
+      expect(find.text(r'$meminit_v2'), findsOneWidget);
+      expect(find.text('ADDR'), findsOneWidget);
+      expect(find.text('WORDS'), findsOneWidget);
+    });
   });
 
   group('wire fanout', () {

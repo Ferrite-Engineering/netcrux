@@ -14,7 +14,7 @@ import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
-import 'package:netcrux/services/schematic/declared_cell_ports.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 
 /// One scope of one committed netlist fixture.
 class LayoutParityScope {
@@ -62,13 +62,13 @@ const layoutParityScopes = <LayoutParityScope>[
 ];
 
 /// The ELK input the app builds for [module] of the netlist [netlistJson]:
-/// with every declared port of every cell.
+/// the module the schematic draws ([schematicScopeModule]).
 String elkInputForModule(String netlistJson, String module) {
   final model = NetlistModel.fromJson(
     jsonDecode(netlistJson) as Map<String, Object?>,
   );
   return jsonEncode(
-    buildElkInput(withDeclaredCellPorts(model, model.modules[module]!)),
+    buildElkInput(schematicScopeModule(model, model.modules[module]!)),
   );
 }
 
