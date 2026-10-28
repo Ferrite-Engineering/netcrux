@@ -331,6 +331,22 @@
       }
     }
   },
+  "elaborationErrorSvFrontendReturn": "Yosys's built-in SystemVerilog reader does not accept a return statement in a function. Your design is not at fault.",
+  "@elaborationErrorSvFrontendReturn": {
+    "description": "Schematic error-view body when Yosys's built-in reader (read_verilog -sv) stopped at a return statement in a function, legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendImport": "Yosys's built-in SystemVerilog reader does not accept a package import inside a module. Your design is not at fault.",
+  "@elaborationErrorSvFrontendImport": {
+    "description": "Schematic error-view body when Yosys's built-in reader stopped at a package import inside a module (header or body), legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendCast": "Yosys's built-in SystemVerilog reader does not accept a cast of a non-constant expression to a type. Your design is not at fault.",
+  "@elaborationErrorSvFrontendCast": {
+    "description": "Schematic error-view body when Yosys's built-in reader stopped at a cast of a non-constant expression to a named type, legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendHint": "Install a Yosys that includes the yosys-slang front end, such as the OSS CAD Suite, and NetCrux reads the design with it. Or convert the sources with sv2v first.",
+  "@elaborationErrorSvFrontendHint": {
+    "description": "Second sentence of the schematic error view after one of the elaborationErrorSvFrontend* bodies: how to get past the built-in reader's limit. yosys-slang, OSS CAD Suite and sv2v are product names."
+  },
   "elaborationErrorGeneric": "Something went wrong while elaborating the project. See the details below.",
   "@elaborationErrorGeneric": {
     "description": "Schematic error-view body for an unclassified elaboration failure; the raw error text appears in the expandable details section."

@@ -21,6 +21,7 @@ import 'package:netcrux/services/yosys/elaboration_cache_service.dart';
 import 'package:netcrux/services/yosys/elaboration_timeout_provider.dart';
 import 'package:netcrux/services/yosys/isolate_netlist_parser.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
+import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
@@ -73,6 +74,7 @@ class LoadedNetlistException implements Exception {
     this.detail,
     this.exitCode,
     this.timeoutSeconds,
+    this.frontendGap,
   });
 
   /// Short user-actionable English message. Kept for logs, `toString`,
@@ -99,6 +101,12 @@ class LoadedNetlistException implements Exception {
   /// Elapsed timeout budget in whole seconds — set for
   /// [LoadedNetlistErrorKind.timeout].
   final int? timeoutSeconds;
+
+  /// The SystemVerilog construct Yosys's built-in reader stopped at, when a
+  /// [LoadedNetlistErrorKind.nonZeroExit] failure is one of the reader's
+  /// known gaps rather than an error in the design. The error view then
+  /// names the construct and the way past it.
+  final SvFrontendGap? frontendGap;
 
   @override
   String toString() => cause == null
@@ -283,18 +291,30 @@ class LoadedNetlist extends _$LoadedNetlist {
     // elaboration. Cleared in the finally below — the readout is only
     // meaningful while a subprocess is actually in flight.
     final progress = ref.read(elaborationProgressProvider.notifier);
-    final YosysRunResult result;
-    try {
-      result = await runner.run(
-        request,
+    var result = await _runOnce(
+      runner,
+      request,
+      progress,
+      timeout: policy.killOnTimeout ? budget : null,
+      cancelSignal: cancel.future,
+    );
+    // The built-in reader refuses some ordinary SystemVerilog (a `return`,
+    // a package import in a module header, a cast of a non-constant
+    // expression). When it stops at one of those and this Yosys has the
+    // yosys-slang front end, the design is read again with it.
+    final gap = result is YosysRunFailure
+        ? svFrontendGapIn(result.stderr)
+        : null;
+    if (gap != null &&
+        request.hasVerilogSources &&
+        await ref.read(yosysAvailabilityServiceProvider).probeSlang()) {
+      result = await _runOnce(
+        runner,
+        _withFrontend(request, YosysFrontend.slang),
+        progress,
         timeout: policy.killOnTimeout ? budget : null,
         cancelSignal: cancel.future,
-        onStderrLine: progress.consumeStderrLine,
       );
-    } finally {
-      // Runs on the throwing paths too: a failed elaboration must not
-      // leave the strip advertising a pass that stopped executing.
-      progress.clear();
     }
     // Publish stderr — successes and failures alike — so the
     // diagnostics drawer can surface warnings even on healthy runs.
@@ -347,7 +367,29 @@ class LoadedNetlist extends _$LoadedNetlist {
         throw LoadedNetlistException(e.message, cause: e);
       }
     }
-    throw _failureFor(result);
+    throw _failureFor(result, frontendGap: gap);
+  }
+
+  /// One Yosys run with the live pass readout attached and cleared after.
+  Future<YosysRunResult> _runOnce(
+    YosysRunner runner,
+    YosysRunRequest request,
+    ElaborationProgressNotifier progress, {
+    required Duration? timeout,
+    required Future<void> cancelSignal,
+  }) async {
+    try {
+      return await runner.run(
+        request,
+        timeout: timeout,
+        cancelSignal: cancelSignal,
+        onStderrLine: progress.consumeStderrLine,
+      );
+    } finally {
+      // Runs on the throwing paths too: a failed elaboration must not
+      // leave the strip advertising a pass that stopped executing.
+      progress.clear();
+    }
   }
 
   /// Overrides the elaborated model directly — used by tests and by
@@ -517,7 +559,10 @@ Future<YosysAvailability> _requireYosys(Ref ref) async {
 }
 
 /// The typed failure for a Yosys run that timed out or exited non-zero.
-LoadedNetlistException _failureFor(YosysRunResult result) {
+LoadedNetlistException _failureFor(
+  YosysRunResult result, {
+  SvFrontendGap? frontendGap,
+}) {
   if (result is YosysRunTimeout) {
     final timeout = YosysTimeoutException(result.budget);
     return LoadedNetlistException(
@@ -541,5 +586,26 @@ LoadedNetlistException _failureFor(YosysRunResult result) {
     kind: LoadedNetlistErrorKind.nonZeroExit,
     exitCode: failure.exitCode,
     detail: stderr.isEmpty ? null : stderr,
+    // Only when the failure is still the built-in reader's: a slang re-run
+    // that failed for its own reason reports that instead.
+    frontendGap: frontendGap != null && svFrontendGapIn(stderr) == frontendGap
+        ? frontendGap
+        : null,
   );
 }
+
+/// [request] read by [frontend] instead of its own.
+YosysRunRequest _withFrontend(
+  YosysRunRequest request,
+  YosysFrontend frontend,
+) => YosysRunRequest(
+  sources: request.sources,
+  topModule: request.topModule,
+  defines: request.defines,
+  includePaths: request.includePaths,
+  extraCommands: request.extraCommands,
+  vhdlStandard: request.vhdlStandard,
+  vhdlTopUnit: request.vhdlTopUnit,
+  frontend: frontend,
+  slangOptions: request.slangOptions,
+);

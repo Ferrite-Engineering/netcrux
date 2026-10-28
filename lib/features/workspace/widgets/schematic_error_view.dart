@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_unavailable_reason_text.dart';
 
 /// Elaboration-failure view shown on the schematic canvas when the
@@ -42,6 +43,20 @@ class SchematicErrorView extends StatelessWidget {
             e.detail,
           );
         case LoadedNetlistErrorKind.nonZeroExit:
+          // A known gap in Yosys's built-in reader is named, with the way
+          // past it, rather than read as an error in the design.
+          final gap = switch (e.frontendGap) {
+            null => null,
+            SvFrontendGap.returnStatement =>
+              l10n.elaborationErrorSvFrontendReturn,
+            SvFrontendGap.packageImport =>
+              l10n.elaborationErrorSvFrontendImport,
+            SvFrontendGap.nonConstantCast =>
+              l10n.elaborationErrorSvFrontendCast,
+          };
+          if (gap != null) {
+            return ('$gap ${l10n.elaborationErrorSvFrontendHint}', e.detail);
+          }
           return (l10n.elaborationErrorNonZeroExit(e.exitCode ?? 0), e.detail);
         case LoadedNetlistErrorKind.unknown:
           return (l10n.elaborationErrorGeneric, e.detail ?? e.message);

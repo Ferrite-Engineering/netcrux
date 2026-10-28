@@ -37,6 +37,16 @@ write_json <temp>
 
 The JSON is read back and the temporary file deleted. Results are cached, so re-opening the same sources with the same include paths and defines skips Yosys entirely.
 
+### Which SystemVerilog the built-in reader reads {#systemverilog-subset}
+
+Yosys's built-in `read_verilog -sv` reads the synthesizable core of SystemVerilog: `logic`, `always_ff` / `always_comb`, packed structs, enums and typedefs, packages declared at file scope, and interfaces in simple forms. It does not read every construct in IEEE 1800-2017. Three that current open cores use often stop it, although they are legal:
+
+- a `return` statement in a function;
+- a package import inside a module, in its header (`module m import p::*; #(...)`) or its body;
+- a cast of a non-constant expression to a named type, such as `state_t'(x)` as a `case` expression.
+
+When the built-in reader stops at one of these, NetCrux says which construct it was and that the design is not at fault. If your Yosys includes the [yosys-slang](https://github.com/povik/yosys-slang) front end (the OSS CAD Suite build does; Homebrew's does not), NetCrux reads the design again with `read_slang`, which handles the full language, and opens it. Otherwise install such a Yosys and point NetCrux at it in Settings, or convert the sources with [sv2v](https://github.com/zachjs/sv2v) first. A design read with `read_slang` draws each port connection as a buffer cell and an asynchronously reset flip-flop as `$aldff`.
+
 VHDL is lowered to Verilog first: NetCrux runs `ghdl --synth --out=verilog <vhdl files> -e <top>` as a separate process and hands the emitted Verilog to Yosys. You need `ghdl` on your `PATH` and nothing else — no `ghdl-yosys-plugin`, and no plugin-capable Yosys build. GHDL elaborates the top unit named by the project's top module; VHDL files opened without a project that names one are elaborated with the entity name `top`. GHDL is GPLv2 and is invoked as a separate program, never linked in.
 
 ### The layout engine {#layout-engine}
@@ -99,7 +109,7 @@ Supported inputs:
 
 | Input | How it loads |
 |---|---|
-| Verilog (IEEE 1364-2005), SystemVerilog (IEEE 1800) | Elaborated by Yosys `read_verilog`. |
+| Verilog (IEEE 1364-2005), SystemVerilog (IEEE 1800) | Elaborated by Yosys `read_verilog`, or `read_slang` where the built-in reader stops. See [which SystemVerilog it reads](#systemverilog-subset). |
 | VHDL (IEEE 1076) | Lowered to Verilog by `ghdl --synth`, then read by Yosys. |
 | `.netcrux-project` | A JSON project file: source list, top module, include directories and defines. |
 | `<design>.crux-project` | The suite design manifest. See [Sources, projects & sessions](files-and-projects.md#crux-project). |

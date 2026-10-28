@@ -16,6 +16,7 @@ import 'package:netcrux/features/project/providers/elaboration_diagnostics_provi
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
+import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
@@ -45,6 +46,50 @@ class _CountingRunner extends YosysRunner {
       stdout: '',
       stderr: 'warn: run $calls',
     );
+  }
+}
+
+/// Fails the built-in reader the way Yosys does on a package import in a
+/// module header, and succeeds when the request asks for yosys-slang.
+class _FrontendGapRunner extends YosysRunner {
+  _FrontendGapRunner(this.rawJson);
+
+  final String rawJson;
+  final List<YosysFrontend> frontends = <YosysFrontend>[];
+
+  @override
+  Future<YosysRunResult> run(
+    YosysRunRequest request, {
+    Duration? timeout,
+    Future<void>? cancelSignal,
+    Map<String, String>? environment,
+    void Function(String line)? onStderrLine,
+  }) async {
+    frontends.add(request.frontend);
+    if (request.frontend == YosysFrontend.slang) {
+      return YosysRunSuccess(rawJson: rawJson, stdout: '', stderr: '');
+    }
+    return const YosysRunFailure(
+      exitCode: 1,
+      stdout: '',
+      stderr:
+          '/work/rf.sv:10: ERROR: syntax error, unexpected TOK_IMPORT, '
+          "expecting '#' or '(' or ';'\n",
+    );
+  }
+}
+
+/// Answers the yosys-slang probe without spawning anything.
+class _SlangProbe extends YosysAvailabilityService {
+  _SlangProbe({required this.hasSlang});
+
+  final bool hasSlang;
+  int probes = 0;
+
+  @override
+  Future<bool> probeSlang() async {
+    probes++;
+    return hasSlang;
   }
 }
 
@@ -443,6 +488,65 @@ void main() {
       expect(request.defines, contains('FAST'));
       expect(request.defines, contains('DEBUG'));
       expect(request.defines, isNot(contains('FAST=')));
+    });
+  });
+  group('a SystemVerilog construct the built-in reader refuses', () {
+    Future<(ProviderContainer, _FrontendGapRunner, _SlangProbe)> boot({
+      required bool hasSlang,
+    }) async {
+      final dir = Directory.systemTemp.createTempSync('netcrux_sv_gap_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final src = File('${dir.path}/rf.sv')
+        ..writeAsStringSync('module rf import p::*; (); endmodule\n');
+      final runner = _FrontendGapRunner(_fakeRawJson);
+      final probe = _SlangProbe(hasSlang: hasSlang);
+      final container = ProviderContainer(
+        overrides: [
+          ...netcruxTelemetryTestOverrides(),
+          yosysRunnerProvider.overrideWith((ref) => runner),
+          yosysAvailabilityServiceProvider.overrideWith((ref) => probe),
+          yosysAvailabilityProvider.overrideWith(
+            (ref) async => const YosysAvailability.available(
+              executablePath: '/fake/yosys',
+              versionString: 'Yosys fake',
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.read(currentProjectProvider.notifier).setSourceFiles(<String>[
+        src.path,
+      ]);
+      return (container, runner, probe);
+    }
+
+    test('is read again with yosys-slang when this Yosys has it', () async {
+      final (container, runner, _) = await boot(hasSlang: true);
+      final model = await container.read(loadedNetlistProvider.future);
+      expect(model?.topModule?.name, 'top');
+      expect(runner.frontends, <YosysFrontend>[
+        YosysFrontend.verilog,
+        YosysFrontend.slang,
+      ]);
+    });
+
+    test('without yosys-slang, fails naming the construct', () async {
+      final (container, runner, probe) = await boot(hasSlang: false);
+      final error = await container
+          .read(loadedNetlistProvider.future)
+          .then<Object?>((_) => null, onError: (Object e) => e);
+      expect(
+        error,
+        isA<LoadedNetlistException>()
+            .having((e) => e.kind, 'kind', LoadedNetlistErrorKind.nonZeroExit)
+            .having(
+              (e) => e.frontendGap,
+              'frontendGap',
+              SvFrontendGap.packageImport,
+            ),
+      );
+      expect(runner.frontends, <YosysFrontend>[YosysFrontend.verilog]);
+      expect(probe.probes, 1);
     });
   });
 }

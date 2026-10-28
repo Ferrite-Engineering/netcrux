@@ -331,6 +331,22 @@
       }
     }
   },
+  "elaborationErrorSvFrontendReturn": "Yosys 내장 SystemVerilog 리더는 함수 안의 return 문을 받아들이지 않습니다. 설계의 오류가 아닙니다.",
+  "@elaborationErrorSvFrontendReturn": {
+    "description": "Schematic error-view body when Yosys's built-in reader (read_verilog -sv) stopped at a return statement in a function, legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendImport": "Yosys 내장 SystemVerilog 리더는 모듈 안의 패키지 import를 받아들이지 않습니다. 설계의 오류가 아닙니다.",
+  "@elaborationErrorSvFrontendImport": {
+    "description": "Schematic error-view body when Yosys's built-in reader stopped at a package import inside a module (header or body), legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendCast": "Yosys 내장 SystemVerilog 리더는 상수가 아닌 식의 타입 캐스트를 받아들이지 않습니다. 설계의 오류가 아닙니다.",
+  "@elaborationErrorSvFrontendCast": {
+    "description": "Schematic error-view body when Yosys's built-in reader stopped at a cast of a non-constant expression to a named type, legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendHint": "yosys-slang 프런트엔드가 포함된 Yosys(예: OSS CAD Suite)를 설치하면 NetCrux가 그것으로 설계를 읽습니다. 또는 먼저 sv2v로 소스를 변환하세요.",
+  "@elaborationErrorSvFrontendHint": {
+    "description": "Second sentence of the schematic error view after one of the elaborationErrorSvFrontend* bodies: how to get past the built-in reader's limit. yosys-slang, OSS CAD Suite and sv2v are product names."
+  },
   "elaborationErrorGeneric": "프로젝트를 엘라보레이션하는 중 문제가 발생했습니다. 아래 세부 정보를 확인하세요.",
   "@elaborationErrorGeneric": {
     "description": "Schematic error-view body for an unclassified elaboration failure; the raw error text appears in the expandable details section."

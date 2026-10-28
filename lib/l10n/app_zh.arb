@@ -331,6 +331,22 @@
       }
     }
   },
+  "elaborationErrorSvFrontendReturn": "Yosys 内置的 SystemVerilog 读取器不接受函数中的 return 语句。这不是设计的错误。",
+  "@elaborationErrorSvFrontendReturn": {
+    "description": "Schematic error-view body when Yosys's built-in reader (read_verilog -sv) stopped at a return statement in a function, legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendImport": "Yosys 内置的 SystemVerilog 读取器不接受模块中的包 import。这不是设计的错误。",
+  "@elaborationErrorSvFrontendImport": {
+    "description": "Schematic error-view body when Yosys's built-in reader stopped at a package import inside a module (header or body), legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendCast": "Yosys 内置的 SystemVerilog 读取器不接受对非常量表达式的类型转换。这不是设计的错误。",
+  "@elaborationErrorSvFrontendCast": {
+    "description": "Schematic error-view body when Yosys's built-in reader stopped at a cast of a non-constant expression to a named type, legal SystemVerilog it does not read. Followed by elaborationErrorSvFrontendHint."
+  },
+  "elaborationErrorSvFrontendHint": "安装包含 yosys-slang 前端的 Yosys（例如 OSS CAD Suite），NetCrux 便会用它读取设计。也可以先用 sv2v 转换源文件。",
+  "@elaborationErrorSvFrontendHint": {
+    "description": "Second sentence of the schematic error view after one of the elaborationErrorSvFrontend* bodies: how to get past the built-in reader's limit. yosys-slang, OSS CAD Suite and sv2v are product names."
+  },
   "elaborationErrorGeneric": "详尽展开项目时出现问题。请查看下方详情。",
   "@elaborationErrorGeneric": {
     "description": "Schematic error-view body for an unclassified elaboration failure; the raw error text appears in the expandable details section."

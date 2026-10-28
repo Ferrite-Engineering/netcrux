@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_error_view.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 
 const _locales = <Locale>[
   Locale('en'),
@@ -117,6 +118,37 @@ void main() {
           find.text(l10n.elaborationErrorNonZeroExit(3)),
           findsOneWidget,
         );
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('[$tag] a built-in reader gap names the construct and the '
+          'way past it, not the exit code', (tester) async {
+        final l10n = await L10N.delegate.load(locale);
+        for (final (gap, sentence) in <(SvFrontendGap, String)>[
+          (
+            SvFrontendGap.returnStatement,
+            l10n.elaborationErrorSvFrontendReturn,
+          ),
+          (SvFrontendGap.packageImport, l10n.elaborationErrorSvFrontendImport),
+          (SvFrontendGap.nonConstantCast, l10n.elaborationErrorSvFrontendCast),
+        ]) {
+          await _pump(
+            tester,
+            LoadedNetlistException(
+              'Elaboration failed with exit code 1',
+              kind: LoadedNetlistErrorKind.nonZeroExit,
+              exitCode: 1,
+              detail: 'x.sv:3: ERROR: syntax error, unexpected TOK_IMPORT',
+              frontendGap: gap,
+            ),
+            locale: locale,
+          );
+          expect(
+            find.text('$sentence ${l10n.elaborationErrorSvFrontendHint}'),
+            findsOneWidget,
+          );
+          expect(find.text(l10n.elaborationErrorNonZeroExit(1)), findsNothing);
+        }
         expect(tester.takeException(), isNull);
       });
 
