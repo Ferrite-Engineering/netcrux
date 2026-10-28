@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:ui' show Paragraph;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/activity/activity_color_scheme.dart';
@@ -494,6 +496,69 @@ void main() {
         hidden,
         isNot(contains(ActivityColorScheme.uncoloredWire(wire).toARGB32())),
       );
+    });
+  });
+
+  group('boundary port labels', () {
+    test('an input is named on its west side and an output on its east, '
+        'clear of the wire each one carries', () {
+      // An input's wire leaves the east face of its box, an output's wire
+      // arrives at the west face. A name drawn on the wire side lies over
+      // the wire, which is how a register file read `rd_addr` and `clk`.
+      const input = SchematicBoundaryPort(
+        id: 'port:rd_addr',
+        name: 'rd_addr',
+        direction: PortDirection.input,
+        width: 5,
+      );
+      const output = SchematicBoundaryPort(
+        id: 'port:rs1',
+        name: 'rs1',
+        direction: PortDirection.output,
+        width: 32,
+      );
+      const inputBox = BoundingBox(x: 200, y: 40, width: 16, height: 16);
+      const outputBox = BoundingBox(x: 400, y: 40, width: 16, height: 16);
+      const laidOut = LaidOutGraph(
+        graph: SchematicGraph(
+          moduleName: 'rf',
+          cells: <SchematicCell>[],
+          boundaryPorts: <SchematicBoundaryPort>[input, output],
+          edges: <SchematicEdge>[],
+        ),
+        layout: NetlistLayout(
+          nodes: <NodePosition>[
+            NodePosition(id: 'port:rd_addr', bounds: inputBox),
+            NodePosition(id: 'port:rs1', bounds: outputBox),
+          ],
+          edges: <EdgeRoute>[],
+          bounds: BoundingBox(x: 0, y: 0, width: 600, height: 100),
+        ),
+      );
+      final renderObject = SchematicCanvasRenderObject(
+        laidOut: laidOut,
+        transform: ViewportTransform.identity,
+        theme: ThemeData.light(),
+        statsSink: const NoopRenderStatsSink(),
+      )..layout(BoxConstraints.tight(const Size(800, 200)));
+      final context = TestRecordingPaintingContext(TestRecordingCanvas());
+      renderObject.paint(context, Offset.zero);
+      final labels = <({double left, double right})>[
+        for (final recorded
+            in (context.canvas as TestRecordingCanvas).invocations)
+          if (recorded.invocation.memberName == #drawParagraph)
+            () {
+              final args = recorded.invocation.positionalArguments;
+              final left = (args[1] as Offset).dx;
+              return (
+                left: left,
+                right: left + (args[0] as Paragraph).longestLine,
+              );
+            }(),
+      ]..sort((a, b) => a.left.compareTo(b.left));
+      expect(labels, hasLength(2));
+      expect(labels.first.right, lessThanOrEqualTo(inputBox.x));
+      expect(labels.last.left, greaterThanOrEqualTo(outputBox.x + 16));
     });
   });
 

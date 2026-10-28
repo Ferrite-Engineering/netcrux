@@ -18,6 +18,7 @@ import 'package:netcrux/domain/models/activity/activity_color_scheme.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
+import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/pin_tie.dart';
@@ -705,7 +706,8 @@ class SchematicCanvasRenderObject extends RenderBox {
 
   /// Design-space slop added around the visible rect before culling.
   /// Wide enough to cover a boundary-port label (drawn up to ~84 px to
-  /// the right of its port) plus stroke/stub overhang.
+  /// the left of an input port or the right of an output) plus
+  /// stroke/stub overhang.
   static const double _cullMargin = 96;
 
   // ── Cell painting ──────────────────────────────────────────────
@@ -2023,8 +2025,14 @@ class SchematicCanvasRenderObject extends RenderBox {
       style,
       80,
     );
+    // The label goes on the side the port's wire does not use. An input's
+    // wire leaves its east face, so its name sits to the west; an output's
+    // (and an inout's) wire arrives at the west face, so its name sits to
+    // the east. On the wire side the name was drawn over its own wire.
     final origin = Offset(
-      rect.right + 4,
+      port.direction == PortDirection.input
+          ? rect.left - 4 - painter.width
+          : rect.right + 4,
       rect.center.dy - painter.height / 2,
     );
     painter.paint(canvas, origin);

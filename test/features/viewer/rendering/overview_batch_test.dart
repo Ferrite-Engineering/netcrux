@@ -72,6 +72,31 @@ void main() {
       expect(batch.length, 300);
     });
 
+    test('keeps every coordinate across growth, so no wire is cut short '
+        'to the origin', () {
+      // An odd starting capacity once put the copy boundary in the middle
+      // of a segment: its far end read (0, 0) and the overview drew a
+      // diagonal from a real pin to the top-left corner, while half the
+      // earlier wires vanished.
+      final canvas = TestRecordingCanvas();
+      final batch = OverviewLineBatch(3);
+      for (var i = 0; i < 100; i++) {
+        batch.addSegment(10.0 + i, 20.0 + i, 30.0 + i, 20.0 + i);
+      }
+      batch.paint(canvas, Paint());
+      final points =
+          canvas.invocations.single.invocation.positionalArguments[1]
+              as List<double>;
+      expect(points, <double>[
+        for (var i = 0; i < 100; i++) ...<double>[
+          10.0 + i,
+          20.0 + i,
+          30.0 + i,
+          20.0 + i,
+        ],
+      ]);
+    });
+
     test('strokes every segment with one drawRawPoints call, none when '
         'empty', () {
       final canvas = TestRecordingCanvas();

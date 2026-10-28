@@ -154,8 +154,11 @@ class OverviewLineBatch {
   /// Adds the segment from ([x0], [y0]) to ([x1], [y1]).
   void addSegment(double x0, double y0, double x1, double y1) {
     if ((_segments + 1) * 4 > _points.length) {
-      _points = Float32List(_points.length * 2)
-        ..setRange(0, _points.length ~/ 2, _points);
+      // Copy the whole old buffer. Inside a cascade on the new list,
+      // `_points` still names the old one, so its full length is the range.
+      final grown = Float32List(_points.length * 2)
+        ..setRange(0, _points.length, _points);
+      _points = grown;
     }
     final p = _segments * 4;
     _points
