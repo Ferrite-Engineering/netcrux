@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/services/file_open/gtk_file_picker.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +36,8 @@ void main() {
   });
 
   test('pickFiles sends the filter and returns the chosen files', () async {
-    final top = File('${dir.path}/top.v')..writeAsStringSync('module top;');
+    final top = File(p.join(dir.path, 'top.v'))
+      ..writeAsStringSync('module top;');
     answer = <String>[top.path];
 
     final result = await GtkFilePicker().pickFiles(
@@ -70,7 +72,7 @@ void main() {
   test(
     'saveFile returns the path and writes only bytes it was given',
     () async {
-      final target = '${dir.path}/session.netcrux';
+      final target = p.join(dir.path, 'session.netcrux');
       answer = <String>[target];
 
       final path = await GtkFilePicker().saveFile(
