@@ -62,6 +62,7 @@ import 'package:netcrux/netcrux_color_theme_bootstrap.dart';
 import 'package:netcrux/plugins/extra_localizations_delegates_provider.dart';
 import 'package:netcrux/plugins/policy_lock_message_provider.dart';
 import 'package:netcrux/services/cli/cli_args.dart';
+import 'package:netcrux/services/file_open/gtk_file_picker.dart';
 import 'package:netcrux/services/file_open/incoming_document_service.dart';
 import 'package:netcrux/services/logging/severe_log_stderr_sink.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
@@ -212,6 +213,9 @@ Future<void> bootstrap({
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+  // file_picker's Linux dialogs need a desktop session's DBus portal, which a
+  // remotely displayed host often lacks; the runner draws them with GTK.
+  useGtkFileDialogsOnLinux();
 
   // `--reset-telemetry-consent` puts this installation back to "never
   // answered", so the one-time disclosure mounts again this launch rather than
