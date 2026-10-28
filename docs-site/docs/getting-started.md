@@ -6,10 +6,16 @@ NetCrux is a desktop application for Linux, macOS and Windows. It does not synth
 
 | Platform | Versions | How you get it |
 |---|---|---|
-| Linux | x86_64 | AppImage or `.tar.gz` from the [downloads page](https://netcrux.app/download). |
+| Linux | x86_64; from NetCrux 1.1.1, glibc 2.28 or later (RHEL, Rocky Linux and AlmaLinux 8 and 9, Ubuntu 22.04 and later, Debian 12); before 1.1.1, glibc 2.34 | AppImage or `.tar.gz` from the [downloads page](https://netcrux.app/download), or `.deb` and `.rpm` for managed fleets. |
 | macOS | Universal (Intel + Apple Silicon), macOS 12.0 or later | From the [downloads page](https://netcrux.app/download). |
 | Windows | Windows 10 / 11, x86_64 | Installer or `.zip` from the [downloads page](https://netcrux.app/download). |
 | Web | Any modern browser | A read-only viewer at `app.netcrux.app` for a Yosys JSON netlist you already have. See [Web viewer](web-mode.md). |
+
+### Linux over a remote display {#linux-remote}
+
+On a remote X session (VNC, X forwarding, ETX or NX) or a virtual machine without 3D support there is often no OpenGL. From NetCrux 1.1.1 the app checks for it at startup and, when there is none, draws with the software renderer and prints one line on stderr saying so; setting `FLUTTER_LINUX_RENDERER=opengl` keeps OpenGL. Before 1.1.1 the window stayed empty on such a display. NetCrux also needs the EGL and OpenGL ES libraries (`libEGL.so.1`, `libGLESv2.so.2`, from Mesa); the `.deb` and `.rpm` declare them from 1.1.1.
+
+Such sessions often have no keyring service either. From NetCrux 1.1.1 a licence file or machine file still activates there: it is kept in a file only you can read, and the licence panel says where. A licence key needs a keyring, and the panel says so when there is none. A licence in your organization's policy file needs no keyring. See [Licensing](licensing.md).
 
 NetCrux is localized in English, Simplified Chinese, Japanese and Korean. The **Language** picker is in `Settings → Appearance`.
 
