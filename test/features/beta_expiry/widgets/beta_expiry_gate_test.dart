@@ -137,22 +137,17 @@ void main() {
       expect(banner.strings, isA<NetcruxBetaExpiryStrings>());
 
       // And the dismiss button's accessible name comes from that adapter. It
-      // is carried by an enclosing Semantics rather than a Tooltip, because
-      // the strip renders above the Navigator where no Overlay ancestor
-      // exists — so read the wrapper, not the button's own (empty) node.
+      // is the close glyph's semantic label, which merges into the button's
+      // own focus node (a Tooltip cannot work: the strip renders above the
+      // Navigator, where no Overlay ancestor exists).
       final context = tester.element(find.byType(CruxBetaExpiryBanner));
-      final wrapper = tester.widget<Semantics>(
-        find
-            .ancestor(
-              of: find.byKey(CruxBetaExpiryBanner.dismissButtonKey),
-              matching: find.byType(Semantics),
-            )
-            .first,
+      final glyph = tester.widget<Icon>(
+        find.descendant(
+          of: find.byKey(CruxBetaExpiryBanner.dismissButtonKey),
+          matching: find.byType(Icon),
+        ),
       );
-      expect(
-        wrapper.properties.label,
-        L10N.of(context).betaExpiryDismissLabel,
-      );
+      expect(glyph.semanticLabel, L10N.of(context).betaExpiryDismissLabel);
     });
   });
 
