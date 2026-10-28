@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:meta/meta.dart';
+import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 
 /// Produces an SVG document representing a [LaidOutGraph].
@@ -16,20 +17,37 @@ class SvgExporter {
   const SvgExporter();
 
   /// Serializes [graph] into a self-contained SVG document.
-  String toSvg(LaidOutGraph graph) {
+  ///
+  /// With a [frame] (layout coordinates) the document shows that part of the
+  /// layout, its size the frame's, and its background covers the frame.
+  /// Without one it is sized to the layout bounds from the origin, as the
+  /// Save as SVG export has always written it.
+  String toSvg(LaidOutGraph graph, {BoundingBox? frame}) {
     final bounds = graph.layout.bounds;
-    final width = bounds.width;
-    final height = bounds.height;
+    final x = frame?.x ?? 0;
+    final y = frame?.y ?? 0;
+    final width = frame?.width ?? bounds.width;
+    final height = frame?.height ?? bounds.height;
+    final viewBox = frame == null
+        ? '0 0 ${width.toStringAsFixed(2)} ${height.toStringAsFixed(2)}'
+        : '${x.toStringAsFixed(2)} ${y.toStringAsFixed(2)} '
+              '${width.toStringAsFixed(2)} ${height.toStringAsFixed(2)}';
     final buffer = StringBuffer()
       ..writeln('<?xml version="1.0" encoding="UTF-8"?>')
       ..writeln(
         '<svg xmlns="http://www.w3.org/2000/svg" '
         'width="${width.toStringAsFixed(2)}" '
         'height="${height.toStringAsFixed(2)}" '
-        'viewBox="0 0 ${width.toStringAsFixed(2)} '
-        '${height.toStringAsFixed(2)}">',
+        'viewBox="$viewBox">',
       )
-      ..writeln('  <rect width="100%" height="100%" fill="#1A1A1A" />');
+      ..writeln(
+        frame == null
+            ? '  <rect width="100%" height="100%" fill="#1A1A1A" />'
+            : '  <rect x="${x.toStringAsFixed(2)}" '
+                  'y="${y.toStringAsFixed(2)}" '
+                  'width="${width.toStringAsFixed(2)}" '
+                  'height="${height.toStringAsFixed(2)}" fill="#1A1A1A" />',
+      );
 
     // Cells.
     for (final cell in graph.graph.cells) {

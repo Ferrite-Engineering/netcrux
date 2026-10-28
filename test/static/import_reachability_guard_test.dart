@@ -134,6 +134,13 @@ const _exemptions = <_Exemption>[
         'by the golden test and tool/generate_netlist_fixtures.dart, which '
         'regenerates the companions.',
   ),
+  _Exemption(
+    'lib/services/export/scope_render.dart',
+    _Consumer.testsAndTools,
+    'The headless render pipeline behind tool/render_schematic.dart, run by '
+        'test/tools/render_schematic_test.dart under flutter test. The app '
+        'lays scopes out through its providers instead.',
+  ),
 ];
 
 void main() {

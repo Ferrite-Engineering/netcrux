@@ -102,6 +102,23 @@ void main() {
       expect(svg, isNot(contains('>a<b>')));
     });
 
+    test('a frame sets the size, the view box and the background', () {
+      final svg = exporter.toSvg(
+        _graph(),
+        frame: const BoundingBox(x: -24, y: 10, width: 120, height: 60),
+      );
+      expect(svg, contains('width="120.00"'));
+      expect(svg, contains('height="60.00"'));
+      expect(svg, contains('viewBox="-24.00 10.00 120.00 60.00"'));
+      expect(
+        svg,
+        contains(
+          '<rect x="-24.00" y="10.00" width="120.00" height="60.00" '
+          'fill="#1A1A1A" />',
+        ),
+      );
+    });
+
     test('an empty graph still yields a valid (cell-free) SVG', () {
       final svg = exporter.toSvg(LaidOutGraph.empty);
       expect(svg, contains('<svg'));

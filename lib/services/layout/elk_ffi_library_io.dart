@@ -37,7 +37,8 @@ String elkFfiLibraryFileName() {
 ///    subtree (Linux); the dynamic loader finds it through the bundle's
 ///    rpath without an explicit path.
 /// 2. **`native/elk_ffi/target/{release,debug}/...`** under a probed root,
-///    the `flutter test` path. The test process is a plain Dart VM with no
+///    or `target/<triple>/{release,debug}/...` for a build with an explicit
+///    `--target`, the `flutter test` path. The test process is a plain Dart VM with no
 ///    bundle, so the bare name throws; falling back to the path `cargo
 ///    build` produces lets the tests find the library on a developer machine
 ///    or CI runner without any extra setup. Probed roots are
@@ -68,8 +69,24 @@ String? elkFfiDevBuildPath() {
   const profiles = <String>['release', 'debug'];
   for (final root in <String>[cwd, '$cwd/netcrux']) {
     for (final profile in profiles) {
-      final candidate = '$root/native/elk_ffi/target/$profile/$fileName';
+      final target = '$root/native/elk_ffi/target';
+      final candidate = '$target/$profile/$fileName';
       if (File(candidate).existsSync()) return candidate;
+      // A build for an explicit `--target <triple>` lands one level deeper,
+      // in `target/<triple>/<profile>/`.
+      final targetDir = Directory(target);
+      if (!targetDir.existsSync()) continue;
+      final triples =
+          targetDir
+              .listSync()
+              .whereType<Directory>()
+              .map((d) => d.path)
+              .toList()
+            ..sort();
+      for (final triple in triples) {
+        final crossBuild = '$triple/$profile/$fileName';
+        if (File(crossBuild).existsSync()) return crossBuild;
+      }
     }
   }
   return null;
