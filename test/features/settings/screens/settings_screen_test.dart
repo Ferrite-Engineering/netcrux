@@ -67,6 +67,56 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  // The licence-expiry strip opens Settings at License this way; the shared
+  // shell turns the id into the selected category, which crux_settings_ui's
+  // own tests cover.
+  testWidgets('openAdaptive passes initialCategoryId to the body', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsServiceProvider.overrideWithValue(
+            SettingsService<AppSettings>(
+              const NetcruxSettingsCodec(),
+              prefsOverride: prefs,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: L10N.localizationsDelegates,
+          supportedLocales: L10N.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => SettingsScreen.openAdaptive(
+                  context,
+                  initialCategoryId: CruxSettingsCategoryId.shortcuts,
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      tester
+          .widget<CruxSettingsInitialCategory>(
+            find.byType(CruxSettingsInitialCategory),
+          )
+          .id,
+      CruxSettingsCategoryId.shortcuts,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   group('locale sweep', () {
     for (final locale in L10N.supportedLocales) {
       testWidgets('pumps cleanly in ${locale.toLanguageTag()}', (tester) async {

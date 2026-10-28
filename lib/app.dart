@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async' show unawaited;
 import 'dart:io' show stdout;
 import 'package:crux_about_dialog/crux_about_dialog.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart'
@@ -49,6 +50,7 @@ import 'package:netcrux/features/issue_reporter/netcrux_issue_reporter_overrides
 import 'package:netcrux/features/menu_bar/widgets/desktop_menu_bar.dart';
 import 'package:netcrux/features/remote/netcrux_cxp_overrides.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/features/settings/screens/settings_screen.dart';
 import 'package:netcrux/features/telemetry/netcrux_telemetry_overrides.dart';
 import 'package:netcrux/features/update/netcrux_update_overrides.dart';
 import 'package:netcrux/features/workspace/screens/workspace_screen.dart';
@@ -570,7 +572,14 @@ class NetcruxApp extends ConsumerWidget {
                     // already clear the 44 dp consent floor; NetCrux has no
                     // device-metrics system of its own to feed in.
                     child: UpdateBanner(
-                      child: child ?? const SizedBox.shrink(),
+                      // The licence-expiry strip (crux_license): below the
+                      // update prompt, inside the agreement and the expiry
+                      // gate, which outrank it. Shows nothing in an open-core
+                      // build; the Pro overlay supplies the status and strings.
+                      child: CruxLicenseExpiryGate(
+                        onOpenLicenseSettings: _openLicenseSettings,
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),
@@ -583,6 +592,19 @@ class NetcruxApp extends ConsumerWidget {
     // Windows/Linux: restore the drop shadow + drag-to-resize edges the
     // frameless window loses. No-op wrapper elsewhere.
     return useCustomWindowChrome ? buildWindowFrame(app) : app;
+  }
+
+  /// Opens Settings at the License category, for the licence-expiry strip,
+  /// from the root navigator: the strip sits above it.
+  static void _openLicenseSettings() {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+    unawaited(
+      SettingsScreen.openAdaptive(
+        context,
+        initialCategoryId: kCruxLicenseCategoryId,
+      ),
+    );
   }
 
   /// Routes a menu selection to the active screen's action handler.
