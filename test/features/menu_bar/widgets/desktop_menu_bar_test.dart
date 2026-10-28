@@ -88,7 +88,7 @@ void main() {
 
       final labels = _leafLabels(tester);
 
-      // Pro action: "Show Cone of Influence (Fanin) (PRO)".
+      // Pro action: "Show Cone of Influence (Fan-in) (PRO)".
       final proBase = NetcruxAction.showConeOfInfluenceFanin.label(l10n);
       final proSuffix = tierLabelSuffix(LicenseTier.pro, l10n);
       expect(proSuffix, ' (PRO)');

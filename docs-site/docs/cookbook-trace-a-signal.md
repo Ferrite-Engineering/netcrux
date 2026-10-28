@@ -7,7 +7,7 @@ You are looking at a net with a value you do not trust, and you want to know wha
 | **Goal** | Find the logic, register or boundary port that drives a suspect net. |
 | **Time** | About 8 minutes |
 | **Tier** | Open Core for one-step fanin; the Cone of Influence and X-Trace are <span class="tier tier-pro">Pro</span>. |
-| **You will use** | [Fanin / fanout](tracing.md#fanin-fanout), [Search Design](navigating.md#search), the [Cone of Influence](tracing.md#cone), [X-Trace](tracing.md#x-trace), and the [inspector](source-and-inspection.md#inspector). |
+| **You will use** | [Fan-in / fan-out](tracing.md#fanin-fanout), [Search Design](navigating.md#search), the [Cone of Influence](tracing.md#cone), [X-Trace](tracing.md#x-trace), and the [inspector](source-and-inspection.md#inspector). |
 
 ## Before you start {#before}
 
@@ -17,11 +17,11 @@ Elaborate the design ([Installation & first elaboration](getting-started.md)) an
 
 1. **Select the net and take one hop back.**
 
-    Click the net, then press ++bracket-left++ for **Show Fanin**. NetCrux highlights the cells that directly drive it and dims everything else. Often that is enough — if a single cell drives it, you have your answer.
+    Click the net, then press ++bracket-left++ for **Show Fan-in**. NetCrux highlights the cells that directly drive it and dims everything else. Often that is enough — if a single cell drives it, you have your answer.
 
 2. **Walk back, or widen to the cone.**
 
-    In Open Core, click a highlighted driver and press ++bracket-left++ again, one level at a time, until you reach a register (the value comes from the previous cycle — now you want its data input), a constant, or a module port. With Pro, right-click the driving cell or port and choose **Show Cone of Influence (Fanin)** to pull in the whole transitive driver chain at once. NetCrux frames the view to the cone and reports its size; choose **Show Only Cone** to hide everything else. Clear it any time with ++escape++.
+    In Open Core, click a highlighted driver and press ++bracket-left++ again, one level at a time, until you reach a register (the value comes from the previous cycle — now you want its data input), a constant, or a module port. With Pro, right-click the driving cell or port and choose **Show Cone of Influence (Fan-in)** to pull in the whole transitive driver chain at once. NetCrux frames the view to the cone and reports its size; choose **Show Only Cone** to hide everything else. Clear it any time with ++escape++.
 
 3. **Run X-Trace for one concrete chain.** <span class="tier tier-pro">Pro</span>
 

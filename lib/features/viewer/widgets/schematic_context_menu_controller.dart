@@ -68,8 +68,8 @@ class SchematicContextMenuController {
   /// Reads / writes provider state.
   final WidgetRef ref;
 
-  /// Trace overlay controller — reused for the menu's "Trace Fanin"
-  /// / "Trace Fanout" entries so the action wiring matches the
+  /// Trace overlay controller — reused for the menu's "Trace Fan-in"
+  /// / "Trace Fan-out" entries so the action wiring matches the
   /// keyboard / command-palette dispatch.
   final TraceOverlayController traceController;
 

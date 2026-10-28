@@ -16,7 +16,7 @@
 15. Zoom to Selection (Z) button
 16. Jump to Top (Ctrl+Home) button
 17. Pop Out of Scope (Ctrl+[) button
-18. Trace (Show Fanin is default) ([) button
+18. Trace (Show Fan-in is default) ([) button
 19. [Active pane grouping] top.v button selected
 20. [top.v button] Close top.v button
 21. Render stats for this pane button

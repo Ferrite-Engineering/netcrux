@@ -78,7 +78,7 @@ window. From there:
 - **Search → Search…** (`Cmd/Ctrl+F`) matches instances, cells and nets by
   substring, glob or regex. In `cdc-capture`, searching `req` finds the
   request pulse and both flops that sample it.
-- Select a net, then **Navigate → Show Fanin** (`[`) or **Show Fanout**
+- Select a net, then **Navigate → Show Fan-in** (`[`) or **Show Fan-out**
   (`]`) to dim everything that is not a driver or a load of it.
   **Navigate → Clear Selection / Overlay** (`Esc`) restores the full view.
   Tracing `req_a` in `cdc-capture` walks straight into the single-flop

@@ -35,8 +35,8 @@ These are the default bindings that ship with NetCrux. Every one of them is rebi
 | ++cmd+shift+k++ / ++ctrl+shift+k++ | Toggle Theme | View |
 | ++cmd+home++ / ++ctrl+home++ | Jump to Top | Navigate |
 | ++cmd+bracket-left++ / ++ctrl+bracket-left++ | Pop Out of Scope | Navigate |
-| ++bracket-left++ | Show Fanin | Navigate |
-| ++bracket-right++ | Show Fanout | Navigate |
+| ++bracket-left++ | Show Fan-in | Navigate |
+| ++bracket-right++ | Show Fan-out | Navigate |
 | ++z++ | Zoom to Selection | Navigate |
 | ++escape++ | Clear Selection / Overlay | Navigate |
 | ++cmd+f++ / ++ctrl+f++ | Search… | Search |
@@ -49,7 +49,7 @@ Tab cycling uses ++ctrl++ on every platform, macOS included: ++cmd+tab++ is the 
 
 Zoom In answers to the modifier with `=` and with `+`, so it works on every keyboard layout: on a US layout `=` is the unshifted key, and on Swedish, German and most other European layouts `+` has its own key. ++cmd+shift+equal++ / ++ctrl+shift+equal++ and the numpad forms (numpad ++plus++, numpad ++minus++ and numpad ++0++ with the modifier) work as well. The extra forms follow the default binding: once you rebind Zoom In, Zoom Out or Zoom to Fit, only the key you chose triggers it. The menu shows the `=` form.
 
-**Zoom to Selection** (++z++) frames the selected elements and, while a fanin or fanout trace is showing, every cell and wire the trace highlights. On macOS the menu bar shows no key beside it, or beside **Show Fanin** and **Show Fanout**: the macOS menu bar only displays keys that carry a modifier. The keys still work, and the command palette and the toolbar tooltip show them.
+**Zoom to Selection** (++z++) frames the selected elements and, while a fanin or fanout trace is showing, every cell and wire the trace highlights. On macOS the menu bar shows no key beside it, or beside **Show Fan-in** and **Show Fan-out**: the macOS menu bar only displays keys that carry a modifier. The keys still work, and the command palette and the toolbar tooltip show them.
 
 **Toggle Theme** switches to the built-in preset of the opposite brightness: from any dark preset to **Crux Light**, and from Crux Light to **Crux Dark**. See [Appearance & themes](appearance-and-themes.md#mode).
 

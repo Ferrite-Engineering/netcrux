@@ -47,9 +47,9 @@ void main() {
       final l10n = await L10N.delegate.load(const Locale('en'));
       // `showConeOfInfluenceFanin` is Pro (requiredTier == pro) and
       // palette-visible. Its full label isolates exactly that row
-      // (fanout diverges at "(Fanin)"/"(Fanout)").
+      // (fanout diverges at "(Fan-in)"/"(Fan-out)").
       final proLabel = NetcruxAction.showConeOfInfluenceFanin.label(l10n);
-      expect(proLabel, 'Show Cone of Influence (Fanin)');
+      expect(proLabel, 'Show Cone of Influence (Fan-in)');
 
       await tester.pumpWidget(_harness());
       await tester.pumpAndSettle();

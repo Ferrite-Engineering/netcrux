@@ -172,7 +172,7 @@ void main() {
       tester,
     ) async {
       // The dialog's `featureLabel` for this action is "Show Cone of Influence
-      // (Fanin)" in English and different text in each of the other four
+      // (Fan-in)" in English and different text in each of the other four
       // locales. Whatever reaches the wire has to be `coi`.
       final (dispatcher, context) = await pumpDispatcher(
         tester,

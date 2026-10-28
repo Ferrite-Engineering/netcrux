@@ -65,7 +65,7 @@ void main() {
     expect(allow(NetcruxAction.showConeOfInfluenceFanin), isFalse);
     await tester.pump();
     expect(
-      find.text('Show Cone of Influence (Fanin) requires NetCrux Pro.'),
+      find.text('Show Cone of Influence (Fan-in) requires NetCrux Pro.'),
       findsOneWidget,
     );
   });

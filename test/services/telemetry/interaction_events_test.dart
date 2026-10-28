@@ -4,7 +4,7 @@
 // `trace.used` and `cxp.crossprobe`, on their production seams.
 //
 // The trace counter comes out of `WorkspaceActionDispatcher._dispatchTrace`,
-// which is where the Show Fanin / Show Fanout actions land from all three
+// which is where the Show Fan-in / Show Fan-out actions land from all three
 // discovery surfaces (keyboard, menu bar, command palette). The cross-probe
 // counter comes out of `NetcruxCxpRequestHandler._resolveAndAct`, the one seam
 // both the acked `request_highlight` and the fire-and-forget
@@ -152,7 +152,7 @@ void main() {
       return (dispatcher, hostContext);
     }
 
-    testWidgets('Show Fanin and Show Fanout each record their kind', (
+    testWidgets('Show Fan-in and Show Fan-out each record their kind', (
       tester,
     ) async {
       final (dispatcher, context) = await pumpDispatcher(tester);

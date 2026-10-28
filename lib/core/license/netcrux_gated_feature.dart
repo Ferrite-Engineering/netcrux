@@ -20,7 +20,7 @@ library;
 /// (`tier.gate_hit {feature}`, one of the commercial-group events).
 ///
 /// **This is not the dialog's `featureName`.** `NetcruxUpgradeDialog` takes a
-/// *localized display label* — "Show Cone of Influence (Fanin)" in English and
+/// *localized display label* — "Show Cone of Influence (Fan-in)" in English and
 /// something else in each of the other four locales. Sending that would put a
 /// per-locale free-form string on the wire, which the ingestion Worker's
 /// `[a-z0-9_]{1,64}` value class rejects outright: the property would be

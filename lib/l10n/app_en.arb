@@ -420,11 +420,11 @@
   "@actionPopOutScope": {
     "description": "Command palette / menu label for popping out of the current scope to its parent."
   },
-  "actionShowFanin": "Show Fanin",
+  "actionShowFanin": "Show Fan-in",
   "@actionShowFanin": {
     "description": "Command palette / menu label for the fanin (drivers) tracing overlay."
   },
-  "actionShowFanout": "Show Fanout",
+  "actionShowFanout": "Show Fan-out",
   "@actionShowFanout": {
     "description": "Command palette / menu label for the fanout (loads) tracing overlay."
   },
@@ -727,11 +727,11 @@
   "@contextMenuCopyPath": {
     "description": "Right-click / long-press context-menu item that copies the canonical hierarchical path of the selected element to the clipboard."
   },
-  "contextMenuTraceFanin": "Trace Fanin",
+  "contextMenuTraceFanin": "Trace Fan-in",
   "@contextMenuTraceFanin": {
     "description": "Right-click / long-press context-menu item that runs the fanin trace on the selected element."
   },
-  "contextMenuTraceFanout": "Trace Fanout",
+  "contextMenuTraceFanout": "Trace Fan-out",
   "@contextMenuTraceFanout": {
     "description": "Right-click / long-press context-menu item that runs the fanout trace on the selected element."
   },
@@ -1247,11 +1247,11 @@
       }
     }
   },
-  "actionShowConeOfInfluenceFanin": "Show Cone of Influence (Fanin)",
+  "actionShowConeOfInfluenceFanin": "Show Cone of Influence (Fan-in)",
   "@actionShowConeOfInfluenceFanin": {
     "description": "Command palette / menu label for the Pro multi-step fanin cone-of-influence trace from the current selection."
   },
-  "actionShowConeOfInfluenceFanout": "Show Cone of Influence (Fanout)",
+  "actionShowConeOfInfluenceFanout": "Show Cone of Influence (Fan-out)",
   "@actionShowConeOfInfluenceFanout": {
     "description": "Command palette / menu label for the Pro multi-step fanout cone-of-influence trace from the current selection."
   },
@@ -2429,15 +2429,15 @@
   },
   "toolbarTraceCluster": "Trace",
   "@toolbarTraceCluster": {
-    "description": "Tooltip on the toolbar's grouped trace button, whose siblings are Show Fanin / Show Fanout / Clear Overlay"
+    "description": "Tooltip on the toolbar's grouped trace button, whose siblings are Show Fan-in / Show Fan-out / Clear Overlay"
   },
   "toolbarTraceClusterFace": "Trace ({action} is default)",
   "@toolbarTraceClusterFace": {
-    "description": "Hover tooltip on the toolbar's grouped trace button: the group name, then which sibling a plain click runs. {action} is that sibling's menu label (Show Fanin / Show Fanout / Clear Overlay).",
+    "description": "Hover tooltip on the toolbar's grouped trace button: the group name, then which sibling a plain click runs. {action} is that sibling's menu label (Show Fan-in / Show Fan-out / Clear Overlay).",
     "placeholders": {
       "action": {
         "type": "String",
-        "example": "Show Fanin"
+        "example": "Show Fan-in"
       }
     }
   },

@@ -510,7 +510,7 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
 - **Steps and expected behavior.**
   1. **File → Open Project…** (`Cmd/Ctrl+O`), pick `examples/adder4/adder4.netcrux-project`. Expected: a tab named `adder4` opens and a schematic with ports `a`, `b`, `cin`, `sum`, `cout` renders. No "No such file" diagnostic.
   2. Repeat for `examples/cdc-capture/cdc-capture.netcrux-project`. Expected: a schematic with the flops and muxes of both clock domains; the Hierarchy dock (left) lists `cdc_capture`; the status bar reports the top module and a non-zero cell count.
-  3. Select the `req_a` net, then **Navigate → Show Fanin** (`[`). Expected: the overlay dims everything that is not a driver; **Navigate → Clear Selection / Overlay** (`Esc`) restores.
+  3. Select the `req_a` net, then **Navigate → Show Fan-in** (`[`). Expected: the overlay dims everything that is not a driver; **Navigate → Clear Selection / Overlay** (`Esc`) restores.
   4. **Search → Search…** (`Cmd/Ctrl+F`), query `req`. Expected: matches for the request pulse and the flops sampling it.
   5. From a terminal in an unrelated directory: `netcrux /abs/path/examples/adder4/adder4.netcrux-project`. Expected: opens as a **project** tab, not as an HDL source. (Before the extension fix, `p.extension` returned `.netcrux-project`, missed the `.netcrux` equality test, and routed the JSON to Yosys as if it were Verilog.)
 - **Edge cases.** With Yosys absent the examples must **degrade, not look broken**: the tab still opens and the canvas shows "Elaboration failed" over "Yosys was not found on your PATH. Install Yosys, or set a custom path in Settings.", with the persistent `Yosys not found` status-bar segment. An example that names a source nobody committed, or a `topModule` no source declares, must fail the guard suite rather than reach a user.
@@ -714,7 +714,7 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
 - **Setup.** A loaded design. For the size steps, a large flat netlist: `test/fixtures/netlist/grid_100k/generated/grid_100k.netlist.json.gz` (100,000 flops in one scope; open it with **File > Open Netlist JSON…** after decompressing it) and the captured `picorv32` core.
 - **Steps and expected behavior.**
   1. Select a cell in the middle of picorv32's top scope and choose **View > Cone View**. Expected: the canvas lays out a handful of cells (the cell and two levels of its drivers), framed; the bar reads "Cone view of <cell>: N of 1599 cells"; a screen reader announces the same sentence. The stats strip's layout time is the cone's.
-  2. In the bar choose **Fan-in and fan-out**, then **8 levels**. Expected: each choice lays the cone out again, larger. Choose **1 level**. Expected: exactly the cells **Show Fanin** lights on the whole scope for that cell.
+  2. In the bar choose **Fan-in and fan-out**, then **8 levels**. Expected: each choice lays the cone out again, larger. Choose **1 level**. Expected: exactly the cells **Show Fan-in** lights on the whole scope for that cell.
   3. Click a cell inside the cone, press `[`, `Z`, open the Inspector (Alt+Enter). Expected: they work as on the whole scope, with the scope's own names.
   4. Right-click another cell in the cone and choose **Cone View**. Expected: the cone re-roots at that cell, keeping the direction and depth.
   5. Pan away from the cone. Expected: blank canvas past the cone's bounds, the bar still there. Choose **Show Whole Scope** (bar, or **View > Show Whole Scope**). Expected: the whole scope comes back at once from the cache, framed on the cone's root, with the selection kept.
@@ -1297,8 +1297,8 @@ Pro features land in the Pro overlay against extension-point seams defined here 
 **Setup.** Open any project in the open-core build (no Pro overlay). Pick a cell in the schematic so a selection exists.
 
 **Steps and expected behavior.**
-1. Open the command palette (Ctrl/Cmd+Shift+P) and search for "Cone of Influence". Three actions appear: "Show Cone of Influence (Fanin)", "Show Cone of Influence (Fanout)", "Clear Cone of Influence" (labels per the active locale).
-2. Activate "Show Cone of Influence (Fanin)". The dispatch path runs but the open-core `NoopConeOfInfluenceService` returns an empty overlay → no visual change, no error, the canvas paints normally.
+1. Open the command palette (Ctrl/Cmd+Shift+P) and search for "Cone of Influence". Three actions appear: "Show Cone of Influence (Fan-in)", "Show Cone of Influence (Fan-out)", "Clear Cone of Influence" (labels per the active locale).
+2. Activate "Show Cone of Influence (Fan-in)". The dispatch path runs but the open-core `NoopConeOfInfluenceService` returns an empty overlay → no visual change, no error, the canvas paints normally.
 3. Activate "Clear Cone of Influence". The trace overlay is cleared (idempotent if already clear).
 
 **Tier-gate scenarios.**
@@ -1323,9 +1323,9 @@ Pro features land in the Pro overlay against extension-point seams defined here 
 Both surfaces read the single `requiredTier` source of truth; adding a Pro action badges it on both automatically.
 
 **Steps and expected behavior.**
-1. Open the command palette and type "Show Cone of Influence (Fanin)". The row renders a `PRO` chip to the right of its label; the shortcut hint (if bound) renders after it.
+1. Open the command palette and type "Show Cone of Influence (Fan-in)". The row renders a `PRO` chip to the right of its label; the shortcut hint (if bound) renders after it.
 2. Type "Open Project". The row renders **no** chip (open-core action).
-3. Open the native menu bar. The **View → Show Cone of Influence (Fanin)** item reads `Show Cone of Influence (Fanin) (PRO)`; **File → Open Project…** has no suffix. On macOS the suffix appears in the system menu bar; on Windows / Linux in the in-window menu bar.
+3. Open the native menu bar. The **View → Show Cone of Influence (Fan-in)** item reads `Show Cone of Influence (Fan-in) (PRO)`; **File → Open Project…** has no suffix. On macOS the suffix appears in the system menu bar; on Windows / Linux in the in-window menu bar.
 4. Read `NetcruxAction.showConeOfInfluenceFanin.requiredTier`; expect `LicenseTier.pro`. Read `NetcruxAction.clearConeOfInfluence.requiredTier`; expect `LicenseTier.openCore` (clearing is always available). Show Annotations Panel is Open Core too (§7.5): it carries no badge.
 5. In an open-core build (no Pro overlay) during the beta, choose any Pro action — from the palette, the menu, or the inspector's **Go to source** (which carries a `PRO` badge). Expected: a "<action> requires NetCrux Pro." snackbar and nothing else; never silence. Post-beta at the open-core tier the upgrade dialog shows instead. With the Pro overlay installed (`proOverlayInstalledProvider` overridden to true), the action runs.
 
@@ -1365,7 +1365,7 @@ Both surfaces read the single `requiredTier` source of truth; adding a Pro actio
 **Setup.** Right-click any cell / port / wire / boundary port in the open-core build.
 
 **Steps and expected behavior.**
-1. The context menu shows the existing five built-in entries (Copy Path / Trace Fanin / Trace Fanout / Find in Hierarchy / Properties). Below a divider, open core adds **Add Annotation…** (and **Show Annotation** on an annotated element), with no tier chip (§7.5).
+1. The context menu shows the existing five built-in entries (Copy Path / Trace Fan-in / Trace Fan-out / Find in Hierarchy / Properties). Below a divider, open core adds **Add Annotation…** (and **Show Annotation** on an annotated element), with no tier chip (§7.5).
 2. Selecting any built-in entry dispatches as before; no regressions in the existing flow.
 3. Overriding `schematicContextMenuExtensionsProvider` with a builder that emits one entry → the menu renders the entry below a `PopupMenuDivider`. Selecting the entry calls its `onTap` closure with the build context + ref.
 4. Entries with `enabled: false` render greyed; entries with a tooltip render their tooltip on hover (desktop) — useful for "Cross-probe to peer → (no peers connected)" disabled state.
@@ -2320,7 +2320,7 @@ This section *is* the tier-gate scenario. Both phases are covered by steps 4 and
   1. Host presents (default). Guest's tab moves to the host's scope and
      framing; moving the host's camera moves the guest's within a fraction of
      a second.
-  2. Host runs Show Fanout. Guest sees the lit elements glow in the host's
+  2. Host runs Show Fan-out. Guest sees the lit elements glow in the host's
      colour; the guest's own trace overlay is unchanged and Clear Overlay on
      the guest does not remove the glow.
   3. Guest pans. Guest is detached: host navigation no longer moves the

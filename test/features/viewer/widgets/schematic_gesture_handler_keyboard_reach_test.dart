@@ -407,7 +407,7 @@ void main() {
       await press(tester);
       await tester.pumpAndSettle();
       expect(find.text('Copy Path'), findsOneWidget);
-      expect(find.text('Trace Fanin'), findsOneWidget);
+      expect(find.text('Trace Fan-in'), findsOneWidget);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();

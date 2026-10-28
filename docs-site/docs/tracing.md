@@ -2,7 +2,7 @@
 
 "What drives this?" is the most valuable question a schematic browser can answer. NetCrux answers it at three levels of depth: one-step fanin and fanout in Open Core, and the transitive Cone of Influence and the X-Trace driver chain in Pro. All three work within the current scope.
 
-## One-step fanin & fanout {#fanin-fanout}
+## One-step fan-in & fan-out {#fanin-fanout}
 
 Select a cell, port or net, then ask what touches it in one hop:
 
@@ -12,7 +12,7 @@ Select a cell, port or net, then ask what touches it in one hop:
 
 2. **Show fanin or fanout.**
 
-    Press ++bracket-left++ (no modifier) for **Show Fanin** — the cells that directly drive the selection — or ++bracket-right++ for **Show Fanout** — its direct loads. The same commands are on the `Navigate` menu, the toolbar's **Trace** button, and the canvas context menu as **Trace Fanin** / **Trace Fanout**. The overlay includes the connected drivers (or loads), the edges that connect them, and the originating cell itself; everything else is dimmed, so the relevant subgraph reads at a glance.
+    Press ++bracket-left++ (no modifier) for **Show Fan-in** — the cells that directly drive the selection — or ++bracket-right++ for **Show Fan-out** — its direct loads. The same commands are on the `Navigate` menu, the toolbar's **Trace** button, and the canvas context menu as **Trace Fan-in** / **Trace Fan-out**. The overlay includes the connected drivers (or loads), the edges that connect them, and the originating cell itself; everything else is dimmed, so the relevant subgraph reads at a glance.
 
 3. **Frame the trace.**
 
@@ -30,7 +30,7 @@ Where the one-step overlay stops at the immediate neighbors, the **Cone of Influ
 
 1. **Run the cone from the selection.**
 
-    Right-click a cell or port and choose **Show Cone of Influence (Fanin)** or **Show Cone of Influence (Fanout)** — the same commands are on the `Navigate` menu and the command palette. NetCrux paints the cone with an azure accent that stays visible at every zoom level, frames the view to the cone, and reports its size ("*N* cells in cone").
+    Right-click a cell or port and choose **Show Cone of Influence (Fan-in)** or **Show Cone of Influence (Fan-out)** — the same commands are on the `Navigate` menu and the command palette. NetCrux paints the cone with an azure accent that stays visible at every zoom level, frames the view to the cone, and reports its size ("*N* cells in cone").
 
 2. **Show only the cone.**
 
@@ -54,7 +54,7 @@ From NetCrux 1.2 you can lay out just the neighbourhood of an element instead of
 
 3. **Change the direction or the depth.**
 
-    In the bar, choose **Fan-in** (what drives the element) or **Fan-in and fan-out** (what drives it and what it drives), and a depth of 1, 2, 3, 4, 6 or 8 levels. One level is the same set **Show Fanin** lights. **All levels** <span class="tier tier-pro">Pro</span> lays out the whole cone, as far as [Cone of Influence](#cone) walks; it is also `View > Cone View, All Levels`. To start a new cone from another cell, right-click it in the cone and choose **Cone View**: the direction and depth stay as you set them.
+    In the bar, choose **Fan-in** (what drives the element) or **Fan-in and fan-out** (what drives it and what it drives), and a depth of 1, 2, 3, 4, 6 or 8 levels. One level is the same set **Show Fan-in** lights. **All levels** <span class="tier tier-pro">Pro</span> lays out the whole cone, as far as [Cone of Influence](#cone) walks; it is also `View > Cone View, All Levels`. To start a new cone from another cell, right-click it in the cone and choose **Cone View**: the direction and depth stay as you set them.
 
 4. **Go back to the whole scope.**
 
