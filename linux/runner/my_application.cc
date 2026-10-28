@@ -84,6 +84,13 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_set_size_request(GTK_WIDGET(window), 800, 500);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
+  // The software renderer draws through Skia. With Impeller on, the engine
+  // aborts at the first line of text ("Impeller DlText cannot be drawn to a
+  // Skia canvas"), so turn Impeller off whenever software rendering is
+  // selected, by the probe above or by the user.
+  if (g_strcmp0(g_getenv("FLUTTER_LINUX_RENDERER"), "software") == 0) {
+    fl_dart_project_set_enable_impeller(project, FALSE);
+  }
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
 
