@@ -3,6 +3,7 @@
 
 import 'dart:async' show unawaited;
 import 'dart:io' show stdout;
+import 'package:crux_a11y/crux_a11y.dart' show CruxRoutedContent;
 import 'package:crux_about_dialog/crux_about_dialog.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart'
     show
@@ -579,7 +580,10 @@ class NetcruxApp extends ConsumerWidget {
                       // build; the Pro overlay supplies the status and strings.
                       child: CruxLicenseExpiryGate(
                         onOpenLicenseSettings: _openLicenseSettings,
-                        child: child ?? const SizedBox.shrink(),
+                        // Its own semantics container, so a route's modal
+                        // barrier does not hide the strips above from a
+                        // screen reader.
+                        child: CruxRoutedContent(child: child),
                       ),
                     ),
                   ),
