@@ -2,19 +2,19 @@
 //
 // A sample index produced in the clk_a domain is captured into the clk_b
 // domain. Each new sample is announced by a one-cycle `req_a` pulse. The
-// request crosses into clk_b through only a SINGLE flop (an insufficient
-// synchronizer — no 2-FF chain, no pulse-stretch, no toggle/ack handshake),
-// and the multi-bit `sample_a` bus is captured directly with no coherent
-// hold. When clk_b is slow relative to the request pulse, whole pulses fall
-// between clk_b sampling edges and samples are silently DROPPED. Because
-// whether a pulse is caught depends on the (asynchronous) clock phase, the
-// failure is phase/seed dependent — i.e. flaky.
+// request passes a 2-flop chain into clk_b (req_b0, req_b1), but a 2-flop
+// sync neither stretches a pulse nor acknowledges it (no toggle/ack
+// handshake), and the multi-bit `sample_a` bus is captured directly with no
+// coherent hold. When clk_b is slow relative to the request pulse, whole
+// pulses fall between clk_b sampling edges and samples are silently DROPPED.
+// Whether a pulse is caught depends on the (asynchronous) clock phase, so
+// the failure is phase/seed dependent, i.e. flaky.
 //
 // Meant to be caught four ways by the crux suite:
 //   * SimCrux  — the self-checking testbench fails on some phases/seeds
 //   * WaveCrux — a req_a pulse with no following captured_valid_b is a visibly
 //                dropped sample; captured_b skips a value
-//   * NetCrux  — CDC analysis flags req_a/sample_a -> clk_b as unsynchronized
+//   * NetCrux  — CDC analysis flags the sample_a -> clk_b bus as unsynchronized
 //   * LintCrux — Verilator/Verible flag the width truncation + unused net below
 module cdc_capture #(
     parameter WIDTH  = 8,
@@ -52,8 +52,8 @@ module cdc_capture #(
     end
 
     // ---------------------------------------------------------------
-    // Domain B: THE BUG. Single-flop sample of req_a (insufficient sync),
-    // rising-edge detect, and a direct capture of the clk_a-domain bus.
+    // Domain B: THE BUG. 2-flop sync of a one-cycle req_a pulse (no stretch,
+    // no handshake), edge detect, and a direct capture of the clk_a bus.
     // ---------------------------------------------------------------
     reg req_b0, req_b1;
 
@@ -64,7 +64,7 @@ module cdc_capture #(
             captured_b       <= {WIDTH{1'b0}};
             captured_valid_b <= 1'b0;
         end else begin
-            req_b0           <= req_a;                 // <-- single-flop CDC
+            req_b0           <= req_a;                 // <-- 2-flop sync; pulse can be missed
             req_b1           <= req_b0;
             captured_valid_b <= req_b0 & ~req_b1;      // rising edge of request
             if (req_b0 & ~req_b1)
