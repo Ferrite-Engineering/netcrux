@@ -187,8 +187,13 @@ class _HierarchyTreeBody extends ConsumerWidget {
         final message = error is LoadedNetlistException
             ? error.message
             : '$error';
+        // The pipeline's own messages already start with "Elaboration
+        // failed"; prefixing them again read "Elaboration failed:
+        // Elaboration failed ...".
         return _EmptyMessage(
-          text: l10n.hierarchyEmptyElaborationFailed(message),
+          text: message.startsWith('Elaboration failed')
+              ? message
+              : l10n.hierarchyEmptyElaborationFailed(message),
           isError: true,
         );
       }

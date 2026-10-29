@@ -275,6 +275,45 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('a pipeline message that already says "Elaboration failed" '
+        'is not prefixed again', (tester) async {
+      final container = ProviderContainer(
+        overrides: <Override>[
+          loadedNetlistProvider.overrideWith(_MissingModuleLoadedNetlist.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      // Settle the throwing AsyncNotifier outside the widget tester's
+      // fake-async zone so the AsyncError state is visible the first
+      // time the panel rebuilds.
+      await tester.runAsync(() async {
+        final sub = container.listen<AsyncValue<NetlistModel?>>(
+          loadedNetlistProvider,
+          (previous, next) {},
+        );
+        addTearDown(sub.close);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+      });
+      expect(
+        container.read(loadedNetlistProvider).hasError,
+        isTrue,
+        reason: 'override should have errored by now',
+      );
+      await tester.pumpWidget(
+        _wrap(child: const HierarchyTreePanel(), container: container),
+      );
+      expect(
+        find.text('Elaboration failed: a module is not part of the design'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Elaboration failed: Elaboration failed'),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('empty top-module model shows the no-top message', (
       tester,
     ) async {
@@ -835,6 +874,15 @@ class _ThrowingLoadedNetlist extends LoadedNetlist {
   Future<NetlistModel?> build() async {
     throw const LoadedNetlistException(
       'Yosys is not available: not found on PATH',
+    );
+  }
+}
+
+class _MissingModuleLoadedNetlist extends LoadedNetlist {
+  @override
+  Future<NetlistModel?> build() async {
+    throw const LoadedNetlistException(
+      'Elaboration failed: a module is not part of the design',
     );
   }
 }
