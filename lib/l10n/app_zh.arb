@@ -339,6 +339,23 @@
   "@elaborationErrorDetailsLabel": {
     "description": "Expander label above the raw error detail (Yosys stderr, or an unclassified error's text) in the schematic error view."
   },
+  "elaborationErrorMissingModule": "设计使用了模块 {module}，但没有任何源文件或单元库定义它。请添加定义它的文件或单元库 (Liberty)，或将缺失的模块显示为黑盒。",
+  "@elaborationErrorMissingModule": {
+    "description": "Schematic error-view body shown when Yosys stopped because the design instantiates a module that nothing defines. {module} is the module's name as the design writes it.",
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "elaborationErrorMissingModuleUnnamed": "设计使用了一个没有任何源文件或单元库定义的模块。请添加定义它的文件或单元库 (Liberty)，或将缺失的模块显示为黑盒。",
+  "@elaborationErrorMissingModuleUnnamed": {
+    "description": "Schematic error-view body shown when Yosys stopped because the design instantiates a module that nothing defines, and the module's name could not be read from the message."
+  },
+  "elaborationErrorShowBlackBoxes": "将缺失的模块显示为黑盒",
+  "@elaborationErrorShowBlackBoxes": {
+    "description": "Button in the schematic error view, shown for a missing module: turns on the project option that draws modules nothing defines as black boxes and elaborates again."
+  },
   "commonCancel": "取消",
   "@commonCancel": {
     "description": "Generic Cancel button label used across dialogs."
@@ -892,6 +909,14 @@
   "cellLibrariesDialogApply": "应用",
   "@cellLibrariesDialogApply": {
     "description": "Button that applies the edited Cell Libraries list to the tab and re-elaborates the design."
+  },
+  "cellLibrariesDialogBlackBoxes": "将缺失的模块显示为黑盒",
+  "@cellLibrariesDialogBlackBoxes": {
+    "description": "Checkbox label in the Cell Libraries dialog: the project option that draws modules nothing defines (no source file, no cell library) as black boxes instead of failing the elaboration."
+  },
+  "cellLibrariesDialogBlackBoxesHelp": "用于在没有库的情况下查看设计。引脚方向根据连线推断，因此电源引脚显示为输入；如需准确的引脚，请使用单元库。",
+  "@cellLibrariesDialogBlackBoxesHelp": {
+    "description": "Explanation under the black-box checkbox in the Cell Libraries dialog: the option is for viewing, pin directions are inferred from the wiring, and a cell library gives exact pins."
   },
   "filePickerLibertyDialogTitle": "添加单元库",
   "@filePickerLibertyDialogTitle": {

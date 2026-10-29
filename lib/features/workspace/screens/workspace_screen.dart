@@ -813,20 +813,29 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
     if (!mounted) return;
     // The same sources may already be open, and then openTab focuses that
-    // tab and keeps its payload: bring its cell libraries in line with the
-    // project about to be set, so a restore agrees with what is shown.
+    // tab and keeps its payload: bring its cell libraries (and black-box
+    // option, which a fresh open leaves off) in line with the project about
+    // to be set, so a restore agrees with what is shown.
     final opened = ref
         .read(netcruxWorkspaceProvider)
         .value
         ?.tabs
         .where((tab) => tab.id == tabId)
         .firstOrNull;
-    if (opened != null && !listEquals(opened.payload.libertyFiles, libraries)) {
+    if (opened != null &&
+        (!listEquals(opened.payload.libertyFiles, libraries) ||
+            opened.payload.blackBoxMissingModules != null)) {
       await workspace.updateTabPayload(
         tabId,
         (payload) => libraries == null
-            ? payload.copyWith(clearLibertyFiles: true)
-            : payload.copyWith(libertyFiles: libraries),
+            ? payload.copyWith(
+                clearLibertyFiles: true,
+                clearBlackBoxMissingModules: true,
+              )
+            : payload.copyWith(
+                libertyFiles: libraries,
+                clearBlackBoxMissingModules: true,
+              ),
       );
       if (!mounted) return;
     }
@@ -872,17 +881,19 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           _hasSuffix(projectFile, kNetcruxProjectExtension);
       final isFilelist =
           projectFile != null && _hasSuffix(projectFile, kFilelistExtension);
-      // Cell libraries the tab set itself (see
+      // Cell libraries and the black-box option the tab set itself (see
       // [NetcruxTabPayload.libertyFiles]) apply over whatever the file says.
       final libertyOverride = payload.libertyFiles;
+      final blackBoxOverride = payload.blackBoxMissingModules;
       if (isProjectFile || isFilelist) {
         try {
           final fromFile = isFilelist
               ? await const FilelistReader().readAsProject(projectFile)
               : await _readNetcruxProject(projectFile);
-          final project = libertyOverride == null
-              ? fromFile
-              : fromFile.copyWith(libertyFiles: libertyOverride);
+          final project = fromFile.copyWith(
+            libertyFiles: libertyOverride,
+            blackBoxMissingModules: blackBoxOverride,
+          );
           if (!mounted) return;
           container
               .read(currentProjectProvider.notifier)
@@ -905,6 +916,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               sourceFiles: payload.sourceFiles,
               topModule: payload.topModule,
               libertyFiles: libertyOverride ?? const <String>[],
+              blackBoxMissingModules: blackBoxOverride ?? false,
             ),
             source: projectFile == null
                 ? NetcruxDesignSource.rtl

@@ -26,8 +26,9 @@ Future<void> _open(
   WidgetTester tester, {
   required List<String> initial,
   required FileOpenService picker,
-  required void Function(List<String>? result) onClosed,
+  required void Function(CellLibrariesEdit? result) onClosed,
   Locale? locale,
+  bool initialBlackBoxes = false,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -40,6 +41,7 @@ Future<void> _open(
             await showCellLibrariesDialog(
               context: context,
               initial: initial,
+              initialBlackBoxMissingModules: initialBlackBoxes,
               picker: picker,
             ),
           ),
@@ -55,7 +57,7 @@ Future<void> _open(
 void main() {
   testWidgets('lists, removes, adds and applies', (tester) async {
     final picker = _FakePicker(<String>['/pdk/b.lib', '/pdk/a.lib']);
-    List<String>? result;
+    CellLibrariesEdit? result;
     await _open(
       tester,
       initial: const <String>['/pdk/a.lib', '/pdk/old.lib'],
@@ -78,12 +80,43 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey<String>('cellLibrariesApply')));
     await tester.pumpAndSettle();
-    expect(result, <String>['/pdk/a.lib', '/pdk/b.lib']);
+    expect(result?.libertyFiles, <String>['/pdk/a.lib', '/pdk/b.lib']);
+    expect(result?.blackBoxMissingModules, isFalse);
+  });
+
+  testWidgets('the black-box checkbox opens as set and applies', (
+    tester,
+  ) async {
+    CellLibrariesEdit? result;
+    await _open(
+      tester,
+      initial: const <String>[],
+      initialBlackBoxes: true,
+      picker: _FakePicker(const <String>[]),
+      onClosed: (r) => result = r,
+    );
+    final box = find.byKey(const ValueKey<String>('cellLibrariesBlackBoxes'));
+    expect(find.text('Show missing modules as black boxes'), findsOneWidget);
+    expect(tester.widget<CheckboxListTile>(box).value, isTrue);
+
+    await tester.tap(box);
+    await tester.pump();
+    expect(tester.widget<CheckboxListTile>(box).value, isFalse);
+    await tester.tap(box);
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey<String>('cellLibrariesApply')));
+    await tester.pumpAndSettle();
+    expect(result?.libertyFiles, isEmpty);
+    expect(result?.blackBoxMissingModules, isTrue);
   });
 
   testWidgets('Cancel returns null; an empty list says so', (tester) async {
     var closed = false;
-    List<String>? result = const <String>['sentinel'];
+    CellLibrariesEdit? result = (
+      libertyFiles: const <String>['sentinel'],
+      blackBoxMissingModules: false,
+    );
     await _open(
       tester,
       initial: const <String>[],

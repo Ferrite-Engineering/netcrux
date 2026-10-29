@@ -120,6 +120,11 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
         'yosys_unavailable',
         'timeout',
         'non_zero_exit',
+        // `hierarchy -check` found an instance of a module nothing
+        // defines. Classified from the message so the error view can offer
+        // black boxes; still only the classification is reported, never
+        // the module's name.
+        'missing_module',
         'unknown',
       ],
     },

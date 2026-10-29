@@ -392,6 +392,40 @@ void main() {
       _assertInCatalog(event);
     });
 
+    test('a missing module reports missing_module, never its name', () async {
+      const stderr =
+          r"ERROR: Module `\SECRET_MACRO' referenced in module `\top' in "
+          r"cell `\u1' is not part of the design.";
+      final dir = sourcesFor(<String>['top.v']);
+      final container = elaborationContainer(
+        result: () => const YosysRunFailure(
+          exitCode: 1,
+          stdout: '',
+          stderr: stderr,
+        ),
+      );
+      container.read(currentProjectProvider.notifier).setSourceFiles(<String>[
+        '${dir.path}/top.v',
+      ]);
+
+      await expectLater(
+        container.read(loadedNetlistProvider.future),
+        throwsA(
+          isA<LoadedNetlistException>().having(
+            (e) => e.kind,
+            'kind',
+            LoadedNetlistErrorKind.missingModule,
+          ),
+        ),
+      );
+
+      final event = telemetry.named('design.elaboration_failed');
+      expect(event.properties, <String, Object?>{'reason': 'missing_module'});
+      final transmitted = '${event.name} ${event.properties}';
+      expect(transmitted, isNot(contains('SECRET_MACRO')));
+      _assertInCatalog(event);
+    });
+
     test('a timeout reports the timeout class', () async {
       final dir = sourcesFor(<String>['top.v']);
       final container = elaborationContainer(

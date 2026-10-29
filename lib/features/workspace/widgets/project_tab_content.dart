@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:crux_ide_layout/crux_ide_layout.dart';
+import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/providers/workspace_banner_widgets_provider.dart';
@@ -43,6 +44,7 @@ import 'package:netcrux/services/schematic/coi_filter_view_mode_provider.dart';
 import 'package:netcrux/services/schematic/net_activity_color_override_provider.dart';
 import 'package:netcrux/services/schematic/schematic_annotation_markers_provider.dart';
 import 'package:netcrux/services/schematic/schematic_crossing_overlay_provider.dart';
+import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 
 /// Per-tab content rendered inside [`PaneHost`]'s `IndexedStack` of tabs.
@@ -356,9 +358,39 @@ class _SchematicCenter extends ConsumerWidget {
         ),
       ),
       loading: () => const _SchematicLayoutLoading(),
-      error: (error, stackTrace) => SchematicErrorView(error: error),
+      error: (error, stackTrace) => SchematicErrorView(
+        error: error,
+        onShowMissingModulesAsBlackBoxes: () =>
+            unawaited(_showMissingModulesAsBlackBoxes(ref)),
+      ),
     );
   }
+}
+
+/// The schematic error view's "Show missing modules as black boxes": turns
+/// the option on for this tab's project, which elaborates it again, and
+/// records it in the tab's payload so it survives a restart (see
+/// `NetcruxTabPayload.blackBoxMissingModules`).
+Future<void> _showMissingModulesAsBlackBoxes(WidgetRef ref) async {
+  // Read everything before the first await: `ref` may not outlive it.
+  TabId? tabId;
+  try {
+    tabId = ref.read(tabIdProvider);
+  } on Object {
+    // Not inside a per-tab container (a bare test harness): there is no
+    // payload to record the option in.
+    tabId = null;
+  }
+  ref
+      .read(currentProjectProvider.notifier)
+      .setBlackBoxMissingModules(enabled: true);
+  if (tabId == null) return;
+  await ref
+      .read(netcruxWorkspaceProvider.notifier)
+      .updateTabPayload(
+        tabId,
+        (payload) => payload.copyWith(blackBoxMissingModules: true),
+      );
 }
 
 class _NotifierStatsSink implements RenderStatsSink {

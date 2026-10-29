@@ -20,6 +20,7 @@ Future<void> _pump(
   WidgetTester tester,
   Object error, {
   required Locale locale,
+  VoidCallback? onShowMissingModulesAsBlackBoxes,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -31,11 +32,26 @@ Future<void> _pump(
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: L10N.supportedLocales,
-      home: Scaffold(body: SchematicErrorView(error: error)),
+      home: Scaffold(
+        body: SchematicErrorView(
+          error: error,
+          onShowMissingModulesAsBlackBoxes: onShowMissingModulesAsBlackBoxes,
+        ),
+      ),
     ),
   );
   await tester.pumpAndSettle();
 }
+
+const LoadedNetlistException _missingModule = LoadedNetlistException(
+  'Elaboration failed: a module is not part of the design',
+  kind: LoadedNetlistErrorKind.missingModule,
+  exitCode: 1,
+  missingModule: 'INV',
+  detail:
+      r"ERROR: Module `\INV' referenced in module `\top' in cell `\u1' is "
+      'not part of the design.',
+);
 
 void main() {
   group('SchematicErrorView localized envelope', () {
@@ -120,6 +136,23 @@ void main() {
         expect(tester.takeException(), isNull);
       });
 
+      testWidgets('[$tag] missingModule → names the module, offers black '
+          'boxes', (tester) async {
+        final l10n = await L10N.delegate.load(locale);
+        await _pump(
+          tester,
+          _missingModule,
+          locale: locale,
+          onShowMissingModulesAsBlackBoxes: () {},
+        );
+        expect(
+          find.text(l10n.elaborationErrorMissingModule('INV')),
+          findsOneWidget,
+        );
+        expect(find.text(l10n.elaborationErrorShowBlackBoxes), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
       testWidgets('[$tag] unknown error → generic envelope, no class leak', (
         tester,
       ) async {
@@ -133,6 +166,65 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    testWidgets('the black-box action calls back once per tap', (
+      tester,
+    ) async {
+      var taps = 0;
+      await _pump(
+        tester,
+        _missingModule,
+        locale: const Locale('en'),
+        onShowMissingModulesAsBlackBoxes: () => taps++,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('showMissingModulesAsBlackBoxes')),
+      );
+      await tester.pump();
+      expect(taps, 1);
+      expect(find.text('Show missing modules as black boxes'), findsOneWidget);
+    });
+
+    testWidgets('a missing module the message does not name still reads', (
+      tester,
+    ) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        const LoadedNetlistException(
+          'Elaboration failed: a module is not part of the design',
+          kind: LoadedNetlistErrorKind.missingModule,
+          exitCode: 1,
+        ),
+        locale: const Locale('en'),
+        onShowMissingModulesAsBlackBoxes: () {},
+      );
+      expect(
+        find.text(l10n.elaborationErrorMissingModuleUnnamed),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('no action without a callback, or for any other failure', (
+      tester,
+    ) async {
+      final action = find.byKey(
+        const ValueKey<String>('showMissingModulesAsBlackBoxes'),
+      );
+      await _pump(tester, _missingModule, locale: const Locale('en'));
+      expect(action, findsNothing);
+      await _pump(
+        tester,
+        const LoadedNetlistException(
+          'Yosys exited with code 3',
+          kind: LoadedNetlistErrorKind.nonZeroExit,
+          exitCode: 3,
+        ),
+        locale: const Locale('en'),
+        onShowMissingModulesAsBlackBoxes: () {},
+      );
+      expect(action, findsNothing);
+    });
 
     testWidgets('nonZeroExit stderr detail is hidden until expanded', (
       tester,

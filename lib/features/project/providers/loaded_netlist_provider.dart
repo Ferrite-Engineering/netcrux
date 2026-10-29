@@ -19,6 +19,7 @@ import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
 import 'package:netcrux/services/telemetry/netcrux_design_language_mix.dart';
 import 'package:netcrux/services/web/web_json_loader.dart';
+import 'package:netcrux/services/yosys/black_box_port_inference.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_provider.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_service.dart';
 import 'package:netcrux/services/yosys/elaboration_timeout_provider.dart';
@@ -56,6 +57,12 @@ enum LoadedNetlistErrorKind {
   /// Yosys ran to completion but exited non-zero.
   nonZeroExit,
 
+  /// Yosys stopped because the design instantiates a module that no source
+  /// file or cell library defines (`hierarchy -check`: "is not part of the
+  /// design"). The error view offers to show missing modules as black
+  /// boxes ([NetcruxProject.blackBoxMissingModules]).
+  missingModule,
+
   /// Unclassified failure — render the generic envelope.
   unknown,
 }
@@ -76,6 +83,7 @@ class LoadedNetlistException implements Exception {
     this.detail,
     this.exitCode,
     this.timeoutSeconds,
+    this.missingModule,
   });
 
   /// Short user-actionable English message. Kept for logs, `toString`,
@@ -102,6 +110,10 @@ class LoadedNetlistException implements Exception {
   /// Elapsed timeout budget in whole seconds — set for
   /// [LoadedNetlistErrorKind.timeout].
   final int? timeoutSeconds;
+
+  /// The module Yosys found no definition for, as the design names it — set
+  /// for [LoadedNetlistErrorKind.missingModule] when the message names one.
+  final String? missingModule;
 
   @override
   String toString() => cause == null
@@ -258,6 +270,7 @@ class LoadedNetlist extends _$LoadedNetlist {
       defines: options.defines,
       includePaths: options.includePaths,
       extraCommands: options.extraCommands,
+      blackBoxMissingModules: project.blackBoxMissingModules,
     );
     if (cacheKey != null) {
       final hit = cache.lookup(cacheKey);
@@ -309,7 +322,7 @@ class LoadedNetlist extends _$LoadedNetlist {
     // Publish stderr — successes and failures alike — so the
     // diagnostics drawer can surface warnings even on healthy runs. The cell
     // libraries' own warnings go first, in Yosys's `Warning:` form.
-    final stderr = _withLibertyWarnings(liberty, result.stderr);
+    var stderr = _withLibertyWarnings(liberty, result.stderr);
     ref.read(elaborationStderrProvider.notifier).set(stderr);
     // A killed subprocess is reported by its result type, not an
     // exit code. Branch on those before the success / failure handling.
@@ -336,10 +349,19 @@ class LoadedNetlist extends _$LoadedNetlist {
         // top of that. Behavior is drop-in compatible with the legacy
         // in-memory `YosysJsonParser`, retained for tests. See
         // ARCHITECTURE.md §8.9.
-        final model = await parseNetlistOnIsolate(
+        final parsed = await _parse(
+          project,
           result.rawJson,
           cancelSignal: cancel.future,
         );
+        final model = parsed?.model;
+        // The modules drawn as black boxes lead the diagnostics, ahead of
+        // the cell libraries' warnings and Yosys's own.
+        final blackBoxes = parsed?.report ?? BlackBoxReport.none;
+        if (!blackBoxes.isEmpty) {
+          stderr = _withWarnings(blackBoxes.warningLines, stderr);
+          ref.read(elaborationStderrProvider.notifier).set(stderr);
+        }
         // Cache only a fully-parsed success (never populate the cache
         // with a partial result — cancelled and
         // failed runs return above, parse failures throw below, and a
@@ -431,6 +453,7 @@ class LoadedNetlist extends _$LoadedNetlist {
       includePaths: project.includePaths,
       extraCommands: project.extraYosysCommands,
       vhdlTopUnit: project.topModule.isEmpty ? null : project.topModule,
+      allowUndefinedModules: project.blackBoxMissingModules,
     );
   }
 
@@ -490,7 +513,7 @@ Future<NetlistModel?> loadDesignNetlist(
   if (result is YosysRunCancelled) return null;
   if (result is! YosysRunSuccess) throw _failureFor(result);
   try {
-    return await parseNetlistOnIsolate(result.rawJson);
+    return (await _parse(project, result.rawJson))?.model;
   } on YosysJsonParseException catch (e) {
     throw LoadedNetlistException(e.message, cause: e);
   }
@@ -551,11 +574,39 @@ Future<LibertyStubs?> _libertyStubs(Ref ref, NetcruxProject project) async {
 /// the form the diagnostics drawer parses.
 String _withLibertyWarnings(LibertyStubs? liberty, String stderr) {
   if (liberty == null || liberty.warnings.isEmpty) return stderr;
+  return _withWarnings(<String>[
+    for (final warning in liberty.warnings) 'Warning: $warning',
+  ], stderr);
+}
+
+/// [stderr] with [lines] in front, one per line.
+String _withWarnings(List<String> lines, String stderr) {
+  if (lines.isEmpty) return stderr;
   final buffer = StringBuffer();
-  for (final warning in liberty.warnings) {
-    buffer.writeln('Warning: $warning');
-  }
+  lines.forEach(buffer.writeln);
   return '$buffer$stderr';
+}
+
+/// Parses [rawJson] off the UI isolate. For a [project] that shows missing
+/// modules as black boxes, the black-box pins are given directions there
+/// too ([inferBlackBoxPorts]); otherwise the report is
+/// [BlackBoxReport.none]. `null` when [cancelSignal] fires first.
+Future<({NetlistModel model, BlackBoxReport report})?> _parse(
+  NetcruxProject project,
+  String rawJson, {
+  Future<void>? cancelSignal,
+}) async {
+  if (project.blackBoxMissingModules) {
+    return await parseNetlistWithBlackBoxesOnIsolate(
+      rawJson,
+      cancelSignal: cancelSignal,
+    );
+  }
+  final model = await parseNetlistOnIsolate(
+    rawJson,
+    cancelSignal: cancelSignal,
+  );
+  return model == null ? null : (model: model, report: BlackBoxReport.none);
 }
 
 /// The Yosys probe result, or a [LoadedNetlistErrorKind.yosysUnavailable]
@@ -592,6 +643,20 @@ LoadedNetlistException _failureFor(YosysRunResult result) {
   // pipeline error with that stderr shown in the details section, the
   // same envelope any tool failure uses.
   final stderr = failure.stderr;
+  // `hierarchy -check` refusing an instance of a module nothing defines.
+  // Matched on the message rather than reported as a plain non-zero exit,
+  // so the error view can offer the black-box option.
+  if (failure.kind == YosysFailureKind.nonZeroExit &&
+      stderr.contains(_missingModuleMarker)) {
+    return LoadedNetlistException(
+      'Elaboration failed: a module is not part of the design',
+      cause: stderr,
+      kind: LoadedNetlistErrorKind.missingModule,
+      exitCode: failure.exitCode,
+      detail: stderr,
+      missingModule: missingModuleIn(stderr),
+    );
+  }
   return LoadedNetlistException(
     'Elaboration failed with exit code ${failure.exitCode}',
     cause: stderr.isEmpty ? null : stderr,
@@ -600,3 +665,19 @@ LoadedNetlistException _failureFor(YosysRunResult result) {
     detail: stderr.isEmpty ? null : stderr,
   );
 }
+
+/// What Yosys's `hierarchy -check` says of an instance whose module no
+/// source defines: ``Module `\X' referenced in module `\top' in cell
+/// `\u1' is not part of the design.``
+const String _missingModuleMarker = 'is not part of the design';
+
+final RegExp _missingModulePattern = RegExp(
+  r"Module `\\?([^']+)' referenced in module .* is not part of the design",
+);
+
+/// The module name in Yosys's missing-module error in [stderr], without the
+/// backslash Yosys puts in front of a user identifier, or `null` when
+/// [stderr] has no such error.
+@visibleForTesting
+String? missingModuleIn(String stderr) =>
+    _missingModulePattern.firstMatch(stderr)?.group(1);

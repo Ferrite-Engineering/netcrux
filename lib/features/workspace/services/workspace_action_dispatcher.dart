@@ -831,30 +831,34 @@ class WorkspaceActionDispatcher {
     if (tabId != null) {
       await workspace.updateTabPayload(
         tabId,
-        // The file now holds the tab's cell libraries, so the tab's own
-        // copy of the list is dropped and a restore reads the file's.
+        // The file now holds the tab's cell libraries and black-box option,
+        // so the tab's own copies are dropped and a restore reads the file's.
         (payload) => payload.copyWith(
           projectFilePath: saved,
           clearLibertyFiles: true,
+          clearBlackBoxMissingModules: true,
         ),
       );
     }
     await settings.recordRecentProject(saved);
   }
 
-  /// Opens the Cell Libraries dialog over the active tab's Liberty files
-  /// and applies the edited list: to the tab's project, which re-elaborates
-  /// it, and to the tab's payload, so the list survives a restart (see
-  /// `NetcruxTabPayload.libertyFiles`).
+  /// Opens the Cell Libraries dialog over the active tab's Liberty files and
+  /// black-box option and applies the edit: to the tab's project, which
+  /// re-elaborates it, and to the tab's payload, so it survives a restart
+  /// (see `NetcruxTabPayload.libertyFiles` and
+  /// `NetcruxTabPayload.blackBoxMissingModules`).
   Future<void> _editCellLibraries(BuildContext context) async {
     final container = _ref.activeTabContainerOrNull(context);
     if (container == null) return;
     // Read before the await: `ref` is invalid across an async gap.
     final workspace = _ref.read(netcruxWorkspaceProvider.notifier);
     final tabId = _ref.read(netcruxWorkspaceProvider).value?.activeTabId;
+    final project = container.read(currentProjectProvider);
     final edited = await showCellLibrariesDialog(
       context: context,
-      initial: container.read(currentProjectProvider).libertyFiles,
+      initial: project.libertyFiles,
+      initialBlackBoxMissingModules: project.blackBoxMissingModules,
       picker: _ref.read(fileOpenServiceProvider),
     );
     if (edited == null || tabId == null || !context.mounted) return;
@@ -862,10 +866,18 @@ class WorkspaceActionDispatcher {
     // disposed and there is nothing to apply the list to.
     final tabs = _ref.read(netcruxWorkspaceProvider).value?.tabs;
     if (tabs == null || !tabs.any((tab) => tab.id == tabId)) return;
-    container.read(currentProjectProvider.notifier).setLibertyFiles(edited);
+    container
+        .read(currentProjectProvider.notifier)
+        .setLibertyFiles(
+          edited.libertyFiles,
+          blackBoxMissingModules: edited.blackBoxMissingModules,
+        );
     await workspace.updateTabPayload(
       tabId,
-      (payload) => payload.copyWith(libertyFiles: edited),
+      (payload) => payload.copyWith(
+        libertyFiles: edited.libertyFiles,
+        blackBoxMissingModules: edited.blackBoxMissingModules,
+      ),
     );
   }
 
