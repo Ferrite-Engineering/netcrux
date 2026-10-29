@@ -14,7 +14,7 @@
 //   -I DIR              include directory, repeatable (also --include)
 //   --zoom Z            PNG pixels per layout unit (default 1.0)
 //   --region X,Y,W,H    the part of the layout to show, in layout units
-//   --theme dark|light  PNG colours (default dark)
+//   --theme dark|light  colours (default dark)|light  PNG colours (default dark)
 //   --font FILE.ttf     label font for a PNG (default: Arial where present)
 //
 // Sources are elaborated with Yosys as NetCrux elaborates them; a single

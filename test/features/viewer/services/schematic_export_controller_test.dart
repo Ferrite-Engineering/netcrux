@@ -5,17 +5,28 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/layout/bounding_box.dart';
+import 'package:netcrux/domain/models/layout/edge_route.dart';
+import 'package:netcrux/domain/models/layout/netlist_layout.dart';
+import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/exported_cell_symbol.dart';
+import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/viewer/services/schematic_export_controller.dart';
+import 'package:netcrux/features/viewer/services/svg_export_palette_from_theme.dart';
+import 'package:netcrux/features/viewer/symbols/cell_symbol_svg_source_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// Pumps a Scaffold, optionally hosting a widget under [canvasKey], and
@@ -150,6 +161,49 @@ void main() {
       expect(find.textContaining('no graph to export'), findsOneWidget);
       expect(File('${dir.path}/schematic.svg').existsSync(), isFalse);
     });
+
+    testWidgets('writes the canvas symbols, custom artwork from the '
+        'active source, in the theme colours', (tester) async {
+      final dir = Directory.systemTemp.createTempSync('nc_export_svg_ok_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final container = ProviderContainer(
+        overrides: [
+          ...netcruxTelemetryTestOverrides(),
+          currentLaidOutGraphProvider.overrideWith((ref) async => _laidOut()),
+          cellSymbolSvgSourceProvider.overrideWithValue(
+            (cell) => cell.type == 'alu'
+                ? const ExportedCellSymbolSvg(
+                    '<svg xmlns="http://www.w3.org/2000/svg" '
+                    'viewBox="0 0 10 10"><circle id="alu-art" cx="5" '
+                    'cy="5" r="4"/></svg>',
+                  )
+                : null,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(currentLaidOutGraphProvider.future);
+
+      final controller = await _controller(
+        tester,
+        reuseContainer: container,
+        pickSavePath: (name) async => '${dir.path}/$name',
+      );
+
+      await tester.runAsync(controller.exportSvg);
+      await tester.pump();
+
+      final file = File('${dir.path}/schematic.svg');
+      expect(file.existsSync(), isTrue);
+      final svg = file.readAsStringSync();
+      expect(svg, contains('<g class="cell" data-kind="andGate"'));
+      expect(svg, contains('<svg class="cell custom-symbol" data-type="alu"'));
+      expect(svg, contains('id="alu-art"'));
+      // The MaterialApp's default (light) theme, not the dark fallback.
+      final theme = ThemeData();
+      expect(svg, contains(cssHexColor(theme.colorScheme.surface)));
+      expect(find.textContaining(file.path), findsOneWidget);
+    });
   });
 
   group('exportJson', () {
@@ -252,6 +306,42 @@ void main() {
     });
   });
 }
+
+LaidOutGraph _laidOut() => const LaidOutGraph(
+  graph: SchematicGraph(
+    moduleName: 'top',
+    cells: <SchematicCell>[
+      SchematicCell(
+        id: 'u_and',
+        kind: CellKind.andGate,
+        type: r'$and',
+        ports: <SchematicPort>[],
+      ),
+      SchematicCell(
+        id: 'u_alu',
+        kind: CellKind.generic,
+        type: 'alu',
+        ports: <SchematicPort>[],
+      ),
+    ],
+    boundaryPorts: <SchematicBoundaryPort>[],
+    edges: <SchematicEdge>[],
+  ),
+  layout: NetlistLayout(
+    nodes: <NodePosition>[
+      NodePosition(
+        id: 'u_and',
+        bounds: BoundingBox(x: 0, y: 0, width: 60, height: 40),
+      ),
+      NodePosition(
+        id: 'u_alu',
+        bounds: BoundingBox(x: 100, y: 0, width: 40, height: 40),
+      ),
+    ],
+    edges: <EdgeRoute>[],
+    bounds: BoundingBox(x: 0, y: 0, width: 140, height: 40),
+  ),
+);
 
 NetlistModel _model() {
   const top = Module(

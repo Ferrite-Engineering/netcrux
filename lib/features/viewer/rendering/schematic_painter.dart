@@ -23,6 +23,11 @@ import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
+import 'package:netcrux/domain/models/schematic/symbol_shapes.dart'
+    as shapes
+    show symbolPinFace;
+import 'package:netcrux/domain/models/schematic/symbol_shapes.dart'
+    hide symbolPinFace;
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
@@ -933,13 +938,6 @@ class SchematicCanvasRenderObject extends RenderBox {
   /// [_paintOutsideCellLabels], which draws them after the wires.
   final List<_OutsideLabel> _pendingOutsideLabels = <_OutsideLabel>[];
 
-  /// The widest an outside label may be, in design units, when its cell is
-  /// narrower: a symbol node can be small, and the name should stay legible.
-  static const double _outsideLabelMinWidth = 120;
-
-  /// Gap between a symbol cell's drawing and its outside label.
-  static const double _outsideLabelGap = 2;
-
   /// Paints the label of every cell drawn with a custom symbol outside its
   /// drawing: centred below the node, or above it when a neighbouring cell
   /// or module port occupies the space below and none occupies the space
@@ -958,7 +956,7 @@ class SchematicCanvasRenderObject extends RenderBox {
         'o:${label.cell.id}',
         label.cell.displayLabel,
         style,
-        math.max(cellRect.width, _outsideLabelMinWidth),
+        math.max(cellRect.width, SchematicDetailMarks.outsideLabelMinWidth),
         elideStart: true,
       );
       final rect = outsideLabelRect(
@@ -999,35 +997,32 @@ class SchematicCanvasRenderObject extends RenderBox {
   );
 
   /// Where the outside label of a cell at [cellRect] goes, for a label of
-  /// [labelSize]: centred under the cell, [_outsideLabelGap] below it, when
-  /// [isFree] says that space is clear; otherwise the same distance above
-  /// when that is clear; otherwise below regardless. Never inside
-  /// [cellRect].
+  /// [labelSize]: the rule of [outsideLabelBox], which the SVG export
+  /// follows too.
   @visibleForTesting
   static Rect outsideLabelRect(
     Rect cellRect,
     Size labelSize, {
     required bool Function(Rect candidate) isFree,
   }) {
-    final left = cellRect.center.dx - labelSize.width / 2;
-    final below = Rect.fromLTWH(
-      left,
-      cellRect.bottom + _outsideLabelGap,
-      labelSize.width,
-      labelSize.height,
+    Rect rectOf(BoundingBox b) => Rect.fromLTWH(b.x, b.y, b.width, b.height);
+    return rectOf(
+      outsideLabelBox(
+        BoundingBox(
+          x: cellRect.left,
+          y: cellRect.top,
+          width: cellRect.width,
+          height: cellRect.height,
+        ),
+        labelSize.width,
+        labelSize.height,
+        isFree: (candidate) => isFree(rectOf(candidate)),
+      ),
     );
-    if (isFree(below)) return below;
-    final above = Rect.fromLTWH(
-      left,
-      cellRect.top - _outsideLabelGap - labelSize.height,
-      labelSize.width,
-      labelSize.height,
-    );
-    return isFree(above) ? above : below;
   }
 
   /// Inset of a pin name from the edge of a symbol's drawing.
-  static const double _pinNameInset = 3;
+  static const double _pinNameInset = SchematicDetailMarks.pinNameInset;
 
   /// Names each pin of a custom-symbol [cell] that a symbol anchor names
   /// exactly ([anchoredPins]), just inside the drawing beside the pin, on
@@ -1093,21 +1088,13 @@ class SchematicCanvasRenderObject extends RenderBox {
   }
 
   /// The face of a symbol node that a pin [box] (relative to the node, of
-  /// [width] by [height]) sits on: the layout puts west pins wholly left of
-  /// the node, east pins at its right edge, north pins above it and south
-  /// pins at its bottom edge.
+  /// [width] by [height]) sits on; see the shared `symbolPinFace`.
   @visibleForTesting
   static SchematicPortSide symbolPinFace(
     BoundingBox box,
     double width,
     double height,
-  ) {
-    const slop = 0.5;
-    if (box.x + box.width <= slop) return SchematicPortSide.west;
-    if (box.x >= width - slop) return SchematicPortSide.east;
-    if (box.y + box.height <= slop) return SchematicPortSide.north;
-    return SchematicPortSide.south;
-  }
+  ) => shapes.symbolPinFace(box, width, height);
 
   /// Positive cone-of-influence highlight: an azure tint + outline drawn
   /// over a cone cell's body in every LOD band. Distinct hue from the amber
@@ -1172,9 +1159,7 @@ class SchematicCanvasRenderObject extends RenderBox {
       if (tie.kind == PinTieKind.constant || tie.kind == PinTieKind.undriven) {
         // The stub leaves the pin away from the body: leftwards from a pin
         // on the west half of the cell, rightwards from one on the east.
-        final outward = box.x + box.width / 2 < position.bounds.width / 2
-            ? -1.0
-            : 1.0;
+        final outward = tieStubOutward(box, position.bounds.width);
         _paintTieStub(
           canvas,
           port,
@@ -1191,16 +1176,17 @@ class SchematicCanvasRenderObject extends RenderBox {
           : stubPaint;
       canvas.drawCircle(
         Offset(cx, cy),
-        isSelectedPort ? 3.5 : 2.5,
+        isSelectedPort
+            ? SchematicDetailMarks.selectedPinDotRadius
+            : SchematicDetailMarks.pinDotRadius,
         dotPaint,
       );
     }
   }
 
   /// Design-space length of the stub drawn out of a constant-tied or
-  /// undriven pin. Short enough to stay inside the gap ELK leaves between
-  /// layers.
-  static const double _tieStubLength = 9;
+  /// undriven pin; see [SchematicDetailMarks.tieStubLength].
+  static const double _tieStubLength = SchematicDetailMarks.tieStubLength;
 
   /// Draws the stub of a pin whose [SchematicPort.tie] is a constant or
   /// undriven, from [pin] towards [outward] (`-1` left, `1` right).
@@ -1226,11 +1212,14 @@ class SchematicCanvasRenderObject extends RenderBox {
     final stroke = Paint()
       ..color = colour
       ..style = PaintingStyle.stroke
-      ..strokeWidth = undriven ? 1.6 : 1.2;
+      ..strokeWidth = undriven
+          ? SchematicDetailMarks.undrivenStubWidth
+          : SchematicDetailMarks.constantStubWidth;
     final end = pin.translate(outward * _tieStubLength, 0);
     canvas.drawLine(pin, end, stroke);
     if (undriven) {
-      canvas.drawCircle(end.translate(outward * 2, 0), 2, stroke);
+      const ring = SchematicDetailMarks.undrivenRingRadius;
+      canvas.drawCircle(end.translate(outward * ring, 0), ring, stroke);
       return;
     }
     final text = port.tie.constantText;
@@ -1240,12 +1229,13 @@ class SchematicCanvasRenderObject extends RenderBox {
       text,
       (_theme.textTheme.labelSmall ?? const TextStyle()).copyWith(
         color: colour,
-        fontSize: 8,
+        fontSize: SchematicDetailMarks.tieLabelFontSize,
         height: 1,
       ),
       28,
     );
-    final dx = outward < 0 ? end.dx - 1 - painter.width : end.dx + 1;
+    const gap = SchematicDetailMarks.tieLabelGap;
+    final dx = outward < 0 ? end.dx - gap - painter.width : end.dx + gap;
     painter.paint(canvas, Offset(dx, end.dy - painter.height / 2));
   }
 
@@ -2031,8 +2021,8 @@ class SchematicCanvasRenderObject extends RenderBox {
     // the east. On the wire side the name was drawn over its own wire.
     final origin = Offset(
       port.direction == PortDirection.input
-          ? rect.left - 4 - painter.width
-          : rect.right + 4,
+          ? rect.left - SchematicDetailMarks.boundaryLabelGap - painter.width
+          : rect.right + SchematicDetailMarks.boundaryLabelGap,
       rect.center.dy - painter.height / 2,
     );
     painter.paint(canvas, origin);

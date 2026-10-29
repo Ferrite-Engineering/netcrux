@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/theme/netcrux_theme.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
+import 'package:netcrux/features/viewer/services/svg_export_palette_from_theme.dart';
 import 'package:netcrux/services/export/scope_render.dart';
 import 'package:netcrux/services/export/svg_exporter.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
@@ -51,12 +52,19 @@ void main() {
     final laidOut = layOutScope(model, node, solver.solve);
     solver.dispose();
     final frame = renderFrame(laidOut, region: region);
+    final base = request['theme'] == 'light'
+        ? NetcruxTheme.light()
+        : NetcruxTheme.dark();
 
     if (out.path.toLowerCase().endsWith('.svg')) {
       await tester.runAsync(() async {
         await out.parent.create(recursive: true);
         await out.writeAsString(
-          const SvgExporter().toSvg(laidOut, frame: frame),
+          const SvgExporter().toSvg(
+            laidOut,
+            frame: frame,
+            palette: svgExportPaletteFromTheme(base),
+          ),
         );
       });
       return;
@@ -84,9 +92,6 @@ void main() {
       await tester.runAsync(loader.load);
       labelFamily = 'RenderLabel';
     }
-    final base = request['theme'] == 'light'
-        ? NetcruxTheme.light()
-        : NetcruxTheme.dark();
     final theme = labelFamily.isEmpty
         ? base
         : base.copyWith(

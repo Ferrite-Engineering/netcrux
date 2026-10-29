@@ -1,10 +1,9 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 
 /// Paint configuration handed to every symbol painter. Keeps the
 /// painters themselves stateless so they're easy to unit-test
@@ -29,7 +28,7 @@ class SymbolPaintContext {
       stroke: Paint()
         ..color = scheme.onSurface
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4,
+        ..strokeWidth = symbolStrokeWidth,
       accent: Paint()
         ..color = scheme.primary
         ..style = PaintingStyle.stroke
@@ -94,168 +93,92 @@ SymbolPainter painterFor(CellKind kind) {
   }
 }
 
-void _drawFilledOutline(Canvas canvas, Path path, SymbolPaintContext ctx) {
-  canvas
-    ..drawPath(path, ctx.body)
-    ..drawPath(path, ctx.stroke);
+/// Draws [shape], pieces in order, into [canvas] already translated into
+/// the cell's local box. The one painter behind every built-in symbol; the
+/// SVG export writes the same pieces (see `symbol_shapes.dart`).
+void paintSymbolShape(
+  Canvas canvas,
+  List<SymbolPrimitive> shape,
+  SymbolPaintContext ctx,
+) {
+  for (final piece in shape) {
+    final filled = piece.style == SymbolPrimitiveStyle.filledOutline;
+    switch (piece) {
+      case SymbolPath(:final commands):
+        final path = _pathOf(commands);
+        if (filled) canvas.drawPath(path, ctx.body);
+        canvas.drawPath(path, ctx.stroke);
+      case SymbolCircle(:final cx, :final cy, :final radius):
+        final centre = Offset(cx, cy);
+        if (filled) canvas.drawCircle(centre, radius, ctx.body);
+        canvas.drawCircle(centre, radius, ctx.stroke);
+      case SymbolRect(
+        :final left,
+        :final top,
+        :final right,
+        :final bottom,
+        :final cornerRadius,
+      ):
+        final rect = Rect.fromLTRB(left, top, right, bottom);
+        if (cornerRadius > 0) {
+          final rrect = RRect.fromRectAndRadius(
+            rect,
+            Radius.circular(cornerRadius),
+          );
+          if (filled) canvas.drawRRect(rrect, ctx.body);
+          canvas.drawRRect(rrect, ctx.stroke);
+        } else {
+          if (filled) canvas.drawRect(rect, ctx.body);
+          canvas.drawRect(rect, ctx.stroke);
+        }
+    }
+  }
 }
 
-/// Standard ANSI/IEEE 91-style AND-gate body: flat back, rounded
-/// front-right, drawn inside `[0, 0, size.width, size.height]`. A
-/// small inset keeps the body off the rectangle's edges so the pin
-/// stubs the renderer overlays look like they touch the body.
-void paintAndGate(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final left = inset;
-  final right = size.width - inset;
-  final top = inset;
-  final bottom = size.height - inset;
-  final radius = (bottom - top) / 2;
-  final flatRight = right - radius;
-  final path = Path()
-    ..moveTo(left, top)
-    ..lineTo(flatRight, top)
-    ..arcToPoint(
-      Offset(flatRight, bottom),
-      radius: Radius.circular(radius),
-    )
-    ..lineTo(left, bottom)
-    ..close();
-  _drawFilledOutline(canvas, path, ctx);
+Path _pathOf(List<SymbolPathCommand> commands) {
+  final path = Path();
+  for (final command in commands) {
+    switch (command) {
+      case SymbolMoveTo(:final x, :final y):
+        path.moveTo(x, y);
+      case SymbolLineTo(:final x, :final y):
+        path.lineTo(x, y);
+      case SymbolArcTo(:final x, :final y, :final radius):
+        path.arcToPoint(Offset(x, y), radius: Radius.circular(radius));
+      case SymbolQuadTo(:final cx, :final cy, :final x, :final y):
+        path.quadraticBezierTo(cx, cy, x, y);
+      case SymbolClose():
+        path.close();
+    }
+  }
+  return path;
 }
 
-/// IEEE 91-style OR-gate body: curved back, pointed front.
-void paintOrGate(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final left = inset;
-  final right = size.width - inset;
-  final top = inset;
-  final bottom = size.height - inset;
-  final midY = (top + bottom) / 2;
-  final tip = right;
-  // Back: a concave curve from top-left to bottom-left. Top arc and
-  // bottom arc meet at the gate tip (right midpoint).
-  final controlX = left + (right - left) * 0.55;
-  final path = Path()
-    ..moveTo(left, top)
-    // Concave back.
-    ..quadraticBezierTo(left + (right - left) * 0.2, midY, left, bottom)
-    // Bottom curve toward the tip.
-    ..quadraticBezierTo(controlX, bottom, tip, midY)
-    // Top curve back to start.
-    ..quadraticBezierTo(controlX, top, left, top)
-    ..close();
-  _drawFilledOutline(canvas, path, ctx);
-}
+/// AND-gate body ([andGateShape]).
+void paintAndGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, andGateShape(size.width, size.height), ctx);
 
-/// Inverter: triangle with a bubble on the front. Pins on left and
-/// right edges of the bounding box.
-void paintNotGate(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final left = inset;
-  final right = size.width - inset;
-  final top = inset;
-  final bottom = size.height - inset;
-  final midY = (top + bottom) / 2;
-  final bubbleRadius = (size.width - 2 * inset) * 0.06;
-  final triangleRight = right - 2 * bubbleRadius;
-  final triangle = Path()
-    ..moveTo(left, top)
-    ..lineTo(triangleRight, midY)
-    ..lineTo(left, bottom)
-    ..close();
-  _drawFilledOutline(canvas, triangle, ctx);
-  final bubbleCenter = Offset(triangleRight + bubbleRadius, midY);
-  canvas
-    ..drawCircle(bubbleCenter, bubbleRadius, ctx.body)
-    ..drawCircle(bubbleCenter, bubbleRadius, ctx.stroke);
-}
+/// OR-gate body ([orGateShape]).
+void paintOrGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, orGateShape(size.width, size.height), ctx);
 
-/// Mux: trapezoid, wider on the left (input side) than the right.
-void paintMux(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final left = inset;
-  final right = size.width - inset;
-  final top = inset;
-  final bottom = size.height - inset;
-  final shrink = (bottom - top) * 0.18;
-  final path = Path()
-    ..moveTo(left, top)
-    ..lineTo(right, top + shrink)
-    ..lineTo(right, bottom - shrink)
-    ..lineTo(left, bottom)
-    ..close();
-  _drawFilledOutline(canvas, path, ctx);
-}
+/// Inverter body ([notGateShape]).
+void paintNotGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, notGateShape(size.width, size.height), ctx);
 
-/// Flip-flop: rounded rectangle with a CLK triangle on the left side
-/// (drawn pointing inward, near the bottom).
-void paintFlipFlop(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final rect = RRect.fromRectAndRadius(
-    Rect.fromLTRB(
-      inset,
-      inset,
-      size.width - inset,
-      size.height - inset,
-    ),
-    const Radius.circular(4),
-  );
-  canvas
-    ..drawRRect(rect, ctx.body)
-    ..drawRRect(rect, ctx.stroke);
-  // Clock arrow — small inward triangle near the bottom-left.
-  final clockY = size.height * 0.78;
-  final triangleSize = size.height * 0.07;
-  final clockArrow = Path()
-    ..moveTo(inset, clockY - triangleSize)
-    ..lineTo(inset + triangleSize * 1.4, clockY)
-    ..lineTo(inset, clockY + triangleSize)
-    ..close();
-  canvas.drawPath(clockArrow, ctx.stroke);
-}
+/// Mux body ([muxShape]).
+void paintMux(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, muxShape(size.width, size.height), ctx);
 
-/// Latch: rounded rectangle similar to a flip-flop but without the
-/// edge-triangle clock arrow. Indicates level-sensitive enable.
-void paintLatch(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final rect = RRect.fromRectAndRadius(
-    Rect.fromLTRB(
-      inset,
-      inset,
-      size.width - inset,
-      size.height - inset,
-    ),
-    const Radius.circular(2),
-  );
-  canvas
-    ..drawRRect(rect, ctx.body)
-    ..drawRRect(rect, ctx.stroke);
-  // Level-sensitive marker — a small horizontal bar on the left edge
-  // mid-height, distinguishing the symbol from a flip-flop at a
-  // glance even before the user reads the type label.
-  final midY = size.height / 2;
-  final barWidth = math.min(size.width * 0.15, 12);
-  final bar = Path()
-    ..moveTo(inset, midY - 3)
-    ..lineTo(inset + barWidth, midY - 3)
-    ..lineTo(inset + barWidth, midY + 3)
-    ..lineTo(inset, midY + 3)
-    ..close();
-  canvas.drawPath(bar, ctx.stroke);
-}
+/// Flip-flop body ([flipFlopShape]).
+void paintFlipFlop(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, flipFlopShape(size.width, size.height), ctx);
 
-/// Generic catch-all: simple labeled rectangle. The renderer paints
-/// the cell's display label on top.
-void paintGenericBox(Canvas canvas, Size size, SymbolPaintContext ctx) {
-  final inset = size.width * 0.06;
-  final rect = Rect.fromLTRB(
-    inset,
-    inset,
-    size.width - inset,
-    size.height - inset,
-  );
-  canvas
-    ..drawRect(rect, ctx.body)
-    ..drawRect(rect, ctx.stroke);
-}
+/// Latch body ([latchShape]).
+void paintLatch(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, latchShape(size.width, size.height), ctx);
+
+/// Generic catch-all body ([genericBoxShape]). The renderer paints the
+/// cell's display label on top.
+void paintGenericBox(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, genericBoxShape(size.width, size.height), ctx);

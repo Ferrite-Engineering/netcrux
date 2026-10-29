@@ -17,6 +17,8 @@ import 'package:netcrux/domain/enums/netcrux_export_kind.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/viewer/services/svg_export_palette_from_theme.dart';
+import 'package:netcrux/features/viewer/symbols/cell_symbol_svg_source_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/export/svg_exporter.dart';
 
@@ -105,8 +107,13 @@ class SchematicExportController {
     }
   }
 
-  /// Exports the current canvas as SVG using [SvgExporter].
+  /// Exports the current canvas as SVG using [SvgExporter]: the canvas's
+  /// symbols, custom ones included ([cellSymbolSvgSourceProvider]), in the
+  /// active theme's colours.
   Future<void> exportSvg() async {
+    // Read the theme before the picker's await, as [exportPng] captures its
+    // render object.
+    final palette = svgExportPaletteFromTheme(Theme.of(context));
     final path = await _pickSavePath('schematic.svg');
     if (path == null) return;
     try {
@@ -115,7 +122,11 @@ class SchematicExportController {
         _fail('no graph to export');
         return;
       }
-      final svg = const SvgExporter().toSvg(laidOut);
+      final svg = const SvgExporter().toSvg(
+        laidOut,
+        customSymbols: container.read(cellSymbolSvgSourceProvider),
+        palette: palette,
+      );
       await File(path).writeAsString(svg);
       _success(NetcruxExportKind.svg, path);
     } on Object catch (e) {

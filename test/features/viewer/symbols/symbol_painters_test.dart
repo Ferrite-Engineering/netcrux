@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 import 'package:netcrux/features/viewer/symbols/symbol_painters.dart';
 
 /// Hosts a [SymbolPainter] inside a [CustomPaint] at a fixed pixel
@@ -30,6 +31,51 @@ class _SymbolHarness extends StatelessWidget {
     );
   }
 }
+
+/// Records the draw calls a painter makes, by kind and paint.
+class _RecordingCanvas implements Canvas {
+  final List<String> calls = <String>[];
+  final List<Rect> pathBounds = <Rect>[];
+
+  String _paint(Paint p) => p.style == PaintingStyle.fill ? 'fill' : 'stroke';
+
+  @override
+  void drawPath(Path path, Paint paint) {
+    calls.add('path:${_paint(paint)}');
+    pathBounds.add(path.getBounds());
+  }
+
+  @override
+  void drawCircle(Offset c, double radius, Paint paint) =>
+      calls.add('circle:${_paint(paint)}');
+
+  @override
+  void drawRect(Rect rect, Paint paint) => calls.add('rect:${_paint(paint)}');
+
+  @override
+  void drawRRect(RRect rrect, Paint paint) =>
+      calls.add('rrect:${_paint(paint)}');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      fail('unexpected canvas call ${invocation.memberName}');
+}
+
+/// The draw calls [shape] implies: a fill then a stroke for each filled
+/// piece, a stroke alone for the rest.
+List<String> _expectedCalls(List<SymbolPrimitive> shape) => <String>[
+  for (final piece in shape) ...<String>[
+    for (final style in <String>[
+      if (piece.style == SymbolPrimitiveStyle.filledOutline) 'fill',
+      'stroke',
+    ])
+      '${switch (piece) {
+        SymbolPath() => 'path',
+        SymbolCircle() => 'circle',
+        SymbolRect(:final cornerRadius) => cornerRadius > 0 ? 'rrect' : 'rect',
+      }}:$style',
+  ],
+];
 
 class _DelegatePainter extends CustomPainter {
   _DelegatePainter(this.painter, this.ctx);
@@ -98,6 +144,35 @@ void main() {
           );
         }
       }
+    });
+  });
+
+  group('painters draw the shared shapes', () {
+    // The SVG export writes these same shapes, so a painter that drew
+    // anything else would let the canvas and the export drift apart.
+    final ctx = SymbolPaintContext.fromTheme(ThemeData.dark());
+    for (final kind in CellKind.values) {
+      test(kind.name, () {
+        final canvas = _RecordingCanvas();
+        painterFor(kind)(canvas, standardSize, ctx);
+        final shape = symbolShapeFor(
+          kind,
+          standardSize.width,
+          standardSize.height,
+        );
+        expect(canvas.calls, _expectedCalls(shape));
+        for (final bounds in canvas.pathBounds) {
+          expect(
+            Offset.zero & standardSize,
+            predicate<Rect>((r) => r.expandToInclude(bounds) == r),
+            reason: 'a ${kind.name} path leaves its box',
+          );
+        }
+      });
+    }
+
+    test('the outline width is the shared one', () {
+      expect(ctx.stroke.strokeWidth, closeTo(symbolStrokeWidth, 1e-6));
     });
   });
 
