@@ -66,6 +66,103 @@ Module _module(int flops) => NetlistModel.fromJson(_json(flops)).modules['m']!;
 
 void main() {
   group('enumerateNetEdges', () {
+    test('a power net with no driver is drawn from its inout port', () {
+      // vdd is an inout supply port wired to two cells' power pins: inout
+      // pins (from a Liberty pg_pin) on u0, an inferred input on u1.
+      final module = NetlistModel.fromJson(const <String, Object?>{
+        'modules': <String, Object?>{
+          'm': <String, Object?>{
+            'attributes': <String, Object?>{'top': '1'},
+            'ports': <String, Object?>{
+              'vdd': <String, Object?>{
+                'direction': 'inout',
+                'bits': <Object>[5],
+              },
+            },
+            'cells': <String, Object?>{
+              'u0': <String, Object?>{
+                'type': 'INV',
+                'port_directions': <String, Object?>{'VDD': 'inout'},
+                'connections': <String, Object?>{
+                  'VDD': <Object>[5],
+                },
+              },
+              'u1': <String, Object?>{
+                'type': 'NAND2',
+                'port_directions': <String, Object?>{'VDD': 'input'},
+                'connections': <String, Object?>{
+                  'VDD': <Object>[5],
+                },
+              },
+            },
+            'netnames': <String, Object?>{},
+          },
+        },
+      }).modules['m']!;
+
+      final net = enumerateNetEdges(module).singleWhere((g) => g.netId == 5);
+      expect(
+        <String>[
+          for (final e in net.edges) '${e.sourcePortId}>${e.targetPortId}',
+        ],
+        <String>['port:vdd>u0:VDD', 'port:vdd>u1:VDD'],
+      );
+    });
+
+    test('with no inout port, a net of inout pins is drawn from the first', () {
+      final module = NetlistModel.fromJson(<String, Object?>{
+        'modules': <String, Object?>{
+          'm': <String, Object?>{
+            'attributes': const <String, Object?>{'top': '1'},
+            'ports': const <String, Object?>{},
+            'cells': <String, Object?>{
+              for (final name in <String>['p0', 'p1', 'p2'])
+                name: <String, Object?>{
+                  'type': 'PAD',
+                  'port_directions': <String, Object?>{'IO': 'inout'},
+                  'connections': <String, Object?>{
+                    'IO': <Object>[7],
+                  },
+                },
+            },
+            'netnames': const <String, Object?>{},
+          },
+        },
+      }).modules['m']!;
+
+      final net = enumerateNetEdges(module).single;
+      expect(
+        <String>[
+          for (final e in net.edges) '${e.sourcePortId}>${e.targetPortId}',
+        ],
+        <String>['p0:IO>p1:IO', 'p0:IO>p2:IO'],
+      );
+    });
+
+    test('a net of inputs alone still draws nothing', () {
+      final module = NetlistModel.fromJson(<String, Object?>{
+        'modules': <String, Object?>{
+          'm': <String, Object?>{
+            'attributes': const <String, Object?>{'top': '1'},
+            'ports': const <String, Object?>{},
+            'cells': <String, Object?>{
+              for (final name in <String>['a', 'b'])
+                name: <String, Object?>{
+                  'type': 'INV',
+                  'port_directions': <String, Object?>{'A': 'input'},
+                  'connections': <String, Object?>{
+                    'A': <Object>[9],
+                  },
+                },
+            },
+            'netnames': const <String, Object?>{},
+          },
+        },
+      }).modules['m']!;
+
+      expect(enumerateNetEdges(module), isEmpty);
+    });
+
     test('numbers each net from zero, independent of other nets', () {
       final small = enumerateNetEdges(_module(2));
       final large = enumerateNetEdges(_module(40));

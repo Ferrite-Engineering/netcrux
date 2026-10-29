@@ -32,7 +32,10 @@ class NetEdges {
 ///
 /// A driver is a cell output or a module input port; everything else (a
 /// cell input, inout or pin with no recorded direction, a module output or
-/// inout port) is a sink. Attachments are de-duplicated per net, since Yosys
+/// inout port) is a sink. A net with no driver but an inout on it, such as a
+/// power net that only connects an inout supply port to cells' power pins,
+/// is drawn from that inout: the first module inout port on the net, or else
+/// the first inout cell pin. Without it such a net drew no wire at all. Attachments are de-duplicated per net, since Yosys
 /// lists a pin once per bit and a bus can carry one net on several bits, and
 /// a pin is never paired with itself. Nets keep the order their first
 /// attachment appears in (cells, then module ports); drivers and sinks keep
@@ -49,7 +52,11 @@ List<NetEdges> enumerateNetEdges(Module module) {
         if (bit is! NetBit) continue;
         attachmentsByNetId
             .putIfAbsent(bit.netId, _NetAttachments.new)
-            .add(portId, isDriver: isDriver);
+            .add(
+              portId,
+              isDriver: isDriver,
+              isInoutPin: direction == PortDirection.inout,
+            );
       }
     }
   }
@@ -60,7 +67,11 @@ List<NetEdges> enumerateNetEdges(Module module) {
       if (bit is! NetBit) continue;
       attachmentsByNetId
           .putIfAbsent(bit.netId, _NetAttachments.new)
-          .add(portId, isDriver: isDriver);
+          .add(
+            portId,
+            isDriver: isDriver,
+            isInoutPort: port.direction == PortDirection.inout,
+          );
     }
   }
 
@@ -69,7 +80,10 @@ List<NetEdges> enumerateNetEdges(Module module) {
     final netId = entry.key;
     final attachments = entry.value;
     final edges = <SchematicEdge>[];
-    for (final driver in attachments.drivers) {
+    final drivers = attachments.drivers.isNotEmpty
+        ? attachments.drivers
+        : <String>{?attachments.standInDriver};
+    for (final driver in drivers) {
       for (final sink in attachments.sinks) {
         if (driver == sink) continue;
         edges.add(
@@ -94,8 +108,21 @@ class _NetAttachments {
   // Linked sets: de-duplicated, insertion-ordered.
   final Set<String> drivers = <String>{};
   final Set<String> sinks = <String>{};
+  String? _firstInoutPort;
+  String? _firstInoutPin;
 
-  void add(String portId, {required bool isDriver}) {
+  /// What a net with no driver is drawn from: its first module inout port,
+  /// or else its first inout cell pin, or null when it has neither.
+  String? get standInDriver => _firstInoutPort ?? _firstInoutPin;
+
+  void add(
+    String portId, {
+    required bool isDriver,
+    bool isInoutPort = false,
+    bool isInoutPin = false,
+  }) {
     (isDriver ? drivers : sinks).add(portId);
+    if (isInoutPort) _firstInoutPort ??= portId;
+    if (isInoutPin) _firstInoutPin ??= portId;
   }
 }
