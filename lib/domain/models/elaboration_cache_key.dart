@@ -46,7 +46,8 @@ class ElaborationCacheFile {
 /// Composite cache key for one elaboration. Covers everything that can
 /// change the resulting Yosys JSON: the source files and Liberty cell
 /// libraries (with their fingerprints), the requested top module, defines,
-/// include paths, extra Yosys commands, and the yosys version banner.
+/// include paths, extra Yosys commands, whether missing modules are drawn as
+/// black boxes, and the yosys version banner.
 @immutable
 class ElaborationCacheKey {
   /// Creates a key. Lists are stored as immutable copies so callers
@@ -59,6 +60,7 @@ class ElaborationCacheKey {
     List<String> includePaths = const <String>[],
     List<String> extraCommands = const <String>[],
     List<ElaborationCacheFile> libertyFiles = const <ElaborationCacheFile>[],
+    this.blackBoxMissingModules = false,
   }) : files = List<ElaborationCacheFile>.unmodifiable(files),
        libertyFiles = List<ElaborationCacheFile>.unmodifiable(libertyFiles),
        defines = List<String>.unmodifiable(defines),
@@ -74,6 +76,11 @@ class ElaborationCacheKey {
   /// from [files]: the generated stub file is not fingerprinted, the
   /// libraries it is made from are.
   final List<ElaborationCacheFile> libertyFiles;
+
+  /// Whether the run leaves undefined modules in as black boxes (no
+  /// `hierarchy -check`, pin directions inferred after parsing). It changes
+  /// both the Yosys JSON and the parsed model.
+  final bool blackBoxMissingModules;
 
   /// Optional top module name passed to `hierarchy -top`.
   final String? topModule;
@@ -112,6 +119,7 @@ class ElaborationCacheKey {
       }
       buf.write(']');
     }
+    if (blackBoxMissingModules) buf.write(';blackbox');
     return buf.toString();
   }
 

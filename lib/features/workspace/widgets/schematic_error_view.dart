@@ -16,14 +16,33 @@ import 'package:netcrux/services/yosys/yosys_unavailable_reason_text.dart';
 /// detail (Yosys stderr, an unclassified error's text) is tucked into an
 /// expandable "Details" section so the envelope never leaks an exception
 /// class name to the user.
+///
+/// A [LoadedNetlistErrorKind.missingModule] failure also offers "Show
+/// missing modules as black boxes" when [onShowMissingModulesAsBlackBoxes]
+/// is given.
 class SchematicErrorView extends StatelessWidget {
   /// Creates an error view for [error].
-  const SchematicErrorView({required this.error, super.key});
+  const SchematicErrorView({
+    required this.error,
+    this.onShowMissingModulesAsBlackBoxes,
+    super.key,
+  });
 
   /// The error surfaced by the elaboration/layout pipeline. A
   /// [LoadedNetlistException] is mapped to a per-[LoadedNetlistErrorKind]
   /// message; any other object falls back to the generic envelope.
   final Object error;
+
+  /// Turns on the tab's project option to draw missing modules as black
+  /// boxes, which elaborates again. Offered only for a
+  /// [LoadedNetlistErrorKind.missingModule] failure.
+  final VoidCallback? onShowMissingModulesAsBlackBoxes;
+
+  bool get _offersBlackBoxes =>
+      onShowMissingModulesAsBlackBoxes != null &&
+      error is LoadedNetlistException &&
+      (error as LoadedNetlistException).kind ==
+          LoadedNetlistErrorKind.missingModule;
 
   /// Resolves the error into a localized body and an optional raw detail
   /// string for the expandable section.
@@ -58,6 +77,14 @@ class SchematicErrorView extends StatelessWidget {
             return ('$gap ${l10n.elaborationErrorSvFrontendHint}', e.detail);
           }
           return (l10n.elaborationErrorNonZeroExit(e.exitCode ?? 0), e.detail);
+        case LoadedNetlistErrorKind.missingModule:
+          final module = e.missingModule;
+          return (
+            module == null
+                ? l10n.elaborationErrorMissingModuleUnnamed
+                : l10n.elaborationErrorMissingModule(module),
+            e.detail,
+          );
         case LoadedNetlistErrorKind.unknown:
           return (l10n.elaborationErrorGeneric, e.detail ?? e.message);
       }
@@ -97,6 +124,14 @@ class SchematicErrorView extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
+              if (_offersBlackBoxes) ...[
+                const SizedBox(height: 16),
+                FilledButton(
+                  key: const ValueKey<String>('showMissingModulesAsBlackBoxes'),
+                  onPressed: onShowMissingModulesAsBlackBoxes,
+                  child: Text(l10n.elaborationErrorShowBlackBoxes),
+                ),
+              ],
               if (detail != null && detail.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _ErrorDetail(detail: detail),

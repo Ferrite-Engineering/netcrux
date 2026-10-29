@@ -52,6 +52,7 @@ class NetcruxProject {
     required this.lowerToStructural,
     this.sourceFileLanguages = const <String, NetcruxSourceLanguage>{},
     this.libertyFiles = const <String>[],
+    this.blackBoxMissingModules = false,
   });
 
   /// Convenience constructor — produces a v1 project with the
@@ -68,6 +69,7 @@ class NetcruxProject {
     Map<String, NetcruxSourceLanguage> sourceFileLanguages =
         const <String, NetcruxSourceLanguage>{},
     List<String> libertyFiles = const <String>[],
+    bool blackBoxMissingModules = false,
   }) {
     return NetcruxProject(
       version: kNetcruxProjectVersion,
@@ -81,6 +83,7 @@ class NetcruxProject {
         sourceFileLanguages,
       ),
       libertyFiles: List<String>.unmodifiable(libertyFiles),
+      blackBoxMissingModules: blackBoxMissingModules,
     );
   }
 
@@ -158,6 +161,13 @@ class NetcruxProject {
   /// Not HDL sources: they never appear in [sourceFiles], and the vendor's
   /// behavioural cell models should be left out of that list.
   final List<String> libertyFiles;
+
+  /// Whether a module that nothing defines (no source, no cell library) is
+  /// drawn as a black box instead of failing the elaboration. Yosys then
+  /// keeps each instance with the connections it makes, and NetCrux infers
+  /// each pin's direction from the wiring, so the result is for viewing:
+  /// [libertyFiles] is the exact route when a library is at hand.
+  final bool blackBoxMissingModules;
 
   /// Whether [path] names a Liberty cell library: a `.lib` or `.liberty`
   /// suffix, case-insensitive. The open-files and filelist routes send
@@ -261,6 +271,7 @@ class NetcruxProject {
     bool? lowerToStructural,
     Map<String, NetcruxSourceLanguage>? sourceFileLanguages,
     List<String>? libertyFiles,
+    bool? blackBoxMissingModules,
   }) {
     return NetcruxProject(
       version: version ?? this.version,
@@ -286,6 +297,8 @@ class NetcruxProject {
       libertyFiles: libertyFiles == null
           ? this.libertyFiles
           : List<String>.unmodifiable(libertyFiles),
+      blackBoxMissingModules:
+          blackBoxMissingModules ?? this.blackBoxMissingModules,
     );
   }
 
@@ -296,6 +309,7 @@ class NetcruxProject {
     if (other.version != version) return false;
     if (other.topModule != topModule) return false;
     if (other.lowerToStructural != lowerToStructural) return false;
+    if (other.blackBoxMissingModules != blackBoxMissingModules) return false;
     if (!_listEquals(other.sourceFiles, sourceFiles)) return false;
     if (!_listEquals(other.includePaths, includePaths)) return false;
     if (!_listEquals(other.libertyFiles, libertyFiles)) return false;
@@ -317,6 +331,7 @@ class NetcruxProject {
     version,
     topModule,
     lowerToStructural,
+    blackBoxMissingModules,
     Object.hashAll(sourceFiles),
     Object.hashAll(includePaths),
     Object.hashAll(libertyFiles),

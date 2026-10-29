@@ -40,6 +40,8 @@ class NetcruxWorkspaceCodec extends WorkspaceCodec<NetcruxTabPayload> {
       if (p.panY != 0.0) 'panY': p.panY,
       if (p.sessionExportPath != null) 'sessionExportPath': p.sessionExportPath,
       if (p.libertyFiles != null) 'libertyFiles': p.libertyFiles,
+      if (p.blackBoxMissingModules != null)
+        'blackBoxMissingModules': p.blackBoxMissingModules,
     };
   }
 
@@ -144,6 +146,14 @@ class NetcruxWorkspaceCodec extends WorkspaceCodec<NetcruxTabPayload> {
       );
     }
 
+    final blackBoxRaw = json['blackBoxMissingModules'];
+    if (blackBoxRaw != null && blackBoxRaw is! bool) {
+      throw const FormatException(
+        'NetcruxTabPayload: "blackBoxMissingModules" must be a bool when '
+        'present',
+      );
+    }
+
     final topModuleRaw = json['topModule'];
     if (topModuleRaw != null && topModuleRaw is! String) {
       throw const FormatException(
@@ -166,6 +176,7 @@ class NetcruxWorkspaceCodec extends WorkspaceCodec<NetcruxTabPayload> {
       libertyFiles: libertyFiles == null
           ? null
           : List<String>.unmodifiable(libertyFiles),
+      blackBoxMissingModules: blackBoxRaw as bool?,
     );
   }
 

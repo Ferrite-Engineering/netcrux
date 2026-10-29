@@ -128,6 +128,7 @@ class ElaborationCacheService {
   ///
   /// [libertyFilePaths] are the project's Liberty cell libraries,
   /// fingerprinted the same way: a changed library invalidates the entry.
+  /// [blackBoxMissingModules] is the project option of that name.
   ///
   /// Returns `null` if any source file does not exist — the caller
   /// shouldn't try to cache an invalid request. Stat failures other
@@ -141,6 +142,7 @@ class ElaborationCacheService {
     List<String> includePaths = const <String>[],
     List<String> extraCommands = const <String>[],
     List<String> libertyFilePaths = const <String>[],
+    bool blackBoxMissingModules = false,
   }) async {
     final files = await _fingerprint(sourceFilePaths);
     if (files == null) return null;
@@ -154,6 +156,7 @@ class ElaborationCacheService {
       defines: defines,
       includePaths: includePaths,
       extraCommands: extraCommands,
+      blackBoxMissingModules: blackBoxMissingModules,
     );
   }
 

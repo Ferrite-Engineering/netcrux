@@ -355,6 +355,23 @@
   "@elaborationErrorDetailsLabel": {
     "description": "Expander label above the raw error detail (Yosys stderr, or an unclassified error's text) in the schematic error view."
   },
+  "elaborationErrorMissingModule": "The design uses module {module}, which no source file or cell library defines. Add the file that defines it or a cell library (Liberty), or show missing modules as black boxes.",
+  "@elaborationErrorMissingModule": {
+    "description": "Schematic error-view body shown when Yosys stopped because the design instantiates a module that nothing defines. {module} is the module's name as the design writes it.",
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "elaborationErrorMissingModuleUnnamed": "The design uses a module that no source file or cell library defines. Add the file that defines it or a cell library (Liberty), or show missing modules as black boxes.",
+  "@elaborationErrorMissingModuleUnnamed": {
+    "description": "Schematic error-view body shown when Yosys stopped because the design instantiates a module that nothing defines, and the module's name could not be read from the message."
+  },
+  "elaborationErrorShowBlackBoxes": "Show missing modules as black boxes",
+  "@elaborationErrorShowBlackBoxes": {
+    "description": "Button in the schematic error view, shown for a missing module: turns on the project option that draws modules nothing defines as black boxes and elaborates again."
+  },
   "commonCancel": "Cancel",
   "@commonCancel": {
     "description": "Generic Cancel button label used across dialogs."
@@ -922,6 +939,14 @@
   "cellLibrariesDialogApply": "Apply",
   "@cellLibrariesDialogApply": {
     "description": "Button that applies the edited Cell Libraries list to the tab and re-elaborates the design."
+  },
+  "cellLibrariesDialogBlackBoxes": "Show missing modules as black boxes",
+  "@cellLibrariesDialogBlackBoxes": {
+    "description": "Checkbox label in the Cell Libraries dialog: the project option that draws modules nothing defines (no source file, no cell library) as black boxes instead of failing the elaboration."
+  },
+  "cellLibrariesDialogBlackBoxesHelp": "For viewing a design without its libraries. Pin directions are inferred from the wiring, so a power pin shows as an input; a cell library gives the exact pins.",
+  "@cellLibrariesDialogBlackBoxesHelp": {
+    "description": "Explanation under the black-box checkbox in the Cell Libraries dialog: the option is for viewing, pin directions are inferred from the wiring, and a cell library gives exact pins."
   },
   "filePickerLibertyDialogTitle": "Add Cell Libraries",
   "@filePickerLibertyDialogTitle": {

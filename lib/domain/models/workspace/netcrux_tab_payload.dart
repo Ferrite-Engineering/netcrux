@@ -37,6 +37,7 @@ class NetcruxTabPayload {
     this.panY = 0.0,
     this.sessionExportPath,
     this.libertyFiles,
+    this.blackBoxMissingModules,
   });
 
   /// Canonical empty payload — used as the default for "+"-button tabs and
@@ -110,11 +111,21 @@ class NetcruxTabPayload {
   /// the tab as a project writes the list into the file and clears it here.
   final List<String>? libertyFiles;
 
+  /// The tab's own "show missing modules as black boxes" setting, when the
+  /// tab sets it itself (the schematic error view's action, or the Cell
+  /// Libraries dialog). `null` when the tab has no setting of its own and a
+  /// restore takes whatever the [projectFilePath] file says (off, for a tab
+  /// without one).
+  ///
+  /// Applied over a project or filelist on restore, and cleared by Save
+  /// Project As, exactly as [libertyFiles] is.
+  final bool? blackBoxMissingModules;
+
   /// Returns a copy with the given fields replaced. Pass `null` for value
   /// fields to leave them; pass explicit empty collections to clear them.
   /// Pass `clearProjectFilePath` / `clearSelection` / `clearOverlayMode` /
-  /// `clearSessionExportPath` / `clearLibertyFiles` to set the
-  /// corresponding field to `null`.
+  /// `clearSessionExportPath` / `clearLibertyFiles` /
+  /// `clearBlackBoxMissingModules` to set the corresponding field to `null`.
   NetcruxTabPayload copyWith({
     List<String>? sourceFiles,
     String? topModule,
@@ -128,11 +139,13 @@ class NetcruxTabPayload {
     double? panY,
     String? sessionExportPath,
     List<String>? libertyFiles,
+    bool? blackBoxMissingModules,
     bool clearProjectFilePath = false,
     bool clearSelection = false,
     bool clearOverlayMode = false,
     bool clearSessionExportPath = false,
     bool clearLibertyFiles = false,
+    bool clearBlackBoxMissingModules = false,
   }) {
     return NetcruxTabPayload(
       sourceFiles: sourceFiles == null
@@ -163,6 +176,9 @@ class NetcruxTabPayload {
           : libertyFiles == null
           ? this.libertyFiles
           : List<String>.unmodifiable(libertyFiles),
+      blackBoxMissingModules: clearBlackBoxMissingModules
+          ? null
+          : (blackBoxMissingModules ?? this.blackBoxMissingModules),
     );
   }
 
@@ -197,6 +213,7 @@ class NetcruxTabPayload {
     final b = libertyFiles;
     if ((a == null) != (b == null)) return false;
     if (a != null && !_listEquals(a, b!)) return false;
+    if (other.blackBoxMissingModules != blackBoxMissingModules) return false;
     return true;
   }
 
@@ -214,6 +231,7 @@ class NetcruxTabPayload {
     Object.hashAll(expandedScopeKeys),
     selectionJson == null ? 0 : selectionJson!.length,
     libertyFiles == null ? null : Object.hashAll(libertyFiles!),
+    blackBoxMissingModules,
   );
 
   static bool _listEquals<T>(List<T> a, List<T> b) {

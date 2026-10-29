@@ -116,12 +116,28 @@ class CurrentProject extends _$CurrentProject {
     setProject(NetcruxProject.create(sourceFiles: sourceFiles));
   }
 
-  /// Replaces the active project's Liberty cell libraries, which
-  /// re-elaborates it. An edit to the open design rather than an open, so
-  /// unlike [setProject] it records no audit entry and keeps
+  /// Replaces the active project's Liberty cell libraries, and with
+  /// [blackBoxMissingModules] its black-box option too, in one change that
+  /// re-elaborates it once. An edit to the open design rather than an open,
+  /// so unlike [setProject] it records no audit entry and keeps
   /// [activeSource].
-  void setLibertyFiles(List<String> libertyFiles) {
-    final next = state.copyWith(libertyFiles: libertyFiles);
+  void setLibertyFiles(
+    List<String> libertyFiles, {
+    bool? blackBoxMissingModules,
+  }) {
+    final next = state.copyWith(
+      libertyFiles: libertyFiles,
+      blackBoxMissingModules: blackBoxMissingModules,
+    );
+    if (next == state) return;
+    state = next;
+  }
+
+  /// Turns the active project's "show missing modules as black boxes"
+  /// option ([NetcruxProject.blackBoxMissingModules]) on or off, which
+  /// re-elaborates it. Like [setLibertyFiles], an edit rather than an open.
+  void setBlackBoxMissingModules({required bool enabled}) {
+    final next = state.copyWith(blackBoxMissingModules: enabled);
     if (next == state) return;
     state = next;
   }

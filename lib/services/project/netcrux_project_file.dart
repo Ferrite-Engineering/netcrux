@@ -209,6 +209,8 @@ class NetcruxProjectFileReader {
       // Optional: absent from files written before cell libraries existed,
       // which load with none.
       libertyFiles: _readStringList(json['libertyFiles']),
+      // Optional too, and absent unless the option is on.
+      blackBoxMissingModules: json['blackBoxMissingModules'] == true,
     );
   }
 
@@ -341,6 +343,9 @@ class NetcruxProjectFileWriter {
     // without cell libraries keeps the shape older builds wrote.
     if (project.libertyFiles.isNotEmpty)
       'libertyFiles': List<String>.from(project.libertyFiles),
+    // Likewise only when on, so `.netcrux-project` stays v1 and a file
+    // without it reads the same in every build.
+    if (project.blackBoxMissingModules) 'blackBoxMissingModules': true,
   };
 
   static String _languageToString(NetcruxSourceLanguage lang) {
