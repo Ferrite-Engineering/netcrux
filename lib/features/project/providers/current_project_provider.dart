@@ -107,12 +107,23 @@ class CurrentProject extends _$CurrentProject {
   }
 
   /// Convenience: install a project that wraps [sourceFiles] with
-  /// the documented defaults. Used by the "Open Source Files…"
-  /// welcome-screen flow and by the CLI launch intent so a freshly-
-  /// dropped file list becomes a real project without the caller
-  /// having to import the model.
+  /// the documented defaults, so a freshly-dropped file list becomes a
+  /// real project without the caller having to import the model. The
+  /// "Open Source Files…" flow builds its project with
+  /// [NetcruxProject.fromOpenedFiles] instead, which also sorts out
+  /// Liberty cell libraries.
   void setSourceFiles(List<String> sourceFiles) {
     setProject(NetcruxProject.create(sourceFiles: sourceFiles));
+  }
+
+  /// Replaces the active project's Liberty cell libraries, which
+  /// re-elaborates it. An edit to the open design rather than an open, so
+  /// unlike [setProject] it records no audit entry and keeps
+  /// [activeSource].
+  void setLibertyFiles(List<String> libertyFiles) {
+    final next = state.copyWith(libertyFiles: libertyFiles);
+    if (next == state) return;
+    state = next;
   }
 
   /// Clears the project back to [NetcruxProject.empty]. Used by

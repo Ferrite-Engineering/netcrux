@@ -876,6 +876,43 @@
   "@filePickerFilelistDialogTitle": {
     "description": "Title for the file picker dialog when importing a .f filelist."
   },
+  "actionEditCellLibraries": "单元库 (Liberty)…",
+  "@actionEditCellLibraries": {
+    "description": "Command palette / File menu label for editing the active tab's Liberty cell libraries (the .lib files whose standard cells the RTL instantiates directly)."
+  },
+  "cellLibrariesDialogTitle": "单元库 (Liberty)",
+  "@cellLibrariesDialogTitle": {
+    "description": "Title of the dialog that lists the active tab's Liberty cell libraries."
+  },
+  "cellLibrariesDialogBody": "用于直接实例化标准单元的 RTL 的 Liberty (.lib) 文件。NetCrux 读取每个单元的引脚、总线和电源引脚，并将这些单元作为黑盒详尽展开。请不要把厂商的仿真模型放入源文件。如果两个库定义了同一个单元，则使用列表中靠上的那个。",
+  "@cellLibrariesDialogBody": {
+    "description": "Explanation at the top of the Cell Libraries dialog: what Liberty files are for, that vendor simulation models stay out of the source files, and which library wins when two define the same cell."
+  },
+  "cellLibrariesDialogEmpty": "没有单元库。",
+  "@cellLibrariesDialogEmpty": {
+    "description": "Shown in the Cell Libraries dialog when the tab has no Liberty files."
+  },
+  "cellLibrariesDialogAdd": "添加…",
+  "@cellLibrariesDialogAdd": {
+    "description": "Button in the Cell Libraries dialog that opens a file picker to add Liberty files."
+  },
+  "cellLibrariesDialogRemove": "移除 {file}",
+  "@cellLibrariesDialogRemove": {
+    "description": "Tooltip and screen-reader label of the button that removes one Liberty file from the Cell Libraries dialog's list.",
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "cellLibrariesDialogApply": "应用",
+  "@cellLibrariesDialogApply": {
+    "description": "Button that applies the edited Cell Libraries list to the tab and re-elaborates the design."
+  },
+  "filePickerLibertyDialogTitle": "添加单元库",
+  "@filePickerLibertyDialogTitle": {
+    "description": "Title for the file picker dialog when adding Liberty (.lib) cell libraries."
+  },
   "yosysPathModeAuto": "自动检测",
   "@yosysPathModeAuto": {
     "description": "Segmented-button label for the Yosys path mode that uses PATH search."

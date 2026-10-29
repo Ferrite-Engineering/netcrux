@@ -36,6 +36,7 @@ class NetcruxTabPayload {
     this.panX = 0.0,
     this.panY = 0.0,
     this.sessionExportPath,
+    this.libertyFiles,
   });
 
   /// Canonical empty payload — used as the default for "+"-button tabs and
@@ -97,10 +98,23 @@ class NetcruxTabPayload {
   /// picker's destination. `null` when the tab has never been exported.
   final String? sessionExportPath;
 
+  /// The tab's Liberty cell libraries, when the tab sets them itself:
+  /// sources opened together with `.lib` files, or a list edited in the
+  /// Cell Libraries dialog. `null` when the tab has no list of its own and
+  /// a restore takes whatever the [projectFilePath] file says (none, for a
+  /// tab without one).
+  ///
+  /// A project or filelist carries its own cell libraries and is re-read on
+  /// restore, so a list stored here is applied on top of it: an edit made
+  /// in the app survives a restart without the file being rewritten. Saving
+  /// the tab as a project writes the list into the file and clears it here.
+  final List<String>? libertyFiles;
+
   /// Returns a copy with the given fields replaced. Pass `null` for value
   /// fields to leave them; pass explicit empty collections to clear them.
   /// Pass `clearProjectFilePath` / `clearSelection` / `clearOverlayMode` /
-  /// `clearSessionExportPath` to set the corresponding field to `null`.
+  /// `clearSessionExportPath` / `clearLibertyFiles` to set the
+  /// corresponding field to `null`.
   NetcruxTabPayload copyWith({
     List<String>? sourceFiles,
     String? topModule,
@@ -113,10 +127,12 @@ class NetcruxTabPayload {
     double? panX,
     double? panY,
     String? sessionExportPath,
+    List<String>? libertyFiles,
     bool clearProjectFilePath = false,
     bool clearSelection = false,
     bool clearOverlayMode = false,
     bool clearSessionExportPath = false,
+    bool clearLibertyFiles = false,
   }) {
     return NetcruxTabPayload(
       sourceFiles: sourceFiles == null
@@ -142,6 +158,11 @@ class NetcruxTabPayload {
       sessionExportPath: clearSessionExportPath
           ? null
           : (sessionExportPath ?? this.sessionExportPath),
+      libertyFiles: clearLibertyFiles
+          ? null
+          : libertyFiles == null
+          ? this.libertyFiles
+          : List<String>.unmodifiable(libertyFiles),
     );
   }
 
@@ -172,6 +193,10 @@ class NetcruxTabPayload {
     if (!_listEquals(other.scopePath, scopePath)) return false;
     if (!_listEquals(other.expandedScopeKeys, expandedScopeKeys)) return false;
     if (!_mapEquals(other.selectionJson, selectionJson)) return false;
+    final a = other.libertyFiles;
+    final b = libertyFiles;
+    if ((a == null) != (b == null)) return false;
+    if (a != null && !_listEquals(a, b!)) return false;
     return true;
   }
 
@@ -188,6 +213,7 @@ class NetcruxTabPayload {
     Object.hashAll(scopePath),
     Object.hashAll(expandedScopeKeys),
     selectionJson == null ? 0 : selectionJson!.length,
+    libertyFiles == null ? null : Object.hashAll(libertyFiles!),
   );
 
   static bool _listEquals<T>(List<T> a, List<T> b) {

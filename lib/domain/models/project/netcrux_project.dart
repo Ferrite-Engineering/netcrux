@@ -51,6 +51,7 @@ class NetcruxProject {
     required this.extraYosysCommands,
     required this.lowerToStructural,
     this.sourceFileLanguages = const <String, NetcruxSourceLanguage>{},
+    this.libertyFiles = const <String>[],
   });
 
   /// Convenience constructor — produces a v1 project with the
@@ -66,6 +67,7 @@ class NetcruxProject {
     bool lowerToStructural = false,
     Map<String, NetcruxSourceLanguage> sourceFileLanguages =
         const <String, NetcruxSourceLanguage>{},
+    List<String> libertyFiles = const <String>[],
   }) {
     return NetcruxProject(
       version: kNetcruxProjectVersion,
@@ -78,6 +80,23 @@ class NetcruxProject {
       sourceFileLanguages: Map<String, NetcruxSourceLanguage>.unmodifiable(
         sourceFileLanguages,
       ),
+      libertyFiles: List<String>.unmodifiable(libertyFiles),
+    );
+  }
+
+  /// The project a set of opened files makes: [paths] split into HDL
+  /// sources and Liberty cell libraries ([isLibertyPath]), each list in the
+  /// order given.
+  factory NetcruxProject.fromOpenedFiles(List<String> paths) {
+    return NetcruxProject.create(
+      sourceFiles: <String>[
+        for (final path in paths)
+          if (!isLibertyPath(path)) path,
+      ],
+      libertyFiles: <String>[
+        for (final path in paths)
+          if (isLibertyPath(path)) path,
+      ],
     );
   }
 
@@ -129,6 +148,24 @@ class NetcruxProject {
   /// portability — a future cross-suite "ProjectModel" promotion does
   /// not have to rename this field.
   final Map<String, NetcruxSourceLanguage> sourceFileLanguages;
+
+  /// Liberty (`.lib`) cell libraries, for RTL that instantiates standard
+  /// cells directly. Elaboration reads each one's cell interfaces (pins,
+  /// buses and power pins) and gives Yosys a black-box Verilog stub per
+  /// cell, so `hierarchy -check` finds a definition for every instance.
+  /// Order matters: when two libraries define a cell, the first wins.
+  ///
+  /// Not HDL sources: they never appear in [sourceFiles], and the vendor's
+  /// behavioural cell models should be left out of that list.
+  final List<String> libertyFiles;
+
+  /// Whether [path] names a Liberty cell library: a `.lib` or `.liberty`
+  /// suffix, case-insensitive. The open-files and filelist routes send
+  /// these to [libertyFiles] rather than [sourceFiles].
+  static bool isLibertyPath(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.lib') || lower.endsWith('.liberty');
+  }
 
   /// Returns the resolved language for [path]: the explicit override
   /// from [sourceFileLanguages] when present and not [auto], otherwise
@@ -223,6 +260,7 @@ class NetcruxProject {
     List<String>? extraYosysCommands,
     bool? lowerToStructural,
     Map<String, NetcruxSourceLanguage>? sourceFileLanguages,
+    List<String>? libertyFiles,
   }) {
     return NetcruxProject(
       version: version ?? this.version,
@@ -245,6 +283,9 @@ class NetcruxProject {
           : Map<String, NetcruxSourceLanguage>.unmodifiable(
               sourceFileLanguages,
             ),
+      libertyFiles: libertyFiles == null
+          ? this.libertyFiles
+          : List<String>.unmodifiable(libertyFiles),
     );
   }
 
@@ -257,6 +298,7 @@ class NetcruxProject {
     if (other.lowerToStructural != lowerToStructural) return false;
     if (!_listEquals(other.sourceFiles, sourceFiles)) return false;
     if (!_listEquals(other.includePaths, includePaths)) return false;
+    if (!_listEquals(other.libertyFiles, libertyFiles)) return false;
     if (!_listEquals(other.extraYosysCommands, extraYosysCommands)) {
       return false;
     }
@@ -277,6 +319,7 @@ class NetcruxProject {
     lowerToStructural,
     Object.hashAll(sourceFiles),
     Object.hashAll(includePaths),
+    Object.hashAll(libertyFiles),
     Object.hashAll(extraYosysCommands),
     Object.hashAllUnordered(
       defines.entries.map((e) => Object.hash(e.key, e.value)),

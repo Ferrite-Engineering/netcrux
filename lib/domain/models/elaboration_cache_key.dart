@@ -44,9 +44,9 @@ class ElaborationCacheFile {
 }
 
 /// Composite cache key for one elaboration. Covers everything that can
-/// change the resulting Yosys JSON: the source files (with their
-/// fingerprints), the requested top module, defines, include paths,
-/// extra Yosys commands, and the yosys version banner.
+/// change the resulting Yosys JSON: the source files and Liberty cell
+/// libraries (with their fingerprints), the requested top module, defines,
+/// include paths, extra Yosys commands, and the yosys version banner.
 @immutable
 class ElaborationCacheKey {
   /// Creates a key. Lists are stored as immutable copies so callers
@@ -58,7 +58,9 @@ class ElaborationCacheKey {
     List<String> defines = const <String>[],
     List<String> includePaths = const <String>[],
     List<String> extraCommands = const <String>[],
+    List<ElaborationCacheFile> libertyFiles = const <ElaborationCacheFile>[],
   }) : files = List<ElaborationCacheFile>.unmodifiable(files),
+       libertyFiles = List<ElaborationCacheFile>.unmodifiable(libertyFiles),
        defines = List<String>.unmodifiable(defines),
        includePaths = List<String>.unmodifiable(includePaths),
        extraCommands = List<String>.unmodifiable(extraCommands);
@@ -66,6 +68,12 @@ class ElaborationCacheKey {
   /// Per-file fingerprints. Order matters because Verilog elaboration
   /// can be order-sensitive (parameter overrides, defparam).
   final List<ElaborationCacheFile> files;
+
+  /// Per-library fingerprints of the project's Liberty cell libraries, in
+  /// project order (the first library to define a cell wins). Kept apart
+  /// from [files]: the generated stub file is not fingerprinted, the
+  /// libraries it is made from are.
+  final List<ElaborationCacheFile> libertyFiles;
 
   /// Optional top module name passed to `hierarchy -top`.
   final String? topModule;
@@ -97,6 +105,13 @@ class ElaborationCacheKey {
       buf.write('${f.path}@${f.modifiedMicroseconds}:${f.sizeBytes},');
     }
     buf.write(']');
+    if (libertyFiles.isNotEmpty) {
+      buf.write(';lib=[');
+      for (final f in libertyFiles) {
+        buf.write('${f.path}@${f.modifiedMicroseconds}:${f.sizeBytes},');
+      }
+      buf.write(']');
+    }
     return buf.toString();
   }
 

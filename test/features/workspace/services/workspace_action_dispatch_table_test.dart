@@ -102,6 +102,7 @@ const _routing = <NetcruxAction, _Routing>{
   NetcruxAction.exportJson: _Routing.tabScoped,
   NetcruxAction.saveSession: _Routing.tabScoped,
   NetcruxAction.saveProjectAs: _Routing.tabScoped,
+  NetcruxAction.editCellLibraries: _Routing.tabScoped,
   NetcruxAction.openSession: _Routing.tabScoped,
   NetcruxAction.showConeOfInfluenceFanin: _Routing.tabScoped,
   NetcruxAction.showConeOfInfluenceFanout: _Routing.tabScoped,

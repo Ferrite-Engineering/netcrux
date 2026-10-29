@@ -33,7 +33,9 @@ import 'package:netcrux/features/diagnostics/widgets/app_diagnostics_dialog.dart
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/services/project_save_controller.dart';
+import 'package:netcrux/features/project/widgets/cell_libraries_dialog.dart';
 import 'package:netcrux/features/remote/providers/cross_probe_visible_provider.dart';
 import 'package:netcrux/features/remote/services/netcrux_cross_probe_selection.dart';
 import 'package:netcrux/features/search/widgets/search_dialog.dart';
@@ -537,6 +539,8 @@ class WorkspaceActionDispatcher {
         unawaited(_dispatchExport(context, NetcruxExportKind.json));
       case NetcruxAction.importFilelist:
         unawaited(_onImportFilelistPressed(context));
+      case NetcruxAction.editCellLibraries:
+        unawaited(_editCellLibraries(context));
       // ── workspace lifecycle ──────────────────────────────────────────
       case NetcruxAction.newWorkspace:
         unawaited(_newWorkspace(context));
@@ -932,10 +936,42 @@ class WorkspaceActionDispatcher {
     if (tabId != null) {
       await workspace.updateTabPayload(
         tabId,
-        (payload) => payload.copyWith(projectFilePath: saved),
+        // The file now holds the tab's cell libraries, so the tab's own
+        // copy of the list is dropped and a restore reads the file's.
+        (payload) => payload.copyWith(
+          projectFilePath: saved,
+          clearLibertyFiles: true,
+        ),
       );
     }
     recent.markOpened(saved);
+  }
+
+  /// Opens the Cell Libraries dialog over the active tab's Liberty files
+  /// and applies the edited list: to the tab's project, which re-elaborates
+  /// it, and to the tab's payload, so the list survives a restart (see
+  /// `NetcruxTabPayload.libertyFiles`).
+  Future<void> _editCellLibraries(BuildContext context) async {
+    final container = _ref.activeTabContainerOrNull(context);
+    if (container == null) return;
+    // Read before the await: `ref` is invalid across an async gap.
+    final workspace = _ref.read(netcruxWorkspaceProvider.notifier);
+    final tabId = _ref.read(netcruxWorkspaceProvider).value?.activeTabId;
+    final edited = await showCellLibrariesDialog(
+      context: context,
+      initial: container.read(currentProjectProvider).libertyFiles,
+      picker: _ref.read(fileOpenServiceProvider),
+    );
+    if (edited == null || tabId == null || !context.mounted) return;
+    // The tab may have closed while the dialog was up; its container is then
+    // disposed and there is nothing to apply the list to.
+    final tabs = _ref.read(netcruxWorkspaceProvider).value?.tabs;
+    if (tabs == null || !tabs.any((tab) => tab.id == tabId)) return;
+    container.read(currentProjectProvider.notifier).setLibertyFiles(edited);
+    await workspace.updateTabPayload(
+      tabId,
+      (payload) => payload.copyWith(libertyFiles: edited),
+    );
   }
 
   Future<void> _openSession(BuildContext context) async {

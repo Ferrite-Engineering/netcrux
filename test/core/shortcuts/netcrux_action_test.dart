@@ -160,6 +160,9 @@ void main() {
         // Save Project As… is a dialog-driven File-menu command like Save
         // Workspace As…; Cmd/Ctrl+S stays with the session.
         NetcruxAction.saveProjectAs,
+        // Cell Libraries… is a dialog-driven File-menu command set once per
+        // design, so it carries no chord.
+        NetcruxAction.editCellLibraries,
         NetcruxAction.resetWorkspace,
         NetcruxAction.toggleTheme,
         // Collaborative sessions: File menu and palette, unbound by default,

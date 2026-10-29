@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart' show cruxCxpRuntimeProvider;
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_workspace/crux_workspace.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/cli/cli_arg_parser.dart';
@@ -179,9 +180,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         await _openProjectByPath(path);
       case OpenSourceFilesCliLaunch(:final paths):
         // Open each source file as a separate tab in the active pane
-        // (one tab per file).
-        for (final path in paths) {
-          await _openSourceFilesByPaths(<String>[path]);
+        // (one tab per file). Liberty cell libraries on the command line
+        // are not designs of their own: every tab gets all of them.
+        final libraries = paths.where(NetcruxProject.isLibertyPath).toList();
+        final sources = paths
+            .where((path) => !NetcruxProject.isLibertyPath(path))
+            .toList();
+        if (sources.isEmpty) {
+          await _openSourceFilesByPaths(libraries);
+        }
+        for (final path in sources) {
+          await _openSourceFilesByPaths(<String>[path, ...libraries]);
         }
       case OpenSessionCliLaunch(:final path):
         await _openSessionByPath(path);
@@ -779,22 +788,52 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     ).apply(session);
   }
 
+  /// Opens [paths] as one design tab. Liberty cell libraries among them
+  /// (`.lib`, `.liberty`) become the project's cell libraries rather than
+  /// sources ([NetcruxProject.fromOpenedFiles]); only the sources are
+  /// recorded as recent files, since a library alone is not a design.
   Future<void> _openSourceFilesByPaths(List<String> paths) async {
     if (paths.isEmpty || !mounted) return;
-    final displayName = paths.length == 1
-        ? p.basename(paths.first)
-        : '${paths.length} files';
-    await ref
-        .read(netcruxWorkspaceProvider.notifier)
-        .openTab(
-          displayName: displayName,
-          payload: NetcruxTabPayload(sourceFiles: paths),
-        );
+    final project = NetcruxProject.fromOpenedFiles(paths);
+    final named = project.sourceFiles.isEmpty ? paths : project.sourceFiles;
+    final displayName = named.length == 1
+        ? p.basename(named.first)
+        : '${named.length} files';
+    final libraries = project.libertyFiles.isEmpty
+        ? null
+        : project.libertyFiles;
+    final workspace = ref.read(netcruxWorkspaceProvider.notifier);
+    final tabId = await workspace.openTab(
+      displayName: displayName,
+      payload: NetcruxTabPayload(
+        sourceFiles: project.sourceFiles,
+        libertyFiles: libraries,
+      ),
+    );
     if (!mounted) return;
+    // The same sources may already be open, and then openTab focuses that
+    // tab and keeps its payload: bring its cell libraries in line with the
+    // project about to be set, so a restore agrees with what is shown.
+    final opened = ref
+        .read(netcruxWorkspaceProvider)
+        .value
+        ?.tabs
+        .where((tab) => tab.id == tabId)
+        .firstOrNull;
+    if (opened != null && !listEquals(opened.payload.libertyFiles, libraries)) {
+      await workspace.updateTabPayload(
+        tabId,
+        (payload) => libraries == null
+            ? payload.copyWith(clearLibertyFiles: true)
+            : payload.copyWith(libertyFiles: libraries),
+      );
+      if (!mounted) return;
+    }
     final container = ref.activeTabContainerOrNull(context);
-    container?.read(currentProjectProvider.notifier).setSourceFiles(paths);
-    // Newest last, so the first path ends up first in the list.
-    paths.reversed.forEach(
+    container?.read(currentProjectProvider.notifier).setProject(project);
+    // Newest last, so the first path ends up first in the list. A cell
+    // library alone is not a design, so only sources are recorded.
+    project.sourceFiles.reversed.forEach(
       ref.read(recentSources.provider.notifier).markOpened,
     );
   }
@@ -839,11 +878,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           _hasSuffix(projectFile, kNetcruxProjectExtension);
       final isFilelist =
           projectFile != null && _hasSuffix(projectFile, kFilelistExtension);
+      // Cell libraries the tab set itself (see
+      // [NetcruxTabPayload.libertyFiles]) apply over whatever the file says.
+      final libertyOverride = payload.libertyFiles;
       if (isProjectFile || isFilelist) {
         try {
-          final project = isFilelist
+          final fromFile = isFilelist
               ? await const FilelistReader().readAsProject(projectFile)
               : await _readNetcruxProject(projectFile);
+          final project = libertyOverride == null
+              ? fromFile
+              : fromFile.copyWith(libertyFiles: libertyOverride);
           if (!mounted) return;
           container
               .read(currentProjectProvider.notifier)
@@ -865,6 +910,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             NetcruxProject.create(
               sourceFiles: payload.sourceFiles,
               topModule: payload.topModule,
+              libertyFiles: libertyOverride ?? const <String>[],
             ),
             source: projectFile == null
                 ? NetcruxDesignSource.rtl

@@ -206,6 +206,9 @@ class NetcruxProjectFileReader {
       extraYosysCommands: extraYosysCommands,
       lowerToStructural: (json['lowerToStructural'] as bool?) ?? false,
       sourceFileLanguages: _readLanguageMap(json['sourceFileLanguages']),
+      // Optional: absent from files written before cell libraries existed,
+      // which load with none.
+      libertyFiles: _readStringList(json['libertyFiles']),
     );
   }
 
@@ -334,6 +337,10 @@ class NetcruxProjectFileWriter {
         for (final entry in project.sourceFileLanguages.entries)
           entry.key: _languageToString(entry.value),
       },
+    // Written only when set, like `sourceFileLanguages`, so a project
+    // without cell libraries keeps the shape older builds wrote.
+    if (project.libertyFiles.isNotEmpty)
+      'libertyFiles': List<String>.from(project.libertyFiles),
   };
 
   static String _languageToString(NetcruxSourceLanguage lang) {

@@ -126,6 +126,9 @@ class ElaborationCacheService {
   /// provider's `build()` on the UI isolate, same convention as its
   /// size-estimate pass).
   ///
+  /// [libertyFilePaths] are the project's Liberty cell libraries,
+  /// fingerprinted the same way: a changed library invalidates the entry.
+  ///
   /// Returns `null` if any source file does not exist — the caller
   /// shouldn't try to cache an invalid request. Stat failures other
   /// than "not found" also yield `null` (never cache what can't be
@@ -137,9 +140,30 @@ class ElaborationCacheService {
     List<String> defines = const <String>[],
     List<String> includePaths = const <String>[],
     List<String> extraCommands = const <String>[],
+    List<String> libertyFilePaths = const <String>[],
   }) async {
+    final files = await _fingerprint(sourceFilePaths);
+    if (files == null) return null;
+    final libertyFiles = await _fingerprint(libertyFilePaths);
+    if (libertyFiles == null) return null;
+    return ElaborationCacheKey(
+      files: files,
+      libertyFiles: libertyFiles,
+      yosysVersion: yosysVersion,
+      topModule: topModule,
+      defines: defines,
+      includePaths: includePaths,
+      extraCommands: extraCommands,
+    );
+  }
+
+  /// Fingerprints [paths] by size and modification time; `null` when any
+  /// one is missing or cannot be stat'ed.
+  static Future<List<ElaborationCacheFile>?> _fingerprint(
+    List<String> paths,
+  ) async {
     final files = <ElaborationCacheFile>[];
-    for (final path in sourceFilePaths) {
+    for (final path in paths) {
       try {
         // Async stat by convention — see LoadedNetlist._estimateSize.
         // ignore: avoid_slow_async_io
@@ -156,13 +180,6 @@ class ElaborationCacheService {
         return null;
       }
     }
-    return ElaborationCacheKey(
-      files: files,
-      yosysVersion: yosysVersion,
-      topModule: topModule,
-      defines: defines,
-      includePaths: includePaths,
-      extraCommands: extraCommands,
-    );
+    return files;
   }
 }
