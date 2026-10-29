@@ -198,7 +198,8 @@ void main() {
       final svg = file.readAsStringSync();
       expect(svg, contains('<g class="cell" data-kind="andGate"'));
       expect(svg, contains('<svg class="cell custom-symbol" data-type="alu"'));
-      expect(svg, contains('id="alu-art"'));
+      // The artwork's ids are made unique to this symbol in the export.
+      expect(svg, contains('id="cs0-alu-art"'));
       // The MaterialApp's default (light) theme, not the dark fallback.
       final theme = ThemeData();
       expect(svg, contains(cssHexColor(theme.colorScheme.surface)));

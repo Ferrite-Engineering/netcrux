@@ -126,6 +126,7 @@ class SvgExporter {
       );
 
     final outsideLabels = <(SchematicCell, NodePosition)>[];
+    var customSymbolCount = 0;
 
     // Cells: body, then label or pin names, then pin marks.
     for (final cell in graph.graph.cells) {
@@ -134,7 +135,13 @@ class SvgExporter {
       final box = pos.bounds;
       final custom = customSymbols(cell);
       if (custom is ExportedCellSymbolSvg) {
-        _writeCustomSymbol(buffer, cell, box, custom.document);
+        _writeCustomSymbol(
+          buffer,
+          cell,
+          box,
+          custom.document,
+          idPrefix: 'cs${customSymbolCount++}-',
+        );
       } else {
         final shape = custom is ExportedCellSymbolUnrenderable
             ? genericBoxShape(box.width, box.height)
@@ -236,8 +243,9 @@ class SvgExporter {
     StringBuffer buffer,
     SchematicCell cell,
     BoundingBox box,
-    String document,
-  ) {
+    String document, {
+    required String idPrefix,
+  }) {
     final size = svgIntrinsicSize(document);
     final viewBox = size == null
         ? ''
@@ -250,7 +258,7 @@ class SvgExporter {
         'width="${_n(box.width)}" height="${_n(box.height)}"$viewBox '
         'preserveAspectRatio="xMidYMid meet" overflow="hidden">',
       )
-      ..writeln(_stripProlog(document))
+      ..writeln(nestableSvgDocument(document, idPrefix: idPrefix))
       ..writeln('  </svg>');
   }
 
@@ -523,6 +531,78 @@ String fitLabel(
   return elideStart
       ? '\u2026${text.substring(text.length - keep)}'
       : '${text.substring(0, keep)}\u2026';
+}
+
+/// [document], a standalone SVG document, rewritten to nest inside the
+/// export's per-cell `<svg>` wrapper, whose `viewBox` is the document's
+/// intrinsic size ([svgIntrinsicSize]).
+///
+/// * The XML prolog and doctype go; the export has its own.
+/// * The root element's `width` and `height` become `100%`, so it fills the
+///   wrapper's viewBox and the renderer scales its own viewBox into that,
+///   as the canvas does. Left as written, a size in other units than the
+///   viewBox (`width="40mm"` over `viewBox="0 0 40 20"`, or `width="200"`)
+///   makes a viewport larger than the wrapper's viewBox, and the wrapper
+///   clips the drawing to its top-left part.
+/// * Every `id` gets [idPrefix], as do the `url(#…)`, `href="#…"` and
+///   `<style>` selector references to it, so two symbols in one export
+///   cannot resolve each other's gradients, clip paths or markers.
+@visibleForTesting
+String nestableSvgDocument(String document, {required String idPrefix}) {
+  var out = _stripProlog(document);
+
+  final root = RegExp(r'<svg\b([^>]*)>', caseSensitive: false).firstMatch(out);
+  if (root != null) {
+    var attributes = root.group(1)!;
+    final selfClosing = attributes.trimRight().endsWith('/');
+    if (selfClosing) {
+      attributes = attributes.substring(0, attributes.lastIndexOf('/'));
+    }
+    attributes = attributes.replaceAll(
+      RegExp(
+        r'''\s(?:width|height)\s*=\s*(?:"[^"]*"|'[^']*')''',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    final tag =
+        '<svg${attributes.trimRight()} width="100%" height="100%"'
+        '${selfClosing ? '/' : ''}>';
+    out = out.replaceRange(root.start, root.end, tag);
+  }
+
+  final ids = <String>{
+    for (final match in RegExp(
+      r'''\sid\s*=\s*(?:"([^"]*)"|'([^']*)')''',
+    ).allMatches(out))
+      match.group(1) ?? match.group(2)!,
+  }..remove('');
+  if (ids.isEmpty) return out;
+  String renamed(String id) => ids.contains(id) ? '$idPrefix$id' : id;
+
+  return out
+      .replaceAllMapped(
+        RegExp(r'''(\sid\s*=\s*)(["'])([^"']*)\2'''),
+        (m) => '${m[1]}${m[2]}${renamed(m[3]!)}${m[2]}',
+      )
+      .replaceAllMapped(
+        RegExp(r'''(url\(\s*["']?#)([^)"'\s]+)'''),
+        (m) => '${m[1]}${renamed(m[2]!)}',
+      )
+      .replaceAllMapped(
+        RegExp(r'''((?:xlink:)?href\s*=\s*["']#)([^"']+)'''),
+        (m) => '${m[1]}${renamed(m[2]!)}',
+      )
+      .replaceAllMapped(
+        RegExp(r'(<style\b[^>]*>)([\s\S]*?)(</style>)', caseSensitive: false),
+        (m) {
+          final css = m[2]!.replaceAllMapped(
+            RegExp(r'#([A-Za-z_][\w-]*)'),
+            (s) => '#${renamed(s[1]!)}',
+          );
+          return '${m[1]}$css${m[3]}';
+        },
+      );
 }
 
 String _stripProlog(String document) => document

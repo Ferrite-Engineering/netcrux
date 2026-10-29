@@ -126,6 +126,7 @@ String _group(String svg, CellKind kind) {
 LaidOutGraph _single(
   SchematicCell cell,
   NodePosition position, {
+  List<SchematicCell> extraCells = const <SchematicCell>[],
   List<NodePosition> extraNodes = const <NodePosition>[],
   List<SchematicBoundaryPort> boundaryPorts = const <SchematicBoundaryPort>[],
   Map<String, Set<String>> symbolCells = const <String, Set<String>>{},
@@ -133,7 +134,7 @@ LaidOutGraph _single(
   return LaidOutGraph(
     graph: SchematicGraph(
       moduleName: 'top',
-      cells: <SchematicCell>[cell],
+      cells: <SchematicCell>[cell, ...extraCells],
       boundaryPorts: boundaryPorts,
       edges: const <SchematicEdge>[],
     ),
@@ -505,6 +506,124 @@ void main() {
       // One prolog, the document's own.
       expect(RegExp(r'<\?xml').allMatches(svg), hasLength(1));
       expect(svg, isNot(contains('class="cell" data-kind=')));
+    });
+
+    test('artwork sized in other units than its viewBox fills the cell, not '
+        'a clipped corner of it', () {
+      // An Inkscape drawing in millimetres: 40mm is about 151px, four times
+      // the 40-unit viewBox, so a root left at width="40mm" overflows the
+      // wrapper's viewBox and the wrapper clips all but its top-left part.
+      const mm =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="40mm" '
+          'height="20mm" viewBox="0 0 40 20">\n'
+          '<path d="M0 0 L40 10 L0 20 Z"/></svg>';
+      final svg = exporter.toSvg(
+        _single(symbolCell, symbolNode),
+        customSymbols: (_) => const ExportedCellSymbolSvg(mm),
+      );
+      expect(
+        svg,
+        contains(
+          'width="60.00" height="40.00" viewBox="0 0 40.00 20.00" '
+          'preserveAspectRatio="xMidYMid meet" overflow="hidden">\n'
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 20" '
+          'width="100%" height="100%">\n<path',
+        ),
+      );
+      expect(svg, isNot(contains('mm"')));
+    });
+
+    test('a bare numeric root size other than the viewBox is replaced too', () {
+      expect(
+        nestableSvgDocument(
+          '<?xml version="1.0"?>\n'
+          "<svg width='200' viewBox=\"0 0 40 20\" height=\"100px\" "
+          'stroke-width="2"><rect width="40" height="20"/></svg>',
+          idPrefix: 'cs0-',
+        ),
+        '<svg viewBox="0 0 40 20" stroke-width="2" width="100%" '
+        'height="100%"><rect width="40" height="20"/></svg>',
+      );
+    });
+
+    test('a root without a size gets one, and a self-closing root stays '
+        'self-closing', () {
+      expect(
+        nestableSvgDocument(
+          '<svg viewBox="0 0 4 2"><g/></svg>',
+          idPrefix: 'cs0-',
+        ),
+        '<svg viewBox="0 0 4 2" width="100%" height="100%"><g/></svg>',
+      );
+      expect(
+        nestableSvgDocument(
+          '<svg viewBox="0 0 4 2" width="8" />',
+          idPrefix: 'cs0-',
+        ),
+        '<svg viewBox="0 0 4 2" width="100%" height="100%"/>',
+      );
+    });
+
+    test('ids and their references are made unique per symbol', () {
+      const withDefs =
+          '<svg viewBox="0 0 30 20"><defs>\n'
+          '<linearGradient id="g"><stop offset="0"/></linearGradient>\n'
+          "<clipPath id='c'><rect width=\"30\" height=\"20\"/></clipPath>\n"
+          '</defs>\n'
+          '<style>#body { fill: url(#g); } .x { fill: #fff; }</style>\n'
+          '<path id="body" d="M0 0 L30 10 L0 20 Z" fill="url(#g)" '
+          'clip-path="url(\'#c\')"/>\n'
+          '<use href="#body"/>\n'
+          '<use xlink:href="#body"/>\n'
+          '<use href="#elsewhere"/></svg>';
+      final svg = exporter.toSvg(
+        _single(
+          symbolCell,
+          symbolNode,
+          extraCells: const <SchematicCell>[
+            SchematicCell(
+              id: 'u_alu2',
+              kind: CellKind.generic,
+              type: 'alu',
+              ports: <SchematicPort>[],
+            ),
+          ],
+          extraNodes: const <NodePosition>[
+            NodePosition(
+              id: 'u_alu2',
+              bounds: BoundingBox(x: 200, y: 100, width: 60, height: 40),
+            ),
+          ],
+        ),
+        customSymbols: (_) => const ExportedCellSymbolSvg(withDefs),
+      );
+      for (final prefix in <String>['cs0-', 'cs1-']) {
+        expect(svg, contains('<linearGradient id="${prefix}g">'));
+        expect(svg, contains("<clipPath id='${prefix}c'>"));
+        expect(
+          svg,
+          contains(
+            '<style>#${prefix}body { fill: url(#${prefix}g); } '
+            '.x { fill: #fff; }</style>',
+          ),
+        );
+        expect(
+          svg,
+          contains(
+            '<path id="${prefix}body" d="M0 0 L30 10 L0 20 Z" '
+            'fill="url(#${prefix}g)" clip-path="url(\'#${prefix}c\')"/>',
+          ),
+        );
+        expect(
+          svg,
+          contains(
+            '<use href="#${prefix}body"/>\n<use xlink:href="#${prefix}body"/>',
+          ),
+        );
+      }
+      // A reference to no id in the symbol is left alone.
+      expect(svg, contains('<use href="#elsewhere"/>'));
+      expect(RegExp(r'\sid="g"').allMatches(svg), isEmpty);
     });
 
     test('artwork that cannot be drawn falls back to the generic box', () {
