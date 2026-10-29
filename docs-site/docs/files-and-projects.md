@@ -4,7 +4,7 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 
 | Artifact | Extension | What it holds |
 |---|---|---|
-| **Project** | `.netcrux-project` | A named source set for a design: sources, top module, include paths, defines. |
+| **Project** | `.netcrux-project` | A named source set for a design: sources, top module, include paths, defines, cell libraries. |
 | **Suite manifest** | `<design>.crux-project` | The design, described once for every EDACrux product. |
 | **Session** | `.netcrux` | One tab's view state — where you were and what you were looking at. |
 | **Workspace** | `.netcrux-workspace` | A named set of tabs and panes. |
@@ -18,6 +18,7 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 | NetCrux project | `.netcrux-project` | JSON describing sources, top module, include directories and defines. |
 | Suite manifest | `<design>.crux-project` | YAML naming the design's sources or a pre-built netlist. See [below](#crux-project). |
 | Vivado-style filelist | `.f` | Imported with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |
+| Liberty cell library | `.lib`, `.liberty` | Read for its cells' interfaces, which Yosys sees as black boxes. See [Cell libraries](#cell-libraries). |
 | Yosys JSON netlist | `.json` | Read directly — no Yosys run. See [below](#json). |
 
 A netlist your own flow already wrote with Yosys `write_json` opens without elaboration: choose `File → Open Netlist JSON…` (also on the toolbar), pass it on the [command line](cli/usage.md) (`netcrux build/top.json`), or name it under `artifacts.netlist` in a [design manifest](#crux-project). It is also the only thing the [web viewer](web-mode.md) opens. NetCrux parses it and renders the top module exactly as if it had run Yosys itself, and the netlist file is watched for changes like any source. A single `.json` file is always read as a netlist, never handed to Yosys.
@@ -66,15 +67,34 @@ A manifest from an earlier release is named just `.crux-project`, which file pic
 
     NetCrux runs Yosys (and GHDL for VHDL), reads the resulting netlist, and renders the top module. Close the tab with **Close Tab** (++cmd+w++ / ++ctrl+w++) or **Close Project** (++cmd+shift+w++ / ++ctrl+shift+w++).
 
+Any `.lib` or `.liberty` file selected with the sources becomes one of the tab's [cell libraries](#cell-libraries) rather than a source.
+
+## Cell libraries {#cell-libraries}
+
+RTL that instantiates standard cells directly, such as an analog top level or hand-placed buffers, needs a definition for every cell, because NetCrux elaborates with `hierarchy -check`. The vendor's simulation models are the wrong place to get one: they are written for simulators and use constructs Yosys cannot read, such as UDPs and `specify` blocks. Leave them out of the source list and add the library's Liberty file instead.
+
+From NetCrux 1.1.3, a project carries a list of Liberty (`.lib`) files. NetCrux reads each cell's pins with their directions, its buses with their widths, and its power and ground pins (`pg_pin`), which become `inout` ports so an instance that connects `VDD` and `VSS` elaborates. Each cell reaches Yosys as a black box. If your sources define a module with a cell's name, that definition is used instead. When two libraries define the same cell, the first in the list is used and the Diagnostics panel says so.
+
+Add cell libraries in any of these ways:
+
+- `File → Cell Libraries (Liberty)…` lists the active tab's libraries, with **Add…** and a remove button for each. **Apply** re-elaborates the design.
+- `File → Open Source Files…` accepts `.lib` and `.liberty` files alongside the sources.
+- A `.f` filelist entry ending in `.lib` or `.liberty` is a cell library.
+- A `.netcrux-project` lists them under `libertyFiles`.
+
+A list changed with `File → Cell Libraries (Liberty)…` stays with the tab across restarts, even when the tab's project file does not list it; `File → Save Project As…` writes it into the project.
+
+Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time, so a library is read once until it changes. A library that is missing or is not valid Liberty fails the elaboration with the file name, and the line for a syntax error.
+
 ## Projects {#projects}
 
-A `.netcrux-project` file captures everything needed to re-elaborate a design: the source list, the chosen top module, include directories, `define` macros, and optionally extra Yosys commands and per-file language overrides. Relative paths resolve against the project file's own directory, so a committed project works from any checkout. Open one with `File → Open Project…` (++cmd+o++ / ++ctrl+o++), or pass it on the [command line](cli/usage.md). Use a project when a design needs more than a bare file list — defines, an explicit top, or a fixed include path. A project is the durable definition of a design; a session is a transient view of it.
+A `.netcrux-project` file captures everything needed to re-elaborate a design: the source list, the chosen top module, include directories, `define` macros, and optionally extra Yosys commands, per-file language overrides and [cell libraries](#cell-libraries). Relative paths resolve against the project file's own directory, so a committed project works from any checkout. Open one with `File → Open Project…` (++cmd+o++ / ++ctrl+o++), or pass it on the [command line](cli/usage.md). Use a project when a design needs more than a bare file list — defines, an explicit top, or a fixed include path. A project is the durable definition of a design; a session is a transient view of it.
 
-`File → Save Project As…` (from NetCrux 1.1) writes the active tab's project as a `.netcrux-project`: the source list, top module, include directories, defines and Yosys options the tab elaborates with, whether they came from a project file, a filelist import or files opened one by one. Source and include paths are written relative to the project file's directory when they share a root with it, so the file can be committed and opened from another checkout; a path on another drive stays absolute. The tab then treats the new file as its project file, so a restore re-reads it, and the file joins **Recent Projects**.
+`File → Save Project As…` (from NetCrux 1.1) writes the active tab's project as a `.netcrux-project`: the source list, top module, include directories, defines, cell libraries and Yosys options the tab elaborates with, whether they came from a project file, a filelist import or files opened one by one. Source, include and cell-library paths are written relative to the project file's directory when they share a root with it, so the file can be committed and opened from another checkout; a path on another drive stays absolute. The tab then treats the new file as its project file, so a restore re-reads it, and the file joins **Recent Projects**.
 
 ## Importing a Vivado filelist {#filelist}
 
-If you already maintain a `.f` filelist for a vendor flow, import it with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). NetCrux reads the source paths, `+incdir+` directories and `+define+` macros out of the filelist — following nested `-f` includes, expanding `$VAR` / `${VAR}` environment variables, and reporting include cycles — and elaborates from there in a new tab. `-y`, `+libext+` and `--top` are not supported.
+If you already maintain a `.f` filelist for a vendor flow, import it with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). NetCrux reads the source paths, `+incdir+` directories, `+define+` macros and [cell libraries](#cell-libraries) out of the filelist — following nested `-f` includes, expanding `$VAR` / `${VAR}` environment variables, and reporting include cycles — and elaborates from there in a new tab. `-y`, `+libext+` and `--top` are not supported.
 
 An imported filelist is listed under **Recent Projects** on the welcome screen and reopens from there, and `netcrux <design>.f` opens one from a shell. A tab opened from a filelist re-reads it when the workspace is restored, the same way a `.netcrux-project` tab does, so its defines and include directories apply at the next launch too.
 

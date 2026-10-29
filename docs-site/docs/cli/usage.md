@@ -33,7 +33,7 @@ NetCrux is a desktop application with a command-line front door. Every invocatio
 | Exactly one `*.netcrux` | Opened as a session, like `--session`. |
 | Exactly one `*.crux-project` | Opened as a suite design manifest: its netlist, or its sources and top module. See [design manifests](../files-and-projects.md#crux-project). |
 | Exactly one directory | The one `*.crux-project` manifest inside it is opened. A directory with no manifest, or with more than one, is refused with a message naming what it found. |
-| One or more other paths | Opened as source files, one tab each. A `*.json` file is read as a pre-built Yosys netlist, without elaboration. |
+| One or more other paths | Opened as source files, one tab each. A `*.json` file is read as a pre-built Yosys netlist, without elaboration. `*.lib` and `*.liberty` files are [cell libraries](../files-and-projects.md#cell-libraries), added to every tab rather than opened as tabs of their own. |
 | No arguments | The saved workspace is restored (unless `Settings → General → Restore tabs on launch` is off). |
 
 Precedence: `--workspace` wins over `--session`, which wins over positional arguments.

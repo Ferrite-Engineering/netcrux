@@ -120,6 +120,7 @@ Supported inputs:
 | `.netcrux-project` | A JSON project file: source list, top module, include directories and defines. |
 | `<design>.crux-project` | The suite design manifest. See [Sources, projects & sessions](files-and-projects.md#crux-project). |
 | `.f` filelist | A Vivado-style filelist. Import with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |
+| `.lib` Liberty file | A standard-cell library, for RTL that instantiates cells directly. See [Cell libraries](files-and-projects.md#cell-libraries). |
 
 The full story on projects, auto-reload, sessions, workspaces and export lives on [Sources, projects & sessions](files-and-projects.md).
 
