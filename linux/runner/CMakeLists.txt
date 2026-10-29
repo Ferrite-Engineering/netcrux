@@ -10,6 +10,9 @@ add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
   "remote_display.cc"
+  # Keeps a key press on an untrusted X display (ssh -X) from crashing the
+  # app. Works by being linked in; see the file.
+  "x11_keymap_guard.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 
@@ -23,7 +26,11 @@ add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 # Add dependency libraries. Add any application-specific dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
-# remote_display.cc installs an X error handler (XSetErrorHandler).
+# remote_display.cc installs an X error handler (XSetErrorHandler), and
+# x11_keymap_guard.cc reads the display's keycode range.
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::X11)
+# x11_keymap_guard.cc finds GDK's own function with dlsym, which is in libdl
+# before glibc 2.34, and the release build targets an older glibc.
+target_link_libraries(${BINARY_NAME} PRIVATE ${CMAKE_DL_LIBS})
 
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
