@@ -86,6 +86,18 @@ A list changed with `File → Cell Libraries (Liberty)…` stays with the tab ac
 
 Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time, so a library is read once until it changes. A library that is missing or is not valid Liberty fails the elaboration with the file name, and the line for a syntax error.
 
+### Missing modules as black boxes {#black-boxes}
+
+Without a library at hand, a design that instantiates a module nothing defines stops with "is not part of the design". From NetCrux 1.1.3 the error view offers **Show missing modules as black boxes**, which turns the option on for the tab's project and elaborates again. The same option is a checkbox in `File → Cell Libraries (Liberty)…`, and a `.netcrux-project` stores it as `"blackBoxMissingModules": true`.
+
+With the option on, each instance of a missing module is drawn as a box with the pins its instance connects. A positional connection has no pin name to show, so its pins are `$1`, `$2` and so on, in the instance's order. Nothing says which way a pin points, so NetCrux infers it from the wiring:
+
+- A pin on a net that something else drives (a module input, a constant, another cell's output) is an input.
+- A pin that is the only possible driver of a net that other cells or a module output read is an output.
+- A pin the wiring does not decide is shown as an input.
+
+A power pin tied to a supply or a constant therefore shows as an input. The Diagnostics panel lists the module types drawn this way and how many pins were guessed. Directions are inferred, so use this for viewing; a [cell library](#cell-libraries) gives the exact pins. The vendor's simulation models still have to be left out of the source list, since Yosys cannot read them either way.
+
 ## Projects {#projects}
 
 A `.netcrux-project` file captures everything needed to re-elaborate a design: the source list, the chosen top module, include directories, `define` macros, and optionally extra Yosys commands, per-file language overrides and [cell libraries](#cell-libraries). Relative paths resolve against the project file's own directory, so a committed project works from any checkout. Open one with `File → Open Project…` (++cmd+o++ / ++ctrl+o++), or pass it on the [command line](cli/usage.md). Use a project when a design needs more than a bare file list: defines, an explicit top, or a fixed include path. A project is the durable definition of a design; a session is a transient view of it.
