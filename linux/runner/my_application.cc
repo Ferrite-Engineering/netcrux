@@ -138,6 +138,7 @@ MyApplication* my_application_new() {
   // corresponding .desktop file. This ensures better integration by allowing
   // the application to be recognized beyond its binary name.
   g_set_prgname(APPLICATION_ID);
+  prefer_x11_when_only_display_is_set();
   skip_accessibility_bridge_without_session_bus();
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),

@@ -9,6 +9,16 @@
 // The open core and the Pro overlay both compile this file, so both runners
 // behave the same.
 
+// Keeps the window on the X display a session forwards. GTK tries Wayland
+// first, and with WAYLAND_DISPLAY unset it connects to the default socket,
+// wayland-0, in XDG_RUNTIME_DIR. Over ssh X forwarding to a machine where the
+// same user is also logged in to a Wayland desktop, that socket exists, and
+// the window opens on that machine's own screen instead of the forwarded one.
+// So when DISPLAY is set and WAYLAND_DISPLAY is not, GTK is limited to X11.
+// A GDK_BACKEND the user has set is left alone. GTK picks its backend while
+// it initializes, so call this before the application runs.
+void prefer_x11_when_only_display_is_set();
+
 // Turns off GTK's accessibility bridge when no DBus session bus can be
 // reached. The bridge looks for the accessibility bus through the session
 // bus, and without one it only fails, noisily, on every window. A value the

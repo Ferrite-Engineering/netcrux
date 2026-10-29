@@ -8,6 +8,19 @@
 #include <gdk/gdkx.h>
 #endif
 
+void prefer_x11_when_only_display_is_set() {
+  if (g_getenv("GDK_BACKEND") != nullptr) {
+    return;
+  }
+  const gchar* display = g_getenv("DISPLAY");
+  const gchar* wayland = g_getenv("WAYLAND_DISPLAY");
+  if (display == nullptr || display[0] == '\0' ||
+      (wayland != nullptr && wayland[0] != '\0')) {
+    return;
+  }
+  gdk_set_allowed_backends("x11");
+}
+
 void skip_accessibility_bridge_without_session_bus() {
   if (g_getenv("NO_AT_BRIDGE") != nullptr) {
     return;
