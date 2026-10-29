@@ -792,8 +792,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   /// (`.lib`, `.liberty`) become the project's cell libraries rather than
   /// sources ([NetcruxProject.fromOpenedFiles]); only the sources are
   /// recorded as recent files, since a library alone is not a design.
-  Future<void> _openSourceFilesByPaths(List<String> paths) async {
-    if (paths.isEmpty || !mounted) return;
+  Future<void> _openSourceFilesByPaths(List<String> requested) async {
+    if (requested.isEmpty || !mounted) return;
+    // A path typed on the command line is relative to the directory the app
+    // was started in. Made absolute here, so a later Save Project As writes
+    // it relative to the project file, as it does a path picked in a dialog;
+    // kept as typed, `design/top.v` was saved verbatim and then read against
+    // the project file's folder.
+    final paths = <String>[
+      for (final path in requested) p.normalize(p.absolute(path)),
+    ];
     final project = NetcruxProject.fromOpenedFiles(paths);
     final named = project.sourceFiles.isEmpty ? paths : project.sourceFiles;
     final displayName = named.length == 1
