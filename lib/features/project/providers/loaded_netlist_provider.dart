@@ -14,6 +14,9 @@ import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
+import 'package:netcrux/services/liberty/liberty_library.dart';
+import 'package:netcrux/services/liberty/liberty_stub_service.dart';
+import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
 import 'package:netcrux/services/telemetry/netcrux_design_language_mix.dart';
 import 'package:netcrux/services/web/web_json_loader.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_provider.dart';
@@ -240,20 +243,21 @@ class LoadedNetlist extends _$LoadedNetlist {
   ) async {
     final availability = await _requireYosys(ref);
     final runner = ref.read(yosysRunnerProvider);
-    final request = _buildRequest(project);
+    final options = _buildRequest(project);
     // Elaboration cache (a re-open of an unchanged design is a sub-50 ms cache
-    // hit): fingerprint = per-file path+size+mtime + yosys version + the
-    // request options. A hit returns the previously parsed model and its stderr
-    // without spawning yosys or re-parsing. A null key (a source vanished)
-    // simply bypasses the cache.
+    // hit): fingerprint = per-file path+size+mtime (sources and Liberty cell
+    // libraries) + yosys version + the request options. A hit returns the
+    // previously parsed model and its stderr without spawning yosys or
+    // re-parsing. A null key (a source vanished) simply bypasses the cache.
     final cache = ref.read(elaborationCacheServiceProvider);
     final cacheKey = await ElaborationCacheService.buildKey(
       sourceFilePaths: project.sourceFiles,
+      libertyFilePaths: project.libertyFiles,
       yosysVersion: availability.versionString ?? '',
-      topModule: request.topModule,
-      defines: request.defines,
-      includePaths: request.includePaths,
-      extraCommands: request.extraCommands,
+      topModule: options.topModule,
+      defines: options.defines,
+      includePaths: options.includePaths,
+      extraCommands: options.extraCommands,
     );
     if (cacheKey != null) {
       final hit = cache.lookup(cacheKey);
@@ -262,6 +266,12 @@ class LoadedNetlist extends _$LoadedNetlist {
         return (model: hit.model, cached: true);
       }
     }
+    // Cell libraries become one more Verilog source: a file of black-box
+    // stubs, generated (or read from its on-disk cache) only on a miss.
+    final liberty = await _libertyStubs(ref, project);
+    final request = liberty == null
+        ? options
+        : _buildRequest(project, libertyStubPath: liberty.stubPath);
     // VHDL sources are not pre-empted here on a ghdl-availability check:
     // the runner lowers them with a standalone `ghdl --synth` step and a
     // missing or failing ghdl surfaces its stderr as a pipeline error,
@@ -297,8 +307,10 @@ class LoadedNetlist extends _$LoadedNetlist {
       progress.clear();
     }
     // Publish stderr — successes and failures alike — so the
-    // diagnostics drawer can surface warnings even on healthy runs.
-    ref.read(elaborationStderrProvider.notifier).set(result.stderr);
+    // diagnostics drawer can surface warnings even on healthy runs. The cell
+    // libraries' own warnings go first, in Yosys's `Warning:` form.
+    final stderr = _withLibertyWarnings(liberty, result.stderr);
+    ref.read(elaborationStderrProvider.notifier).set(stderr);
     // A killed subprocess is reported by its result type, not an
     // exit code. Branch on those before the success / failure handling.
     if (result is YosysRunTimeout) throw _failureFor(result);
@@ -337,7 +349,7 @@ class LoadedNetlist extends _$LoadedNetlist {
             cacheKey,
             ElaborationCacheEntry(
               model: model,
-              stderr: result.stderr,
+              stderr: stderr,
               approxBytes: result.rawJson.length,
             ),
           );
@@ -392,12 +404,22 @@ class LoadedNetlist extends _$LoadedNetlist {
   /// non-empty defines emit `NAME=VALUE`. Per-file language is
   /// resolved by [NetcruxProject.resolveLanguage].
   @visibleForTesting
-  static YosysRunRequest buildRequest(NetcruxProject project) =>
-      _buildRequest(project);
+  static YosysRunRequest buildRequest(
+    NetcruxProject project, {
+    String? libertyStubPath,
+  }) => _buildRequest(project, libertyStubPath: libertyStubPath);
 
-  static YosysRunRequest _buildRequest(NetcruxProject project) {
+  /// [libertyStubPath], when given, is the generated black-box stub file
+  /// for the project's cell libraries. It is read first, as plain Verilog,
+  /// so a module the sources define under a cell's name replaces the stub
+  /// (Yosys replaces a black box with a later full definition).
+  static YosysRunRequest _buildRequest(
+    NetcruxProject project, {
+    String? libertyStubPath,
+  }) {
     return YosysRunRequest(
       sources: <YosysSourceFile>[
+        if (libertyStubPath != null) YosysSourceFile(libertyStubPath),
         for (final path in project.sourceFiles)
           _sourceFileFor(path, project.resolveLanguage(path)),
       ],
@@ -453,12 +475,16 @@ Future<NetlistModel?> loadDesignNetlist(
     return await _readPrebuiltNetlist(ref, project);
   }
   await _requireYosys(ref);
+  final liberty = await _libertyStubs(ref, project);
   final policy = ref.read(elaborationTimeoutPolicyProvider);
   final budget = policy.timeoutFor(await LoadedNetlist._estimateSize(project));
   final result = await ref
       .read(yosysRunnerProvider)
       .run(
-        LoadedNetlist._buildRequest(project),
+        LoadedNetlist._buildRequest(
+          project,
+          libertyStubPath: liberty?.stubPath,
+        ),
         timeout: policy.killOnTimeout ? budget : null,
       );
   if (result is YosysRunCancelled) return null;
@@ -499,6 +525,37 @@ Future<NetlistModel?> _readPrebuiltNetlist(
   } on YosysJsonParseException catch (e) {
     throw LoadedNetlistException(e.message, cause: e, detail: e.message);
   }
+}
+
+/// The black-box stubs for [project]'s cell libraries, or `null` when it
+/// has none.
+///
+/// A library that is missing or is not valid Liberty fails the elaboration
+/// with a message naming the file (and the line, for a syntax error), shown
+/// as the error's detail.
+Future<LibertyStubs?> _libertyStubs(Ref ref, NetcruxProject project) async {
+  if (project.libertyFiles.isEmpty) return null;
+  final service = ref.read(libertyStubServiceProvider);
+  try {
+    return await service.stubsFor(project.libertyFiles);
+  } on LibertyParseException catch (e) {
+    throw LoadedNetlistException(
+      'Cell library could not be read: ${e.description}',
+      cause: e,
+      detail: 'Cell library could not be read: ${e.description}',
+    );
+  }
+}
+
+/// [stderr] with [liberty]'s warnings in front, one `Warning:` line each,
+/// the form the diagnostics drawer parses.
+String _withLibertyWarnings(LibertyStubs? liberty, String stderr) {
+  if (liberty == null || liberty.warnings.isEmpty) return stderr;
+  final buffer = StringBuffer();
+  for (final warning in liberty.warnings) {
+    buffer.writeln('Warning: $warning');
+  }
+  return '$buffer$stderr';
 }
 
 /// The Yosys probe result, or a [LoadedNetlistErrorKind.yosysUnavailable]

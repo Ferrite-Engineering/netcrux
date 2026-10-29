@@ -57,6 +57,9 @@ NetcruxProject resolveProjectPaths(
   final includePaths = <String>[
     for (final d in project.includePaths) resolve(d),
   ];
+  final libertyFiles = <String>[
+    for (final f in project.libertyFiles) resolve(f),
+  ];
   final languages = <String, NetcruxSourceLanguage>{
     for (final entry in project.sourceFileLanguages.entries)
       resolve(entry.key): entry.value,
@@ -66,11 +69,12 @@ NetcruxProject resolveProjectPaths(
     sourceFiles: sourceFiles,
     includePaths: includePaths,
     sourceFileLanguages: languages,
+    libertyFiles: libertyFiles,
   );
 }
 
 /// The inverse of [resolveProjectPaths], for writing a project file: every
-/// absolute source and include path that shares a root with [projectDir] is
+/// absolute source, include and cell-library path that shares a root with [projectDir] is
 /// written relative to it (`..` segments included, as a filelist would), so
 /// the file travels between checkouts and machines; a path on another root,
 /// a second Windows drive, stays absolute, since no relative path reaches
@@ -104,6 +108,9 @@ NetcruxProject relativizeProjectPaths(
   final includePaths = <String>[
     for (final d in project.includePaths) relativize(d),
   ];
+  final libertyFiles = <String>[
+    for (final f in project.libertyFiles) relativize(f),
+  ];
   final languages = <String, NetcruxSourceLanguage>{
     for (final entry in project.sourceFileLanguages.entries)
       relativize(entry.key): entry.value,
@@ -113,5 +120,6 @@ NetcruxProject relativizeProjectPaths(
     sourceFiles: sourceFiles,
     includePaths: includePaths,
     sourceFileLanguages: languages,
+    libertyFiles: libertyFiles,
   );
 }

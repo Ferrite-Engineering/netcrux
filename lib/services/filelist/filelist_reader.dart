@@ -59,6 +59,7 @@ class FilelistContents {
     required this.sourceFiles,
     required this.defines,
     required this.includePaths,
+    this.libertyFiles = const <String>[],
   });
 
   /// HDL source paths in declaration order, resolved to absolute
@@ -71,6 +72,10 @@ class FilelistContents {
 
   /// `+incdir+PATH` directories, in declaration order.
   final List<String> includePaths;
+
+  /// Liberty cell libraries (`.lib` / `.liberty` entries), in declaration
+  /// order, resolved like [sourceFiles].
+  final List<String> libertyFiles;
 }
 
 /// Reads Vivado-style `.f` filelists.
@@ -80,6 +85,10 @@ class FilelistContents {
 /// - **Source files**: any bare line that is not a flag is treated
 ///   as an HDL source path. Relative paths resolve against the
 ///   filelist's directory.
+/// - **Cell libraries**: a bare entry ending in `.lib` or `.liberty` is a
+///   Liberty cell library, not a source, and goes to
+///   [NetcruxProject.libertyFiles] (see [NetcruxProject.isLibertyPath]).
+///   It resolves the same way as a source path.
 /// - **`+define+NAME` / `+define+NAME=VALUE`**: preprocessor define.
 ///   Multiple `+define+` segments may appear on one line.
 /// - **`+incdir+PATH`**: include directory. Multiple `+incdir+`
@@ -139,6 +148,7 @@ class FilelistReader {
       sourceFiles: contents.sourceFiles,
       defines: contents.defines,
       includePaths: contents.includePaths,
+      libertyFiles: contents.libertyFiles,
     );
   }
 
@@ -169,6 +179,7 @@ class FilelistReader {
     final sources = <String>[];
     final defines = <String, String>{};
     final includes = <String>[];
+    final liberty = <String>[];
 
     for (final rawLine in lines) {
       final line = _stripComment(rawLine).trim();
@@ -192,6 +203,7 @@ class FilelistReader {
             defines[entry.key] = entry.value;
           }
           includes.addAll(nestedContents.includePaths);
+          liberty.addAll(nestedContents.libertyFiles);
           i++; // consume the next token
           continue;
         }
@@ -209,8 +221,13 @@ class FilelistReader {
           // additions wire here.
           continue;
         }
-        // Bare token = source file path.
-        sources.add(_resolveRelative(dir, token));
+        // Bare token = source file path, or a Liberty cell library.
+        final resolvedPath = _resolveRelative(dir, token);
+        if (NetcruxProject.isLibertyPath(resolvedPath)) {
+          liberty.add(resolvedPath);
+        } else {
+          sources.add(resolvedPath);
+        }
       }
     }
 
@@ -219,6 +236,7 @@ class FilelistReader {
       sourceFiles: List<String>.unmodifiable(sources),
       defines: Map<String, String>.unmodifiable(defines),
       includePaths: List<String>.unmodifiable(includes),
+      libertyFiles: List<String>.unmodifiable(liberty),
     );
   }
 

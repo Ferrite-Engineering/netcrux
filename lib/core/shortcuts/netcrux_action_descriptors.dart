@@ -246,6 +246,16 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
     isEnabled: _requiresTab,
   ),
 
+  // ── Cell Libraries — browsable, needs a tab ─────────────────────────
+  // Edits the active tab's project, so a tab is enough: a design that does
+  // not elaborate yet is exactly the one missing its cell libraries. Local
+  // files read for Yosys, so the browser build does not offer it.
+  NetcruxAction.editCellLibraries => const NetcruxActionDescriptor(
+    surfaces: _menuPalette,
+    isVisible: _desktopOnly,
+    isEnabled: _requiresTab,
+  ),
+
   // ── Trace overlays — toolbar (as one split button) + menu + palette ──
   // Fan-in / fan-out / clear share a single grouped toolbar slot rather
   // than three near-identical buttons; see NetcruxToolbar.

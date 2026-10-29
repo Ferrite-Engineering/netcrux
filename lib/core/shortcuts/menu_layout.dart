@@ -60,10 +60,12 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
       NetcruxAction.openSession,
       NetcruxAction.importFilelist,
     ],
-    // Auxiliary inputs loaded alongside the design: a comparison netlist for
-    // the diff view and a waveform for activity analysis. Each loader sits
-    // next to the command that unloads it.
+    // Auxiliary inputs loaded alongside the design: the cell libraries it
+    // instantiates, a comparison netlist for the diff view and a waveform
+    // for activity analysis. Each loader sits next to the command that
+    // unloads it.
     [
+      NetcruxAction.editCellLibraries,
       NetcruxAction.loadComparisonNetlist,
       NetcruxAction.clearComparisonNetlist,
       NetcruxAction.openWaveformFile,

@@ -39,6 +39,7 @@ class NetcruxWorkspaceCodec extends WorkspaceCodec<NetcruxTabPayload> {
       if (p.panX != 0.0) 'panX': p.panX,
       if (p.panY != 0.0) 'panY': p.panY,
       if (p.sessionExportPath != null) 'sessionExportPath': p.sessionExportPath,
+      if (p.libertyFiles != null) 'libertyFiles': p.libertyFiles,
     };
   }
 
@@ -125,6 +126,24 @@ class NetcruxWorkspaceCodec extends WorkspaceCodec<NetcruxTabPayload> {
       );
     }
 
+    final libertyRaw = json['libertyFiles'];
+    List<String>? libertyFiles;
+    if (libertyRaw is List) {
+      libertyFiles = <String>[];
+      for (final entry in libertyRaw) {
+        if (entry is! String) {
+          throw const FormatException(
+            'NetcruxTabPayload: "libertyFiles" entries must be strings',
+          );
+        }
+        libertyFiles.add(entry);
+      }
+    } else if (libertyRaw != null) {
+      throw const FormatException(
+        'NetcruxTabPayload: "libertyFiles" must be a list when present',
+      );
+    }
+
     final topModuleRaw = json['topModule'];
     if (topModuleRaw != null && topModuleRaw is! String) {
       throw const FormatException(
@@ -144,6 +163,9 @@ class NetcruxWorkspaceCodec extends WorkspaceCodec<NetcruxTabPayload> {
       panX: _asDouble(json['panX'], 'panX') ?? 0.0,
       panY: _asDouble(json['panY'], 'panY') ?? 0.0,
       sessionExportPath: sessionExportRaw as String?,
+      libertyFiles: libertyFiles == null
+          ? null
+          : List<String>.unmodifiable(libertyFiles),
     );
   }
 

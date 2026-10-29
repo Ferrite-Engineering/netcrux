@@ -860,6 +860,43 @@
   "@filePickerFilelistDialogTitle": {
     "description": "Title for the file picker dialog when importing a .f filelist."
   },
+  "actionEditCellLibraries": "セルライブラリ (Liberty)…",
+  "@actionEditCellLibraries": {
+    "description": "Command palette / File menu label for editing the active tab's Liberty cell libraries (the .lib files whose standard cells the RTL instantiates directly)."
+  },
+  "cellLibrariesDialogTitle": "セルライブラリ (Liberty)",
+  "@cellLibrariesDialogTitle": {
+    "description": "Title of the dialog that lists the active tab's Liberty cell libraries."
+  },
+  "cellLibrariesDialogBody": "スタンダードセルを直接インスタンス化する RTL のための Liberty (.lib) ファイルです。NetCrux は各セルのピン、バス、電源ピンを読み取り、セルをブラックボックスとしてエラボレーションします。ベンダーのシミュレーションモデルはソースファイルに含めないでください。同じセルを複数のライブラリが定義している場合は、リストの上にあるものが使われます。",
+  "@cellLibrariesDialogBody": {
+    "description": "Explanation at the top of the Cell Libraries dialog: what Liberty files are for, that vendor simulation models stay out of the source files, and which library wins when two define the same cell."
+  },
+  "cellLibrariesDialogEmpty": "セルライブラリはありません。",
+  "@cellLibrariesDialogEmpty": {
+    "description": "Shown in the Cell Libraries dialog when the tab has no Liberty files."
+  },
+  "cellLibrariesDialogAdd": "追加…",
+  "@cellLibrariesDialogAdd": {
+    "description": "Button in the Cell Libraries dialog that opens a file picker to add Liberty files."
+  },
+  "cellLibrariesDialogRemove": "{file} を削除",
+  "@cellLibrariesDialogRemove": {
+    "description": "Tooltip and screen-reader label of the button that removes one Liberty file from the Cell Libraries dialog's list.",
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "cellLibrariesDialogApply": "適用",
+  "@cellLibrariesDialogApply": {
+    "description": "Button that applies the edited Cell Libraries list to the tab and re-elaborates the design."
+  },
+  "filePickerLibertyDialogTitle": "セルライブラリを追加",
+  "@filePickerLibertyDialogTitle": {
+    "description": "Title for the file picker dialog when adding Liberty (.lib) cell libraries."
+  },
   "yosysPathModeAuto": "自動検出",
   "@yosysPathModeAuto": {
     "description": "Segmented-button label for the Yosys path mode that uses PATH search."

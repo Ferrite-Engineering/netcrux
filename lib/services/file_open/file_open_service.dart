@@ -9,6 +9,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:netcrux/services/filelist/filelist_reader.dart'
     show kFilelistExtension;
 
+/// The extensions, without their dots, of a Liberty cell library; see
+/// `NetcruxProject.isLibertyPath`.
+const List<String> kLibertyExtensions = <String>['lib', 'liberty'];
+
 /// Result of a file-open dialog. Either at least one path was selected or
 /// the user cancelled (the picker returned `null`). Distinguished here so
 /// callers can disambiguate "cancelled" from "no files selected".
@@ -80,8 +84,10 @@ class FileOpenService {
     return FileOpenResult(paths);
   }
 
-  /// Prompts the user for one or more Verilog / VHDL source files. Returns
-  /// the picked paths or [FileOpenResult.cancelled].
+  /// Prompts the user for one or more Verilog / VHDL source files, and
+  /// any Liberty cell libraries (`.lib`, `.liberty`) to read with them; the
+  /// open flow separates the two. Returns the picked paths or
+  /// [FileOpenResult.cancelled].
   Future<FileOpenResult> pickSourceFiles({required String dialogTitle}) async {
     final result = await FilePicker.pickFiles(
       dialogTitle: dialogTitle,
@@ -95,7 +101,26 @@ class FileOpenService {
         'vh',
         'vhd',
         'vhdl',
+        ...kLibertyExtensions,
       ],
+    );
+    if (result == null || result.files.isEmpty) {
+      return const FileOpenResult.cancelled();
+    }
+    final paths = <String>[
+      for (final file in result.files)
+        if (file.path != null) file.path!,
+    ];
+    return FileOpenResult(paths);
+  }
+
+  /// Prompts the user for one or more Liberty cell libraries. Returns the
+  /// picked paths or [FileOpenResult.cancelled].
+  Future<FileOpenResult> pickLibertyFiles({required String dialogTitle}) async {
+    final result = await FilePicker.pickFiles(
+      dialogTitle: dialogTitle,
+      type: FileType.custom,
+      allowedExtensions: kLibertyExtensions,
     );
     if (result == null || result.files.isEmpty) {
       return const FileOpenResult.cancelled();

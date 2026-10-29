@@ -100,6 +100,10 @@ enum NetcruxAction implements CruxAction {
   /// project.
   importFilelist,
 
+  /// Edit the active tab's Liberty cell libraries: the `.lib` files whose
+  /// cells RTL that instantiates standard cells is elaborated against.
+  editCellLibraries,
+
   /// Split the active pane to the right (creates a second pane and
   /// moves the active tab into it).
   splitPaneRight,
@@ -397,6 +401,8 @@ enum NetcruxAction implements CruxAction {
       case NetcruxAction.openWorkspace:
       case NetcruxAction.openSession:
       case NetcruxAction.importFilelist:
+      // Cell libraries are files read alongside the design.
+      case NetcruxAction.editCellLibraries:
       // Loading and unloading a waveform / comparison netlist is opening and
       // closing a file, so both halves of each pair live in File rather than
       // split between Tools and View.
@@ -570,6 +576,8 @@ extension NetcruxActionLabel on NetcruxAction {
         return l10n.actionOpenSession;
       case NetcruxAction.importFilelist:
         return l10n.actionImportFilelist;
+      case NetcruxAction.editCellLibraries:
+        return l10n.actionEditCellLibraries;
       case NetcruxAction.splitPaneRight:
         return l10n.actionSplitPaneRight;
       case NetcruxAction.closePane:
@@ -785,6 +793,7 @@ extension NetcruxActionRequiredTier on NetcruxAction {
       case NetcruxAction.saveProjectAs:
       case NetcruxAction.openSession:
       case NetcruxAction.importFilelist:
+      case NetcruxAction.editCellLibraries:
       case NetcruxAction.splitPaneRight:
       case NetcruxAction.closePane:
       case NetcruxAction.focusOtherPane:
@@ -910,6 +919,7 @@ extension NetcruxActionGatedFeature on NetcruxAction {
       case NetcruxAction.saveProjectAs:
       case NetcruxAction.openSession:
       case NetcruxAction.importFilelist:
+      case NetcruxAction.editCellLibraries:
       case NetcruxAction.splitPaneRight:
       case NetcruxAction.closePane:
       case NetcruxAction.focusOtherPane:
