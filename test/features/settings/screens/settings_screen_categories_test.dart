@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_cxp_ui/crux_cxp_ui.dart';
+import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_settings/crux_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import 'package:netcrux/features/settings/widgets/color_theme_section.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
+import 'package:netcrux/services/yosys/yosys_executable_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Drives each Settings category's tiles through the real screen, so the
@@ -140,12 +142,69 @@ void main() {
     expect(_settings(container).yosysPathMode, YosysPathMode.custom);
     expect(find.byType(TextField), findsOneWidget);
 
-    await tester.tap(find.text(l10n.yosysPathModeBundled));
+    await tester.tap(find.text(l10n.yosysPathModeAuto));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(_settings(container).yosysPathMode, YosysPathMode.bundled);
+    expect(_settings(container).yosysPathMode, YosysPathMode.autoDetect);
     expect(find.byType(TextField), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  // No Yosys binary ships with NetCrux, so a Bundled choice would resolve
+  // exactly as Auto-detect does and read as a shipped feature.
+  testWidgets('Engines → the Yosys path control offers only Auto-detect and '
+      'Custom', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pump(tester);
+    final l10n = await l10nFor(const Locale('en'));
+
+    await _openCategory(tester, l10n.settingsEnginesSection);
+
+    final control = tester.widget<CruxSegmentedControl<YosysPathMode>>(
+      find.byType(CruxSegmentedControl<YosysPathMode>),
+    );
+    expect(control.segments.map((s) => s.value), [
+      YosysPathMode.autoDetect,
+      YosysPathMode.custom,
+    ]);
+    expect(control.segments.map((s) => s.label), [
+      l10n.yosysPathModeAuto,
+      l10n.yosysPathModeCustom,
+    ]);
+    expect(find.text('Bundled'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Engines → a path mode saved as Bundled shows as Auto-detect and '
+      'resolves through PATH', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'netcrux.yosysPathMode': 'bundled',
+    });
+    final container = await _pump(tester);
+    final l10n = await l10nFor(const Locale('en'));
+
+    // The saved value loads untouched.
+    expect(_settings(container).yosysPathMode, YosysPathMode.bundled);
+
+    await _openCategory(tester, l10n.settingsEnginesSection);
+
+    final control = tester.widget<CruxSegmentedControl<YosysPathMode>>(
+      find.byType(CruxSegmentedControl<YosysPathMode>),
+    );
+    expect(control.selected, YosysPathMode.autoDetect);
+    expect(find.byType(TextField), findsNothing);
+    // With no bundled binary directory configured, the executable is the
+    // plain PATH lookup, as Auto-detect gives.
+    expect(
+      container.read(
+        effectiveYosysExecutableProvider,
+      ),
+      isNull,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -180,7 +239,7 @@ void main() {
     // harness fails on it.
     await tester.enterText(find.byType(TextField), '/no/such/yosys');
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text(l10n.yosysPathModeBundled));
+    await tester.tap(find.text(l10n.yosysPathModeAuto));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(TextField), findsNothing);

@@ -75,10 +75,11 @@ flutter analyze
 flutter test
 ```
 
-The `Bundled` binary-source mode in `Settings → Engines` is a forward-looking seam: no
-Yosys binary ships inside the release distribution today, so it resolves only when the
-`NETCRUX_BUNDLED_BIN_DIR` environment variable points at a binary directory and otherwise
-falls back to the `PATH` lookup. See [`NOTICES`](NOTICES) §1.
+`Settings → Engines` offers Auto-detect and Custom for the Yosys binary. No Yosys binary
+ships inside the release distribution, so there is no Bundled choice. A setting saved as
+Bundled by an earlier version still loads and shows as Auto-detect; it resolves through the
+`PATH` lookup unless the `NETCRUX_BUNDLED_BIN_DIR` environment variable points at a binary
+directory. See [`NOTICES`](NOTICES) §1.
 
 ## Platform support
 

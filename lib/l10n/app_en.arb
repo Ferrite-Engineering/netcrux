@@ -894,10 +894,6 @@
   "@yosysPathModeAuto": {
     "description": "Segmented-button label for the Yosys path mode that uses PATH search."
   },
-  "yosysPathModeBundled": "Bundled",
-  "@yosysPathModeBundled": {
-    "description": "Segmented-button label for the Yosys path mode reserved for a NetCrux-shipped binary. No Yosys binary ships with NetCrux today, so this mode resolves only when NETCRUX_BUNDLED_BIN_DIR is set and otherwise falls back to the PATH lookup."
-  },
   "yosysPathModeCustom": "Custom",
   "@yosysPathModeCustom": {
     "description": "Segmented-button label for the Yosys path mode that uses a user-supplied binary path."

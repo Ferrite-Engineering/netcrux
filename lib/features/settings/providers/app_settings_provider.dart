@@ -104,8 +104,8 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
   }
 
   /// Switches the Yosys path-resolution strategy
-  /// ([YosysPathMode.autoDetect] / [YosysPathMode.bundled] /
-  /// [YosysPathMode.custom]). Settings → Engines → Yosys writes
+  /// ([YosysPathMode.autoDetect] / [YosysPathMode.custom]; the UI does not
+  /// offer [YosysPathMode.bundled]). Settings → Engines → Yosys writes
   /// through this method; the elaboration backend listens via
   /// `effectiveYosysExecutableProvider`.
   Future<void> setYosysPathMode(YosysPathMode mode) async {

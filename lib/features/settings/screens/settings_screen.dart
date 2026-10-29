@@ -287,15 +287,16 @@ class _YosysPathModeTile extends ConsumerWidget {
                     label: l10n.yosysPathModeAuto,
                   ),
                   CruxSegment<YosysPathMode>(
-                    value: YosysPathMode.bundled,
-                    label: l10n.yosysPathModeBundled,
-                  ),
-                  CruxSegment<YosysPathMode>(
                     value: YosysPathMode.custom,
                     label: l10n.yosysPathModeCustom,
                   ),
                 ],
-                selected: currentMode,
+                // No Bundled segment: no Yosys binary ships with NetCrux, so it
+                // would resolve exactly as Auto-detect does. A setting saved as
+                // Bundled still resolves that way and shows as Auto-detect.
+                selected: currentMode == YosysPathMode.bundled
+                    ? YosysPathMode.autoDetect
+                    : currentMode,
                 semanticLabel: l10n.settingsYosysPathLabel,
                 onChanged: (mode) => unawaited(
                   ref.read(appSettingsProvider.notifier).setYosysPathMode(mode),

@@ -12,7 +12,7 @@ part 'yosys_executable_provider.g.dart';
 /// `bootstrap()` from the `--yosys-path <path>` CLI flag.
 ///
 /// When non-null this wins over the Settings → Engines → Yosys
-/// preference (auto / bundled / custom) — exactly mirroring how
+/// preference (auto-detect / custom) — exactly mirroring how
 /// command-line invocations of any EDA tool override the saved
 /// preference. `null` means "no CLI override; consult settings".
 @Riverpod(keepAlive: true)
@@ -37,10 +37,10 @@ BundledBinaryResolver bundledBinaryResolver(Ref ref) {
 ///   1. [cliYosysPathOverride] — `--yosys-path <path>` for the session
 ///   2. Settings: when [YosysPathMode.custom] is selected, the user's
 ///      configured path (empty → falls through to default)
-///   3. Settings: when [YosysPathMode.bundled] is selected, the
-///      bundled-binary resolver's `yosys` entry. When the env var is unset the
-///      resolver returns `null` and we fall through to auto-detect, preserving
-///      the UI for users who have already picked "bundled" in Settings.
+///   3. Settings: when a legacy [YosysPathMode.bundled] value is saved (the UI
+///      no longer offers it), the bundled-binary resolver's `yosys` entry.
+///      When the env var is unset the resolver returns `null` and we fall
+///      through to auto-detect.
 ///   4. Auto-detect — `null`, meaning the cross-suite
 ///      `YosysAvailabilityService` / `YosysRunner` use their default
 ///      executable name and let the operating system's PATH lookup
