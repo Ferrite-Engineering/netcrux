@@ -3,6 +3,7 @@
 
 import 'dart:async' show unawaited;
 
+import 'package:crux_ide_layout/crux_ide_layout.dart' show cruxOpenUrl;
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_telemetry/crux_telemetry.dart' show cruxExit;
 import 'package:flutter/material.dart';
@@ -10,12 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/updates/netcrux_update_config.dart';
 import 'package:netcrux/features/beta_expiry/widgets/netcrux_beta_expiry_strings.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Seam for opening the "download the latest build" page, overridable in tests
 /// so the banner / modal actions can be exercised without the `url_launcher`
 /// platform channel.
-Future<bool> Function(Uri uri) betaExpiryLaunchUrl = launchUrl;
+Future<bool> Function(Uri uri) betaExpiryLaunchUrl = cruxOpenUrl;
 
 /// Seam for terminating the process from the expired modal's quit action,
 /// overridable in tests (calling the real exit would kill the test runner).

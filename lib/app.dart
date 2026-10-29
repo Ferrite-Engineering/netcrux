@@ -11,6 +11,7 @@ import 'package:crux_cxp_ui/crux_cxp_ui.dart'
         cruxCxpLaunchSettingsProvider,
         loadCruxCxpLaunchSettings;
 import 'package:crux_eula/crux_eula.dart';
+import 'package:crux_file_dialogs/crux_file_dialogs.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_linux_integration/crux_linux_integration.dart';
@@ -62,7 +63,6 @@ import 'package:netcrux/netcrux_color_theme_bootstrap.dart';
 import 'package:netcrux/plugins/extra_localizations_delegates_provider.dart';
 import 'package:netcrux/plugins/policy_lock_message_provider.dart';
 import 'package:netcrux/services/cli/cli_args.dart';
-import 'package:netcrux/services/file_open/gtk_file_picker.dart';
 import 'package:netcrux/services/file_open/incoming_document_service.dart';
 import 'package:netcrux/services/logging/severe_log_stderr_sink.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';

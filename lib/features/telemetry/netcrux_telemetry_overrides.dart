@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_ide_layout/crux_ide_layout.dart' show cruxOpenUrl;
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -9,7 +10,6 @@ import 'package:netcrux/core/telemetry/netcrux_telemetry_config.dart';
 import 'package:netcrux/core/telemetry/netcrux_telemetry_storage.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/services/telemetry/telemetry_platform.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Root-scope overrides binding the cross-suite `crux_telemetry` package to
 /// NetCrux's own configuration, persistence, build metadata, layout idiom,
@@ -39,7 +39,7 @@ final List<Override> netcruxTelemetryOverrides = <Override>[
 
   // "Learn more" on both consent surfaces. The package default throws rather
   // than silently doing nothing when the user taps a link on a privacy notice.
-  telemetryUrlLauncherProvider.overrideWithValue(launchUrl),
+  telemetryUrlLauncherProvider.overrideWithValue(cruxOpenUrl),
 
   // The `app_version` envelope field. Until this resolves the package's
   // envelope resolver returns null and the flush skips — a version we do not

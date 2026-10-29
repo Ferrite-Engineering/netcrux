@@ -3,6 +3,7 @@
 
 import 'dart:async' show unawaited;
 
+import 'package:crux_ide_layout/crux_ide_layout.dart' show cruxOpenUrl;
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_updates/crux_updates.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -10,7 +11,6 @@ import 'package:netcrux/core/app_info/about_providers.dart';
 import 'package:netcrux/core/updates/netcrux_update_config.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/update/providers/observed_server_time_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Root-scope overrides that bind the cross-suite `crux_updates` package to
 /// NetCrux's own configuration, build metadata, persisted settings, URL
@@ -79,5 +79,5 @@ final List<Override> netcruxUpdateOverrides = <Override>[
 
   // "Update Now" / "View Changes". The package default throws rather than
   // silently doing nothing when the user taps the button.
-  updateUrlLauncherProvider.overrideWithValue(launchUrl),
+  updateUrlLauncherProvider.overrideWithValue(cruxOpenUrl),
 ];
