@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/services/yosys/black_box_port_inference.dart';
 import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 
@@ -38,6 +39,34 @@ Future<NetlistModel?> parseNetlistOnIsolate(
   String rawJson, {
   Future<void>? cancelSignal,
 }) async {
+  final parsed = await _parseOnIsolate(
+    rawJson,
+    inferBlackBoxes: false,
+    cancelSignal: cancelSignal,
+  );
+  return parsed?.model;
+}
+
+/// [parseNetlistOnIsolate] followed, on the same background isolate, by
+/// [inferBlackBoxPorts]: for a netlist Yosys elaborated with undefined
+/// modules left in as black boxes. Returns the model with every black-box
+/// pin given a direction, and the report of what was inferred; `null` when
+/// [cancelSignal] fires first.
+Future<({NetlistModel model, BlackBoxReport report})?>
+parseNetlistWithBlackBoxesOnIsolate(
+  String rawJson, {
+  Future<void>? cancelSignal,
+}) => _parseOnIsolate(
+  rawJson,
+  inferBlackBoxes: true,
+  cancelSignal: cancelSignal,
+);
+
+Future<({NetlistModel model, BlackBoxReport report})?> _parseOnIsolate(
+  String rawJson, {
+  required bool inferBlackBoxes,
+  Future<void>? cancelSignal,
+}) async {
   // A single port receives the result (via Isolate.exit), plus any onExit
   // (`null`) and onError (`[error, stack]`) notifications. Routing all three
   // through one port makes their order well-defined (FIFO): the Isolate.exit
@@ -49,7 +78,7 @@ Future<NetlistModel?> parseNetlistOnIsolate(
   try {
     isolate = await Isolate.spawn<List<Object?>>(
       _parseEntry,
-      <Object?>[rawJson, port.sendPort],
+      <Object?>[rawJson, port.sendPort, inferBlackBoxes],
       debugName: 'netlist-parse',
       onExit: port.sendPort,
       onError: port.sendPort,
@@ -59,16 +88,20 @@ Future<NetlistModel?> parseNetlistOnIsolate(
     rethrow;
   }
 
-  final completer = Completer<NetlistModel?>();
+  final completer = Completer<({NetlistModel model, BlackBoxReport report})?>();
   var settled = false;
 
   final sub = port.listen((message) {
     if (settled) return;
     settled = true;
-    if (message is List && message.length == 2 && message[0] is bool) {
-      // Our protocol: [true, NetlistModel] or [false, errorMessage].
+    if (message is List && message.length == 3 && message[0] is bool) {
+      // Our protocol: [true, NetlistModel, BlackBoxReport] or
+      // [false, errorMessage, null].
       if (message[0] == true) {
-        completer.complete(message[1] as NetlistModel?);
+        completer.complete((
+          model: message[1]! as NetlistModel,
+          report: message[2]! as BlackBoxReport,
+        ));
       } else {
         completer.completeError(YosysJsonParseException(message[1]! as String));
       }
@@ -115,12 +148,21 @@ Future<NetlistModel?> parseNetlistOnIsolate(
 void _parseEntry(List<Object?> args) {
   final rawJson = args[0]! as String;
   final reply = args[1]! as SendPort;
+  final inferBlackBoxes = args[2]! as bool;
   try {
     final model = const StreamingYosysJsonReader().parse(rawJson);
-    Isolate.exit(reply, <Object?>[true, model]);
+    if (!inferBlackBoxes) {
+      Isolate.exit(reply, <Object?>[true, model, BlackBoxReport.none]);
+    }
+    final inferred = inferBlackBoxPorts(model);
+    Isolate.exit(reply, <Object?>[true, inferred.model, inferred.report]);
   } on YosysJsonParseException catch (e) {
-    Isolate.exit(reply, <Object?>[false, e.message]);
+    Isolate.exit(reply, <Object?>[false, e.message, null]);
   } on Object catch (e) {
-    Isolate.exit(reply, <Object?>[false, 'Yosys JSON could not be parsed: $e']);
+    Isolate.exit(reply, <Object?>[
+      false,
+      'Yosys JSON could not be parsed: $e',
+      null,
+    ]);
   }
 }
