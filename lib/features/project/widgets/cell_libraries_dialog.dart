@@ -18,7 +18,7 @@ Future<List<String>?> showCellLibrariesDialog({
   required List<String> initial,
   required FileOpenService picker,
 }) {
-  return showDialog<List<String>>(
+  return showCruxDialog<List<String>>(
     context: context,
     // An editor: closing is Cancel or Apply, never a stray scrim click.
     barrierDismissible: false,
@@ -72,8 +72,8 @@ class _CellLibrariesDialogState extends State<CellLibrariesDialog> {
   Widget build(BuildContext context) {
     final l10n = L10N.of(context);
     final theme = Theme.of(context);
-    return AlertDialog(
-      title: Text(l10n.cellLibrariesDialogTitle),
+    return CruxDialog(
+      title: l10n.cellLibrariesDialogTitle,
       content: SizedBox(
         width: 560,
         child: Column(
@@ -136,14 +136,15 @@ class _CellLibrariesDialogState extends State<CellLibrariesDialog> {
         ),
       ),
       actions: <Widget>[
-        TextButton(
+        CruxDialogAction(
+          label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
         ),
-        FilledButton(
+        CruxDialogAction(
           key: const ValueKey<String>('cellLibrariesApply'),
+          label: l10n.cellLibrariesDialogApply,
+          role: CruxDialogActionRole.primary,
           onPressed: () => Navigator.of(context).pop(List<String>.of(_files)),
-          child: Text(l10n.cellLibrariesDialogApply),
         ),
       ],
     );
