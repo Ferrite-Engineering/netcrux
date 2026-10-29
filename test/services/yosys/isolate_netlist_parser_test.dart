@@ -74,4 +74,37 @@ void main() {
       expect(model, isNull);
     });
   });
+
+  group('parseNetlistWithBlackBoxesOnIsolate', () {
+    const doc = '''
+{"creator":"test","modules":{"top":{"attributes":{"top":"1"},
+"ports":{"a":{"direction":"input","bits":[2]},
+"y":{"direction":"output","bits":[3]}},
+"cells":{"u1":{"hide_name":0,"type":"INV","parameters":{},"attributes":{},
+"connections":{"A":[2],"Y":[3]}}},"netnames":{}}}}
+''';
+
+    test('infers black-box pins on the worker and reports them', () async {
+      final parsed = await parseNetlistWithBlackBoxesOnIsolate(doc);
+      expect(parsed, isNotNull);
+      expect(
+        parsed!.model.modules['top']!.cells['u1']!.portDirections.keys,
+        <String>['A', 'Y'],
+      );
+      expect(parsed.report.types, <String>['INV']);
+      expect(parsed.report.pinCount, 2);
+    });
+
+    test('the plain parse leaves the pins alone', () async {
+      final model = await parseNetlistOnIsolate(doc);
+      expect(model!.modules['top']!.cells['u1']!.portDirections, isEmpty);
+    });
+
+    test('malformed input still throws the parse exception', () {
+      expect(
+        parseNetlistWithBlackBoxesOnIsolate('{"modules": 3}'),
+        throwsA(isA<YosysJsonParseException>()),
+      );
+    });
+  });
 }
