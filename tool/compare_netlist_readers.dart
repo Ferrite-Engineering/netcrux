@@ -6,7 +6,7 @@
 //
 //   dart run tool/compare_netlist_readers.dart [--top NAME] [--liberty LIB]...
 //       [--cell-model V]... [--src exact|line|ignore] [--no-order]
-//       [--keep DIR] FILE.v...
+//       [--keep DIR] [--reference-json FILE] FILE.v...
 //
 // The Yosys side runs what the app's Yosys route runs: Liberty cells as
 // black-box stubs, the cell models and sources read with `read_verilog`,
@@ -16,6 +16,11 @@
 // modules, ports, nets, cells, cell types, connected pins, declared pin
 // directions and, as chosen, `src` locations and iteration order.
 //
+// `--reference-json` compares with a Yosys JSON document the flow already
+// wrote (and the pin inference the app runs after reading it) instead of
+// running Yosys, which is how the largest designs are compared when their
+// Yosys run is already on disk.
+//
 // Exit status 0 when they match, 1 when they differ, 2 for a bad command
 // line, 3 when the native reader declined the file. Needs `yosys` on PATH
 // and holds both models in memory at once, so use it on designs of up to a
@@ -24,8 +29,11 @@
 
 import 'dart:io';
 
+import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/liberty/liberty_parser.dart';
 import 'package:netcrux/services/verilog/native_netlist_reader.dart';
+import 'package:netcrux/services/yosys/black_box_port_inference.dart';
+import 'package:netcrux/services/yosys/chunked_yosys_json_reader.dart';
 
 import '../test/support/netlist_equivalence.dart';
 import '../test/support/yosys_reference_model.dart';
@@ -38,6 +46,7 @@ Future<void> main(List<String> args) async {
   var src = SrcComparison.exact;
   var order = true;
   String? keep;
+  String? referenceJson;
   for (var i = 0; i < args.length; i++) {
     final arg = args[i];
     switch (arg) {
@@ -57,13 +66,15 @@ Future<void> main(List<String> args) async {
         order = false;
       case '--keep':
         keep = _value(args, ++i, arg);
+      case '--reference-json':
+        referenceJson = _value(args, ++i, arg);
       default:
         if (arg.startsWith('--')) _usage('unknown option $arg');
         files.add(arg);
     }
   }
   if (files.isEmpty) _usage('no netlist given');
-  if (findYosys() == null) {
+  if (referenceJson == null && findYosys() == null) {
     stderr.writeln('yosys is not on the PATH');
     exit(2);
   }
@@ -87,24 +98,29 @@ Future<void> main(List<String> args) async {
     exit(3);
   }
 
-  final scratch =
-      keep == null
-            ? Directory.systemTemp.createTempSync('compare_netlist_readers')
-            : Directory(keep)
-        ..createSync(recursive: true);
   clock
     ..reset()
     ..start();
-  final reference = yosysReferenceModel(
-    sources: files,
-    scratch: scratch,
-    libertyLibraries: libraries,
-    cellModelFiles: models,
-    top: top,
-  );
+  final ({NetlistModel model, BlackBoxReport report}) reference;
+  if (referenceJson != null) {
+    reference = inferBlackBoxPorts(
+      ChunkedYosysJsonReader.parseFile(referenceJson),
+    );
+  } else {
+    final scratch = keep == null
+        ? Directory.systemTemp.createTempSync('compare_netlist_readers')
+        : Directory(keep);
+    scratch.createSync(recursive: true);
+    reference = yosysReferenceModel(
+      sources: files,
+      scratch: scratch,
+      libertyLibraries: libraries,
+      cellModelFiles: models,
+      top: top,
+    );
+    if (keep == null) scratch.deleteSync(recursive: true);
+  }
   final yosysMs = clock.elapsedMilliseconds;
-  if (keep == null) scratch.deleteSync(recursive: true);
-
   final differences = compareNetlists(
     outcome.model,
     reference.model,
