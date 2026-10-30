@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:io' show File, FileSystemException;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/web/web_json_loader.dart';
@@ -24,14 +26,17 @@ typedef NetlistDocumentReader = Future<String> Function(String location);
 /// isolate so a large netlist never freezes the UI, while the browser has no
 /// `Isolate.spawn` and parses in place.
 class PrebuiltNetlistLoader {
-  /// Creates a loader. [read] defaults to [fetchWebJson], which reads a file
-  /// on desktop and fetches a URL on web.
+  /// Creates a loader. With no [read], a desktop build parses the file at the
+  /// location straight from the disk in chunks, so a netlist of any size
+  /// opens, and a browser build fetches the URL as text ([fetchWebJson]). A
+  /// [read] given here always takes the text route, which tests and the
+  /// browser use.
   const PrebuiltNetlistLoader({
-    this._read = fetchWebJson,
+    this._read,
     this.parseOnIsolate = !kIsWeb,
   });
 
-  final NetlistDocumentReader _read;
+  final NetlistDocumentReader? _read;
 
   /// Whether [parse] runs on a spawned isolate.
   final bool parseOnIsolate;
@@ -67,8 +72,37 @@ class PrebuiltNetlistLoader {
     String location, {
     Future<void>? cancelSignal,
   }) async {
-    final raw = await _read(location);
+    final read = _read;
+    if (read == null && parseOnIsolate && !kIsWeb) {
+      return await _loadFile(location, cancelSignal: cancelSignal);
+    }
+    final raw = await (read ?? fetchWebJson)(location);
     return await parseWithReport(raw, cancelSignal: cancelSignal);
+  }
+
+  /// The desktop route: the worker isolate reads the file itself, in
+  /// chunks, so the document is never a string or one buffer and has no size
+  /// limit.
+  Future<({NetlistModel model, BlackBoxReport report})?> _loadFile(
+    String location, {
+    Future<void>? cancelSignal,
+  }) async {
+    final path = location.startsWith('file://')
+        ? Uri.parse(location).toFilePath()
+        : location;
+    final file = File(path);
+    if (!file.existsSync()) {
+      throw WebJsonLoadException('JSON file not found at $path');
+    }
+    try {
+      file.openSync().closeSync();
+    } on FileSystemException catch (e) {
+      throw WebJsonLoadException('Failed to read JSON at $path', cause: e);
+    }
+    return await parseNetlistFileWithBlackBoxesOnIsolate(
+      path,
+      cancelSignal: cancelSignal,
+    );
   }
 
   /// Parses an already-read netlist document.

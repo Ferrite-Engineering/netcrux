@@ -43,8 +43,8 @@ void main() {
     final region = regionText == null ? null : parseRenderRegion(regionText);
 
     final model = await tester.runAsync(
-      () async => const StreamingYosysJsonReader().parse(
-        await File(request['netlist']! as String).readAsString(),
+      () => const StreamingYosysJsonReader().readFile(
+        request['netlist']! as String,
       ),
     );
     final node = scopeAtPath(model!, (request['scope'] as String?) ?? '');

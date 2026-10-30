@@ -16,10 +16,11 @@ import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// Records each request and answers with a canned netlist.
-class _RecordingRunner extends YosysRunner {
+class _RecordingRunner extends YosysRunner with RunBackedKeepingJson {
   final List<YosysRunRequest> requests = <YosysRunRequest>[];
 
   @override

@@ -26,6 +26,7 @@ import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
+import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// NetCrux's contribution to the shared beta issue reporter.
@@ -93,7 +94,7 @@ final _model = NetlistModel(
 
 /// Returns [_model] as canned `write_json` output so the real elaboration
 /// pipeline runs end-to-end without spawning a Yosys subprocess.
-class _SeededRunner extends YosysRunner {
+class _SeededRunner extends YosysRunner with RunBackedKeepingJson {
   _SeededRunner(this.rawJson);
 
   final String rawJson;

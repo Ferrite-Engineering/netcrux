@@ -20,12 +20,13 @@ import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 
+import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// Counts `run()` invocations and returns a canned `write_json` success —
 /// so the elaboration-cache tests can assert whether the pipeline
 /// actually spawned "yosys" or served the parsed model from the cache.
-class _CountingRunner extends YosysRunner {
+class _CountingRunner extends YosysRunner with RunBackedKeepingJson {
   _CountingRunner(this.rawJson);
 
   final String rawJson;
@@ -52,7 +53,7 @@ class _CountingRunner extends YosysRunner {
 
 /// Fails the built-in reader the way Yosys does on a package import in a
 /// module header, and succeeds when the request asks for yosys-slang.
-class _FrontendGapRunner extends YosysRunner {
+class _FrontendGapRunner extends YosysRunner with RunBackedKeepingJson {
   _FrontendGapRunner(this.rawJson, {this.slangStderr});
 
   final String rawJson;
@@ -163,6 +164,54 @@ void main() {
       );
       container.read(loadedNetlistProvider.notifier).setModel(model);
       expect(container.read(loadedNetlistProvider).value, same(model));
+    });
+
+    group('the write_json document Yosys leaves behind', () {
+      Future<(_CountingRunner, Object?)> load(String json) async {
+        final dir = Directory.systemTemp.createTempSync('netcrux_elab_doc_');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final src = File('${dir.path}/top.v')
+          ..writeAsStringSync('module top(); endmodule\n');
+        final runner = _CountingRunner(json);
+        final container = ProviderContainer(
+          overrides: [
+            ...netcruxTelemetryTestOverrides(),
+            yosysRunnerProvider.overrideWith((ref) => runner),
+            yosysAvailabilityProvider.overrideWith(
+              (ref) async => const YosysAvailability.available(
+                executablePath: '/fake/yosys',
+                versionString: 'Yosys fake',
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.read(currentProjectProvider.notifier).setSourceFiles(<String>[
+          src.path,
+        ]);
+        Object? outcome;
+        try {
+          outcome = await container.read(loadedNetlistProvider.future);
+        } on LoadedNetlistException catch (e) {
+          outcome = e;
+        }
+        return (runner, outcome);
+      }
+
+      test('is parsed from the file, never handed over as text, and removed '
+          'after a successful parse', () async {
+        final (runner, outcome) = await load(_fakeRawJson);
+        expect((outcome as NetlistModel?)?.topModule?.name, 'top');
+        expect(runner.keptDocuments, hasLength(1));
+        expect(File(runner.keptDocuments.single).existsSync(), isFalse);
+      });
+
+      test('is removed after a parse that fails', () async {
+        final (runner, outcome) = await load('{"modules": 3}');
+        expect(outcome, isA<LoadedNetlistException>());
+        expect(runner.keptDocuments, hasLength(1));
+        expect(File(runner.keptDocuments.single).existsSync(), isFalse);
+      });
     });
 
     test(

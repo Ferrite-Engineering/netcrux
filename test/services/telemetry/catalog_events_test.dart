@@ -47,6 +47,8 @@ import 'package:netcrux/services/telemetry/telemetry_event_catalog.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 
+import '../../helpers/run_backed_keeping_json.dart';
+
 class _RecordingTelemetryService implements TelemetryService {
   final List<TelemetryEvent> events = <TelemetryEvent>[];
 
@@ -102,7 +104,7 @@ const String _rawJson =
     '{"creator":"fake yosys","modules":{"top":{"attributes":{"top":"1"}, '
     '"ports":{},"cells":{},"netnames":{}}}}';
 
-class _FakeRunner extends YosysRunner {
+class _FakeRunner extends YosysRunner with RunBackedKeepingJson {
   _FakeRunner(this.result);
 
   final YosysRunResult Function() result;

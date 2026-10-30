@@ -34,6 +34,7 @@ import 'package:netcrux/shared/widgets/workspace_managers_scope.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../helpers/app_boot_overrides.dart';
+import '../../../helpers/run_backed_keeping_json.dart';
 
 /// The schematic error view's "Show missing modules as black boxes", in the
 /// running app: a design whose elaboration stops on a missing module shows
@@ -54,7 +55,7 @@ class _Picker extends FileOpenService {
 
 /// Fails as `hierarchy -check` does on a missing module; elaborates an
 /// empty top once the request allows undefined modules.
-class _Runner extends YosysRunner {
+class _Runner extends YosysRunner with RunBackedKeepingJson {
   final List<YosysRunRequest> requests = <YosysRunRequest>[];
 
   @override

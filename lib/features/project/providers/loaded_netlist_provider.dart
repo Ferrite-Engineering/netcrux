@@ -375,6 +375,7 @@ class LoadedNetlist extends _$LoadedNetlist {
       return (model: null, cached: false);
     }
     if (result is YosysRunSuccess) {
+      final document = _NetlistDocument.of(result);
       try {
         // Parse on a background isolate so a large design (the perf report
         // measures 0.34 s @ 100K cells, 4.8 s @ 1M) doesn't freeze the UI
@@ -383,16 +384,15 @@ class LoadedNetlist extends _$LoadedNetlist {
         // hard-kills the worker, so a superseded elaboration stops parsing
         // instead of burning a core to completion.
         //
-        // NOTE: this bounds *UI-thread* time, not peak memory — `rawJson`
-        // is the whole write_json document already materialized as a String
-        // (the runner reads it with readAsStringSync), and the streaming
-        // reader's per-module slicing keeps only O(largest module) live on
-        // top of that. Behavior is drop-in compatible with the legacy
-        // in-memory `YosysJsonParser`, retained for tests. See
+        // The write_json document is never read into this process: Yosys
+        // leaves it in a temp file and the worker reads that file in
+        // fixed-size chunks, so neither isolate holds the text (or any part
+        // of it larger than one cell) and the design's size is not limited by
+        // the size of a string. Peak memory is the model being built. See
         // ARCHITECTURE.md §8.9.
         final parsed = await _parse(
           project,
-          result.rawJson,
+          document,
           cancelSignal: cancel.future,
         );
         final model = parsed?.model;
@@ -413,13 +413,15 @@ class LoadedNetlist extends _$LoadedNetlist {
             ElaborationCacheEntry(
               model: model,
               stderr: stderr,
-              approxBytes: result.rawJson.length,
+              approxBytes: document.byteLength,
             ),
           );
         }
         return (model: model, cached: false);
       } on YosysJsonParseException catch (e) {
         throw LoadedNetlistException(e.message, cause: e);
+      } finally {
+        document.dispose();
       }
     }
     throw _failureFor(result, frontendGap: gap);
@@ -434,7 +436,8 @@ class LoadedNetlist extends _$LoadedNetlist {
     required Future<void> cancelSignal,
   }) async {
     try {
-      return await runner.run(
+      // The document stays in Yosys's temp file; see [_NetlistDocument].
+      return await runner.runKeepingJson(
         request,
         timeout: timeout,
         cancelSignal: cancelSignal,
@@ -566,7 +569,7 @@ Future<NetlistModel?> loadDesignNetlist(
   final budget = policy.timeoutFor(await LoadedNetlist._estimateSize(project));
   final result = await ref
       .read(yosysRunnerProvider)
-      .run(
+      .runKeepingJson(
         LoadedNetlist._buildRequest(
           project,
           libertyStubPath: liberty?.stubPath,
@@ -575,10 +578,13 @@ Future<NetlistModel?> loadDesignNetlist(
       );
   if (result is YosysRunCancelled) return null;
   if (result is! YosysRunSuccess) throw _failureFor(result);
+  final document = _NetlistDocument.of(result);
   try {
-    return (await _parse(project, result.rawJson))?.model;
+    return (await _parse(project, document))?.model;
   } on YosysJsonParseException catch (e) {
     throw LoadedNetlistException(e.message, cause: e);
+  } finally {
+    document.dispose();
   }
 }
 
@@ -646,25 +652,72 @@ String _withWarnings(List<String> lines, String stderr) {
   return '$buffer$stderr';
 }
 
-/// Parses [rawJson] off the UI isolate. For a [project] that shows missing
+/// The `write_json` document of a successful Yosys run: the temp file the
+/// runner left it in, or, from a runner that hands the text back, the text.
+///
+/// The file is the real case. It is never read into this process; the parse
+/// worker reads it in chunks. Whoever takes the document owns the file and
+/// calls [dispose] when done with it, on every path out.
+class _NetlistDocument {
+  _NetlistDocument.of(YosysRunSuccess result)
+    : path = result.jsonPath,
+      text = result.jsonPath == null ? result.rawJson : null;
+
+  /// The temp file holding the document, or `null` for [text].
+  final String? path;
+
+  /// The document itself, only from a runner that does not keep a file.
+  final String? text;
+
+  /// The document's size in bytes (characters, for [text]); `0` when the
+  /// file cannot be read.
+  int get byteLength {
+    final file = path;
+    if (file == null) return text!.length;
+    try {
+      return File(file).lengthSync();
+    } on FileSystemException {
+      return 0;
+    }
+  }
+
+  /// Deletes the temp file; the caller owns it, and a leftover one is a
+  /// whole netlist's worth of disk.
+  void dispose() {
+    final file = path;
+    if (file == null) return;
+    try {
+      File(file).deleteSync();
+    } on FileSystemException {
+      // Already gone, or the platform holds it; nothing else to do.
+    }
+  }
+}
+
+/// Parses [document] off the UI isolate. For a [project] that shows missing
 /// modules as black boxes, the black-box pins are given directions there
 /// too ([inferBlackBoxPorts]); otherwise the report is
 /// [BlackBoxReport.none]. `null` when [cancelSignal] fires first.
 Future<({NetlistModel model, BlackBoxReport report})?> _parse(
   NetcruxProject project,
-  String rawJson, {
+  _NetlistDocument document, {
   Future<void>? cancelSignal,
 }) async {
+  final path = document.path;
   if (project.blackBoxMissingModules) {
-    return await parseNetlistWithBlackBoxesOnIsolate(
-      rawJson,
-      cancelSignal: cancelSignal,
-    );
+    return path != null
+        ? await parseNetlistFileWithBlackBoxesOnIsolate(
+            path,
+            cancelSignal: cancelSignal,
+          )
+        : await parseNetlistWithBlackBoxesOnIsolate(
+            document.text!,
+            cancelSignal: cancelSignal,
+          );
   }
-  final model = await parseNetlistOnIsolate(
-    rawJson,
-    cancelSignal: cancelSignal,
-  );
+  final model = path != null
+      ? await parseNetlistFileOnIsolate(path, cancelSignal: cancelSignal)
+      : await parseNetlistOnIsolate(document.text!, cancelSignal: cancelSignal);
   return model == null ? null : (model: model, report: BlackBoxReport.none);
 }
 

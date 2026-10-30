@@ -17,6 +17,7 @@ import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// `write_json` from Yosys 0.69 for, without `-check` (the `src` attributes
@@ -51,7 +52,7 @@ const String _undeclaredPinJson = '''
 "attributes":{}},"y":{"hide_name":0,"bits":[3],"attributes":{}}}}}}
 ''';
 
-class _Runner extends YosysRunner {
+class _Runner extends YosysRunner with RunBackedKeepingJson {
   @override
   Future<YosysRunResult> run(
     YosysRunRequest request, {

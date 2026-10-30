@@ -1014,10 +1014,10 @@ This section covers the project/session file formats, filelist import, VHDL (and
 
 ### 5.6 JSON streaming parser — bounded-memory netlist load
 
-- **What it does.** `StreamingYosysJsonReader` walks `write_json` output one module at a time via brace-depth tracking (string-escape aware) and decodes each module's sub-document independently, so peak memory is bounded by O(largest single module) + the accumulated `modules` map rather than the whole document. `readFile` / `readStream` cover file + stream inputs; a `CancellationToken` lets the UI drop an in-flight elaboration when the user opens a different design. `loadedNetlistProvider` uses the streaming reader by default; cross-parser equivalence is asserted against the in-memory `YosysJsonParser`.
+- **What it does.** A netlist file of any size is read from disk in fixed-size chunks by `ChunkedYosysJsonReader` on a worker isolate: it walks the `write_json` structure down to one cell, net or port, decodes each alone, and never holds the document, or a whole module, as one string or buffer, so peak memory is the model plus the largest single member and there is no 2 GiB limit. An elaboration leaves Yosys's document in its temp file and the pipeline reads and then deletes it. `StreamingYosysJsonReader.parse` keeps the whole-string route for the browser build and tests (module-at-a-time slicing, bounded by O(largest single module) + the accumulated `modules` map); a `CancellationToken` lets the UI drop an in-flight read. `loadedNetlistProvider` and File → Open Netlist JSON use the chunked reader; cross-reader equivalence is asserted against the string reader and the in-memory `YosysJsonParser`.
 - **Setup.** The pipeline fixtures (and2 / adder4 / fsm) and a large fixture (e.g. `test/fixtures/netlist/chain_10k/`).
 - **Steps and expected behavior.**
-  1. Open a large design. Expected: it parses without loading the entire JSON string into a single decode; memory stays bounded.
+  1. Open a large design, or a netlist JSON of more than 2 GiB (`tool/gen_gate_netlist.py` and `tool/bench_netlist_parse.dart` make and time one). Expected: it opens; the JSON is never loaded as one string, and process memory is the model's, not the file's.
   2. Open design A then immediately open design B mid-parse. Expected: A's in-flight parse is cancelled via the `CancellationToken`; B loads.
 - **Edge cases.** A nested type error surfaces as a typed `YosysJsonParseException` naming the module (never a raw error). Streaming output must match the in-memory parser byte-for-byte on the reference fixtures.
 - **Automation Assessment.**
@@ -1025,6 +1025,8 @@ This section covers the project/session file formats, filelist import, VHDL (and
   | Test | Coverage |
   |---|---|
   | `StreamingYosysJsonReader` brace-depth walk, per-module decode, cancellation, cross-parser equivalence | `[Coverage: UNIT]` (`test/services/yosys/streaming_yosys_json_reader_test.dart`) |
+  | `ChunkedYosysJsonReader` equals the string reader at chunk sizes that split every token, rejects what it rejects, and reads a valid netlist of more than 2 GiB (reader, worker isolate, Open Netlist JSON loader) | `[Coverage: UNIT]` (`test/services/yosys/chunked_yosys_json_reader_test.dart`) |
+  | The elaboration pipeline parses Yosys's temp file and deletes it after a successful or a failed parse | `[Coverage: UNIT]` (`test/features/project/providers/loaded_netlist_provider_test.dart`) |
   | Malformed input → typed `YosysJsonParseException` with the module name | `[Coverage: FUZZ]` (`test/services/yosys/yosys_json_fuzz_test.dart` + `test/fixtures/netlist/malformed/`) |
   | Streaming reader is the default in the load pipeline | `[Coverage: UNIT]` (`test/features/project/providers/loaded_netlist_provider_test.dart`) |
 

@@ -3,10 +3,10 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/services/yosys/chunked_yosys_json_reader.dart';
 
 /// Streaming reader for `yosys write_json` output.
 ///
@@ -27,22 +27,17 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 ///    to [Module.fromJson]; emit a [Module] record before reading
 ///    the next.
 ///
-/// What this does and does not bound: it avoids the `jsonDecode`
-/// heap spike — no intermediate `Map` for the whole document is ever
-/// built, and decoded-object overhead stays at `O(largest single
-/// module)` plus the accumulated `NetlistModel.modules` map. It does
-/// **not** bound the raw input: every entry point ends up calling
-/// [parse] with the complete document as one `String`, so the source
-/// text is fully materialized in memory regardless of how it arrived.
-/// [readStream] accumulates the incoming chunks into a `StringBuffer`
-/// and [readFile] delegates to it, so neither is incremental in the
-/// raw-bytes sense; the desktop elaboration path likewise hands over a
-/// `String` the runner already read whole. Whole-document
-/// materialization is therefore the known scale ceiling of this
-/// reader — the same honest accounting recorded at the
-/// `parseNetlistOnIsolate` call site in `loaded_netlist_provider.dart`.
-/// Lifting it means a chunk-boundary-aware scanner that can suspend
-/// mid-module.
+/// What this reader does and does not bound: it avoids the `jsonDecode`
+/// heap spike (no intermediate `Map` for the whole document is ever built),
+/// and decoded-object overhead stays at `O(largest single module)` plus the
+/// accumulated `NetlistModel.modules` map. It does **not** bound the raw
+/// input: [parse] takes the complete document as one `String`, so the text is
+/// fully materialized, and a Dart string cannot hold 2 GiB. That is the right
+/// entry point for a document that is already text (a browser upload, a test
+/// fixture) and the wrong one for a file. A file goes through [readFile],
+/// which hands it to `ChunkedYosysJsonReader`: the same model, read from the
+/// disk in fixed-size chunks with no limit on the size of the file or of any
+/// module in it. The desktop elaboration and Open Netlist JSON paths use it.
 ///
 /// Behaviorally drop-in compatible with [YosysJsonParser]: the
 /// produced [NetlistModel] equals the one [YosysJsonParser] would
@@ -112,26 +107,29 @@ class StreamingYosysJsonReader {
     return NetlistModel(creator: creator, modules: modules);
   }
 
-  /// Reads the file at [path] and parses it.
+  /// Reads the file at [path] and parses it, in fixed-size chunks.
   ///
-  /// Delegates to [readStream] over `File.openRead()`, so the same
-  /// whole-document materialization applies: the file's decoded text is
-  /// accumulated in full before parsing begins. Peak memory is the
-  /// document size plus `O(largest single module)` of decoded objects.
+  /// Delegates to `ChunkedYosysJsonReader.parseFile`, so the file is never
+  /// held as a string or a buffer: peak memory is the model being built plus
+  /// `O(largest single cell)`, whatever the size of the file. The read is
+  /// synchronous inside, so run it on a worker isolate (see
+  /// `parseNetlistFileOnIsolate`) for a design of any size; [cancellation] is
+  /// checked between modules and every few thousand cells, and a cancelled
+  /// read returns an empty netlist.
   Future<NetlistModel> readFile(
     String path, {
     CancellationToken? cancellation,
-  }) async {
-    final file = File(path);
-    final stream = file.openRead();
-    return await readStream(stream, cancellation: cancellation);
-  }
+  }) async => ChunkedYosysJsonReader.parseFile(
+    path,
+    cancellation: cancellation,
+  );
 
   /// Reads [stream] (typically `File.openRead()` or a subprocess
   /// stdout) and parses it.
   ///
   /// The chunks are decoded and accumulated into a `StringBuffer`, then
-  /// handed to [parse] as one string — the per-module incrementality is
+  /// handed to [parse] as one string (so a stream of more than 2 GiB cannot
+  /// be read this way; a file should use [readFile]) — the per-module incrementality is
   /// in the *parse*, not in the *read*. [cancellation] is checked after
   /// each chunk, so a cancelled read stops accumulating and returns an
   /// empty netlist without parsing.

@@ -15,6 +15,7 @@ import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// What Yosys 0.69 says of `hierarchy -check` on the design below.
@@ -46,7 +47,7 @@ const String _blackBoxJson = r'''
 
 /// Answers as Yosys does: the missing-module error under `-check`, the
 /// black-box netlist without it.
-class _Runner extends YosysRunner {
+class _Runner extends YosysRunner with RunBackedKeepingJson {
   final List<YosysRunRequest> requests = <YosysRunRequest>[];
 
   @override

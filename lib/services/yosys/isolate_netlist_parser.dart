@@ -6,6 +6,7 @@ import 'dart:isolate';
 
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/yosys/black_box_port_inference.dart';
+import 'package:netcrux/services/yosys/chunked_yosys_json_reader.dart';
 import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 
@@ -62,8 +63,46 @@ parseNetlistWithBlackBoxesOnIsolate(
   cancelSignal: cancelSignal,
 );
 
+/// [parseNetlistOnIsolate] for a document that is a file: the worker reads
+/// [path] itself, in fixed-size chunks (`ChunkedYosysJsonReader`), so the
+/// document is never a string or a buffer, in either isolate, and its size
+/// is not limited. This is the entry point for anything that can be large.
+///
+/// Throws [YosysJsonParseException] as [parseNetlistOnIsolate] does.
+Future<NetlistModel?> parseNetlistFileOnIsolate(
+  String path, {
+  Future<void>? cancelSignal,
+}) async {
+  final parsed = await _parseOnIsolate(
+    _NetlistFile(path),
+    inferBlackBoxes: false,
+    cancelSignal: cancelSignal,
+  );
+  return parsed?.model;
+}
+
+/// [parseNetlistWithBlackBoxesOnIsolate] for a document that is a file; see
+/// [parseNetlistFileOnIsolate].
+Future<({NetlistModel model, BlackBoxReport report})?>
+parseNetlistFileWithBlackBoxesOnIsolate(
+  String path, {
+  Future<void>? cancelSignal,
+}) => _parseOnIsolate(
+  _NetlistFile(path),
+  inferBlackBoxes: true,
+  cancelSignal: cancelSignal,
+);
+
+/// Marks the document handed to the worker as a path to read rather than
+/// the text itself.
+class _NetlistFile {
+  const _NetlistFile(this.path);
+
+  final String path;
+}
+
 Future<({NetlistModel model, BlackBoxReport report})?> _parseOnIsolate(
-  String rawJson, {
+  Object rawJson, {
   required bool inferBlackBoxes,
   Future<void>? cancelSignal,
 }) async {
@@ -78,7 +117,13 @@ Future<({NetlistModel model, BlackBoxReport report})?> _parseOnIsolate(
   try {
     isolate = await Isolate.spawn<List<Object?>>(
       _parseEntry,
-      <Object?>[rawJson, port.sendPort, inferBlackBoxes],
+      <Object?>[
+        // A path travels as its string and is read in the worker.
+        if (rawJson is _NetlistFile) rawJson.path else rawJson,
+        port.sendPort,
+        inferBlackBoxes,
+        rawJson is _NetlistFile,
+      ],
       debugName: 'netlist-parse',
       onExit: port.sendPort,
       onError: port.sendPort,
@@ -146,11 +191,14 @@ Future<({NetlistModel model, BlackBoxReport report})?> _parseOnIsolate(
 /// Worker entry point. Runs on the spawned isolate and returns its result
 /// via [Isolate.exit] for a zero-copy handoff.
 void _parseEntry(List<Object?> args) {
-  final rawJson = args[0]! as String;
+  final source = args[0]! as String;
   final reply = args[1]! as SendPort;
   final inferBlackBoxes = args[2]! as bool;
+  final isFile = args[3]! as bool;
   try {
-    final model = const StreamingYosysJsonReader().parse(rawJson);
+    final model = isFile
+        ? ChunkedYosysJsonReader.parseFile(source)
+        : const StreamingYosysJsonReader().parse(source);
     if (!inferBlackBoxes) {
       Isolate.exit(reply, <Object?>[true, model, BlackBoxReport.none]);
     }
