@@ -421,6 +421,177 @@ void main() {
     });
   });
 
+  group('a pin the definition does not declare', () {
+    // A defined `(* blackbox *)` module, as a cell library's stub is.
+    Map<String, Object?> inv() => <String, Object?>{
+      'attributes': <String, Object?>{'blackbox': '1'},
+      'ports': <String, Object?>{
+        'A': _port('input', <Object>[2]),
+        'Y': _port('output', <Object>[3]),
+        'VDD': _port('inout', <Object>[4]),
+        'VSS': _port('inout', <Object>[5]),
+      },
+      'cells': <String, Object?>{},
+      'netnames': <String, Object?>{},
+    };
+
+    // What Yosys writes when the instance also connects GNDK: its default
+    // direction, output.
+    Map<String, Object?> u1({String extraPin = 'GNDK', int net = 5}) => _known(
+      'INV',
+      <String, String>{
+        'A': 'input',
+        'Y': 'output',
+        'VDD': 'inout',
+        'VSS': 'inout',
+        extraPin: 'output',
+      },
+      <String, List<Object>>{
+        'A': <Object>[2],
+        'Y': <Object>[3],
+        'VDD': <Object>[4],
+        'VSS': <Object>[5],
+        extraPin: <Object>[net],
+      },
+    );
+
+    Map<String, Map<String, Object?>> topPorts() =>
+        <String, Map<String, Object?>>{
+          'a': _port('input', <Object>[2]),
+          'y': _port('output', <Object>[3]),
+          'vdd': _port('inout', <Object>[4]),
+          'gnd': _port('inout', <Object>[5]),
+        };
+
+    test("is inferred from the wiring, not left as Yosys's output", () {
+      final result = inferBlackBoxPorts(
+        _model(
+          topPorts(),
+          <String, Map<String, Object?>>{'u1': u1()},
+          extraModules: <String, Object?>{'INV': inv()},
+        ),
+      );
+      expect(_dirs(result.model, 'u1'), <String, PortDirection>{
+        'A': _in,
+        'Y': _out,
+        'VDD': PortDirection.inout,
+        'VSS': PortDirection.inout,
+        'GNDK': _in,
+      });
+    });
+
+    test('leaves the declared pins as the definition gave them', () {
+      // VSS and GNDK share a net, and VSS is declared inout: it stays so.
+      final result = inferBlackBoxPorts(
+        _model(
+          topPorts(),
+          <String, Map<String, Object?>>{'u1': u1()},
+          extraModules: <String, Object?>{'INV': inv()},
+        ),
+      );
+      final dirs = _dirs(result.model, 'u1');
+      expect(dirs['Y'], _out);
+      expect(dirs['VSS'], PortDirection.inout);
+    });
+
+    test('is counted in the report, apart from the undefined types', () {
+      final result = inferBlackBoxPorts(
+        _model(
+          topPorts(),
+          <String, Map<String, Object?>>{'u1': u1()},
+          extraModules: <String, Object?>{'INV': inv()},
+        ),
+      );
+      final report = result.report;
+      expect(report.types, isEmpty);
+      expect(report.undeclaredPins, <String>['INV.GNDK']);
+      expect(report.undeclaredPinCount, 1);
+      expect(report.pinCount, 1);
+      expect(report.guessedPinCount, 0);
+      expect(report.isEmpty, isFalse);
+      expect(report.warningLines, hasLength(1));
+      expect(report.warningLines.single, startsWith('Warning: 1 connection'));
+      expect(report.warningLines.single, contains('INV.GNDK'));
+    });
+
+    test('a net nothing else is on is a guess, and an input', () {
+      final result = inferBlackBoxPorts(
+        _model(
+          topPorts(),
+          <String, Map<String, Object?>>{'u1': u1(net: 9)},
+          extraModules: <String, Object?>{'INV': inv()},
+        ),
+      );
+      expect(_dirs(result.model, 'u1')['GNDK'], _in);
+      expect(result.report.pinCount, 1);
+      expect(result.report.guessedPinCount, 1);
+      expect(result.report.warningLines.last, contains('1 of 1 black-box pin'));
+      expect(
+        result.report.warningLines.last,
+        isNot(contains('Add a cell library')),
+      );
+    });
+
+    test('the same pin on several instances is counted for each', () {
+      final result = inferBlackBoxPorts(
+        _model(
+          topPorts(),
+          <String, Map<String, Object?>>{'u1': u1(), 'u2': u1()},
+          extraModules: <String, Object?>{'INV': inv()},
+        ),
+      );
+      expect(result.report.undeclaredPins, <String>['INV.GNDK']);
+      expect(result.report.undeclaredPinCount, 2);
+      expect(_dirs(result.model, 'u2')['GNDK'], _in);
+    });
+
+    test('with every pin declared the model is untouched', () {
+      final model = _model(
+        topPorts(),
+        <String, Map<String, Object?>>{
+          'u1': _known(
+            'INV',
+            <String, String>{
+              'A': 'input',
+              'Y': 'output',
+              'VDD': 'inout',
+              'VSS': 'inout',
+            },
+            <String, List<Object>>{
+              'A': <Object>[2],
+              'Y': <Object>[3],
+              'VDD': <Object>[4],
+              'VSS': <Object>[5],
+            },
+          ),
+        },
+        extraModules: <String, Object?>{'INV': inv()},
+      );
+      final result = inferBlackBoxPorts(model);
+      expect(identical(result.model, model), isTrue);
+      expect(result.report, BlackBoxReport.none);
+    });
+
+    test('an undefined type beside it is still a black box', () {
+      final result = inferBlackBoxPorts(
+        _model(
+          topPorts(),
+          <String, Map<String, Object?>>{
+            'u1': u1(),
+            'u2': _bb('BUF', <String, List<Object>>{
+              'A': <Object>[2],
+            }),
+          },
+          extraModules: <String, Object?>{'INV': inv()},
+        ),
+      );
+      expect(result.report.types, <String>['BUF']);
+      expect(result.report.undeclaredPins, <String>['INV.GNDK']);
+      expect(result.report.pinCount, 2);
+      expect(result.report.warningLines, hasLength(2));
+    });
+  });
+
   group('BlackBoxReport.warningLines', () {
     test('names the types and the guesses', () {
       const report = BlackBoxReport(
@@ -454,6 +625,46 @@ void main() {
         guessedPinCount: 0,
       );
       expect(report.warningLines.single, endsWith('C19 and 5 more.'));
+    });
+
+    test('names the pins a definition lacks', () {
+      const report = BlackBoxReport(
+        types: <String>[],
+        pinCount: 3,
+        guessedPinCount: 0,
+        undeclaredPins: <String>['BUF.GNDK', 'INV.GNDK'],
+        undeclaredPinCount: 3,
+      );
+      const line =
+          'Warning: 3 connections to 2 pins that the module definition does '
+          'not declare, with directions inferred from the wiring: '
+          'BUF.GNDK, INV.GNDK.';
+      expect(report.warningLines, <String>[line]);
+    });
+
+    test('equal reports compare equal, undeclared pins included', () {
+      const a = BlackBoxReport(
+        types: <String>[],
+        pinCount: 1,
+        guessedPinCount: 0,
+        undeclaredPins: <String>['INV.GNDK'],
+        undeclaredPinCount: 1,
+      );
+      const b = BlackBoxReport(
+        types: <String>[],
+        pinCount: 1,
+        guessedPinCount: 0,
+        undeclaredPins: <String>['INV.GNDK'],
+        undeclaredPinCount: 1,
+      );
+      const c = BlackBoxReport(
+        types: <String>[],
+        pinCount: 1,
+        guessedPinCount: 0,
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
     });
   });
 }

@@ -8,7 +8,8 @@ import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 
 /// What [inferBlackBoxPorts] found: the module types that nothing defines,
-/// and how many of their pins it gave a direction to.
+/// the pins that a cell's definition does not declare, and how many pins it
+/// gave a direction to.
 @immutable
 class BlackBoxReport {
   /// Creates a report.
@@ -16,6 +17,8 @@ class BlackBoxReport {
     required this.types,
     required this.pinCount,
     required this.guessedPinCount,
+    this.undeclaredPins = const <String>[],
+    this.undeclaredPinCount = 0,
   });
 
   /// A report of a netlist with no undefined module types.
@@ -29,37 +32,65 @@ class BlackBoxReport {
   final List<String> types;
 
   /// Black-box pins whose direction was inferred (every pin of every
-  /// black-box instance that Yosys gave no direction).
+  /// black-box instance that Yosys gave no direction, and every connection
+  /// to a pin its cell's definition does not declare).
   final int pinCount;
 
   /// Of [pinCount], the pins the wiring did not decide: see
   /// [inferBlackBoxPorts].
   final int guessedPinCount;
 
-  /// Whether the netlist had no black boxes at all.
-  bool get isEmpty => types.isEmpty;
+  /// The pins an instance connects that the definition of its module does
+  /// not declare, as `TYPE.PIN`, sorted and without repeats.
+  final List<String> undeclaredPins;
+
+  /// Of [pinCount], the connections to such pins, one for each instance.
+  final int undeclaredPinCount;
+
+  /// Whether the netlist had no black boxes and no undeclared pins at all.
+  bool get isEmpty => types.isEmpty && undeclaredPins.isEmpty;
 
   /// The `Warning:` lines for the diagnostics drawer, in the form the
   /// elaboration stderr uses; empty when [isEmpty].
   List<String> get warningLines {
     if (isEmpty) return const <String>[];
     const shown = 20;
-    final names = types.length <= shown
-        ? types.join(', ')
-        : '${types.take(shown).join(', ')} and ${types.length - shown} more';
-    final typeNoun = types.length == 1 ? 'type' : 'types';
-    final drawn =
+    String list(List<String> names) => names.length <= shown
+        ? names.join(', ')
+        : '${names.take(shown).join(', ')} and ${names.length - shown} more';
+    final lines = <String>[];
+    if (types.isNotEmpty) {
+      final typeNoun = types.length == 1 ? 'type' : 'types';
+      lines.add(
         'Warning: No definition found for ${types.length} module $typeNoun, '
         'drawn as black boxes with pin directions inferred from the wiring: '
-        '$names.';
-    if (guessedPinCount == 0) return <String>[drawn];
-    final pinNoun = pinCount == 1 ? 'pin' : 'pins';
-    final verb = guessedPinCount == 1 ? 'was' : 'were';
-    final guessed =
+        '${list(types)}.',
+      );
+    }
+    if (undeclaredPins.isNotEmpty) {
+      final pinNoun = undeclaredPins.length == 1 ? 'pin' : 'pins';
+      final connectionNoun = undeclaredPinCount == 1
+          ? 'connection'
+          : 'connections';
+      lines.add(
+        'Warning: $undeclaredPinCount $connectionNoun to '
+        '${undeclaredPins.length} $pinNoun that the module definition does '
+        'not declare, with directions inferred from the wiring: '
+        '${list(undeclaredPins)}.',
+      );
+    }
+    if (guessedPinCount != 0) {
+      final pinNoun = pinCount == 1 ? 'pin' : 'pins';
+      final verb = guessedPinCount == 1 ? 'was' : 'were';
+      final remedy = types.isEmpty
+          ? 'Check the cell library for these pins.'
+          : 'Add a cell library (Liberty) for exact pins.';
+      lines.add(
         'Warning: $guessedPinCount of $pinCount black-box $pinNoun had no '
-        'direction the wiring decided and $verb guessed. Add a cell library '
-        '(Liberty) for exact pins.';
-    return <String>[drawn, guessed];
+        'direction the wiring decided and $verb guessed. $remedy',
+      );
+    }
+    return lines;
   }
 
   @override
@@ -67,16 +98,23 @@ class BlackBoxReport {
       other is BlackBoxReport &&
       other.pinCount == pinCount &&
       other.guessedPinCount == guessedPinCount &&
-      _listEquals(other.types, types);
+      other.undeclaredPinCount == undeclaredPinCount &&
+      _listEquals(other.types, types) &&
+      _listEquals(other.undeclaredPins, undeclaredPins);
 
   @override
-  int get hashCode =>
-      Object.hash(pinCount, guessedPinCount, Object.hashAll(types));
+  int get hashCode => Object.hash(
+    pinCount,
+    guessedPinCount,
+    undeclaredPinCount,
+    Object.hashAll(types),
+    Object.hashAll(undeclaredPins),
+  );
 
   @override
   String toString() =>
       'BlackBoxReport(types: $types, pins: $pinCount, '
-      'guessed: $guessedPinCount)';
+      'guessed: $guessedPinCount, undeclared: $undeclaredPins)';
 }
 
 /// Whether a cell of [type] is an instance of a module that [model] does
@@ -92,7 +130,15 @@ bool isUndefinedModuleType(NetlistModel model, String type) =>
 /// `-check`, with the connections the instance makes and no
 /// `port_directions`. A direction Yosys did give a pin is kept and used as
 /// evidence; every other pin is inferred, one module at a time, from what
-/// else sits on the bits it connects:
+/// else sits on the bits it connects.
+///
+/// A cell of a module that is defined (a cell library's stub, say) can also
+/// connect a pin the definition does not declare, which `hierarchy` without
+/// `-check` allows. Yosys gives such a pin the direction `output`, which
+/// would read as a second driver on its net, so it is not believed: the pin
+/// is inferred like a black-box pin, and the pins the definition does
+/// declare keep their declared directions and are evidence like any known
+/// cell's. The inference rules are:
 ///
 /// * **Input** when any of its bits is driven by something else: a
 ///   constant `0`, `1` or `x`, an input or inout port of the module, an
@@ -123,15 +169,19 @@ bool isUndefinedModuleType(NetlistModel model, String type) =>
   NetlistModel model,
 ) {
   final types = SplayTreeSet<String>();
+  final undeclared = SplayTreeSet<String>();
   var pinCount = 0;
   var guessed = 0;
+  var undeclaredCount = 0;
   Map<String, Module>? patched;
   for (final entry in model.modules.entries) {
     final result = _inferModule(model, entry.value);
     if (result == null) continue;
     types.addAll(result.types);
+    undeclared.addAll(result.undeclaredPins);
     pinCount += result.pinCount;
     guessed += result.guessed;
+    undeclaredCount += result.undeclaredCount;
     (patched ??= Map<String, Module>.of(model.modules))[entry.key] =
         result.module;
   }
@@ -142,6 +192,8 @@ bool isUndefinedModuleType(NetlistModel model, String type) =>
       types: List<String>.unmodifiable(types),
       pinCount: pinCount,
       guessedPinCount: guessed,
+      undeclaredPins: List<String>.unmodifiable(undeclared),
+      undeclaredPinCount: undeclaredCount,
     ),
   );
 }
@@ -185,18 +237,46 @@ class _Bit {
 typedef _ModuleResult = ({
   Module module,
   Set<String> types,
+  Set<String> undeclaredPins,
   int pinCount,
   int guessed,
+  int undeclaredCount,
 });
 
+/// The connections of [cell] to pins that the definition of its module does
+/// not declare, or `null` when the cell has none: its type is not defined in
+/// [model] (a black box), or is a Yosys internal cell, or every connection
+/// is to a declared pin.
+Set<String>? _undeclaredPins(NetlistModel model, Cell cell) {
+  final definition = model.modules[cell.type];
+  if (definition == null) return null;
+  Set<String>? extra;
+  for (final name in cell.connections.keys) {
+    if (!definition.ports.containsKey(name)) (extra ??= <String>{}).add(name);
+  }
+  return extra;
+}
+
 _ModuleResult? _inferModule(NetlistModel model, Module module) {
-  // Black-box cells, in the module's order.
-  final cellNames = <String>[
-    for (final entry in module.cells.entries)
-      if (isUndefinedModuleType(model, entry.value.type)) entry.key,
-  ];
+  // Cells with pins to infer, in the module's order: black boxes (every
+  // pin Yosys gave no direction) and cells of a defined module that connect
+  // a pin its definition does not declare (just those pins).
+  final blackBoxNames = <String>{};
+  final undeclared = <String, Set<String>>{};
+  final cellNames = <String>[];
+  for (final entry in module.cells.entries) {
+    final cell = entry.value;
+    if (isUndefinedModuleType(model, cell.type)) {
+      blackBoxNames.add(entry.key);
+      cellNames.add(entry.key);
+      continue;
+    }
+    final extra = _undeclaredPins(model, cell);
+    if (extra == null) continue;
+    undeclared[entry.key] = extra;
+    cellNames.add(entry.key);
+  }
   if (cellNames.isEmpty) return null;
-  final blackBoxNames = cellNames.toSet();
 
   final bits = <int, _Bit>{};
   _Bit bitFor(int id) => bits.putIfAbsent(id, _Bit.new);
@@ -219,10 +299,14 @@ _ModuleResult? _inferModule(NetlistModel model, Module module) {
   for (final entry in module.cells.entries) {
     final cell = entry.value;
     final isBlackBox = blackBoxNames.contains(entry.key);
+    final extra = undeclared[entry.key];
     final ownPins = <int>[];
     for (final connection in cell.connections.entries) {
-      final known = cell.portDirections[connection.key];
-      if (known == null && isBlackBox) {
+      // Yosys's direction for a pin the definition lacks is its default,
+      // not evidence.
+      final isExtra = extra?.contains(connection.key) ?? false;
+      final known = isExtra ? null : cell.portDirections[connection.key];
+      if (known == null && (isBlackBox || isExtra)) {
         ownPins.add(pins.length);
         pins.add(_Pin(cellPins.length, connection.key, connection.value));
         continue;
@@ -241,16 +325,20 @@ _ModuleResult? _inferModule(NetlistModel model, Module module) {
         }
       }
     }
-    if (isBlackBox) cellPins.add(ownPins);
+    if (isBlackBox || extra != null) cellPins.add(ownPins);
   }
-  // Black-box cells whose given directions already include an output.
+  // Cells whose given directions already include an output (not counting
+  // an undeclared pin's default).
   final cellHasOutput = List<bool>.filled(cellPins.length, false);
   {
     var index = 0;
     for (final name in cellNames) {
       final cell = module.cells[name]!;
-      cellHasOutput[index++] = cell.portDirections.values.any(
-        (d) => d != PortDirection.input,
+      final extra = undeclared[name];
+      cellHasOutput[index++] = cell.portDirections.entries.any(
+        (e) =>
+            e.value != PortDirection.input &&
+            !(extra?.contains(e.key) ?? false),
       );
     }
   }
@@ -393,10 +481,20 @@ _ModuleResult? _inferModule(NetlistModel model, Module module) {
 
   final cells = Map<String, Cell>.of(module.cells);
   final types = <String>{};
+  final undeclaredPins = <String>{};
+  var undeclaredCount = 0;
   for (var c = 0; c < cellNames.length; c++) {
     final name = cellNames[c];
     final cell = module.cells[name]!;
-    types.add(cell.type);
+    final extra = undeclared[name];
+    if (extra == null) {
+      types.add(cell.type);
+    } else {
+      undeclaredCount += extra.length;
+      for (final pin in extra) {
+        undeclaredPins.add('${cell.type}.$pin');
+      }
+    }
     final inferred = <String, PortDirection>{
       for (final i in cellPins[c]) pins[i].name: pins[i].direction!,
     };
@@ -405,15 +503,17 @@ _ModuleResult? _inferModule(NetlistModel model, Module module) {
       connections: connections,
       portDirections: <String, PortDirection>{
         for (final port in connections.keys)
-          port: ?(cell.portDirections[port] ?? inferred[port]),
+          port: ?(inferred[port] ?? cell.portDirections[port]),
       },
     );
   }
   return (
     module: module.copyWith(cells: cells),
     types: types,
+    undeclaredPins: undeclaredPins,
     pinCount: pins.length,
     guessed: guessed,
+    undeclaredCount: undeclaredCount,
   );
 }
 
