@@ -22,6 +22,8 @@ The right-hand **inspector** (toggle with ++cmd+2++ / ++ctrl+2++) shows the deta
 
 The canvas marks the same ties with [pin stubs](interface.md#pin-stubs).
 
+**Parameters** show a number the way you would write it. Yosys stores a numeric parameter as a string of bits, so a `$dff` of width one carries `WIDTH` as `00000000000000000000000000000001`; the inspector shows `1`. A value that needs more than eight bits also shows its hex form, such as `4294901760 (0xFFFF0000)`, and a value wider than 64 bits shows hex alone. Hover the row to see the bits exactly as Yosys wrote them. A parameter that is a real string, or has `x` or `z` bits, is shown as written.
+
 Right-click an element on the canvas and choose **Open in Inspector** to make it the primary selection. From NetCrux 1.2 the entry is called **Properties** and also puts the keyboard focus in the inspector, as `View → Properties` and ++alt+enter++ do. Above the details, a **Go to source** button <span class="tier tier-pro">Pro</span> opens the element's RTL in the [RTL source pane](#source-pane). In Open Core it says it requires NetCrux Pro.
 
 ## The RTL source pane <span class="tier tier-pro">Pro</span> {#source-pane}

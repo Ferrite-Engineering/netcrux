@@ -15,6 +15,7 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/inspector/providers/inspector_providers.dart';
 import 'package:netcrux/features/inspector/providers/received_timing_path_provider.dart';
+import 'package:netcrux/features/inspector/services/parameter_value_text.dart';
 import 'package:netcrux/features/inspector/services/pin_tie_text.dart';
 import 'package:netcrux/features/inspector/widgets/annotation_inspector_section.dart';
 import 'package:netcrux/features/inspector/widgets/timing_path_inspector_section.dart';
@@ -301,9 +302,19 @@ Widget? _parametersSection(L10N l10n, Module? module, String cellId) {
     title: l10n.inspectorParametersHeader,
     children: <Widget>[
       for (final entry in parameters.entries)
-        CruxInspectorValueRow(label: entry.key, value: entry.value),
+        _parameterRow(entry.key, entry.value),
     ],
   );
+}
+
+/// One parameter row. A binary string reads as a number, and the bits Yosys
+/// wrote are the row's hover text; the screen reader hears the number alone.
+Widget _parameterRow(String name, String value) {
+  final text = parameterValueText(value);
+  final row = CruxInspectorValueRow(label: name, value: text.display);
+  final raw = text.raw;
+  if (raw == null) return row;
+  return Tooltip(message: raw, excludeFromSemantics: true, child: row);
 }
 
 Widget? _portsSection(L10N l10n, SchematicCell? cell, Module? module) {

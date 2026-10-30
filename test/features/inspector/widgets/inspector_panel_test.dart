@@ -331,6 +331,91 @@ void main() {
     });
   });
 
+  group('cell parameters', () {
+    // Yosys writes WIDTH of a $dff as a 32-character binary string.
+    const width = '00000000000000000000000000000001';
+    const mask = '11111111111111110000000000000000';
+    final model = NetlistModel.fromJson(const <String, Object?>{
+      'creator': 'hand-built',
+      'modules': <String, Object?>{
+        'regfile': <String, Object?>{
+          'attributes': <String, Object?>{'top': '1'},
+          'ports': <String, Object?>{},
+          'cells': <String, Object?>{
+            'init_0': <String, Object?>{
+              'hide_name': 0,
+              'type': r'$meminit_v2',
+              'parameters': <String, Object?>{
+                'WIDTH': width,
+                'MASK': mask,
+                'CLK_POLARITY': '1',
+                'KIND': 'sync_reset',
+                'UNKNOWN': '0000x001',
+              },
+              'attributes': <String, Object?>{},
+              'port_directions': <String, Object?>{},
+              'connections': <String, Object?>{},
+            },
+          },
+          'netnames': <String, Object?>{},
+        },
+      },
+    });
+
+    Future<void> showCell(WidgetTester tester) async {
+      final container = _container(
+        graph: LaidOutGraph(
+          graph: const SchematicGraphBuilder().build(
+            model,
+            HierarchyNode.rootOf(model)!,
+          ),
+          layout: _graph.layout,
+        ),
+      );
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier).setModel(model);
+      container
+          .read(selectedElementProvider.notifier)
+          .select(const SelectedElement.cell(cellId: 'init_0'));
+      await tester.pumpWidget(_wrap(container, const Locale('en')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a binary string reads as a number, not as its bits', (
+      tester,
+    ) async {
+      await showCell(tester);
+      expect(find.text('WIDTH'), findsOneWidget);
+      expect(find.text('1'), findsWidgets);
+      expect(find.text(width), findsNothing);
+      expect(find.text('4294901760 (0xFFFF0000)'), findsOneWidget);
+      expect(find.text(mask), findsNothing);
+    });
+
+    testWidgets('the bits Yosys wrote are the hover text', (tester) async {
+      await showCell(tester);
+      final tips = tester
+          .widgetList<Tooltip>(find.byType(Tooltip))
+          .map((tip) => tip.message)
+          .toSet();
+      expect(tips, containsAll(<String>[width, mask]));
+    });
+
+    testWidgets('a string that is not pure binary, and a single bit, stay '
+        'as written with no hover', (tester) async {
+      await showCell(tester);
+      expect(find.text('sync_reset'), findsOneWidget);
+      expect(find.text('0000x001'), findsOneWidget);
+      final tips = tester
+          .widgetList<Tooltip>(find.byType(Tooltip))
+          .map((tip) => tip.message)
+          .toSet();
+      expect(tips, isNot(contains('1')));
+      expect(tips, isNot(contains('sync_reset')));
+      expect(tips, isNot(contains('0000x001')));
+    });
+  });
+
   group('a port of a netlist exported by ROHD', () {
     final model = NetlistModel.fromJson(const <String, Object?>{
       'creator': 'NetlistSynthesizer (rohd)',
