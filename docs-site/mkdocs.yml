@@ -68,6 +68,7 @@ nav:
       - Web viewer: web-mode.md
   - Working with schematics:
       - Sources, projects & sessions: files-and-projects.md
+      - Project file format: reference/project-format.md
       - Session file format: reference/session-format.md
       - Navigating the schematic: navigating.md
       - Tracing signals: tracing.md
