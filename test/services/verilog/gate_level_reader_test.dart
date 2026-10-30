@@ -9,13 +9,15 @@ import 'package:netcrux/services/verilog/native_netlist_reader.dart';
 import 'package:netcrux/services/verilog/verilog_scanner.dart';
 import 'package:path/path.dart' as p;
 
+import '../../helpers/delete_quietly.dart';
+
 /// What the native reader builds from small netlists, asserted bit by bit.
 /// None of this needs Yosys; `native_vs_yosys_test.dart` holds the same
 /// reader to the Yosys route's model.
 void main() {
   late Directory dir;
   setUp(() => dir = Directory.systemTemp.createTempSync('gate_level_reader'));
-  tearDown(() => dir.deleteSync(recursive: true));
+  tearDown(() => deleteQuietly(dir));
 
   NativeReadOutcome read(
     String text, {

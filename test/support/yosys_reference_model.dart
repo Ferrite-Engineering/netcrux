@@ -18,10 +18,17 @@ import 'package:netcrux/services/yosys/chunked_yosys_json_reader.dart';
 
 /// The path of a `yosys` binary, or `null` when none is installed.
 String? findYosys() {
-  final result = Process.runSync('which', <String>['yosys']);
-  if (result.exitCode != 0) return null;
-  final path = (result.stdout as String).trim();
-  return path.isEmpty ? null : path;
+  try {
+    final result = Process.runSync(
+      Platform.isWindows ? 'where' : 'which',
+      <String>['yosys'],
+    );
+    if (result.exitCode != 0) return null;
+    final path = (result.stdout as String).trim().split('\n').first.trim();
+    return path.isEmpty ? null : path;
+  } on ProcessException {
+    return null;
+  }
 }
 
 /// Runs Yosys over [sources] and returns the model the app would show.

@@ -25,6 +25,7 @@ import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../helpers/delete_quietly.dart';
 import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
@@ -82,7 +83,7 @@ void main() {
     dir = Directory.systemTemp.createTempSync('netcrux_native_load');
     runner = _CountingRunner();
   });
-  tearDown(() => dir.deleteSync(recursive: true));
+  tearDown(() => deleteQuietly(dir));
 
   String write(String name, String text) {
     final path = p.join(dir.path, name);

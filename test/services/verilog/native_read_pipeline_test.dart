@@ -11,6 +11,8 @@ import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:netcrux/services/verilog/native_read_pipeline.dart';
 import 'package:path/path.dart' as p;
 
+import '../../helpers/delete_quietly.dart';
+
 void main() {
   group('nativeReaderInapplicableReason', () {
     String? reason(NetcruxProject project) =>
@@ -75,7 +77,7 @@ void main() {
   group('attemptNativeRead', () {
     late Directory dir;
     setUp(() => dir = Directory.systemTemp.createTempSync('native_pipeline'));
-    tearDown(() => dir.deleteSync(recursive: true));
+    tearDown(() => deleteQuietly(dir));
 
     String write(String name, String text) {
       final path = p.join(dir.path, name);

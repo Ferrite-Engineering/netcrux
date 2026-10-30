@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/services/verilog/native_netlist_reader.dart';
 import 'package:path/path.dart' as p;
 
+import '../../helpers/delete_quietly.dart';
+
 /// A hostile or damaged file must end in a model or a typed decline, soon,
 /// and never in a hang, a crash or an exception of an unclassified kind. The
 /// reader turns an unforeseen exception into a decline whose message starts
@@ -21,7 +23,7 @@ void main() {
     dir = Directory.systemTemp.createTempSync('native_reader_fuzz');
     file = File(p.join(dir.path, 'f.v'));
   });
-  tearDown(() => dir.deleteSync(recursive: true));
+  tearDown(() => deleteQuietly(dir));
 
   const fixtures = <String>[
     'test/fixtures/gate_level/awkward.v',

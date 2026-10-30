@@ -194,8 +194,13 @@ void main() {
   });
 
   group('generated netlists with the awkward forms', () {
-    final python = Process.runSync('python3', <String>['--version']);
-    final haveGenerator = python.exitCode == 0;
+    var haveGenerator = false;
+    try {
+      haveGenerator =
+          Process.runSync('python3', <String>['--version']).exitCode == 0;
+    } on ProcessException {
+      // No python3 on this machine: the generated cases skip.
+    }
 
     for (final seed in const [1, 2, 3]) {
       test('seed $seed', () {
