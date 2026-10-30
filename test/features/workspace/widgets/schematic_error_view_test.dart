@@ -109,10 +109,7 @@ void main() {
           ),
           locale: locale,
         );
-        expect(
-          find.text(l10n.elaborationErrorTimeout(42)),
-          findsOneWidget,
-        );
+        expect(find.text(l10n.elaborationErrorTimeout(42)), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
 
@@ -130,10 +127,7 @@ void main() {
           ),
           locale: locale,
         );
-        expect(
-          find.text(l10n.elaborationErrorNonZeroExit(3)),
-          findsOneWidget,
-        );
+        expect(find.text(l10n.elaborationErrorNonZeroExit(3)), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
 
@@ -199,9 +193,7 @@ void main() {
       });
     }
 
-    testWidgets('the black-box action calls back once per tap', (
-      tester,
-    ) async {
+    testWidgets('the black-box action calls back once per tap', (tester) async {
       var taps = 0;
       await _pump(
         tester,
@@ -215,6 +207,32 @@ void main() {
       await tester.pump();
       expect(taps, 1);
       expect(find.text('Show missing modules as black boxes'), findsOneWidget);
+    });
+
+    testWidgets('a module yosys-slang refuses is named without the black-box '
+        'action, which it cannot honour', (tester) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        const LoadedNetlistException(
+          'Elaboration failed: a module is not defined',
+          kind: LoadedNetlistErrorKind.missingModule,
+          exitCode: 1,
+          missingModule: 'mystery',
+          readBySlang: true,
+        ),
+        locale: const Locale('en'),
+        onShowMissingModulesAsBlackBoxes: () {},
+      );
+      expect(
+        find.text(l10n.elaborationErrorMissingModuleSlang('mystery')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('showMissingModulesAsBlackBoxes')),
+        findsNothing,
+      );
+      expect(find.text('Show missing modules as black boxes'), findsNothing);
     });
 
     testWidgets('a missing module the message does not name still reads', (

@@ -59,8 +59,10 @@ enum LoadedNetlistErrorKind {
 
   /// Yosys stopped because the design instantiates a module that no source
   /// file or cell library defines (`hierarchy -check`: "is not part of the
-  /// design"). The error view offers to show missing modules as black
-  /// boxes ([NetcruxProject.blackBoxMissingModules]).
+  /// design"), or yosys-slang's "unknown module". For the built-in reader
+  /// the error view offers to show missing modules as black boxes
+  /// ([NetcruxProject.blackBoxMissingModules]); yosys-slang cannot draw
+  /// them, so there the view asks for a definition.
   missingModule,
 
   /// Unclassified failure — render the generic envelope.
@@ -85,6 +87,7 @@ class LoadedNetlistException implements Exception {
     this.timeoutSeconds,
     this.frontendGap,
     this.missingModule,
+    this.readBySlang = false,
   });
 
   /// Short user-actionable English message. Kept for logs, `toString`,
@@ -121,6 +124,12 @@ class LoadedNetlistException implements Exception {
   /// The module Yosys found no definition for, as the design names it — set
   /// for [LoadedNetlistErrorKind.missingModule] when the message names one.
   final String? missingModule;
+
+  /// Whether the yosys-slang reader stopped at [missingModule]. That reader
+  /// refuses a module nothing defines and cannot draw it as a black box, so
+  /// the error view asks for a definition or a cell library instead of
+  /// offering the black-box option.
+  final bool readBySlang;
 
   @override
   String toString() => cause == null
@@ -697,6 +706,22 @@ LoadedNetlistException _failureFor(
       missingModule: missingModuleIn(stderr),
     );
   }
+  // yosys-slang refusing an instance of a module nothing defines, before
+  // `hierarchy` runs. It has no way to leave such a module undefined (its
+  // option for that was removed upstream), so the black-box option cannot
+  // help and is not offered.
+  final slangModule = slangUnknownModuleIn(stderr);
+  if (failure.kind == YosysFailureKind.nonZeroExit && slangModule != null) {
+    return LoadedNetlistException(
+      'Elaboration failed: a module is not defined',
+      cause: stderr,
+      kind: LoadedNetlistErrorKind.missingModule,
+      exitCode: failure.exitCode,
+      detail: stderr,
+      missingModule: slangModule,
+      readBySlang: true,
+    );
+  }
   return LoadedNetlistException(
     'Elaboration failed with exit code ${failure.exitCode}',
     cause: stderr.isEmpty ? null : stderr,
@@ -743,3 +768,15 @@ final RegExp _missingModulePattern = RegExp(
 @visibleForTesting
 String? missingModuleIn(String stderr) =>
     _missingModulePattern.firstMatch(stderr)?.group(1);
+
+/// What yosys-slang says of an instance whose module no source defines:
+/// `top.sv:4: ERROR: unknown module 'mystery'`.
+final RegExp _slangUnknownModulePattern = RegExp(
+  "ERROR: unknown module '([^']+)'",
+);
+
+/// The first module name in yosys-slang's unknown-module error in
+/// [stderr], or `null` when [stderr] has no such error.
+@visibleForTesting
+String? slangUnknownModuleIn(String stderr) =>
+    _slangUnknownModulePattern.firstMatch(stderr)?.group(1);

@@ -19,7 +19,9 @@ import 'package:netcrux/services/yosys/yosys_unavailable_reason_text.dart';
 ///
 /// A [LoadedNetlistErrorKind.missingModule] failure also offers "Show
 /// missing modules as black boxes" when [onShowMissingModulesAsBlackBoxes]
-/// is given.
+/// is given, unless yosys-slang stopped at it
+/// ([LoadedNetlistException.readBySlang]): that reader cannot draw a module
+/// nothing defines, so the message asks for a definition instead.
 class SchematicErrorView extends StatelessWidget {
   /// Creates an error view for [error].
   const SchematicErrorView({
@@ -35,14 +37,16 @@ class SchematicErrorView extends StatelessWidget {
 
   /// Turns on the tab's project option to draw missing modules as black
   /// boxes, which elaborates again. Offered only for a
-  /// [LoadedNetlistErrorKind.missingModule] failure.
+  /// [LoadedNetlistErrorKind.missingModule] failure the built-in reader
+  /// reported.
   final VoidCallback? onShowMissingModulesAsBlackBoxes;
 
   bool get _offersBlackBoxes =>
       onShowMissingModulesAsBlackBoxes != null &&
       error is LoadedNetlistException &&
       (error as LoadedNetlistException).kind ==
-          LoadedNetlistErrorKind.missingModule;
+          LoadedNetlistErrorKind.missingModule &&
+      !(error as LoadedNetlistException).readBySlang;
 
   /// Resolves the error into a localized body and an optional raw detail
   /// string for the expandable section.
@@ -79,6 +83,9 @@ class SchematicErrorView extends StatelessWidget {
           return (l10n.elaborationErrorNonZeroExit(e.exitCode ?? 0), e.detail);
         case LoadedNetlistErrorKind.missingModule:
           final module = e.missingModule;
+          if (e.readBySlang && module != null) {
+            return (l10n.elaborationErrorMissingModuleSlang(module), e.detail);
+          }
           return (
             module == null
                 ? l10n.elaborationErrorMissingModuleUnnamed

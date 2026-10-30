@@ -19,6 +19,7 @@ import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
+
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// Counts `run()` invocations and returns a canned `write_json` success —
@@ -52,9 +53,13 @@ class _CountingRunner extends YosysRunner {
 /// Fails the built-in reader the way Yosys does on a package import in a
 /// module header, and succeeds when the request asks for yosys-slang.
 class _FrontendGapRunner extends YosysRunner {
-  _FrontendGapRunner(this.rawJson);
+  _FrontendGapRunner(this.rawJson, {this.slangStderr});
 
   final String rawJson;
+
+  /// When set, the yosys-slang pass fails with this instead of succeeding.
+  final String? slangStderr;
+  final List<YosysRunRequest> requests = <YosysRunRequest>[];
   final List<YosysFrontend> frontends = <YosysFrontend>[];
 
   @override
@@ -66,7 +71,17 @@ class _FrontendGapRunner extends YosysRunner {
     void Function(String line)? onStderrLine,
   }) async {
     frontends.add(request.frontend);
+    requests.add(request);
     if (request.frontend == YosysFrontend.slang) {
+      final failure = slangStderr;
+      if (failure != null) {
+        return YosysRunFailure(
+          exitCode: 1,
+          stdout: '',
+          stderr: failure,
+          kind: YosysFailureKind.nonZeroExit,
+        );
+      }
       return YosysRunSuccess(rawJson: rawJson, stdout: '', stderr: '');
     }
     return const YosysRunFailure(
@@ -92,6 +107,21 @@ class _SlangProbe extends YosysAvailabilityService {
     return hasSlang;
   }
 }
+
+/// What yosys-slang (Yosys 0.70) prints for an instance of a module no
+/// source defines: it stops before `hierarchy` runs.
+const String _slangUnknownModuleStderr =
+    '1. Executing SLANG frontend.\n'
+    "/work/top.sv:4: ERROR: unknown module 'mystery_named'\n"
+    'Top level design units:\n'
+    '    top\n'
+    '\n'
+    "/work/top.sv:6: ERROR: unknown module 'mystery_pos'\n"
+    '  mystery_named u_named (.a(d), .clk(clk), .y(mid));\n'
+    '  ^~~~~~~~~~~~~\n'
+    'ERROR: Design elaboration failed; see full log for details\n'
+    '\n'
+    'Build failed: 2 errors, 0 warnings\n';
 
 const String _fakeRawJson =
     '{"creator":"fake yosys","modules":{"top":{"attributes":{"top":"1"}, '
@@ -132,10 +162,7 @@ void main() {
         modules: <String, Module>{},
       );
       container.read(loadedNetlistProvider.notifier).setModel(model);
-      expect(
-        container.read(loadedNetlistProvider).value,
-        same(model),
-      );
+      expect(container.read(loadedNetlistProvider).value, same(model));
     });
 
     test(
@@ -477,11 +504,7 @@ void main() {
     test('defines map → list conversion preserves bare-flag entries', () {
       final project = NetcruxProject.create(
         sourceFiles: const <String>['top.v'],
-        defines: const <String, String>{
-          'WIDTH': '32',
-          'FAST': '',
-          'DEBUG': '',
-        },
+        defines: const <String, String>{'WIDTH': '32', 'FAST': '', 'DEBUG': ''},
       );
       final request = LoadedNetlist.buildRequest(project);
       expect(request.defines, contains('WIDTH=32'));
@@ -493,12 +516,14 @@ void main() {
   group('a SystemVerilog construct the built-in reader refuses', () {
     Future<(ProviderContainer, _FrontendGapRunner, _SlangProbe)> boot({
       required bool hasSlang,
+      String? slangStderr,
+      bool blackBoxes = false,
     }) async {
       final dir = Directory.systemTemp.createTempSync('netcrux_sv_gap_');
       addTearDown(() => dir.deleteSync(recursive: true));
       final src = File('${dir.path}/rf.sv')
         ..writeAsStringSync('module rf import p::*; (); endmodule\n');
-      final runner = _FrontendGapRunner(_fakeRawJson);
+      final runner = _FrontendGapRunner(_fakeRawJson, slangStderr: slangStderr);
       final probe = _SlangProbe(hasSlang: hasSlang);
       final container = ProviderContainer(
         overrides: [
@@ -514,9 +539,14 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      container.read(currentProjectProvider.notifier).setSourceFiles(<String>[
-        src.path,
-      ]);
+      container
+          .read(currentProjectProvider.notifier)
+          .setProject(
+            NetcruxProject.create(
+              sourceFiles: <String>[src.path],
+              blackBoxMissingModules: blackBoxes,
+            ),
+          );
       return (container, runner, probe);
     }
 
@@ -547,6 +577,73 @@ void main() {
       );
       expect(runner.frontends, <YosysFrontend>[YosysFrontend.verilog]);
       expect(probe.probes, 1);
+    });
+
+    for (final blackBoxes in <bool>[false, true]) {
+      test(
+        'a module nothing defines, found by yosys-slang, is a missing '
+        'module it cannot draw (black boxes ${blackBoxes ? 'on' : 'off'})',
+        () async {
+          final (container, runner, _) = await boot(
+            hasSlang: true,
+            slangStderr: _slangUnknownModuleStderr,
+            blackBoxes: blackBoxes,
+          );
+          final error = await container
+              .read(loadedNetlistProvider.future)
+              .then<Object?>((_) => null, onError: (Object e) => e);
+          expect(
+            error,
+            isA<LoadedNetlistException>()
+                .having(
+                  (e) => e.kind,
+                  'kind',
+                  LoadedNetlistErrorKind.missingModule,
+                )
+                .having((e) => e.readBySlang, 'readBySlang', isTrue)
+                .having(
+                  (e) => e.missingModule,
+                  'missingModule',
+                  'mystery_named',
+                )
+                .having((e) => e.detail, 'detail', _slangUnknownModuleStderr),
+          );
+          expect(runner.frontends, <YosysFrontend>[
+            YosysFrontend.verilog,
+            YosysFrontend.slang,
+          ]);
+          expect(runner.requests.last.allowUndefinedModules, blackBoxes);
+        },
+      );
+    }
+  });
+
+  group('slangUnknownModuleIn', () {
+    test('names the first module yosys-slang refuses', () {
+      expect(slangUnknownModuleIn(_slangUnknownModuleStderr), 'mystery_named');
+    });
+
+    test('reads an escaped identifier as written', () {
+      expect(
+        slangUnknownModuleIn(r"x.sv:3: ERROR: unknown module 'my\mod$1'"),
+        r'my\mod$1',
+      );
+    });
+
+    test('is null for other errors, including the built-in reader missing '
+        'module', () {
+      expect(slangUnknownModuleIn(''), isNull);
+      expect(
+        slangUnknownModuleIn(
+          r"ERROR: Module `\INV' referenced in module `\top' in cell "
+          r"`\u1' is not part of the design.",
+        ),
+        isNull,
+      );
+      expect(
+        slangUnknownModuleIn("x.sv:1: warning: unknown module 'a'"),
+        isNull,
+      );
     });
   });
 }

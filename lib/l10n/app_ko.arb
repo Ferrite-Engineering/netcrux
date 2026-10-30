@@ -368,6 +368,15 @@
   "@elaborationErrorMissingModuleUnnamed": {
     "description": "Schematic error-view body shown when Yosys stopped because the design instantiates a module that nothing defines, and the module's name could not be read from the message."
   },
+  "elaborationErrorMissingModuleSlang": "설계가 모듈 {module}을(를) 사용하지만 어떤 소스 파일이나 셀 라이브러리에도 정의되어 있지 않습니다. 이 설계를 읽은 yosys-slang 리더는 누락된 모듈을 블랙박스로 표시할 수 없습니다. {module}을(를) 정의하는 파일이나 셀 라이브러리(Liberty)를 추가하세요.",
+  "@elaborationErrorMissingModuleSlang": {
+    "description": "Schematic error-view body shown when the yosys-slang reader stopped because the design instantiates a module that nothing defines. That reader cannot draw a missing module as a black box, so no black-box option is offered. {module} is the module's name as the design writes it.",
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
   "elaborationErrorShowBlackBoxes": "누락된 모듈을 블랙박스로 표시",
   "@elaborationErrorShowBlackBoxes": {
     "description": "Button in the schematic error view, shown for a missing module: turns on the project option that draws modules nothing defines as black boxes and elaborates again."
