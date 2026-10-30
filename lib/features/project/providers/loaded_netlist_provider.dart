@@ -314,7 +314,11 @@ class LoadedNetlist extends _$LoadedNetlist {
     if (skipped == null) {
       run.set(const NetlistReaderRun(NetlistReaderKind.native));
       final native = await _readNatively(project);
-      if (native != null) return native;
+      if (native != null) {
+        // A cancelled read produced no model, so no reader read the design.
+        if (native.model == null) run.set(null);
+        return native;
+      }
       run.set(
         const NetlistReaderRun(NetlistReaderKind.yosys, fellBack: true),
       );

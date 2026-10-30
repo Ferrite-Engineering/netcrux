@@ -374,6 +374,7 @@ endmodule
     expect(await pending, isNull);
     expect(clock.elapsed, lessThan(const Duration(seconds: 5)));
     expect(runner.calls, 0);
+    expect(c.read(netlistReaderRunProvider), isNull);
   });
 
   test('a gzip-compressed netlist is read natively', () async {
