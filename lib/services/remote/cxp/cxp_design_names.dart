@@ -8,11 +8,10 @@ import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/net.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
-import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_name_resolver.dart';
-import 'package:netcrux/services/schematic/wire_selection_builder.dart';
+import 'package:netcrux/services/schematic/netlist_element_lookup.dart';
 
 /// A name a peer sent, placed in the design: the scope it lives in and its
 /// name there.
@@ -87,15 +86,18 @@ Net? findNetNamed(Module module, String leaf) {
   return module.nets[stripped];
 }
 
-/// What highlights [net] on [graph]: every drawn strand of the net, or,
-/// when the net has no drawn edge (a register whose output goes nowhere in
-/// this scope), the cell that drives it. Null when neither is on the
-/// schematic.
-Selection? selectionForNet(Module module, SchematicGraph graph, Net net) {
-  final wires = buildWholeNetWireSelection(net, graph);
+/// What highlights [net] on the schematic of [module]: every drawn strand of
+/// the net, or, when the net has no drawn edge (a register whose output goes
+/// nowhere in this scope), the cell that drives it. Null when neither is on
+/// the schematic.
+///
+/// Read from the netlist module alone, so a highlight does not build the
+/// scope's schematic graph (see `netlist_element_lookup.dart`).
+Selection? selectionForNet(Module module, Net net) {
+  final wires = wholeNetWireSelection(module, net);
   if (wires != null) return wires;
   final driver = driverCellOf(module, net);
-  if (driver == null || !graph.cells.any((c) => c.id == driver)) return null;
+  if (driver == null || !schematicDrawsCell(module, driver)) return null;
   return Selection.single(SelectedElement.cell(cellId: driver));
 }
 

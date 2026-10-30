@@ -6,6 +6,7 @@ import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
+import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 
 /// The point-to-point edges of one Yosys net in a scope.
 @immutable
@@ -40,16 +41,30 @@ class NetEdges {
 /// a pin is never paired with itself. Nets keep the order their first
 /// attachment appears in (cells, then module ports); drivers and sinks keep
 /// theirs within a net.
-List<NetEdges> enumerateNetEdges(Module module) {
+///
+/// With [onlyNetIds], only those nets are enumerated: a net's edges depend on
+/// nothing but its own attachments, so each comes out exactly as in the full
+/// enumeration, with the same ids, without allocating the rest of the scope.
+/// With [skipHiddenCells], a cell [isHiddenFromSchematic] leaves out takes no
+/// part, as when the module is the one the schematic draws; the full
+/// enumeration is given that module already.
+List<NetEdges> enumerateNetEdges(
+  Module module, {
+  Set<int>? onlyNetIds,
+  bool skipHiddenCells = false,
+}) {
   final attachmentsByNetId = <int, _NetAttachments>{};
 
   for (final cell in module.cells.values) {
+    if (skipHiddenCells && isHiddenFromSchematic(cell)) continue;
     for (final entry in cell.connections.entries) {
       final direction = cell.portDirections[entry.key] ?? PortDirection.input;
       final isDriver = direction == PortDirection.output;
-      final portId = '${cell.name}:${entry.key}';
+      String? portId;
       for (final bit in entry.value) {
         if (bit is! NetBit) continue;
+        if (onlyNetIds != null && !onlyNetIds.contains(bit.netId)) continue;
+        portId ??= '${cell.name}:${entry.key}';
         attachmentsByNetId
             .putIfAbsent(bit.netId, _NetAttachments.new)
             .add(
@@ -65,6 +80,7 @@ List<NetEdges> enumerateNetEdges(Module module) {
     final portId = 'port:${port.name}';
     for (final bit in port.bits) {
       if (bit is! NetBit) continue;
+      if (onlyNetIds != null && !onlyNetIds.contains(bit.netId)) continue;
       attachmentsByNetId
           .putIfAbsent(bit.netId, _NetAttachments.new)
           .add(

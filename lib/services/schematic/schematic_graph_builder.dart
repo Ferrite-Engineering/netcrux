@@ -32,6 +32,13 @@ class SchematicGraphBuilder {
   /// Creates a builder. Stateless — instances are interchangeable.
   const SchematicGraphBuilder();
 
+  /// How many whole-scope graphs [build] has built in this isolate. A test
+  /// reads it before and after an action to assert the action built none:
+  /// building walks every cell of the scope, which a scope held back for its
+  /// size must not pay for a lookup.
+  @visibleForTesting
+  static int buildCount = 0;
+
   /// Builds a [SchematicGraph] for the [node] inside [model]. Returns
   /// [SchematicGraph.empty] when the node fails to resolve (e.g. the
   /// model was replaced).
@@ -41,6 +48,7 @@ class SchematicGraphBuilder {
   /// leaves out are not drawn ([schematicScopeModule]); the layout pipeline
   /// lays out the same module, so each cell and pin has a place.
   SchematicGraph build(NetlistModel model, HierarchyNode node) {
+    buildCount++;
     final resolved = node.resolve(model);
     if (resolved == null) return SchematicGraph.empty;
     final module = schematicScopeModule(model, resolved);

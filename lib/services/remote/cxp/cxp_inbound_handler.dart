@@ -16,7 +16,6 @@ import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
-import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
@@ -43,9 +42,8 @@ import 'package:netcrux/services/remote/cxp/flow_artifact_opener.dart';
 import 'package:netcrux/services/remote/cxp/inbound_property.dart';
 import 'package:netcrux/services/remote/cxp/inbound_property_cone.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_name_resolver.dart';
-import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
+import 'package:netcrux/services/schematic/netlist_element_lookup.dart';
 import 'package:netcrux/services/schematic/trace_service.dart';
-import 'package:netcrux/services/schematic/wire_selection_builder.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:path/path.dart' as p;
 
@@ -307,12 +305,11 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
         names: reads.otherScopes,
       ),
     ];
-    final graph = const SchematicGraphBuilder().build(model, reads.scope);
     final seeds = <SelectedElement>[];
     Selection? selection;
     for (final name in names) {
       final net = findNetNamed(module, name);
-      final found = net == null ? null : selectionForNet(module, graph, net);
+      final found = net == null ? null : selectionForNet(module, net);
       if (found == null) continue;
       seeds.addAll(found.elements);
       selection = selection == null
@@ -384,7 +381,6 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     Selection? selection;
     if (shown != null) {
       final module = shown.resolve(model);
-      final graph = const SchematicGraphBuilder().build(model, shown);
       for (final (name, scoped) in placed) {
         if (scoped == null) {
           registers.add(
@@ -405,7 +401,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
           continue;
         }
         final net = findNetNamed(module, scoped.leaf)!;
-        final found = selectionForNet(module, graph, net);
+        final found = selectionForNet(module, net);
         if (found != null) {
           selection = selection == null
               ? found
@@ -734,9 +730,10 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       if (element != null) {
         // `_localToSelection` builds the selection syntactically — it cannot
         // tell whether the element exists in the active tab's design.
-        // Pre-validate against the current scope's graph.
-        final graph = _currentGraph(tabContainer);
-        if (graph != null && _selectionExists(graph, element)) {
+        // Pre-validate against the current scope's netlist module, never its
+        // schematic graph: a scope held back for its size must not be walked
+        // whole to answer whether one element is there.
+        if (_selectionExists(tabContainer, element)) {
           tabContainer.read(selectedElementProvider.notifier).select(element);
           _revealElement(tabContainer, element);
           return (honored: true, reason: null);
@@ -780,8 +777,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     if (module == null || net == null) {
       return (honored: false, reason: kCxpElementNotInDesign);
     }
-    final graph = const SchematicGraphBuilder().build(model, scoped.scope);
-    final selection = selectionForNet(module, graph, net);
+    final selection = selectionForNet(module, net);
     if (selection == null) {
       return (honored: false, reason: 'the element is not drawn in its scope');
     }
@@ -808,8 +804,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
         !module.cells.containsKey(scoped.leaf)) {
       return (honored: false, reason: kCxpElementNotInDesign);
     }
-    final graph = const SchematicGraphBuilder().build(model, scoped.scope);
-    if (!graph.cells.any((c) => c.id == scoped.leaf)) {
+    if (!schematicDrawsCell(module, scoped.leaf)) {
       return (honored: false, reason: 'the element is not drawn in its scope');
     }
     _showScope(tab, scoped.scope);
@@ -896,42 +891,35 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     if (model == null || node == null) return false;
     final module = node.resolve(model);
     if (module == null) return false;
-    final graph = const SchematicGraphBuilder().build(model, node);
-    if (graph.isEmpty) return false;
 
+    // The scope's netlist module answers all three, so a scope held back for
+    // its size is never built into a schematic graph to be searched.
     // 1. Named net → whole-net wire selection (symmetric to WaveCrux lighting
     // a signal lane).
     final net = module.nets[leaf];
     if (net != null) {
-      final selection = buildWholeNetWireSelection(net, graph);
+      final selection = wholeNetWireSelection(module, net);
       if (selection != null) {
         tabContainer.read(selectedElementProvider.notifier).replace(selection);
         return true;
       }
     }
     // 2. Boundary port.
-    for (final port in graph.boundaryPorts) {
-      if (port.name == leaf) {
-        tabContainer
-            .read(selectedElementProvider.notifier)
-            .select(
-              SelectedElement.boundaryPort(
-                portId: 'port:$leaf',
-                portName: leaf,
-              ),
-            );
-        return true;
-      }
+    if (schematicDrawsBoundaryPort(module, leaf)) {
+      tabContainer
+          .read(selectedElementProvider.notifier)
+          .select(
+            SelectedElement.boundaryPort(portId: 'port:$leaf', portName: leaf),
+          );
+      return true;
     }
     // 3. Cell instance → select + reveal.
-    for (final cell in graph.cells) {
-      if (cell.id == leaf) {
-        tabContainer
-            .read(selectedElementProvider.notifier)
-            .select(SelectedElement.cell(cellId: cell.id));
-        tabContainer.read(revealRequestProvider.notifier).request(cell.id);
-        return true;
-      }
+    if (schematicDrawsCell(module, leaf)) {
+      tabContainer
+          .read(selectedElementProvider.notifier)
+          .select(SelectedElement.cell(cellId: leaf));
+      tabContainer.read(revealRequestProvider.notifier).request(leaf);
+      return true;
     }
     return false;
   }
@@ -1367,7 +1355,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
   ///
   /// A multi-bit bus resolves to one [SelectedElement.wire] per drawn bit
   /// so an inbound highlight lights the WHOLE bus, matching a local
-  /// row-tap selection (see [buildWholeNetWireSelection]). The renderer
+  /// row-tap selection (see [wholeNetWireSelection]). The renderer
   /// highlights a wire by net id, so each net id must be correct; the
   /// [SelectedElementWire.edgeId] is filled from a laid-out edge on the
   /// bit purely so the selection also survives the handler's existence
@@ -1392,37 +1380,33 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     final net = module.nets[netName];
     if (net == null) return null;
 
-    final graph = const SchematicGraphBuilder().build(model, node);
-    return buildWholeNetWireSelection(net, graph);
+    return wholeNetWireSelection(module, net);
   }
 
-  /// Builds the current scope's schematic graph from the active tab's
-  /// hierarchy state. Returns `null` when no design / scope is available.
-  /// Only the graph topology (cells / ports / edges) is needed for
-  /// existence checks, so this skips the async ELK layout that
-  /// `currentLaidOutGraphProvider` also carries.
-  SchematicGraph? _currentGraph(ProviderContainer tabContainer) {
+  /// Whether [element] names a cell, cell-port or boundary port that the
+  /// schematic of the active tab's current scope draws, answered from the
+  /// scope's netlist module. The scope's schematic graph is not built: for a
+  /// scope held back for its size that walk over every cell is the cost the
+  /// layout limit exists to avoid, and a peer's highlight must not pay it.
+  ///
+  /// A wire is not a name a peer can send here (a net is resolved by name in
+  /// [_resolveNetSelection]), so one is reported as absent.
+  bool _selectionExists(
+    ProviderContainer tabContainer,
+    SelectedElement element,
+  ) {
     final tree = tabContainer.read(hierarchyTreeProvider);
     final model = tree.model;
     final node = tree.selected;
-    if (model == null || node == null) return null;
-    final graph = const SchematicGraphBuilder().build(model, node);
-    return graph.isEmpty ? null : graph;
-  }
-
-  /// Whether [element] names a cell, cell-port, or net that exists in
-  /// [graph]. Mirrors the resolution the canvas gesture handler performs
-  /// when a user clicks the same element directly.
-  bool _selectionExists(SchematicGraph graph, SelectedElement element) {
+    if (model == null || node == null) return false;
+    final module = node.resolve(model);
+    if (module == null) return false;
     return switch (element) {
-      SelectedElementCell(:final cellId) => graph.cells.any(
-        (c) => c.id == cellId,
-      ),
-      SelectedElementPort(:final cellId, :final portName) => graph.cells.any(
-        (c) => c.id == cellId && c.ports.any((p) => p.name == portName),
-      ),
-      SelectedElementWire(:final edgeId) => graph.findEdge(edgeId) != null,
-      SelectedElementBoundaryPort(:final portId) => graph.boundaryPorts.any(
+      SelectedElementCell(:final cellId) => schematicDrawsCell(module, cellId),
+      SelectedElementPort(:final cellId, :final portName) =>
+        schematicDrawsCellPort(model, module, cellId, portName),
+      SelectedElementWire() => false,
+      SelectedElementBoundaryPort(:final portId) => module.ports.values.any(
         (p) => 'port:${p.name}' == portId,
       ),
       SelectedElementNone() => false,
