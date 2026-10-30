@@ -116,6 +116,34 @@ endmodule
       expect(lines.join('\n'), contains('INV.VDD'));
     });
 
+    test('cells nothing defines are reported as black boxes', () async {
+      final top = write('top.v', '''
+module top (input a, output y);
+  MYSTERY u (.P(a), .Q(y));
+endmodule
+''');
+      final attempt = await attemptNativeRead(
+        NetcruxProject.create(sourceFiles: [top]),
+        service(),
+      );
+      final lines = (attempt as NativeAttemptRead).diagnosticLines;
+      expect(
+        lines,
+        contains(
+          startsWith(
+            'Warning: No definition found for 1 module type, drawn '
+            'as black boxes with pin directions inferred from the wiring: '
+            'MYSTERY.',
+          ),
+        ),
+      );
+      final cell = attempt.success.model.modules['top']!.cells['u']!;
+      expect(cell.portDirections, {
+        'P': PortDirection.input,
+        'Q': PortDirection.output,
+      });
+    });
+
     test('a missing library is a warning, not a decline', () async {
       final top = write('top.v', 'module top (input a); endmodule\n');
       final attempt = await attemptNativeRead(

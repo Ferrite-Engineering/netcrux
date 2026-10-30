@@ -91,6 +91,57 @@ void main() {
     }
   });
 
+  group('the same design written differently', () {
+    String fixture(String name) => File('$_dir/$name').readAsStringSync();
+
+    test('with Windows line endings and tab indentation', () {
+      final scratch = Directory.systemTemp.createTempSync('native_style');
+      addTearDown(() => scratch.deleteSync(recursive: true));
+      final text = fixture(
+        'awkward.v',
+      ).replaceAll('\n  ', '\n\t').replaceAll('\n', '\r\n');
+      final file = File('${scratch.path}/crlf.v')..writeAsStringSync(text);
+      _expectEquivalent(
+        sources: [file.path],
+        models: ['$_dir/cell_models.v'],
+        top: 'top',
+        yosys: yosys!,
+      );
+    }, skip: skip);
+
+    test('split over two files, a module before its use and one after', () {
+      final scratch = Directory.systemTemp.createTempSync('native_split');
+      addTearDown(() => scratch.deleteSync(recursive: true));
+      final text = fixture('hierarchy.v');
+      final cut = text.indexOf('module leafb');
+      final first = File('${scratch.path}/a_top.v')
+        ..writeAsStringSync(text.substring(0, cut));
+      final second = File('${scratch.path}/b_leaf.v')
+        ..writeAsStringSync(text.substring(cut));
+      _expectEquivalent(
+        sources: [first.path, second.path],
+        models: ['$_dir/cell_models.v'],
+        top: 'top2',
+        yosys: yosys!,
+      );
+    }, skip: skip);
+
+    test('a file name with a space and non-ASCII text in comments', () {
+      final scratch = Directory.systemTemp.createTempSync('native_names');
+      addTearDown(() => scratch.deleteSync(recursive: true));
+      final file = File('${scratch.path}/my design.v')
+        ..writeAsStringSync(
+          '// caf\u00e9 \u00b5s\n${fixture('declarations.v')}',
+        );
+      _expectEquivalent(
+        sources: [file.path],
+        models: ['$_dir/cell_models.v'],
+        top: 'm3',
+        yosys: yosys!,
+      );
+    }, skip: skip);
+  });
+
   group('the structural fixtures of the repository', () {
     test('a black-box prototype and the module that instantiates it', () {
       _expectEquivalent(

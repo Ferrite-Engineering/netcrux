@@ -63,7 +63,7 @@ A manifest from an earlier release is named just `.crux-project`, which file pic
 
 ## Gate-level netlists: the native reader {#native-reader}
 
-A gate-level netlist, the structural Verilog a synthesis or place-and-route flow writes, has nothing left to elaborate: it is modules, nets and instances of library cells. Running it through Yosys only to read the result back is slow and memory-hungry, so from NetCrux 1.2 (beta) NetCrux reads such a file itself and builds the netlist model directly, with no Yosys run and no JSON document in between. The file is read as a stream on a worker, a block at a time, never as one string, so its size is not limited, and closing the tab or opening something else stops the read. A `.v.gz` file is decompressed as it is read.
+A gate-level netlist, the structural Verilog a synthesis or place-and-route flow writes, has nothing left to elaborate: it is modules, nets and instances of library cells. Running it through Yosys only to read the result back is slow and memory-hungry, so from NetCrux 1.2 (beta) NetCrux reads such a file itself and builds the netlist model directly, with no Yosys run and no JSON document in between. The file is read as a stream on a worker, a block at a time, never as one string, so its size is not limited, and closing the tab or opening something else stops the read. A `.v.gz` file is decompressed as it is read; `File → Open Source Files…` lists every `.gz` file for it, and only a name ending in `.v.gz` is read as a Verilog netlist. The `src` location of each instance and net is the line in the netlist file, so an editor opened on a location (`Settings → Editors`) needs the plain file: it cannot show a line of a `.v.gz`.
 
 The native gate-level reader is **on by default in the beta**, for the files it can read. Turn it off, or force either reader, in any of these ways, from the strongest to the weakest:
 
@@ -98,6 +98,8 @@ Info: Netlist read by the native gate-level reader (beta): 91 modules, 100085 ce
 /path/top.v:42: Warning: The native gate-level reader uses an `always` block, which it does not read; Yosys reads this design instead.
 Info: Netlist read by Yosys (the native gate-level reader declined).
 ```
+
+Measured on generated netlists of one flat module and a three-level hierarchy, on a 64 GB Apple-silicon desktop, the native reader opened 1 million cells in 7.5 s using 2.8 GB, 3 million in 25 s using 8.6 GB, and 5 million cells (a 660 MB file) in 44 s using 12.1 GB. The Yosys route took 65, 225 and 403 s to write the same designs as JSON, and then 13, 43 and 102 s to open the JSON, using up to 15 GB of memory to write it and 19 GB to open it.
 
 A difference from the Yosys route you can see: Yosys keeps every cell of a Liberty library as a black-box module, while the native reader adds the library cells the design instantiates. The pins and their directions are the same.
 

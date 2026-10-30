@@ -139,7 +139,8 @@ class FileOpenService {
   }
 
   /// Prompts the user for a design given as files: one or more Verilog /
-  /// VHDL sources, or a single pre-built Yosys JSON netlist. Returns the
+  /// VHDL sources (a gate-level netlist may be gzip-compressed, `.v.gz`), or
+  /// a single pre-built Yosys JSON netlist. Returns the
   /// picked paths or [FileOpenResult.cancelled]. Used where either form of a
   /// design will do, such as the comparison side of a netlist diff.
   Future<FileOpenResult> pickDesignFiles({required String dialogTitle}) async {
@@ -154,6 +155,8 @@ class FileOpenService {
         'vhd',
         'vhdl',
         'json',
+        // A gzip-compressed gate-level netlist, `.v.gz`.
+        'gz',
       ],
     );
     if (result == null || result.files.isEmpty) {
