@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -78,6 +79,60 @@ void main() {
     final second = await service.stubsFor(<String>[a]);
     expect(second.stubPath, first.stubPath);
     expect(second.cellCount, 1);
+  });
+
+  test(
+    'a gzip-compressed library gives the same stubs as a plain one',
+    () async {
+      final plain = write('a.lib', _libA);
+      final compressed = p.join(root.path, 'b.lib.gz');
+      File(compressed).writeAsBytesSync(gzip.encode(utf8.encode(_libA)));
+      final fromPlain = await service.stubsFor(<String>[plain]);
+      final fromCompressed = await service.stubsFor(<String>[compressed]);
+      expect(fromCompressed.warnings, isEmpty);
+      expect(fromCompressed.cellCount, 1);
+      // The stubs name the file they came from, and nothing else differs.
+      expect(
+        File(fromCompressed.stubPath).readAsStringSync(),
+        File(
+          fromPlain.stubPath,
+        ).readAsStringSync().replaceFirst('// a.lib', '// b.lib.gz'),
+      );
+    },
+  );
+
+  test('a compressed library is cached by the .gz file, not re-read', () async {
+    final path = p.join(root.path, 'a.liberty.gz');
+    File(path).writeAsBytesSync(gzip.encode(utf8.encode(_libA)));
+    final first = await service.stubsFor(<String>[path]);
+    // Replace the contents with something that cannot be inflated, keeping
+    // the size and time the cache key is made of: a re-read would now fail,
+    // a cache hit does not.
+    final file = File(path);
+    final size = file.lengthSync();
+    final modified = file.lastModifiedSync();
+    file
+      ..writeAsBytesSync(List<int>.filled(size, 0x1f))
+      ..setLastModifiedSync(modified);
+    final second = await service.stubsFor(<String>[path]);
+    expect(second.stubPath, first.stubPath);
+    expect(second.warnings, isEmpty);
+    // A change to the .gz file is read again.
+    file.setLastModifiedSync(DateTime.now().add(const Duration(hours: 1)));
+    final third = await service.stubsFor(<String>[path]);
+    expect(third.warnings.single, contains(path));
+  });
+
+  test('a damaged .lib.gz is skipped with a warning naming it', () async {
+    final path = p.join(root.path, 'bad.lib.gz');
+    final bytes = gzip.encode(utf8.encode(_libA)).toList();
+    for (var i = 12; i < bytes.length - 8; i++) {
+      bytes[i] ^= 0x5a;
+    }
+    File(path).writeAsBytesSync(bytes);
+    final stubs = await service.stubsFor(<String>[path]);
+    expect(stubs.cellCount, 0);
+    expect(stubs.warnings.single, contains('bad.lib.gz'));
   });
 
   test('a changed Liberty file is parsed again', () async {

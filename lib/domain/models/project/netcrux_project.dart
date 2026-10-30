@@ -170,11 +170,15 @@ class NetcruxProject {
   final bool blackBoxMissingModules;
 
   /// Whether [path] names a Liberty cell library: a `.lib` or `.liberty`
-  /// suffix, case-insensitive. The open-files and filelist routes send
-  /// these to [libertyFiles] rather than [sourceFiles].
+  /// suffix, or either followed by `.gz` for a gzip-compressed one,
+  /// case-insensitive. The open-files and filelist routes send these to
+  /// [libertyFiles] rather than [sourceFiles].
   static bool isLibertyPath(String path) {
     final lower = path.toLowerCase();
-    return lower.endsWith('.lib') || lower.endsWith('.liberty');
+    return lower.endsWith('.lib') ||
+        lower.endsWith('.liberty') ||
+        lower.endsWith('.lib.gz') ||
+        lower.endsWith('.liberty.gz');
   }
 
   /// Returns the resolved language for [path]: the explicit override

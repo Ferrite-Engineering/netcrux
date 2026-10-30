@@ -19,6 +19,28 @@ void main() {
       name,
     );
 
+    test(
+      'an entry ending in .lib.gz or .liberty.gz is a cell library',
+      () async {
+        final dir = Directory.systemTemp.createTempSync('filelist_gz');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final list = File(p.join(dir.path, 'design.f'))
+          ..writeAsStringSync(
+            'top.v\n'
+            'pdk/cells.lib.gz\n'
+            'pdk/more.liberty.gz\n'
+            'pdk/plain.lib\n',
+          );
+        final contents = await reader.read(list.path);
+        expect(contents.sourceFiles.map(p.basename), <String>['top.v']);
+        expect(contents.libertyFiles.map(p.basename), <String>[
+          'cells.lib.gz',
+          'more.liberty.gz',
+          'plain.lib',
+        ]);
+      },
+    );
+
     test('reads a simple flat filelist', () async {
       final contents = await reader.read(fixturePath('simple.f'));
       expect(contents.sourceFiles.length, 2);

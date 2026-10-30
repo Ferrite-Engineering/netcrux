@@ -1,7 +1,9 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/services/liberty/liberty_library.dart';
@@ -370,6 +372,125 @@ library (big) {
         File(path).writeAsStringSync(text);
         final lib = LibertyParser.parseFile(path, bufferSize: 4096);
         expect(lib.cells.single.ports.map((p) => p.name), <String>['A', 'Y']);
+      });
+    });
+    group('gzip-compressed files', () {
+      const plain = 'test/fixtures/liberty/cells.lib';
+      const gzipped = 'test/fixtures/liberty/cells.lib.gz';
+      late Directory dir;
+      setUp(() => dir = Directory.systemTemp.createTempSync('liberty_gz'));
+      tearDown(() => dir.deleteSync(recursive: true));
+
+      /// What was read, without the path it was read from.
+      Map<String, Object?> cellsOf(String path, {int? bufferSize}) {
+        final json = bufferSize == null
+            ? LibertyParser.parseFile(path).toJson()
+            : LibertyParser.parseFile(path, bufferSize: bufferSize).toJson();
+        return <String, Object?>{...json}..remove('path');
+      }
+
+      test('a .lib.gz made by gzip reads as the plain file does', () {
+        final expected = cellsOf(plain);
+        expect(
+          (expected['cells']! as List<Object?>).length,
+          2,
+          reason: 'the fixture has two cells',
+        );
+        // Small buffers put the decompressed stream across refill
+        // boundaries everywhere; the default is what the app uses.
+        for (final size in <int>[1, 2, 3, 7, 64, 4096, 1 << 20]) {
+          expect(
+            cellsOf(gzipped, bufferSize: size),
+            expected,
+            reason: 'buffer size $size',
+          );
+        }
+      });
+
+      test('a compressed library of many blocks reads like its plain twin', () {
+        // Random-looking numbers do not compress, so the compressed file is
+        // many times the 64 KiB block the reader inflates at a time, and
+        // one table straddles several of them.
+        final random = Random(7);
+        String number() => random.nextDouble().toString();
+        final rows = <String>[
+          for (var i = 0; i < 40000; i++)
+            '"${number()}, ${number()}, ${number()}"',
+        ];
+        final text =
+            '''
+library (big) {
+  cell (X) {
+    pin (A) { direction : input ; }
+    pin (Y) {
+      direction : output ;
+      timing () { cell_rise (t) { values (${rows.join(', \\\n')}) ; } }
+    }
+  }
+  cell (Z) { pin (Q) { direction : output ; } }
+}
+''';
+        final path = p.join(dir.path, 'big.lib.gz');
+        File(path).writeAsBytesSync(gzip.encode(utf8.encode(text)));
+        expect(
+          File(path).lengthSync(),
+          greaterThan(5 * (1 << 16)),
+          reason: 'the test needs a compressed file of several blocks',
+        );
+        final expected = LibertyParser.parseString(text, path: path).toJson();
+        expect(LibertyParser.parseFile(path).toJson(), expected);
+        expect(
+          LibertyParser.parseFile(path, bufferSize: 4096).toJson(),
+          expected,
+        );
+      });
+
+      test('the content decides, not the name', () {
+        final expected = cellsOf(plain);
+        final misnamedGzip = p.join(dir.path, 'compressed.lib');
+        File(gzipped).copySync(misnamedGzip);
+        expect(cellsOf(misnamedGzip), expected);
+        final misnamedText = p.join(dir.path, 'text.lib.gz');
+        File(plain).copySync(misnamedText);
+        expect(cellsOf(misnamedText), expected);
+      });
+
+      test('a truncated file is a parse error naming it', () {
+        final bytes = File(gzipped).readAsBytesSync();
+        final path = p.join(dir.path, 'cut.lib.gz');
+        File(path).writeAsBytesSync(bytes.sublist(0, bytes.length ~/ 2));
+        expect(
+          () => LibertyParser.parseFile(path),
+          throwsA(
+            isA<LibertyParseException>().having((e) => e.path, 'path', path),
+          ),
+        );
+      });
+
+      test('corrupt compressed data is a parse error naming the file', () {
+        final bytes = File(gzipped).readAsBytesSync().toList();
+        for (var i = 30; i < bytes.length - 8; i++) {
+          bytes[i] = bytes[i] ^ 0x5a;
+        }
+        final path = p.join(dir.path, 'bad.lib.gz');
+        File(path).writeAsBytesSync(bytes);
+        expect(
+          () => LibertyParser.parseFile(path),
+          throwsA(
+            isA<LibertyParseException>()
+                .having((e) => e.path, 'path', path)
+                .having((e) => e.description, 'description', contains('gzip')),
+          ),
+        );
+      });
+
+      test('an empty .lib.gz is not a Liberty file', () {
+        final path = p.join(dir.path, 'empty.lib.gz');
+        File(path).writeAsBytesSync(gzip.encode(const <int>[]));
+        expect(
+          () => LibertyParser.parseFile(path),
+          throwsA(isA<LibertyParseException>()),
+        );
       });
     });
   });

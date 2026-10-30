@@ -9,9 +9,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:netcrux/services/filelist/filelist_reader.dart'
     show kFilelistExtension;
 
-/// The extensions, without their dots, of a Liberty cell library; see
-/// `NetcruxProject.isLibertyPath`.
-const List<String> kLibertyExtensions = <String>['lib', 'liberty'];
+/// The extensions, without their dots, a file picker offers for a Liberty
+/// cell library; see `NetcruxProject.isLibertyPath`.
+///
+/// `gz` stands for `.lib.gz` and `.liberty.gz`: the native pickers match on
+/// the last extension only (a two-part one filters out every file on
+/// macOS), so any `.gz` file can be picked here. Only a name ending in
+/// `.lib.gz` or `.liberty.gz` is treated as a library.
+const List<String> kLibertyExtensions = <String>['lib', 'liberty', 'gz'];
 
 /// Result of a file-open dialog. Either at least one path was selected or
 /// the user cancelled (the picker returned `null`). Distinguished here so
@@ -85,7 +90,8 @@ class FileOpenService {
   }
 
   /// Prompts the user for one or more Verilog / VHDL source files, and
-  /// any Liberty cell libraries (`.lib`, `.liberty`) to read with them; the
+  /// any Liberty cell libraries (`.lib`, `.liberty`, `.lib.gz`, `.liberty.gz`) to read
+  /// with them; the
   /// open flow separates the two. Returns the picked paths or
   /// [FileOpenResult.cancelled].
   Future<FileOpenResult> pickSourceFiles({required String dialogTitle}) async {

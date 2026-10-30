@@ -1,0 +1,23 @@
+/* A small cell library, plain and gzip-compressed (cells.lib.gz was made
+   from this file with `gzip -9 -n -k`). */
+library (cells) {
+  delay_model : table_lookup ;
+  cell (INV) {
+    area : 1.5 ;
+    pg_pin (VDD) { pg_type : primary_power ; }
+    pg_pin (VSS) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; capacitance : 0.002 ; }
+    pin (Y) {
+      direction : output ;
+      timing () {
+        related_pin : "A" ;
+        cell_rise (scalar) { values ("0.1, 0.2, 0.3"); }
+      }
+    }
+  }
+  cell (NAND2) {
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; }
+  }
+}

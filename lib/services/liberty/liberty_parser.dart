@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -32,13 +33,21 @@ import 'package:netcrux/services/liberty/liberty_library.dart';
 /// - `/* */` and `//` comments, quoted strings, backslash line
 ///   continuations, simple (`name : value ;`) and complex (`name(args);`)
 ///   attributes, with or without the closing semicolon.
+/// - A gzip-compressed file (`.lib.gz`, `.liberty.gz`), inflated as it is
+///   read through the same buffer: the decompressed text is never held,
+///   so a compressed library costs the same memory as a plain one.
 ///
 /// Runs synchronously; callers keep it off the UI isolate (see
 /// `LibertyStubService`).
 class LibertyParser {
   LibertyParser._(this._lexer, this._path);
 
-  /// Parses the Liberty file at [path].
+  /// Parses the Liberty file at [path], plain or gzip-compressed.
+  ///
+  /// A file that starts with the gzip magic number is inflated as a stream,
+  /// whatever its name; one that does not is read as text, so a plain file
+  /// named `.gz` still parses. Line numbers in a problem report refer to the
+  /// decompressed text.
   ///
   /// Throws [LibertyParseException] for a file that cannot be opened or
   /// is not well-formed Liberty.
@@ -53,12 +62,18 @@ class LibertyParser {
       );
     }
     try {
-      final lexer = _Lexer(path, Uint8List(bufferSize), 0, file);
+      final source = _isGzip(file) ? _GzipSource(file) : _FileSource(file);
+      final lexer = _Lexer(path, Uint8List(bufferSize), 0, source);
       return LibertyParser._(lexer, path)._parse();
     } on FileSystemException catch (e) {
       throw LibertyParseException(
         path,
         'cannot be read: ${e.osError?.message ?? e.message}',
+      );
+    } on FormatException catch (e) {
+      throw LibertyParseException(
+        path,
+        'is not valid gzip data: ${e.message}',
       );
     } finally {
       file.closeSync();
@@ -630,15 +645,102 @@ bool _isDelimiter(int c) =>
     c == _lbraceChar ||
     c == _rbraceChar;
 
+/// Where the lexer's bytes come from: it asks for the next block when its
+/// buffer runs dry.
+abstract interface class _ByteSource {
+  /// Fills the start of [buffer] with the next bytes and returns how many,
+  /// `0` at the end of the input.
+  int readInto(Uint8List buffer);
+}
+
+/// The bytes of the file as they are on disk.
+class _FileSource implements _ByteSource {
+  _FileSource(this._file);
+
+  final RandomAccessFile _file;
+
+  @override
+  int readInto(Uint8List buffer) => _file.readIntoSync(buffer);
+}
+
+/// Whether the open [file] starts with the gzip magic number, leaving its
+/// position at the start.
+bool _isGzip(RandomAccessFile file) {
+  final head = file.readSync(2);
+  file.setPositionSync(0);
+  return head.length == 2 && head[0] == 0x1f && head[1] == 0x8b;
+}
+
+/// The inflated bytes of a gzip file, produced a block at a time.
+///
+/// The decoder is driven synchronously (a block of compressed bytes goes in
+/// and its output is queued before `add` returns), which is what lets the
+/// lexer, a synchronous reader, pull from it without an isolate of its own
+/// or the whole file in memory. A truncated or corrupt stream surfaces as a
+/// [FormatException] from [readInto].
+class _GzipSource implements _ByteSource {
+  _GzipSource(this._file) {
+    _sink = gzip.decoder.startChunkedConversion(_QueueSink(_inflated));
+  }
+
+  final RandomAccessFile _file;
+  final Uint8List _compressed = Uint8List(1 << 16);
+  final Queue<Uint8List> _inflated = Queue<Uint8List>();
+  late final ByteConversionSink _sink;
+  int _offset = 0;
+  bool _finished = false;
+
+  @override
+  int readInto(Uint8List buffer) {
+    // Refill from disk until there is inflated output or the file is done.
+    while (_inflated.isEmpty && !_finished) {
+      final n = _file.readIntoSync(_compressed);
+      if (n == 0) {
+        _finished = true;
+        _sink.close();
+      } else {
+        _sink.add(Uint8List.sublistView(_compressed, 0, n));
+      }
+    }
+    var written = 0;
+    while (written < buffer.length && _inflated.isNotEmpty) {
+      final chunk = _inflated.first;
+      final take = (chunk.length - _offset).clamp(0, buffer.length - written);
+      buffer.setRange(written, written + take, chunk, _offset);
+      written += take;
+      _offset += take;
+      if (_offset == chunk.length) {
+        _inflated.removeFirst();
+        _offset = 0;
+      }
+    }
+    return written;
+  }
+}
+
+/// Collects a decoder's output blocks, each copied so the decoder is free
+/// to reuse its own.
+class _QueueSink implements Sink<List<int>> {
+  _QueueSink(this._queue);
+
+  final Queue<Uint8List> _queue;
+
+  @override
+  void add(List<int> data) => _queue.add(Uint8List.fromList(data));
+
+  @override
+  void close() {}
+}
+
 /// A byte-level tokenizer reading through a fixed buffer, refilled from
-/// [_file] when it runs dry (or holding all the input when [_file] is
+/// [_source] when it runs dry (or holding all the input when [_source] is
 /// `null`).
 class _Lexer {
-  _Lexer(this._path, this._buf, this._len, this._file);
+  _Lexer(this._path, this._buf, this._len, this._source);
 
   final String _path;
   final Uint8List _buf;
-  final RandomAccessFile? _file;
+  final _ByteSource? _source;
   int _len;
   int _pos = 0;
 
@@ -654,9 +756,9 @@ class _Lexer {
 
   /// Refills the buffer. `false` at the end of the input.
   bool _fill() {
-    final file = _file;
-    if (file == null) return false;
-    _len = file.readIntoSync(_buf);
+    final source = _source;
+    if (source == null) return false;
+    _len = source.readInto(_buf);
     _pos = 0;
     return _len > 0;
   }

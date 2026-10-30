@@ -48,6 +48,30 @@ void main() {
       expect(NetcruxProject.isLibertyPath('mylib.sv'), isFalse);
     });
 
+    test('isLibertyPath matches a gzip-compressed library', () {
+      expect(NetcruxProject.isLibertyPath('/pdk/cells.lib.gz'), isTrue);
+      expect(NetcruxProject.isLibertyPath(r'C:\pdk\CELLS.LIBERTY.GZ'), isTrue);
+      expect(NetcruxProject.isLibertyPath('cells.liberty.gz'), isTrue);
+      // Compressed something else is not a library.
+      expect(NetcruxProject.isLibertyPath('top.v.gz'), isFalse);
+      expect(NetcruxProject.isLibertyPath('netlist.json.gz'), isFalse);
+      expect(NetcruxProject.isLibertyPath('cells.gz'), isFalse);
+      expect(NetcruxProject.isLibertyPath('mylib.gz'), isFalse);
+    });
+
+    test('fromOpenedFiles sends compressed libraries to libertyFiles', () {
+      final project = NetcruxProject.fromOpenedFiles(const <String>[
+        '/rtl/top.v',
+        '/pdk/a.lib.gz',
+        '/pdk/b.liberty.gz',
+      ]);
+      expect(project.sourceFiles, <String>['/rtl/top.v']);
+      expect(project.libertyFiles, <String>[
+        '/pdk/a.lib.gz',
+        '/pdk/b.liberty.gz',
+      ]);
+    });
+
     test('fromOpenedFiles splits sources from cell libraries in order', () {
       final project = NetcruxProject.fromOpenedFiles(const <String>[
         '/rtl/top.v',

@@ -18,7 +18,7 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 | NetCrux project | `.netcrux-project` | JSON describing sources, top module, include directories and defines. |
 | Suite manifest | `<design>.crux-project` | YAML naming the design's sources or a pre-built netlist. See [below](#crux-project). |
 | Vivado-style filelist | `.f` | Imported with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |
-| Liberty cell library | `.lib`, `.liberty` | Read for its cells' interfaces, which Yosys sees as black boxes. See [Cell libraries](#cell-libraries). |
+| Liberty cell library | `.lib`, `.liberty`, `.lib.gz`, `.liberty.gz` | Read for its cells' interfaces, which Yosys sees as black boxes. A gzip-compressed library is read as it is. See [Cell libraries](#cell-libraries). |
 | Yosys JSON netlist | `.json` | Read directly — no Yosys run. See [below](#json). |
 
 A netlist your own flow already wrote with Yosys `write_json` opens without elaboration: choose `File → Open Netlist JSON…` (also on the toolbar), pass it on the [command line](cli/usage.md) (`netcrux build/top.json`), or name it under `artifacts.netlist` in a [design manifest](#crux-project). It is also the only thing the [web viewer](web-mode.md) opens. NetCrux parses it and renders the top module exactly as if it had run Yosys itself, and the netlist file is watched for changes like any source. A single `.json` file is always read as a netlist, never handed to Yosys.
@@ -84,9 +84,11 @@ Add cell libraries in any of these ways:
 - A `.f` filelist entry ending in `.lib` or `.liberty` is a cell library.
 - A `.netcrux-project` lists them under `libertyFiles`.
 
+From NetCrux 1.2, each of these also takes a gzip-compressed library, named `.lib.gz` or `.liberty.gz`, so a library does not have to be unpacked first. NetCrux decompresses it as it reads, a block at a time, and never holds the decompressed text, so it needs no more memory than the plain file would. The file pickers show every `.gz` file (the platform file dialogs match only the last part of a name), but only a name ending in `.lib.gz` or `.liberty.gz` is treated as a cell library. A `.gz` file that is not valid gzip data is skipped with a warning in Diagnostics like any unreadable library.
+
 A list changed with `File → Cell Libraries (Liberty)…` stays with the tab across restarts, even when the tab's project file does not list it; `File → Save Project As…` writes it into the project.
 
-Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time, so a library is read once until it changes. A library that is missing or is not valid Liberty is skipped, and the Diagnostics panel shows a warning with the file name, the line for a syntax error, and the reason. Before NetCrux 1.2 such a library stopped the elaboration instead. The design still elaborates with the other libraries, and the cells of the skipped one count as missing modules: with [black boxes](#black-boxes) on they are drawn as black boxes, and otherwise the elaboration stops with "is not part of the design" for the first cell it cannot find. Fix or remove the file in `File → Cell Libraries (Liberty)…` and apply.
+Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time (for a compressed library, those of the `.gz` file), so a library is read once until it changes. A library that is missing or is not valid Liberty is skipped, and the Diagnostics panel shows a warning with the file name, the line for a syntax error, and the reason. Before NetCrux 1.2 such a library stopped the elaboration instead. The design still elaborates with the other libraries, and the cells of the skipped one count as missing modules: with [black boxes](#black-boxes) on they are drawn as black boxes, and otherwise the elaboration stops with "is not part of the design" for the first cell it cannot find. Fix or remove the file in `File → Cell Libraries (Liberty)…` and apply.
 
 ### Missing modules as black boxes {#black-boxes}
 
