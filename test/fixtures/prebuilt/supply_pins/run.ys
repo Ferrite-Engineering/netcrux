@@ -1,0 +1,5 @@
+read_liberty -lib cells.lib
+read_verilog top.v
+hierarchy -top top
+proc
+write_json out.json

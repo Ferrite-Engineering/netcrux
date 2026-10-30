@@ -1,0 +1,185 @@
+{
+ "creator": "Yosys 0.69",
+ "modules": {
+  "INV": {
+   "attributes": {
+    "abc9_box": "00000000000000000000000000000001",
+    "blackbox": "00000000000000000000000000000001"
+   },
+   "ports": {
+    "A": {
+     "direction": "input",
+     "bits": [
+      2
+     ]
+    },
+    "Y": {
+     "direction": "output",
+     "bits": [
+      3
+     ]
+    }
+   },
+   "cells": {},
+   "netnames": {
+    "A": {
+     "hide_name": 0,
+     "bits": [
+      2
+     ],
+     "attributes": {}
+    },
+    "Y": {
+     "hide_name": 0,
+     "bits": [
+      3
+     ],
+     "attributes": {}
+    }
+   }
+  },
+  "top": {
+   "attributes": {
+    "top": "00000000000000000000000000000001"
+   },
+   "ports": {
+    "a": {
+     "direction": "input",
+     "bits": [
+      2
+     ]
+    },
+    "y": {
+     "direction": "output",
+     "bits": [
+      3
+     ]
+    },
+    "vcck": {
+     "direction": "input",
+     "bits": [
+      4
+     ]
+    },
+    "gndk": {
+     "direction": "input",
+     "bits": [
+      5
+     ]
+    }
+   },
+   "cells": {
+    "m1": {
+     "hide_name": 0,
+     "type": "MACRO",
+     "parameters": {},
+     "attributes": {
+      "module_not_derived": "00000000000000000000000000000001"
+     },
+     "connections": {
+      "CLK": [
+       2
+      ],
+      "D": [
+       6
+      ],
+      "Q": []
+     }
+    },
+    "u1": {
+     "hide_name": 0,
+     "type": "INV",
+     "parameters": {},
+     "attributes": {
+      "module_not_derived": "00000000000000000000000000000001"
+     },
+     "port_directions": {
+      "A": "input",
+      "GNDK": "output",
+      "VCCK": "output",
+      "Y": "output"
+     },
+     "connections": {
+      "A": [
+       2
+      ],
+      "GNDK": [
+       5
+      ],
+      "VCCK": [
+       4
+      ],
+      "Y": [
+       6
+      ]
+     }
+    },
+    "u2": {
+     "hide_name": 0,
+     "type": "INV",
+     "parameters": {},
+     "attributes": {
+      "module_not_derived": "00000000000000000000000000000001"
+     },
+     "port_directions": {
+      "A": "input",
+      "GNDK": "output",
+      "VCCK": "output",
+      "Y": "output"
+     },
+     "connections": {
+      "A": [
+       6
+      ],
+      "GNDK": [
+       5
+      ],
+      "VCCK": [
+       4
+      ],
+      "Y": [
+       3
+      ]
+     }
+    }
+   },
+   "netnames": {
+    "a": {
+     "hide_name": 0,
+     "bits": [
+      2
+     ],
+     "attributes": {}
+    },
+    "gndk": {
+     "hide_name": 0,
+     "bits": [
+      5
+     ],
+     "attributes": {}
+    },
+    "n1": {
+     "hide_name": 0,
+     "bits": [
+      6
+     ],
+     "attributes": {}
+    },
+    "vcck": {
+     "hide_name": 0,
+     "bits": [
+      4
+     ],
+     "attributes": {}
+    },
+    "y": {
+     "hide_name": 0,
+     "bits": [
+      3
+     ],
+     "attributes": {}
+    }
+   }
+  }
+ }
+}

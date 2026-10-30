@@ -1,0 +1,8 @@
+library (cells) {
+  cell (INV) {
+    pg_pin (VCCK) { pg_type : primary_power ; }
+    pg_pin (GNDK) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; }
+  }
+}

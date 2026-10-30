@@ -255,7 +255,7 @@ class LoadedNetlist extends _$LoadedNetlist {
   /// A multi-file project can only reach here in a build that cannot
   /// elaborate, and there is no netlist to read in it, so it is reported as
   /// the missing engine it is.
-  Future<NetlistModel?> _loadPrebuiltNetlist(NetcruxProject project) {
+  Future<NetlistModel?> _loadPrebuiltNetlist(NetcruxProject project) async {
     final cancel = Completer<void>();
     ref.onDispose(() {
       if (!cancel.isCompleted) cancel.complete();
@@ -263,7 +263,20 @@ class LoadedNetlist extends _$LoadedNetlist {
     // No Yosys ran, so there is no stderr to show; clear what a previous
     // elaboration in this tab left behind.
     ref.read(elaborationStderrProvider.notifier).set('');
-    return _readPrebuiltNetlist(ref, project, cancelSignal: cancel.future);
+    final loaded = await _readPrebuiltNetlist(
+      ref,
+      project,
+      cancelSignal: cancel.future,
+    );
+    // The pins given a direction here are the only diagnostics a netlist
+    // read from disk has.
+    final report = loaded?.report ?? BlackBoxReport.none;
+    if (!report.isEmpty) {
+      ref
+          .read(elaborationStderrProvider.notifier)
+          .set(_withWarnings(report.warningLines, ''));
+    }
+    return loaded?.model;
   }
 
   Future<({NetlistModel? model, bool cached})> _elaborate(
@@ -545,7 +558,7 @@ Future<NetlistModel?> loadDesignNetlist(
 ) async {
   if (project.sourceFiles.isEmpty) return null;
   if (project.isPrebuiltNetlist || !ref.read(hdlElaborationSupportedProvider)) {
-    return await _readPrebuiltNetlist(ref, project);
+    return (await _readPrebuiltNetlist(ref, project))?.model;
   }
   await _requireYosys(ref);
   final liberty = await _libertyStubs(ref, project);
@@ -574,7 +587,7 @@ Future<NetlistModel?> loadDesignNetlist(
 /// A multi-file project can only reach here in a build that cannot
 /// elaborate, and there is no netlist to read in it, so it is reported as
 /// the missing engine it is.
-Future<NetlistModel?> _readPrebuiltNetlist(
+Future<({NetlistModel model, BlackBoxReport report})?> _readPrebuiltNetlist(
   Ref ref,
   NetcruxProject project, {
   Future<void>? cancelSignal,
@@ -588,7 +601,7 @@ Future<NetlistModel?> _readPrebuiltNetlist(
   try {
     return await ref
         .read(prebuiltNetlistLoaderProvider)
-        .load(project.sourceFiles.single, cancelSignal: cancelSignal);
+        .loadWithReport(project.sourceFiles.single, cancelSignal: cancelSignal);
   } on WebJsonLoadException catch (e) {
     throw LoadedNetlistException(
       e.message,
