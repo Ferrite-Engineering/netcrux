@@ -4,6 +4,8 @@
 @TestOn('vm')
 library;
 
+import 'dart:io';
+
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +13,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/viewer/widgets/cross_probe_menu_entries.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -42,6 +46,15 @@ class _FakeDispatcher extends CrossProbeDispatcher {
   }
 }
 
+class _SeededProject extends CurrentProject {
+  _SeededProject(this._project);
+
+  final NetcruxProject _project;
+
+  @override
+  NetcruxProject build() => _project;
+}
+
 PeerIdentity _peer(String product, int startedAt) => PeerIdentity(
   peerId: '$product-7-$startedAt',
   productName: product,
@@ -53,9 +66,12 @@ Widget _host({
   required SelectedElement target,
   required void Function(List<SchematicContextMenuExtensionEntry>) onEntries,
   Locale? locale,
+  NetcruxProject? project,
 }) {
   final container = ProviderContainer(
     overrides: [
+      if (project != null)
+        currentProjectProvider.overrideWith(() => _SeededProject(project)),
       cruxCxpProductBindingProvider.overrideWithValue(kNetcruxCxpBinding),
       cruxCxpPeersProvider.overrideWithValue(peers),
       cruxCxpServerStatusProvider.overrideWithValue((
@@ -193,6 +209,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(_sent.single.$1.peerId, 'simcrux-7-20');
   });
+
+  testWidgets(
+    'on a host with no file system a register still gets its menu entries',
+    (tester) async {
+      // A browser, which includes the viewer hosted in an editor's webview:
+      // asking the file system whether a path is a directory throws there, and
+      // the viewer's project names a source file (the netlist the editor
+      // handed it). Building the entry used to throw with it, so a right-click
+      // on a register opened no menu at all.
+      late List<SchematicContextMenuExtensionEntry> entries;
+      await IOOverrides.runZoned(
+        () async {
+          await tester.pumpWidget(
+            _host(
+              peers: [_peer('simcrux', 1)],
+              target: const SelectedElement.cell(cellId: 'cnt_reg'),
+              onEntries: (e) => entries = e,
+              project: NetcruxProject.create(
+                sourceFiles: const <String>['fixture.json'],
+              ),
+            ),
+          );
+          await tester.pump();
+        },
+        fseGetTypeSync: (path, followLinks) =>
+            throw UnsupportedError('_Namespace'),
+      );
+      expect(tester.takeException(), isNull);
+      expect(entries.map((e) => e.id), <String>[
+        'cxp-cross-probe-to',
+        'cxp-show-timing-paths',
+      ]);
+    },
+  );
 
   for (final locale in L10N.supportedLocales) {
     testWidgets('renders in $locale', (tester) async {

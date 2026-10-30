@@ -95,9 +95,27 @@ class SchematicContextMenuController {
     // Gather the extension entries: the cross-probe and annotation builders
     // in open core, plus whatever the Pro overlay's `proOverrides` registers.
     final extensionBuilders = ref.read(schematicContextMenuExtensionsProvider);
-    final extensions = <SchematicContextMenuExtensionEntry>[
-      for (final builder in extensionBuilders) ...builder(ref, target),
-    ];
+    // A builder that throws loses only its own entries. The extras are optional
+    // and the built-in ones are not, and a menu that never opens because one
+    // optional entry could not be built looks like a dead right-click, with
+    // nothing on screen to say why. The failure is still reported.
+    final extensions = <SchematicContextMenuExtensionEntry>[];
+    for (final builder in extensionBuilders) {
+      try {
+        extensions.addAll(builder(ref, target));
+      } on Object catch (error, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stack,
+            library: 'schematic context menu',
+            context: ErrorDescription(
+              'while building the entries of one menu extension',
+            ),
+          ),
+        );
+      }
+    }
     final items = <PopupMenuEntry<Object>>[
       PopupMenuItem<Object>(
         value: SchematicContextMenuAction.copyPath,

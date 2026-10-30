@@ -461,6 +461,38 @@ void main() {
       );
     });
 
+    testWidgets('an extension builder that throws costs only its own entries', (
+      tester,
+    ) async {
+      final h = await pumpController(
+        tester,
+        overrides: [
+          schematicContextMenuExtensionsProvider.overrideWithValue(
+            <SchematicContextMenuExtensionBuilder>[
+              (ref, element) => throw UnsupportedError('no file system here'),
+              (ref, element) => <SchematicContextMenuExtensionEntry>[
+                SchematicContextMenuExtensionEntry(
+                  id: 'ext-2',
+                  label: 'Entry after the failure',
+                  onTap: (_, _, _) async {},
+                ),
+              ],
+            ],
+          ),
+        ],
+      );
+
+      unawaitedShow(h.controller, h.context);
+      await tester.pumpAndSettle();
+
+      final l10n = L10N.of(h.context);
+      expect(find.text(l10n.contextMenuCopyPath), findsOneWidget);
+      expect(find.text(l10n.contextMenuProperties), findsOneWidget);
+      expect(find.text('Entry after the failure'), findsOneWidget);
+      // Reported, not swallowed.
+      expect(tester.takeException(), isA<UnsupportedError>());
+    });
+
     testWidgets('a tiered extension entry carries the tier chip beside its '
         'label', (tester) async {
       final h = await pumpController(

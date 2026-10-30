@@ -47,6 +47,18 @@ void main() {
     expect(cxpDesignIdForProject(NetcruxProject.empty), isNull);
   });
 
+  test('cxpDesignIdForProject is null where there is no file system', () {
+    // What a browser does when asked whether a path is a directory.
+    final id = IOOverrides.runZoned(
+      () => cxpDesignIdForProject(
+        NetcruxProject.create(sourceFiles: const <String>['fixture.json']),
+      ),
+      fseGetTypeSync: (path, followLinks) =>
+          throw UnsupportedError('_Namespace'),
+    );
+    expect(id, isNull);
+  });
+
   test(
     'publishes source under the source-dir design id (shared-workspace producer)',
     () async {

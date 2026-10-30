@@ -170,9 +170,22 @@ final Provider<CxpWorkspaceStore> cxpWorkspaceStoreProvider =
 /// the first loaded source file — via the one shared [cxpDesignIdForPath]
 /// helper every product uses, so NetCrux, SimCrux, and WaveCrux key the same
 /// design folder identically.
+///
+/// Null as well where there is no file system to canonicalize the directory
+/// against: a browser, which includes the viewer hosted in an editor's webview.
+/// There the helper's directory probe throws an `UnsupportedError`, and this is
+/// called while a schematic menu is being built (a register's "Show timing
+/// paths through this register" entry reads it), so letting it through left the
+/// right-click on a register with no menu at all.
 String? cxpDesignIdForProject(NetcruxProject project) {
   if (project.sourceFiles.isEmpty) return null;
-  return cxpDesignIdForPath(project.sourceFiles.first);
+  try {
+    return cxpDesignIdForPath(project.sourceFiles.first);
+    // The platform's own answer for "no file system here"; it is an Error.
+    // ignore: avoid_catching_errors
+  } on UnsupportedError {
+    return null;
+  }
 }
 
 /// Records NetCrux's loaded HDL source in the shared workspace so a peer that
