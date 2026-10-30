@@ -2760,7 +2760,16 @@
       }
     }
   },
-  "schematicLayoutDeferredCone": "一部を見るには、検索または階層フィルタでセルを見つけてから、表示 > コーンビューを選ぶと、そのセルを駆動する部分を表示できます。",
+  "schematicLayoutDeferredCone": "一部を見るには、検索または階層フィルタでセルを見つけてください。セルを選ぶと、そのセルを駆動する部分のコーンビューが開きます。",
+  "schematicLayoutDeferredSelected": "選択中: {name}",
+  "@schematicLayoutDeferredSelected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicLayoutDeferredShowCone": "コーンビューを表示",
   "schematicLayoutDeferredAction": "それでもレイアウト",
   "schematicLayoutDeferredEstimate": "スコープ全体の推定メモリ: 約 {memory}。上限は設定 > エンジンで変更できます。",
   "@schematicLayoutDeferredEstimate": {

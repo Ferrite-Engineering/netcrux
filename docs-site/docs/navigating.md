@@ -60,7 +60,7 @@ The **Search Design** dialog (++cmd+f++ / ++ctrl+f++, or the toolbar's **Search�
 
     Choosing a result (click it, or ++arrow-up++ / ++arrow-down++ then ++enter++) navigates to the owning scope, clears any trace overlay, and centers the canvas on the result. An instance or cell is selected. A net has no body of its own, so NetCrux selects the cell that drives it; an undriven net — a module input or a constant — leaves nothing selected.
 
-On a scope that is too large to lay out whole, a result still takes you there and selects the cell, but there is nothing drawn to centre on. Choose `View > Cone View` to lay out the cell's neighbourhood and see it; see [Cone view](tracing.md#cone-view).
+On a scope that is too large to lay out whole, a result takes you there and selects the cell, and because there is no whole-scope layout to centre on, NetCrux opens the cell's cone view at once, so the selection is on screen; see [Cone view](tracing.md#cone-view). The same happens when you choose a cell in the Hierarchy filter or another tool cross-probes a cell, a pin, a port or a net into the scope.
 
 To find a cell without opening a dialog, type part of its name or its type in the hierarchy tree's **Filter scopes and cells…** field: matching cells are listed under their scope, and choosing one does the same as choosing a Search result. See [Hierarchy tree](interface.md#hierarchy).
 

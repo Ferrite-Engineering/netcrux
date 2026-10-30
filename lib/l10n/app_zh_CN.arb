@@ -2760,7 +2760,16 @@
       }
     }
   },
-  "schematicLayoutDeferredCone": "要查看其中一部分，请用搜索或层次结构筛选找到一个单元，然后选择视图 > 锥视图，查看驱动它的部分。",
+  "schematicLayoutDeferredCone": "要查看其中一部分，请用搜索或层次结构筛选找到一个单元。选中单元后会打开它的锥视图，显示驱动它的部分。",
+  "schematicLayoutDeferredSelected": "已选中：{name}",
+  "@schematicLayoutDeferredSelected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicLayoutDeferredShowCone": "显示锥视图",
   "schematicLayoutDeferredAction": "仍然布局",
   "schematicLayoutDeferredEstimate": "整个作用域预计需要约 {memory} 内存。上限可在设置 > 引擎中更改。",
   "@schematicLayoutDeferredEstimate": {

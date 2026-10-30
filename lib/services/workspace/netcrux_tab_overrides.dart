@@ -24,6 +24,7 @@ import 'package:netcrux/features/project/providers/scope_layout_gate_provider.da
 import 'package:netcrux/features/source_pane/providers/source_pane_state_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
 import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
+import 'package:netcrux/features/viewer/providers/held_back_selection_cone_provider.dart';
 import 'package:netcrux/features/viewer/providers/layout_approval_notifier.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
@@ -71,6 +72,9 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // reads it. The scopes the user approved are this tab's.
     scopeLayoutGateProvider.overrideWith(scopeLayoutGate),
     layoutApprovalProvider.overrideWith(LayoutApprovalNotifier.new),
+    // Opens a cone view on a selection made in a held-back scope, so the
+    // selection is on screen; it reads the tab's selection, gate and cone.
+    heldBackSelectionConeProvider.overrideWith(heldBackSelectionCone),
     // Written by the layout pass above, so it follows the same scope.
     layoutTimingProvider.overrideWith(LayoutTimingNotifier.new),
     elaborationStderrProvider.overrideWith(ElaborationStderr.new),

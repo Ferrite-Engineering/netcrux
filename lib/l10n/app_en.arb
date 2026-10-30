@@ -3558,9 +3558,22 @@
       }
     }
   },
-  "schematicLayoutDeferredCone": "To look at part of it, find a cell with Search or with the Hierarchy filter, then choose View > Cone View to see what drives it.",
+  "schematicLayoutDeferredCone": "To look at part of it, find a cell with Search or with the Hierarchy filter. Selecting a cell opens its Cone View, which shows what drives it.",
   "@schematicLayoutDeferredCone": {
-    "description": "Second paragraph of the 'too large to lay out whole' state: the way forward that needs no whole-scope layout. Names the Hierarchy panel, Search and the View > Cone View menu entry by their menu labels."
+    "description": "Second paragraph of the 'too large to lay out whole' state: the way forward that needs no whole-scope layout. Names Search and the Hierarchy filter, and says that selecting a cell opens its Cone View."
+  },
+  "schematicLayoutDeferredSelected": "Selected: {name}",
+  "@schematicLayoutDeferredSelected": {
+    "description": "Line in the 'too large to lay out whole' state naming the element that is selected while no Cone View is on show. {name} is the cell, pin, port or net.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "schematicLayoutDeferredShowCone": "Show Cone View",
+  "@schematicLayoutDeferredShowCone": {
+    "description": "Button in the 'too large to lay out whole' state, shown when something is selected: opens the Cone View of the selection, as View > Cone View does."
   },
   "schematicLayoutDeferredAction": "Lay out anyway",
   "@schematicLayoutDeferredAction": {

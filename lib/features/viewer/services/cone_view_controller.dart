@@ -7,6 +7,7 @@ import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/trace/cone_view.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -81,6 +82,10 @@ class ConeViewController {
 
   /// Shows the whole scope again, framing the cone's root in it unless
   /// something else already asked to be revealed. The selection is kept.
+  ///
+  /// A scope held back for its size is not laid out by leaving the cone: the
+  /// canvas returns to the held-back view, which has nothing to frame, so no
+  /// reveal is requested (it would also read as a new pick of the root).
   void exit() {
     final current = _read(coneViewProvider);
     if (current == null) return;
@@ -90,6 +95,7 @@ class ConeViewController {
     );
     _read(traceOverlayProvider.notifier).clear();
     _read(coneViewProvider.notifier).exit();
+    if (_read(scopeLayoutGateProvider).deferred) return;
     if (target != null && _read(revealRequestProvider) == null) {
       _read(revealRequestProvider.notifier).request(target);
     }

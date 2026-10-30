@@ -48,7 +48,7 @@ A scope with more cells than the [layout limit](getting-started.md#layout-engine
 
 1. **Start from a cell, pin, port or net.**
 
-    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) or with the Hierarchy filter and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead. On a scope that is too large to lay out whole, nothing is running to stop: the cone is the first thing drawn.
+    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) or with the Hierarchy filter and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead. On a scope that is too large to lay out whole, nothing is running to stop: the cone is the first thing drawn. You do not even have to choose it there: selecting a cell, pin, port or net in such a scope, from Search, the Hierarchy filter or a cross-probe from another tool, opens its cone (fan-in, two levels) as soon as it is selected.
 
 2. **Read the cone.**
 
@@ -60,7 +60,7 @@ A scope with more cells than the [layout limit](getting-started.md#layout-engine
 
 4. **Go back to the whole scope.**
 
-    Choose **Show Whole Scope** in the bar or `View > Show Whole Scope`. The whole scope comes back from the layout cache, framed on the element you started from, with your selection kept. A scope above the layout limit that you have not asked to lay out goes back to the message that it is too large instead; choose **Lay out anyway** there to draw it. Moving to another scope (pushing into a cell, popping out, the Hierarchy or the breadcrumb) also ends the cone view.
+    Choose **Show Whole Scope** in the bar or `View > Show Whole Scope`. The whole scope comes back from the layout cache, framed on the element you started from, with your selection kept. A scope above the layout limit that you have not asked to lay out goes back to the message that it is too large instead, now naming what is selected and offering **Show Cone View** to open its cone again; choose **Lay out anyway** there to draw the whole scope. The cone does not reopen by itself until you select something again. Moving to another scope (pushing into a cell, popping out, the Hierarchy or the breadcrumb) also ends the cone view.
 
 The cone view is in NetCrux Open Core, at every depth up to eight levels, in the desktop app and the web viewer. Panning moves over the cone only: the rest of the scope is not drawn, and wires that leave the cone are not shown. A clock or reset net too wide to draw in the whole scope is not drawn in the cone either. A cone view is not saved in a session or a workspace.
 

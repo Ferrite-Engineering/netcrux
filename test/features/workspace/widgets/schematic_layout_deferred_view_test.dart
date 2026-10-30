@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/schematic/scope_layout_gate.dart';
+import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/viewer/providers/layout_approval_notifier.dart';
+import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_layout_deferred_view.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
@@ -107,6 +109,44 @@ void main() {
         isNot(contains('select a cell in the Hierarchy')),
       );
     });
+
+    // Selecting a cell opens its cone by itself, so the guidance says that
+    // and no longer sends the user to the View menu.
+    testWidgets('the guidance says that selecting a cell opens its cone', (
+      tester,
+    ) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      expect(l10n.schematicLayoutDeferredCone, contains('Selecting a cell'));
+      expect(l10n.schematicLayoutDeferredCone, contains('Cone View'));
+      expect(l10n.schematicLayoutDeferredCone, isNot(contains('View >')));
+    });
+
+    for (final locale in _locales) {
+      final tag = locale.countryCode == null
+          ? locale.languageCode
+          : '${locale.languageCode}_${locale.countryCode}';
+
+      testWidgets('[$tag] with a selection, names it and offers the cone', (
+        tester,
+      ) async {
+        final l10n = await L10N.delegate.load(locale);
+        final container = await _pump(tester, locale: locale);
+        expect(find.text(l10n.schematicLayoutDeferredShowCone), findsNothing);
+        container
+            .read(selectedElementProvider.notifier)
+            .select(const SelectedElement.cell(cellId: 'u_17'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(l10n.schematicLayoutDeferredSelected('u_17')),
+          findsOneWidget,
+        );
+        expect(
+          find.text(l10n.schematicLayoutDeferredShowCone),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
 
     testWidgets('the cell counts are shown with digit grouping', (
       tester,

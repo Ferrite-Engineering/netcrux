@@ -23,6 +23,7 @@ import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart'
 import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/statistics/widgets/netcrux_stats_strip.dart';
 import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
+import 'package:netcrux/features/viewer/providers/held_back_selection_cone_provider.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -163,6 +164,8 @@ class ProjectTabContent extends ConsumerWidget {
         );
       })
       ..watch(sourceFileWatcherProvider)
+      // A selection made in a scope held back for its size opens its cone.
+      ..watch(heldBackSelectionConeProvider)
       ..listen<int?>(sourceReloadEventsProvider, (previous, next) {
         if (next == null) return;
         // The suite's source-changed prompt, the same banner in every
