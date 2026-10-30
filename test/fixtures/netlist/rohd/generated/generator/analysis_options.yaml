@@ -1,0 +1,3 @@
+# The generator is its own package; it does not use this repository's lint set.
+formatter:
+  trailing_commas: preserve

@@ -21,12 +21,52 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 | Vivado-style filelist | `.f` | Imported with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |
 | Liberty cell library | `.lib`, `.liberty`, `.lib.gz`, `.liberty.gz` | Read for its cells' interfaces, which Yosys sees as black boxes. A gzip-compressed library is read as it is. See [Cell libraries](#cell-libraries). |
 | Verilog cell model | `.v`, `.v.gz` listed as `cellModelFiles` or `-v` | From NetCrux 1.2: only the module headers are read, for the pin directions of the cells a gate-level netlist instantiates. See [Cell model files](#cell-models). |
-| Yosys JSON netlist | `.json` | Read directly — no Yosys run. See [below](#json). |
+| Yosys JSON netlist | `.json` | Read directly — no Yosys run. See [below](#json). A netlist exported by ROHD is read the same way; see [ROHD netlists](#rohd). |
 
 A netlist your own flow already wrote with Yosys `write_json` opens without elaboration: choose `File → Open Netlist JSON…` (also on the toolbar), pass it on the [command line](cli/usage.md) (`netcrux build/top.json`), or name it under `artifacts.netlist` in a [design manifest](#crux-project). It is also the only thing the [web viewer](web-mode.md) opens. NetCrux parses it and renders the top module exactly as if it had run Yosys itself, and the netlist file is watched for changes like any source. A single `.json` file is always read as a netlist, never handed to Yosys. The file is read from disk in chunks rather than loaded whole, so its size is not limited: a netlist of several gigabytes opens, and the memory it takes is that of the design once parsed, about 4 to 5 GB for every million cells. (The [web viewer](web-mode.md) receives the document as text, so very large netlists belong in the desktop app.)
 {: #json }
 
 From NetCrux 1.2, a netlist read this way gets the same pin direction inference as the [black boxes](#black-boxes) option. A flow that reads a cell library with `read_liberty -lib` and runs `hierarchy` without `-check` leaves the library's power and ground pins out of each cell's module but keeps the instances' connections to them, and Yosys writes every such connection as an output, so a supply net looks driven by every cell on it. NetCrux takes the direction of each connection to a pin its cell's module does not declare from the wiring, keeps the directions of the pins the module does declare, and lists the pins as `CELL.PIN` in the Diagnostics panel. A cell whose type no module in the netlist defines is handled the same way, with all its pins inferred. Directions are inferred, so a pin the wiring does not decide is shown as an input.
+
+## ROHD netlists {#rohd}
+
+[ROHD](https://github.com/intel/rohd), the hardware framework written in Dart, exports a netlist as a superset of Yosys JSON. From NetCrux 1.2 such a file opens like any other netlist (`File → Open Netlist JSON…`, the command line, a design manifest, or the [web viewer](web-mode.md)), with no Yosys run and no Dart toolchain, and what ROHD adds to the format is used rather than skipped. Every route reads it the same way, including the chunked file reader and the text reader the browser uses.
+
+**Exporting from ROHD.** Build the design, then write the JSON with `NetlistService`. Turn source tracing on to record where in your Dart code each signal and instance was created, and activate the tracer before the design is constructed:
+
+```dart
+import 'dart:io';
+import 'package:rohd/rohd.dart';
+
+Future<void> main() async {
+  SourceTracer.activate();
+  final top = MyDesign(Logic(), Logic());
+  await top.build();
+  final netlist = NetlistService(
+    top,
+    configuration: NetlistSynthesizerConfiguration(
+      trace: true,
+      packageRoot: Directory.current.path,
+    ),
+  );
+  File('build/my_design.json').writeAsStringSync(netlist.json);
+}
+```
+
+`NetlistService` and the format version it writes are described in the `doc/netlist_json_format.md` file of the ROHD repository; use a ROHD release that includes it. Without `trace: true` the netlist opens the same way, minus the source locations.
+
+**What NetCrux uses:**
+
+| ROHD extension | In NetCrux |
+|---|---|
+| `rohd.src_trace` and the top-level `files` array | The Dart file, line and column that created each signal and instance become the element's source location, the same `src` attribute a Yosys netlist carries. A sub-module instance is located at the line that instantiated it. [Show Source for this Element](source-and-inspection.md#source-pane) <span class="tier tier-pro">Pro</span> opens that Dart file at that line. |
+| `logic_type` on ports and netnames | A structure or array port or net shows its type in the [inspector](source-and-inspection.md), for example `Sample{data:16, valid:1}` or `array[4]x8`. |
+| `$struct_pack` and `$struct_unpack` cells | Drawn as boxes with one pin for each field, plus the whole value on one side. |
+| `Combinational` and `Sequential` cells | Drawn as boxes with a pin for each signal the block reads or writes. They are ROHD's own procedural block types, so they are not reported as modules with no definition. |
+
+ROHD writes a source path relative to the package root you gave it, and the netlist does not record that root. NetCrux looks for the file beside the netlist and in each directory above it, up to eight levels, and uses the first match; a path it cannot find stays as ROHD wrote it. The browser has no file system, so there the path is left as it is. A location inside ROHD's own library code is possible for something a ROHD component creates for you, and opens only where that library is on disk under the recorded path.
+
+Anything else in the file is ignored: a field NetCrux does not know, a newer ROHD format version, a malformed source trace. None of them stops a netlist from opening, and a plain Yosys netlist is read exactly as before.
 
 ## Opening a design with `<design>.crux-project` {#crux-project}
 

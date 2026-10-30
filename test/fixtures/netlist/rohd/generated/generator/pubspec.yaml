@@ -1,0 +1,33 @@
+# Generator for the ROHD netlist fixtures in the parent directory. It is a
+# separate package so the ROHD sources it builds designs from never enter
+# NetCrux's own dependency graph. See ../PROVENANCE.md.
+name: rohd_netlist_fixtures
+description: Builds small ROHD designs and writes their extended Yosys JSON.
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  path: ^1.9.0
+  # The netlist extensions (NetlistService, format 0.1.0) are on ROHD main
+  # but not yet on pub.dev, so the generator is pinned to a commit.
+  rohd:
+    git:
+      url: https://github.com/intel/rohd.git
+      ref: 2d84f73abfb1ba95c64d218e9b13a12e8416249c
+  rohd_hcl:
+    git:
+      url: https://github.com/intel/rohd-hcl.git
+      ref: 3a3fab368534a23462e6ad11b412bec289fa54c0
+
+dependency_overrides:
+  rohd:
+    git:
+      url: https://github.com/intel/rohd.git
+      ref: 2d84f73abfb1ba95c64d218e9b13a12e8416249c
+  rohd_hierarchy:
+    git:
+      url: https://github.com/intel/rohd.git
+      ref: 2d84f73abfb1ba95c64d218e9b13a12e8416249c
+      path: packages/rohd_hierarchy

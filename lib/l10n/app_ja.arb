@@ -539,6 +539,10 @@
   "@inspectorFieldWidth": {
     "description": "Inspector field label for the bit width of a port or wire."
   },
+  "inspectorFieldRohdType": "ROHD の型",
+  "@inspectorFieldRohdType": {
+    "description": "Inspector field label for the structure or array type of a port or net in a netlist exported by ROHD (the Dart hardware framework)."
+  },
   "inspectorFieldNet": "ネット",
   "@inspectorFieldNet": {
     "description": "Inspector field label for the underlying net of a port or wire."

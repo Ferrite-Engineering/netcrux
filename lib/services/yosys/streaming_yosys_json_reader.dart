@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/yosys/chunked_yosys_json_reader.dart';
+import 'package:netcrux/services/yosys/rohd_netlist_extensions.dart';
 
 /// Streaming reader for `yosys write_json` output.
 ///
@@ -65,12 +66,19 @@ class StreamingYosysJsonReader {
   /// Used by tests and by callers that already have the document in
   /// memory but want the per-module emission semantics.
   ///
+  /// A netlist written by ROHD carries extensions beyond Yosys JSON; the
+  /// ones that matter are applied as the modules are read
+  /// ([RohdNetlistReading]). [sourceResolver] maps a source path ROHD
+  /// recorded to the path to open; without it the path is kept as recorded.
+  ///
   /// Throws [YosysJsonParseException] on malformed input.
   NetlistModel parse(
     String rawJson, {
     CancellationToken? cancellation,
+    RohdSourceFileResolver? sourceResolver,
   }) {
     final modules = <String, Module>{};
+    final rohd = RohdNetlistReading(resolveFile: sourceResolver);
     final creator = _parseScalars(rawJson);
     // The streaming scanner hand-rolls structure detection and calls
     // `jsonDecode` / `Module.fromJson` on substrings, either of which can
@@ -83,7 +91,7 @@ class StreamingYosysJsonReader {
         rawJson,
         onModule: (name, json) {
           try {
-            modules[name] = Module.fromJson(name, json);
+            modules[name] = Module.fromJson(name, rohd.readModule(name, json));
           } on YosysJsonParseException {
             rethrow;
           } on Object catch (e) {
@@ -104,7 +112,10 @@ class StreamingYosysJsonReader {
         cause: e,
       );
     }
-    return NetlistModel(creator: creator, modules: modules);
+    if (rohd.hasSourceTraces) {
+      rohd.readFiles(_topLevelArray(rawJson, 'files'));
+    }
+    return rohd.finish(NetlistModel(creator: creator, modules: modules));
   }
 
   /// Reads the file at [path] and parses it, in fixed-size chunks.
@@ -261,6 +272,85 @@ class StreamingYosysJsonReader {
     return match.end;
   }
 
+  /// The array at the top-level member [name] of the document, or `null`
+  /// when there is none. Only top-level members are looked at: a net or a
+  /// port that happens to be called `files` is not it.
+  List<Object?>? _topLevelArray(String s, String name) {
+    var i = _skipWhitespace(s, 0);
+    if (i >= s.length || s.codeUnitAt(i) != $openBrace) return null;
+    i++;
+    while (true) {
+      i = _skipWhitespace(s, i);
+      if (i >= s.length) return null;
+      final ch = s.codeUnitAt(i);
+      if (ch == $closeBrace) return null;
+      if (ch == $comma) {
+        i++;
+        continue;
+      }
+      if (ch != $quote) return null;
+      final keyEnd = _findStringEnd(s, i);
+      if (keyEnd < 0) return null;
+      final key = s.substring(i + 1, keyEnd);
+      i = _skipWhitespace(s, keyEnd + 1);
+      if (i >= s.length || s.codeUnitAt(i) != $colon) return null;
+      i = _skipWhitespace(s, i + 1);
+      final end = _valueEnd(s, i);
+      if (end < 0) return null;
+      if (key == name) {
+        try {
+          final decoded = jsonDecode(s.substring(i, end + 1));
+          return decoded is List<Object?> ? decoded : null;
+        } on FormatException {
+          return null;
+        }
+      }
+      i = end + 1;
+    }
+  }
+
+  /// The index of the last character of the value that starts at [start],
+  /// or `-1` when it does not end.
+  int _valueEnd(String s, int start) {
+    if (start >= s.length) return -1;
+    final ch = s.codeUnitAt(start);
+    if (ch == $quote) return _findStringEnd(s, start);
+    if (ch == $openBrace || ch == $openBracket) {
+      var depth = 0;
+      var i = start;
+      while (i < s.length) {
+        final c = s.codeUnitAt(i);
+        if (c == $openBrace || c == $openBracket) {
+          depth++;
+        } else if (c == $closeBrace || c == $closeBracket) {
+          depth--;
+          if (depth == 0) return i;
+        } else if (c == $quote) {
+          final end = _findStringEnd(s, i);
+          if (end < 0) return -1;
+          i = end;
+        }
+        i++;
+      }
+      return -1;
+    }
+    var i = start;
+    while (i < s.length) {
+      final c = s.codeUnitAt(i);
+      if (c == $comma ||
+          c == $closeBrace ||
+          c == $closeBracket ||
+          c == $space ||
+          c == $tab ||
+          c == $newline ||
+          c == $carriageReturn) {
+        break;
+      }
+      i++;
+    }
+    return i - 1;
+  }
+
   int _skipWhitespace(String s, int i) {
     var pos = i;
     while (pos < s.length) {
@@ -343,6 +433,8 @@ class CancellationToken {
 
 const int $openBrace = 0x7B;
 const int $closeBrace = 0x7D;
+const int $openBracket = 0x5B;
+const int $closeBracket = 0x5D;
 const int $comma = 0x2C;
 const int $colon = 0x3A;
 const int $quote = 0x22;

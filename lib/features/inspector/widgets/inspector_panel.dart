@@ -26,6 +26,7 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
+import 'package:netcrux/services/yosys/rohd_netlist_extensions.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
 
 /// The right dock's Inspector: the properties of the schematic's primary
@@ -364,6 +365,13 @@ Widget _boundaryPortSection(L10N l10n, Module? module, String portName) {
           label: l10n.inspectorFieldWidth,
           value: '${port.width}',
         ),
+        // A structure or array port of a netlist exported by ROHD.
+        if (module?.nets[portName]?.attributes[rohdTypeAttribute]
+            case final type?)
+          CruxInspectorValueRow(
+            label: l10n.inspectorFieldRohdType,
+            value: type,
+          ),
       ],
     ],
   );
@@ -388,9 +396,17 @@ Widget? _wireSection(
           .toSet()
         ..add(edge.targetPortId);
   final netName = module == null ? null : _netNameIn(module, wire.netId);
+  final rohdType = netName == null
+      ? null
+      : module?.nets[netName]?.attributes[rohdTypeAttribute];
   final fixed = <Widget>[
     if (netName != null)
       CruxInspectorValueRow(label: l10n.inspectorFieldNet, value: netName),
+    if (rohdType != null)
+      CruxInspectorValueRow(
+        label: l10n.inspectorFieldRohdType,
+        value: rohdType,
+      ),
     CruxInspectorValueRow(
       label: l10n.inspectorFieldNetId,
       value: '${wire.netId}',

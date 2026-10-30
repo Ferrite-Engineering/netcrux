@@ -331,6 +331,82 @@ void main() {
     });
   });
 
+  group('a port of a netlist exported by ROHD', () {
+    final model = NetlistModel.fromJson(const <String, Object?>{
+      'creator': 'NetlistSynthesizer (rohd)',
+      'modules': <String, Object?>{
+        'pipe': <String, Object?>{
+          'attributes': <String, Object?>{'top': 1},
+          'ports': <String, Object?>{
+            'beat': <String, Object?>{
+              'direction': 'input',
+              'bits': <Object>[2, 3],
+            },
+            'clk': <String, Object?>{
+              'direction': 'input',
+              'bits': <Object>[4],
+            },
+          },
+          'cells': <String, Object?>{},
+          'netnames': <String, Object?>{
+            'beat': <String, Object?>{
+              'bits': <Object>[2, 3],
+              'attributes': <String, Object?>{
+                'rohd.type': 'Beat{data:1, valid:1}',
+              },
+            },
+            'clk': <String, Object?>{
+              'bits': <Object>[4],
+              'attributes': <String, Object?>{},
+            },
+          },
+        },
+      },
+    });
+
+    for (final locale in _locales) {
+      testWidgets('shows its structure type in ${locale.toLanguageTag()}', (
+        tester,
+      ) async {
+        final container = _container(withGraph: true);
+        addTearDown(container.dispose);
+        container.read(hierarchyTreeProvider.notifier).setModel(model);
+        container
+            .read(selectedElementProvider.notifier)
+            .select(
+              const SelectedElement.boundaryPort(
+                portId: 'port:beat',
+                portName: 'beat',
+              ),
+            );
+        await tester.pumpWidget(_wrap(container, locale));
+        await tester.pumpAndSettle();
+        final l10n = await L10N.delegate.load(locale);
+        expect(find.text(l10n.inspectorFieldRohdType), findsOneWidget);
+        expect(find.text('Beat{data:1, valid:1}'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('shows no type for a plain bus', (tester) async {
+      final container = _container(withGraph: true);
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier).setModel(model);
+      container
+          .read(selectedElementProvider.notifier)
+          .select(
+            const SelectedElement.boundaryPort(
+              portId: 'port:clk',
+              portName: 'clk',
+            ),
+          );
+      await tester.pumpWidget(_wrap(container, const Locale('en')));
+      await tester.pumpAndSettle();
+      expect(find.text('ROHD type'), findsNothing);
+      expect(find.text('Width'), findsOneWidget);
+    });
+  });
+
   group('wire fanout', () {
     // The clock net of a flattened SoC is the case this pane exists for. The
     // sinks used to be one joined `SelectableText` in a non-scrolling

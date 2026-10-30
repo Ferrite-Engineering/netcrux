@@ -1,0 +1,1004 @@
+{
+  "creator": "NetlistSynthesizer (rohd)",
+  "version": "0.1.0",
+  "files": [
+    "generator/lib/designs.dart",
+    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/utilities/synth_module_definition.dart",
+    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/netlist/netlist_passes.dart",
+    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/netlist/netlist_synthesizer.dart"
+  ],
+  "modules": {
+    "SamplePipeline": {
+      "attributes": {
+        "src": "generated",
+        "top": 1,
+        "rohd.src_trace": {
+          "signals": {
+            "clk": [
+              "0:41:11"
+            ],
+            "reset": [
+              "0:42:13"
+            ],
+            "sample_in": [
+              "0:13:7",
+              "0:19:35",
+              "0:43:21"
+            ],
+            "sample_out": [
+              "0:13:7",
+              "0:19:35",
+              "0:44:22"
+            ],
+            "sample_out_data": [
+              "0:13:14",
+              "0:19:35",
+              "0:44:22"
+            ],
+            "sample_out_valid": [
+              "0:13:46",
+              "0:19:35",
+              "0:44:22"
+            ],
+            "sample_in_data": [
+              "0:13:14",
+              "0:19:35",
+              "0:43:21"
+            ],
+            "sample_in_valid": [
+              "0:13:46",
+              "0:19:35",
+              "0:43:21"
+            ],
+            "staged_data": [
+              "0:13:14",
+              "0:55:20"
+            ],
+            "staged_valid": [
+              "0:13:46",
+              "0:55:20"
+            ],
+            "scaled": [
+              "0:46:20"
+            ],
+            "_data_lshift_const_1": [
+              "0:47:5"
+            ],
+            "16'h0": [
+              "0:56:5"
+            ],
+            "1'h0": [
+              "0:56:5"
+            ],
+            "1'h1": [
+              "0:56:5"
+            ],
+            "_shiftAmount_const_1": [
+              "0:50:38"
+            ],
+            "16'h1": [
+              "1:726:48",
+              "2:50:48",
+              "3:1102:35",
+              "3:1137:21"
+            ]
+          },
+          "instances": {
+            "sequential": [
+              "0:56:5"
+            ],
+            "combinational": [
+              "0:47:5"
+            ],
+            "lshift": [
+              "0:50:38"
+            ]
+          }
+        }
+      },
+      "ports": {
+        "clk": {
+          "direction": "input",
+          "bits": [
+            2
+          ],
+          "logic_type": {
+            "width": 1
+          }
+        },
+        "reset": {
+          "direction": "input",
+          "bits": [
+            3
+          ],
+          "logic_type": {
+            "width": 1
+          }
+        },
+        "sample_in": {
+          "direction": "input",
+          "bits": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "logic_type": {
+            "typeName": "Sample",
+            "fields": [
+              {
+                "name": "data",
+                "width": 16,
+                "bits": [
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "name": "valid",
+                "width": 1,
+                "bits": [
+                  20
+                ]
+              }
+            ]
+          }
+        },
+        "sample_out": {
+          "direction": "output",
+          "bits": [
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37
+          ],
+          "logic_type": {
+            "typeName": "Sample",
+            "fields": [
+              {
+                "name": "data",
+                "width": 16,
+                "bits": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36
+                ]
+              },
+              {
+                "name": "valid",
+                "width": 1,
+                "bits": [
+                  37
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "cells": {
+        "struct_slice": {
+          "hide_name": 0,
+          "type": "$slice",
+          "parameters": {
+            "OFFSET": 0,
+            "A_WIDTH": 17,
+            "Y_WIDTH": 16
+          },
+          "attributes": {},
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20
+            ],
+            "Y": [
+              71,
+              72,
+              73,
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83,
+              84,
+              85,
+              86
+            ]
+          }
+        },
+        "struct_slice_0": {
+          "hide_name": 0,
+          "type": "$slice",
+          "parameters": {
+            "OFFSET": 16,
+            "A_WIDTH": 17,
+            "Y_WIDTH": 1
+          },
+          "attributes": {},
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20
+            ],
+            "Y": [
+              87
+            ]
+          }
+        },
+        "sequential": {
+          "hide_name": 0,
+          "type": "Sequential",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": {
+            "reset": "input",
+            "scaled": "input",
+            "sample_in_valid": "input",
+            "clk": "input",
+            "staged_data": "output",
+            "staged_valid": "output"
+          },
+          "connections": {
+            "reset": [
+              3
+            ],
+            "scaled": [
+              55,
+              56,
+              57,
+              58,
+              59,
+              60,
+              61,
+              62,
+              63,
+              64,
+              65,
+              66,
+              67,
+              68,
+              69,
+              70
+            ],
+            "sample_in_valid": [
+              87
+            ],
+            "clk": [
+              2
+            ],
+            "staged_data": [
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47,
+              48,
+              49,
+              50,
+              51,
+              52,
+              53
+            ],
+            "staged_valid": [
+              54
+            ]
+          }
+        },
+        "combinational": {
+          "hide_name": 0,
+          "type": "Combinational",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": {
+            "sample_in": "input",
+            "_data_lshift_const_1": "input",
+            "scaled": "output"
+          },
+          "connections": {
+            "sample_in": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20
+            ],
+            "_data_lshift_const_1": [
+              106,
+              107,
+              108,
+              109,
+              110,
+              111,
+              112,
+              113,
+              114,
+              115,
+              116,
+              117,
+              118,
+              119,
+              120,
+              121
+            ],
+            "scaled": [
+              55,
+              56,
+              57,
+              58,
+              59,
+              60,
+              61,
+              62,
+              63,
+              64,
+              65,
+              66,
+              67,
+              68,
+              69,
+              70
+            ]
+          }
+        },
+        "lshift": {
+          "hide_name": 0,
+          "type": "$shl",
+          "parameters": {
+            "A_SIGNED": 0,
+            "A_WIDTH": 16,
+            "B_SIGNED": 0,
+            "B_WIDTH": 16,
+            "Y_WIDTH": 16
+          },
+          "attributes": {},
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [
+              71,
+              72,
+              73,
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83,
+              84,
+              85,
+              86
+            ],
+            "B": [
+              156,
+              157,
+              158,
+              159,
+              160,
+              161,
+              162,
+              163,
+              164,
+              165,
+              166,
+              167,
+              168,
+              169,
+              170,
+              171
+            ],
+            "Y": [
+              106,
+              107,
+              108,
+              109,
+              110,
+              111,
+              112,
+              113,
+              114,
+              115,
+              116,
+              117,
+              118,
+              119,
+              120,
+              121
+            ]
+          }
+        },
+        "struct_unpack_0_sample_in": {
+          "hide_name": 0,
+          "type": "$struct_unpack",
+          "parameters": {
+            "STRUCT_NAME": "sample_in",
+            "FIELD_COUNT": 2,
+            "FIELD_0_NAME": "data",
+            "FIELD_0_OFFSET": 0,
+            "FIELD_0_WIDTH": 16,
+            "FIELD_1_NAME": "valid",
+            "FIELD_1_OFFSET": 16,
+            "FIELD_1_WIDTH": 1
+          },
+          "attributes": {},
+          "is_synthetic": true,
+          "synthetic_origin": "structureUnpack",
+          "port_directions": {
+            "A": "input",
+            "data": "output",
+            "valid": "output"
+          },
+          "connections": {
+            "A": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20
+            ],
+            "data": [
+              71,
+              72,
+              73,
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83,
+              84,
+              85,
+              86
+            ],
+            "valid": [
+              87
+            ]
+          }
+        },
+        "struct_concat_3_sample_out": {
+          "hide_name": 0,
+          "type": "$struct_pack",
+          "parameters": {
+            "STRUCT_NAME": "sample_out",
+            "FIELD_COUNT": 2,
+            "FIELD_0_NAME": "data",
+            "FIELD_0_OFFSET": 0,
+            "FIELD_0_WIDTH": 16,
+            "FIELD_1_NAME": "valid",
+            "FIELD_1_OFFSET": 16,
+            "FIELD_1_WIDTH": 1
+          },
+          "attributes": {},
+          "is_synthetic": true,
+          "synthetic_origin": "structurePack",
+          "port_directions": {
+            "data": "input",
+            "valid": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "data": [
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47,
+              48,
+              49,
+              50,
+              51,
+              52,
+              53
+            ],
+            "valid": [
+              54
+            ],
+            "Y": [
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37
+            ]
+          }
+        },
+        "const_0_16_h1": {
+          "hide_name": 0,
+          "type": "$const",
+          "parameters": {},
+          "attributes": {},
+          "port_directions": {
+            "16'h1": "output"
+          },
+          "connections": {
+            "16'h1": [
+              156,
+              157,
+              158,
+              159,
+              160,
+              161,
+              162,
+              163,
+              164,
+              165,
+              166,
+              167,
+              168,
+              169,
+              170,
+              171
+            ]
+          }
+        }
+      },
+      "netnames": {
+        "clk": {
+          "bits": [
+            2
+          ],
+          "logic_type": {
+            "width": 1
+          },
+          "attributes": {}
+        },
+        "reset": {
+          "bits": [
+            3
+          ],
+          "logic_type": {
+            "width": 1
+          },
+          "attributes": {}
+        },
+        "sample_in": {
+          "bits": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "logic_type": {
+            "typeName": "Sample",
+            "fields": [
+              {
+                "name": "data",
+                "width": 16,
+                "bits": [
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "name": "valid",
+                "width": 1,
+                "bits": [
+                  20
+                ]
+              }
+            ]
+          },
+          "attributes": {}
+        },
+        "sample_out": {
+          "bits": [
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37
+          ],
+          "logic_type": {
+            "typeName": "Sample",
+            "fields": [
+              {
+                "name": "data",
+                "width": 16,
+                "bits": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36
+                ]
+              },
+              {
+                "name": "valid",
+                "width": 1,
+                "bits": [
+                  37
+                ]
+              }
+            ]
+          },
+          "attributes": {}
+        },
+        "staged_data": {
+          "bits": [
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53
+          ],
+          "logic_type": {
+            "width": 16
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "staged_valid": {
+          "bits": [
+            54
+          ],
+          "logic_type": {
+            "width": 1
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "scaled": {
+          "bits": [
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70
+          ],
+          "logic_type": {
+            "width": 16
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "sample_in_data": {
+          "bits": [
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86
+          ],
+          "logic_type": {
+            "width": 16
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "sample_in_valid": {
+          "bits": [
+            87
+          ],
+          "logic_type": {
+            "width": 1
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "_data_lshift_const_1": {
+          "bits": [
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121
+          ],
+          "logic_type": {
+            "width": 16
+          },
+          "attributes": {}
+        },
+        "sample_out_data": {
+          "bits": [
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53
+          ],
+          "logic_type": {
+            "width": 16
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "sample_out_valid": {
+          "bits": [
+            54
+          ],
+          "logic_type": {
+            "width": 1
+          },
+          "attributes": {
+            "preserved_name": 1
+          }
+        },
+        "const_0_16_h1": {
+          "bits": [
+            156,
+            157,
+            158,
+            159,
+            160,
+            161,
+            162,
+            163,
+            164,
+            165,
+            166,
+            167,
+            168,
+            169,
+            170,
+            171
+          ],
+          "attributes": {
+            "computed": 1
+          }
+        }
+      }
+    }
+  }
+}

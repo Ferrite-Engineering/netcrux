@@ -32,6 +32,9 @@ analyzer:
     # its own CI. Don't audit another repo's source as a side-effect of
     # pinning it as a submodule (the format-check step already skips it).
     - crux-shared/**
+    # A separate Dart package that builds the ROHD netlist fixtures from ROHD's
+    # own sources; its dependencies are not this project's.
+    - test/fixtures/netlist/rohd/generated/generator/**
     - build/**
     - web/**
     - windows/**

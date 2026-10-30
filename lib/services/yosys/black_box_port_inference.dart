@@ -6,6 +6,7 @@ import 'dart:collection';
 import 'package:meta/meta.dart';
 // The netlist shims each re-export the whole model.
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/services/yosys/rohd_netlist_extensions.dart';
 
 /// What [inferBlackBoxPorts] found: the module types that nothing defines,
 /// the pins that a cell's definition does not declare, and how many pins it
@@ -119,9 +120,13 @@ class BlackBoxReport {
 
 /// Whether a cell of [type] is an instance of a module that [model] does
 /// not define: neither one of its modules nor a Yosys internal cell (every
-/// internal cell type starts with `$`).
+/// internal cell type starts with `$`), nor, in a netlist written by ROHD,
+/// one of the procedural block types that format defines
+/// ([rohdBlockCellTypes]).
 bool isUndefinedModuleType(NetlistModel model, String type) =>
-    !type.startsWith(r'$') && !model.modules.containsKey(type);
+    !type.startsWith(r'$') &&
+    !model.modules.containsKey(type) &&
+    !(isRohdCreator(model.creator) && rohdBlockCellTypes.contains(type));
 
 /// Gives every pin of every black-box cell in [model] a direction.
 ///

@@ -7,6 +7,7 @@ import 'dart:typed_data';
 
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/services/yosys/rohd_netlist_extensions.dart';
 import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 
 /// Where a [ChunkedYosysJsonReader] gets its bytes: [read] fills a prefix of
@@ -90,7 +91,9 @@ class ChunkedYosysJsonReader {
     this._source, {
     int chunkSize = defaultChunkSize,
     this._cancellation,
-  }) : _buf = Uint8List(chunkSize);
+    RohdSourceFileResolver? sourceResolver,
+  }) : _buf = Uint8List(chunkSize),
+       _rohd = RohdNetlistReading(resolveFile: sourceResolver);
 
   /// The read buffer size [parseFile] uses: large enough that a read is a
   /// small share of the time, small enough to be a rounding error in memory.
@@ -112,6 +115,10 @@ class ChunkedYosysJsonReader {
         source,
         chunkSize: chunkSize,
         cancellation: cancellation,
+        // A source path in a ROHD netlist is relative to a package root the
+        // document does not name; it is looked for from the netlist's own
+        // directory upward.
+        sourceResolver: rohdSourceResolverFor(path),
       ).parse();
     } finally {
       source.close();
@@ -122,6 +129,10 @@ class ChunkedYosysJsonReader {
   final Uint8List _buf;
   final CancellationToken? _cancellation;
   final _Capture _capture = _Capture();
+
+  /// What a netlist written by ROHD adds to Yosys JSON, collected as the
+  /// document is read.
+  final RohdNetlistReading _rohd;
 
   int _pos = 0;
   int _end = 0;
@@ -162,6 +173,8 @@ class ChunkedYosysJsonReader {
       switch (key) {
         case 'creator':
           creator = _scalarText(_decodeValue());
+        case 'files':
+          _rohd.readFiles(_decodeValue());
         case 'modules':
           if (_peek() != _openBrace) {
             _skipValue();
@@ -179,7 +192,7 @@ class ChunkedYosysJsonReader {
         'Yosys JSON is missing a `modules` object',
       );
     }
-    return NetlistModel(creator: creator, modules: found);
+    return _rohd.finish(NetlistModel(creator: creator, modules: found));
   }
 
   /// Reads the members of the `modules` object, whose `{` was just consumed.
@@ -219,7 +232,7 @@ class ChunkedYosysJsonReader {
             // An otherwise empty module reads its attributes exactly as
             // the full document would.
             attributes = Module.fromJson(name, <String, Object?>{
-              'attributes': raw,
+              'attributes': _rohd.readModuleAttributes(name, raw),
             }).attributes;
           case 'ports':
             _readEntries(where, 'ports', 'port', (k, o) {
@@ -231,6 +244,7 @@ class ChunkedYosysJsonReader {
             });
           case 'netnames':
             _readEntries(where, 'netnames', 'net', (k, o) {
+              _rohd.readNet(o);
               nets[k] = Net.fromJson(k, o);
             });
           case 'memories':
