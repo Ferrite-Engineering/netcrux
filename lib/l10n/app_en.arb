@@ -3534,7 +3534,7 @@
       }
     }
   },
-  "schematicLayoutDeferredCone": "To look at part of it, select a cell in the Hierarchy or find one with Search, then choose View > Cone View to see what drives it.",
+  "schematicLayoutDeferredCone": "To look at part of it, find a cell with Search or with the Hierarchy filter, then choose View > Cone View to see what drives it.",
   "@schematicLayoutDeferredCone": {
     "description": "Second paragraph of the 'too large to lay out whole' state: the way forward that needs no whole-scope layout. Names the Hierarchy panel, Search and the View > Cone View menu entry by their menu labels."
   },

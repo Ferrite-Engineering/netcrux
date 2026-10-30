@@ -2736,7 +2736,7 @@
       }
     }
   },
-  "schematicLayoutDeferredCone": "一部を見るには、階層でセルを選ぶか検索で見つけてから、表示 > コーンビューを選ぶと、そのセルを駆動する部分を表示できます。",
+  "schematicLayoutDeferredCone": "一部を見るには、検索または階層フィルタでセルを見つけてから、表示 > コーンビューを選ぶと、そのセルを駆動する部分を表示できます。",
   "schematicLayoutDeferredAction": "それでもレイアウト",
   "schematicLayoutDeferredEstimate": "スコープ全体の推定メモリ: 約 {memory}。上限は設定 > エンジンで変更できます。",
   "@schematicLayoutDeferredEstimate": {

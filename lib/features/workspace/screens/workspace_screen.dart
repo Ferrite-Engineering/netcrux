@@ -31,6 +31,7 @@ import 'package:netcrux/features/workspace/providers/netcrux_action_context_prov
 import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/features/workspace/services/active_tab_container.dart';
 import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
+import 'package:netcrux/features/workspace/services/restored_tab_project.dart';
 import 'package:netcrux/features/workspace/services/web_deep_link.dart';
 import 'package:netcrux/features/workspace/services/workspace_action_dispatcher.dart';
 import 'package:netcrux/features/workspace/widgets/browser_empty_canvas_content.dart';
@@ -44,7 +45,6 @@ import 'package:netcrux/services/file_open/file_open_service_provider.dart';
 import 'package:netcrux/services/file_open/incoming_document_service_provider.dart';
 import 'package:netcrux/services/filelist/filelist_reader.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
-import 'package:netcrux/services/project/netcrux_project_path_resolver.dart';
 import 'package:netcrux/services/session/session_controller.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/workspace_recovery_provider.dart';
@@ -158,7 +158,19 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   /// Applies one launch intent: the command line's, the document macOS
   /// launched the app with, or a document opened while it runs.
+  ///
+  /// Whatever the intent opens, every tab restored from the saved workspace
+  /// then gets its design too. The hydration used to belong to the empty
+  /// launch alone, so a launch that named a file restored the other tabs
+  /// without their sources and each showed the "Open Project..." placeholder
+  /// when it was switched to.
   Future<void> _applyLaunchIntent(CliLaunchIntent intent) async {
+    await _openLaunchIntent(intent);
+    if (!mounted) return;
+    await _hydrateActiveTabFromWorkspace();
+  }
+
+  Future<void> _openLaunchIntent(CliLaunchIntent intent) async {
     switch (intent) {
       case EmptyCliLaunch():
         // Cold-launch path: workspace.json has been auto-loaded by
@@ -673,15 +685,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   /// Whether [path] ends in `.<extension>`, ignoring case — the command line
   /// routes `Demo.NetCrux-Project` here, so the branch has to agree.
   static bool _hasSuffix(String path, String extension) =>
-      path.toLowerCase().endsWith('.$extension');
+      hasFileSuffix(path, extension);
 
   /// Reads a `.netcrux-project` file with its relative paths anchored to the
   /// project's own directory — a committed project file carries relative
   /// paths so it can travel between checkouts.
-  static Future<NetcruxProject> _readNetcruxProject(String path) async {
-    final project = await const NetcruxProjectFileReader().read(path);
-    return resolveProjectPaths(project, p.dirname(path));
-  }
+  static Future<NetcruxProject> _readNetcruxProject(String path) =>
+      readNetcruxProjectFile(path);
 
   /// The localized explanation for a manifest path NetCrux cannot open.
   static String _manifestUnusableMessage(L10N l10n, ManifestUnusable u) =>
@@ -875,67 +885,34 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   /// Pushes each restored tab's design into its pipeline.
   ///
-  /// A tab opened from a `.netcrux-project` or a `.f` filelist is re-read
-  /// from that file: the payload carries only its sources and top module, and
-  /// rebuilding the project from those silently dropped its defines, include
-  /// paths, extra Yosys commands and lowering, so the restored tab elaborated
-  /// a different design. When the file cannot be read any more, the payload
-  /// is the best there is.
+  /// A tab's project lives in its own container, so every tab restored from
+  /// `workspace.json` starts without one. This runs after whatever the launch
+  /// opened, for every launch route, and gives each tab that still has no
+  /// design the one its payload names (see [hydrateTabProject]); a tab the
+  /// launch has just opened already has its project and is left alone.
   Future<void> _hydrateActiveTabFromWorkspace() async {
     final ws = ref.read(netcruxWorkspaceProvider).value;
     if (ws == null) return;
     if (!mounted) return;
     final scope = WorkspaceManagersScope.of(context);
     for (final tab in ws.tabs) {
+      // A tab closed while an earlier one was being read has no container
+      // to fill: asking for it would create an orphan.
+      final open =
+          ref
+              .read(netcruxWorkspaceProvider)
+              .value
+              ?.tabs
+              .any((t) => t.id == tab.id) ??
+          false;
+      if (!open) continue;
       final container = scope.tabContainerManager.containerFor(tab.id);
-      final payload = tab.payload;
-      final projectFile = payload.projectFilePath;
-      final isProjectFile =
-          projectFile != null &&
-          _hasSuffix(projectFile, kNetcruxProjectExtension);
-      final isFilelist =
-          projectFile != null && _hasSuffix(projectFile, kFilelistExtension);
-      // Cell libraries and the black-box option the tab set itself (see
-      // [NetcruxTabPayload.libertyFiles]) apply over whatever the file says.
-      final libertyOverride = payload.libertyFiles;
-      final blackBoxOverride = payload.blackBoxMissingModules;
-      if (isProjectFile || isFilelist) {
-        try {
-          final fromFile = isFilelist
-              ? await const FilelistReader().readAsProject(projectFile)
-              : await _readNetcruxProject(projectFile);
-          final project = fromFile.copyWith(
-            libertyFiles: libertyOverride,
-            blackBoxMissingModules: blackBoxOverride,
-          );
-          if (!mounted) return;
-          container
-              .read(currentProjectProvider.notifier)
-              .setProject(
-                project,
-                source: isFilelist
-                    ? NetcruxDesignSource.filelist
-                    : NetcruxDesignSource.project,
-              );
-          continue;
-        } on Object {
-          if (!mounted) return;
-        }
-      }
-      if (payload.sourceFiles.isEmpty) continue;
-      container
-          .read(currentProjectProvider.notifier)
-          .setProject(
-            NetcruxProject.create(
-              sourceFiles: payload.sourceFiles,
-              topModule: payload.topModule,
-              libertyFiles: libertyOverride ?? const <String>[],
-              blackBoxMissingModules: blackBoxOverride ?? false,
-            ),
-            source: projectFile == null
-                ? NetcruxDesignSource.rtl
-                : NetcruxDesignSource.project,
-          );
+      await hydrateTabProject(
+        container,
+        tab.payload,
+        isCurrent: () => mounted,
+      );
+      if (!mounted) return;
     }
   }
 

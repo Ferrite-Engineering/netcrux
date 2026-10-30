@@ -94,6 +94,20 @@ void main() {
       });
     }
 
+    // The Hierarchy lists scopes until text is typed in its filter, so a cell
+    // inside a flat scope cannot be picked from the tree alone: the guidance
+    // names the two places a cell can be found.
+    testWidgets('the guidance sends the user to Search and the Hierarchy '
+        'filter, not to picking a cell in the tree', (tester) async {
+      final l10n = await L10N.delegate.load(const Locale('en'));
+      expect(l10n.schematicLayoutDeferredCone, contains('Search'));
+      expect(l10n.schematicLayoutDeferredCone, contains('Hierarchy filter'));
+      expect(
+        l10n.schematicLayoutDeferredCone,
+        isNot(contains('select a cell in the Hierarchy')),
+      );
+    });
+
     testWidgets('the cell counts are shown with digit grouping', (
       tester,
     ) async {

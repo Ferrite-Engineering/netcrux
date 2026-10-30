@@ -48,7 +48,7 @@ A scope with more cells than the [layout limit](getting-started.md#layout-engine
 
 1. **Start from a cell, pin, port or net.**
 
-    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) or in the Hierarchy and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead. On a scope that is too large to lay out whole, nothing is running to stop: the cone is the first thing drawn.
+    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) or with the Hierarchy filter and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead. On a scope that is too large to lay out whole, nothing is running to stop: the cone is the first thing drawn.
 
 2. **Read the cone.**
 
