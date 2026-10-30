@@ -32,6 +32,14 @@ class TabDiagnosticsDrawer extends ConsumerWidget {
   /// Creates a Tab Diagnostics drawer.
   const TabDiagnosticsDrawer({super.key});
 
+  /// The height of every row in the list: room for a message and the
+  /// `file:line` under it, in a dense list tile.
+  ///
+  /// The list gives all its rows this one height so that it can place any
+  /// row without laying out the ones before it. A message that does not fit
+  /// is cut off at the end of its line; the copy buttons give all of it.
+  static const double kDiagnosticRowExtent = 64;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10N.of(context);
@@ -112,6 +120,16 @@ class TabDiagnosticsDrawer extends ConsumerWidget {
                       ),
                     )
                   : ListView.builder(
+                      // A fixed row height, not each row's own. Without one a
+                      // list cannot place row N without building and laying
+                      // out rows 0 to N-1, so a jump deep into a long list (a
+                      // scrollbar drag, End, or a list that shrinks under a
+                      // deep scroll offset when a severity is hidden) cost
+                      // time in proportion to the row number: seconds at a
+                      // few thousand warnings, minutes at tens of thousands,
+                      // the whole time on the UI thread. With one, placing a
+                      // row is arithmetic.
+                      itemExtent: TabDiagnosticsDrawer.kDiagnosticRowExtent,
                       itemCount: diagnostics.length,
                       itemBuilder: (context, index) {
                         return _DiagnosticRow(
@@ -255,11 +273,20 @@ class _DiagnosticRow extends ConsumerWidget {
     return ListTile(
       dense: true,
       leading: _severityIcon(theme, diagnostic.severity),
-      title: Text(diagnostic.message),
+      // The row has one fixed height (see
+      // [TabDiagnosticsDrawer.kDiagnosticRowExtent]): a message gets two
+      // lines when there is no location under it, one when there is.
+      title: Text(
+        diagnostic.message,
+        maxLines: subtitle == null ? 2 : 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: subtitle == null
           ? null
           : Text(
               subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
