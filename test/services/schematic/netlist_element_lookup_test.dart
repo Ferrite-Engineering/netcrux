@@ -4,7 +4,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
-import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
 import 'package:netcrux/services/schematic/netlist_element_lookup.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
@@ -21,7 +20,7 @@ import 'package:netcrux/services/schematic/wire_selection_builder.dart';
 /// * `clk`, a module input that reaches two flops;
 /// * `pad`, an inout that is the only thing on its net besides a cell pin;
 /// * `lonely`, a net nothing reads.
-NetlistModel _model() => NetlistModel.fromJson(<String, Object?>{
+NetlistModel _model() => NetlistModel.fromJson(const <String, Object?>{
   'modules': <String, Object?>{
     'm': <String, Object?>{
       'attributes': <String, Object?>{'top': '1'},
@@ -232,7 +231,7 @@ void main() {
     test('with no restriction is the list as before', () {
       expect(
         enumerateNetEdges(module).map((g) => g.netId),
-        enumerateNetEdges(module, onlyNetIds: null).map((g) => g.netId),
+        enumerateNetEdges(module).map((g) => g.netId),
       );
     });
   });
