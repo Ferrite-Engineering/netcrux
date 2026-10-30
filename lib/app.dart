@@ -55,6 +55,7 @@ import 'package:netcrux/features/menu_bar/widgets/desktop_menu_bar.dart';
 import 'package:netcrux/features/remote/netcrux_cxp_overrides.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/screens/settings_screen.dart';
+import 'package:netcrux/features/telemetry/netcrux_editor_host_overrides.dart';
 import 'package:netcrux/features/telemetry/netcrux_telemetry_overrides.dart';
 import 'package:netcrux/features/update/netcrux_update_overrides.dart';
 import 'package:netcrux/features/workspace/screens/workspace_screen.dart';
@@ -65,6 +66,8 @@ import 'package:netcrux/plugins/extra_localizations_delegates_provider.dart';
 import 'package:netcrux/plugins/policy_lock_message_provider.dart';
 import 'package:netcrux/services/cli/cli_args.dart';
 import 'package:netcrux/services/file_open/incoming_document_service.dart';
+import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
+import 'package:netcrux/services/host_bridge/host_bridge.dart';
 import 'package:netcrux/services/logging/severe_log_stderr_sink.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
@@ -307,6 +310,11 @@ Future<void> bootstrap({
   final cxpLaunchSettings = cruxCxpDesktopHost()
       ? await loadCruxCxpLaunchSettings(kNetcruxCxpBinding)
       : null;
+  // Which editor, if any, hosts this build, read before the container exists:
+  // the extension's page shim sets the marker before `main.dart.js` runs, and
+  // the overrides below are a startup decision, not a watch. Off the web the
+  // conditional export answers `none` without touching anything.
+  final editorHostKind = HostBridgeChannel.detectHostKind();
   final rootContainer = ProviderContainer(
     // Open-core overrides first, then the Pro overlay's. An overlay entry
     // for a provider the open core also binds replaces the open-core entry
@@ -318,6 +326,9 @@ Future<void> bootstrap({
       cliYosysPathOverrideProvider.overrideWithValue(yosysOverride),
       cliNetlistReaderOverrideProvider.overrideWithValue(readerOverride),
       webLaunchParamsProvider.overrideWithValue(webLaunch),
+      // Under an editor host: the host kind, and no telemetry, consent
+      // disclosure or update checks of the page's own. See the function.
+      ...netcruxEditorHostOverrides(editorHostKind),
       // `--no-restore` skips this launch's workspace rehydration without
       // deleting anything: the injected restore gate short-circuits
       // `shouldRestoreOnLaunch` so `workspace.json` is never loaded (and
@@ -412,6 +423,13 @@ Future<void> bootstrap({
   // The identity is the running binary's — open core's by default, the
   // overlay's when the overlay passes its own.
   await maybeIntegrateDesktopEntry(linuxDesktopApp ?? netcruxLinuxDesktopApp);
+
+  // Start the editor-host bridge so an extension host can drive this build
+  // from the first frame. A no-op when nothing hosts the build, which is why
+  // it needs no guard. See lib/services/host_bridge/editor_host_bridge.dart.
+  rootContainer.read(editorHostBridgeProvider);
+  // The editor's colors, applied for this session only.
+  bindEditorHostTheme(rootContainer);
 
   runApp(
     UncontrolledProviderScope(
@@ -578,6 +596,11 @@ class NetcruxApp extends ConsumerWidget {
                   // executed in English, so its chrome stays English rather than
                   // implying a translated contract exists.
                   isPhoneLayout: !isDesktopPlatform,
+                  // The extension hosting the viewer is licensed on its own
+                  // listing; the page inside it presents no second agreement.
+                  // This suppresses the surface and records nothing: it is not
+                  // an acceptance.
+                  presentAgreement: !ref.watch(isEditorHostedProvider),
                   child: TelemetryConsentGate(
                     // NetCrux's own layout idiom, handed to the shared widget
                     // rather than re-derived inside it. `isDesktopPlatform` is

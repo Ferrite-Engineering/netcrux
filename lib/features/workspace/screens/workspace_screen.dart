@@ -43,6 +43,10 @@ import 'package:netcrux/services/file_open/file_open_service.dart';
 import 'package:netcrux/services/file_open/file_open_service_provider.dart';
 import 'package:netcrux/services/file_open/incoming_document_service_provider.dart';
 import 'package:netcrux/services/filelist/filelist_reader.dart';
+import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
+import 'package:netcrux/services/host_bridge/host_bridge_messages.dart';
+import 'package:netcrux/services/host_bridge/host_netlist_blob.dart';
+import 'package:netcrux/services/host_bridge/host_netlist_request_provider.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/project/netcrux_project_path_resolver.dart';
 import 'package:netcrux/services/session/session_controller.dart';
@@ -117,10 +121,34 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   /// command line opens its files one tab at a time.
   Future<void> _openedDocumentQueue = Future<void>.value();
 
+  /// Netlists an editor host sends, opened one at a time in arrival order.
+  Future<void> _hostNetlistQueue = Future<void>.value();
+
+  /// The location of the netlist the editor host's tab shows, kept so the
+  /// next one can replace it and release it.
+  String? _hostNetlistLocation;
+
+  /// Whether the editor host's netlist already has a tab. A later netlist from
+  /// the same host is the same document reloaded, so it replaces that tab's
+  /// design instead of adding another tab.
+  bool _hostNetlistTabOpen = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _handleAutoLaunch());
+    // A netlist the editor host sends after this point. Not fired
+    // immediately: a provider is not modified while the tree builds, and one
+    // sent before the screen existed is taken after the first frame.
+    ref.listenManual<HostNetlistRequest?>(hostNetlistRequestProvider, (
+      _,
+      next,
+    ) {
+      if (next != null) _takeHostNetlistRequest();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_handleAutoLaunch());
+      _takeHostNetlistRequest();
+    });
   }
 
   @override
@@ -490,6 +518,83 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     if (mounted && ref.read(hdlElaborationSupportedProvider)) {
       ref.read(recentSources.provider.notifier).markOpened(location);
     }
+  }
+
+  /// Takes the pending netlist the editor host sent, if any, and queues it.
+  void _takeHostNetlistRequest() {
+    final request = ref.read(hostNetlistRequestProvider);
+    if (request == null) return;
+    // Cleared at once: the text can be tens of megabytes.
+    ref.read(hostNetlistRequestProvider.notifier).clear();
+    _hostNetlistQueue = _hostNetlistQueue.then((_) async {
+      if (mounted) await _openHostNetlist(request.netlist);
+    });
+  }
+
+  /// Opens the netlist an editor host sent as text, then applies its scope and
+  /// signal hints once it has loaded.
+  ///
+  /// It takes the route a browser upload takes: a location the netlist loader
+  /// fetches, with the document's name as the fragment. The first netlist gets
+  /// a tab; a later one is the same document reloaded and replaces that tab's
+  /// design. The editor is told how it went, so a failure is in its log and not
+  /// only on a canvas it may not be looking at.
+  Future<void> _openHostNetlist(HostBridgeOpenNetlist netlist) async {
+    await ref.read(netcruxWorkspaceProvider.future);
+    if (!mounted) return;
+    final bridge = ref.read(editorHostBridgeProvider)
+      ..reportStatus(HostBridgeStatusPhase.loading, message: netlist.name);
+    final previous = _hostNetlistLocation;
+    final location = createHostNetlistLocation(netlist.name, netlist.text);
+    _hostNetlistLocation = location;
+    final project = NetcruxProject.create(sourceFiles: <String>[location]);
+    var tab = _hostNetlistTabOpen
+        ? ref.activeTabContainerOrNull(context)
+        : null;
+    if (tab != null) {
+      tab
+          .read(currentProjectProvider.notifier)
+          .setProject(project, source: NetcruxDesignSource.netlistJson);
+    } else {
+      await _openDesignTab(
+        recentPath: null,
+        displayName: netlist.name,
+        project: project,
+        source: NetcruxDesignSource.netlistJson,
+      );
+      if (!mounted) return;
+      _hostNetlistTabOpen = true;
+      tab = ref.activeTabContainerOrNull(context);
+    }
+    if (previous != null) releaseHostNetlistLocation(previous);
+    if (tab == null) return;
+    final l10n = L10N.of(context);
+    final NetlistModel? model;
+    try {
+      model = await tab.read(loadedNetlistProvider.future);
+    } on Object catch (e) {
+      bridge.reportStatus(HostBridgeStatusPhase.failed, message: '$e');
+      if (!mounted) return;
+      showCruxErrorSnack(
+        context,
+        l10n.hostNetlistLoadFailed(netlist.name, '$e'),
+      );
+      return;
+    }
+    if (model == null || !mounted) return;
+    bridge.reportStatus(
+      HostBridgeStatusPhase.loaded,
+      message: netlist.name,
+      modules: model.modules.length,
+      cells: model.modules.values.fold<int>(
+        0,
+        (total, module) => total + module.cells.length,
+      ),
+    );
+    WebDeepLink(
+      scope: netlist.scope,
+      signal: netlist.signal,
+    ).applyTo(tab, model);
   }
 
   /// Opens the netlist a web viewer URL names (`?json=`), then applies its

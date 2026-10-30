@@ -39,18 +39,18 @@ function describe(err) {
   return text.length > MAX_MESSAGE ? text.slice(0, MAX_MESSAGE) + '...' : text;
 }
 
-let layoutJsonWithProgress = null;
+let solveLayout = null;
 
 self.onmessage = (event) => {
   const { id, input } = event.data || {};
-  if (layoutJsonWithProgress === null) {
+  if (solveLayout === null) {
     self.postMessage({ type: 'error', id, message: 'elk_wasm is not loaded', fatal: true });
     return;
   }
   const progress = (phase, fraction) =>
     self.postMessage({ type: 'progress', id, phase, fraction });
   try {
-    self.postMessage({ type: 'result', id, json: layoutJsonWithProgress(input, progress) });
+    self.postMessage({ type: 'result', id, json: solveLayout(input, progress) });
   } catch (err) {
     self.postMessage({
       type: 'error',
@@ -61,11 +61,23 @@ self.onmessage = (event) => {
   }
 };
 
+// An editor webview serves its files from a different origin than its
+// document, and a browser refuses to start a worker from another origin. The
+// extension's page shim therefore fetches this script, `elk_wasm.js` and
+// `elk_wasm_bg.wasm`, and starts the worker from one blob: the glue's text,
+// then a line defining `self.cruxLayoutHosted`, then this script. The glue
+// sits in the same module, so there is nothing to import and this script must
+// not declare a top-level name the glue does, and the wasm is
+// read from a blob URL because a blob worker cannot resolve a relative path.
+// A page that serves this directory normally never defines it.
 (async () => {
   try {
-    const glue = await import('./elk_wasm.js');
-    await glue.default({ module_or_path: new URL('./elk_wasm_bg.wasm', import.meta.url) });
-    layoutJsonWithProgress = glue.layoutJsonWithProgress;
+    const hosted = self.cruxLayoutHosted;
+    const glue = hosted ? hosted.glue : await import('./elk_wasm.js');
+    await glue.default({
+      module_or_path: hosted ? hosted.wasmUrl : new URL('./elk_wasm_bg.wasm', import.meta.url),
+    });
+    solveLayout = glue.layoutJsonWithProgress;
     self.postMessage({ type: 'ready' });
   } catch (err) {
     self.postMessage({ type: 'load-error', message: describe(err) });

@@ -889,6 +889,26 @@
       }
     }
   },
+  "goToSourceInEditor": "편집기에서 소스로 이동",
+  "@goToSourceInEditor": {
+    "description": "Label of the schematic context-menu entry and the Inspector button that show the RTL source of the selected element in the editor hosting the viewer."
+  },
+  "goToSourceInEditorUnavailable": "넷리스트에 이 요소의 소스 위치가 기록되어 있지 않습니다.",
+  "@goToSourceInEditorUnavailable": {
+    "description": "Snackbar when Go to Source in Editor is chosen for an element whose netlist entry carries no source location (a Yosys src attribute)."
+  },
+  "hostNetlistLoadFailed": "{name}을(를) 열 수 없습니다: {error}",
+  "@hostNetlistLoadFailed": {
+    "description": "Snackbar when the editor hosting the viewer sent a netlist that could not be read. {name} is the file name and {error} the reason.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "filePickerFailed": "파일 선택기를 열 수 없습니다: {error}",
   "@filePickerFailed": {
     "description": "Snackbar shown when the file picker itself throws (e.g. macOS rejects an unknown extension or the OS file-selector plugin returns an error). Surfaces the underlying error so file-open failures are not silent.",

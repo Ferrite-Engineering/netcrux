@@ -1,10 +1,43 @@
 # Use in VS Code
 
-The **NetCrux extension** lets you ask "what drives this signal?" from the VS Code editor, with the cursor already on the identifier, and answers it in a running NetCrux schematic.
+The **NetCrux extension** draws a Yosys netlist as a schematic inside VS Code, and lets you ask "what drives this signal?" from the editor, with the cursor already on the identifier, and answers it in a running NetCrux schematic.
 
 It installs from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=ferrite-engineering.netcrux) and from [Open VSX](https://open-vsx.org/extension/ferrite-engineering/netcrux), which is where Cursor, Windsurf, VSCodium and Theia install from. To install all four EDACrux extensions at once, install the [EDACrux Suite](https://marketplace.visualstudio.com/items?itemName=ferrite-engineering.edacrux) pack.
 
-## What it does { #what-it-does }
+## Schematic preview { #preview }
+
+The preview opens a Yosys JSON netlist, the file `write_json` produces, as a schematic next to your RTL. It is the same viewer as the [web viewer](web-mode.md), running inside VS Code, so nothing is uploaded and it works offline.
+
+To open one:
+
+- Right-click a `.json` file in the Explorer, or its editor tab, and choose **Open Schematic Preview**.
+- Or choose **Open With...** on the file and pick **NetCrux Schematic Preview**.
+- With a netlist open as text, the preview button appears in the editor title bar.
+
+The extension reads the start of the file to check that it is a Yosys netlist before it opens the preview, and says so if it is not. It never takes over ordinary JSON: **Open With...** is the only way a `.json` file opens in the preview without that check, and double-clicking a file still opens it as text.
+
+In the preview you can:
+
+- Move through the hierarchy, push into an instance and pop back out.
+- Search by instance, cell or net name, and trace one step of fan-in and fan-out.
+- Select an element to see its properties, and open **Cone View** to see only what drives it.
+- Choose **Go to Source in Editor**, from the right-click menu on the schematic or the Inspector, to open the RTL behind an element at its line in VS Code. The netlist records the source file and line of each element in its `src` attribute. A relative path is looked for next to the netlist and in the open folders, and a path from another machine is matched by its file name. Only files inside the folders you have opened are shown.
+
+The preview follows your VS Code theme, and when a synthesis run rewrites the netlist the schematic reloads.
+
+### Large netlists { #large }
+
+The preview reads the whole netlist into the editor's memory, so it stops at a size limit, **32 MB** by default. Above it the preview does not load the file; it offers **Open in NetCrux** instead, because the desktop app reads a netlist from disk and has no size limit. The limit is the `netcrux.preview.maxFileSizeMB` setting, which you can raise up to 256 MB.
+
+### Open in NetCrux { #open-in-netcrux }
+
+**Open in NetCrux** hands the netlist to the desktop app. It is in the editor title bar of the preview, on the right-click menu, and in the Command Palette. It also opens the Pro features, which the preview does not have.
+
+- If NetCrux is running, the netlist opens in it.
+- If NetCrux is installed but not running, the extension starts it with the netlist.
+- If NetCrux is not installed, the extension says so and links to the download page.
+
+## What the extension does besides { #what-it-does }
 
 Right-click an identifier in a Verilog, SystemVerilog or VHDL file and choose **What Drives This? (NetCrux)**:
 
@@ -14,7 +47,7 @@ Right-click an identifier in a Verilog, SystemVerilog or VHDL file and choose **
 
 If NetCrux is installed but not running, the extension offers to launch it. If it is not installed, the extension says so and links to the download.
 
-The extension does not draw schematics itself: the schematic, its layout and your elaborated design stay in the desktop app.
+The preview shows a netlist you already have. Elaborating Verilog, SystemVerilog or VHDL into a netlist, the Pro features and the other desktop-only features stay in the desktop app.
 
 ## Working with the other apps { #desktop }
 

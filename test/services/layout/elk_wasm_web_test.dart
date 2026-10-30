@@ -19,6 +19,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
@@ -41,7 +42,21 @@ extension type _Response._(JSObject _) implements JSObject {
   external int get status;
   external _Stream get body;
   external JSPromise<JSString> text();
+  external JSPromise<JSArrayBuffer> arrayBuffer();
 }
+
+@JS('Blob')
+extension type _Blob._(JSObject _) implements JSObject {
+  external factory _Blob(JSArray<JSAny> parts, JSObject options);
+}
+
+@JS('URL.createObjectURL')
+external JSString _createObjectUrl(JSObject blob);
+
+/// A blob URL holding [part] with the media type [type].
+String _blobUrl(JSAny part, String type) => _createObjectUrl(
+  _Blob(<JSAny>[part].toJS, JSObject()..setProperty('type'.toJS, type.toJS)),
+).toDart;
 
 extension type _Stream._(JSObject _) implements JSObject {
   external _Stream pipeThrough(JSObject transform);
@@ -261,5 +276,43 @@ void main() {
         expect(logs, hasLength(1));
       });
     }
+  });
+
+  group('an editor host stages the worker as a blob', () {
+    // An editor webview serves its files from another origin than its
+    // document, and a browser refuses to start a worker from another origin.
+    // The extension's page shim therefore fetches the three files and starts
+    // the worker from one blob: the glue's text, a line defining
+    // `self.cruxLayoutHosted`, then the worker's own script. This composes them
+    // the way the shim does and holds the worker and the solver to it.
+    tearDown(() => globalContext.delete('cruxLayoutWorkerUrl'.toJS));
+
+    test('solves from a blob, with nothing to import or resolve', () async {
+      final glue = await _read('.web_wasm/elk_wasm.js');
+      final worker = await _read('.web_wasm/elk_wasm_worker.js');
+      final response = await _fetch('/.web_wasm/elk_wasm_bg.wasm'.toJS).toDart;
+      expect(response.ok, isTrue);
+      final wasmUrl = _blobUrl(
+        await response.arrayBuffer().toDart,
+        'application/wasm',
+      );
+      final source =
+          '$glue\n'
+          'self.cruxLayoutHosted = { glue: { default: __wbg_init, '
+          'layoutJsonWithProgress: layoutJsonWithProgress }, '
+          'wasmUrl: ${jsonEncode(wasmUrl)} };\n'
+          '$worker';
+      globalContext.setProperty(
+        'cruxLayoutWorkerUrl'.toJS,
+        _blobUrl(source.toJS, 'text/javascript').toJS,
+      );
+      // No worker path given: the solver reads the host's global.
+      logs.clear();
+      debugConfigureElkWebSolver(log: logs.add);
+      final layout = parseLayout(await solveElkOnWeb(_tiny, _noElkjs));
+      expect(layout.nodes, hasLength(2));
+      expect(await debugElkWebEngine, ElkWebEngine.wasm);
+      expect(logs, isEmpty);
+    });
   });
 }

@@ -24,6 +24,8 @@ import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:meta/meta.dart';
+import 'package:netcrux/services/host_bridge/host_bridge_messages.dart'
+    show kEditorHostLayoutWorkerGlobal;
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 
 /// Whether the browser solver is available on this target. `true` on web;
@@ -87,6 +89,29 @@ extension type _Reply._(JSObject _) implements JSObject {
 
 extension type _Request._(JSObject _) implements JSObject {
   external factory _Request({int id, String input});
+}
+
+/// The URL of a worker an editor host's page shim staged, or null.
+///
+/// An editor webview serves its files from a different origin than its
+/// document, and a browser refuses to start a worker from another origin. The
+/// shim therefore fetches the worker's files and starts it from a blob URL,
+/// published here. Unset in a browser tab, where the worker's relative path
+/// resolves normally.
+@JS(kEditorHostLayoutWorkerGlobal)
+external JSString? get _hostLayoutWorkerUrl;
+
+/// The worker script to start: the host's staged blob when there is one and
+/// the solver has not been pointed elsewhere, otherwise [_workerUrl].
+String _resolveWorkerUrl() {
+  if (_workerUrl != kElkWasmWorkerPath) return _workerUrl;
+  try {
+    final hosted = _hostLayoutWorkerUrl?.toDart;
+    if (hosted != null && hosted.isNotEmpty) return hosted;
+  } on Object {
+    // A global another script wrote that is not a string: use the default.
+  }
+  return _workerUrl;
 }
 
 @JS('console.warn')
@@ -227,7 +252,7 @@ Future<void> _startWorker() {
   final ready = Completer<void>();
   final _Worker worker;
   try {
-    worker = _Worker(_workerUrl.toJS, _WorkerOptions(type: 'module'));
+    worker = _Worker(_resolveWorkerUrl().toJS, _WorkerOptions(type: 'module'));
   } on Object catch (e) {
     _workerReady = null;
     return Future<void>.error(

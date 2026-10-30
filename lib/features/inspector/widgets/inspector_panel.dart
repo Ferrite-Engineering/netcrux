@@ -21,9 +21,11 @@ import 'package:netcrux/features/inspector/widgets/timing_path_inspector_section
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
+import 'package:netcrux/features/viewer/services/go_to_source_in_editor.dart';
 import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
+import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/yosys/rohd_netlist_extensions.dart';
@@ -75,6 +77,7 @@ class InspectorPanel extends ConsumerWidget {
               : const SchematicGraphBuilder().cellOf(model, module, cellId)),
     );
     final overlayInstalled = ref.watch(proOverlayInstalledProvider);
+    final editorHosted = ref.watch(isEditorHostedProvider);
     final pro = ref.watch(proInspectorSectionsProvider);
 
     bool resolves(SelectedElement element) => switch (element) {
@@ -107,29 +110,45 @@ class InspectorPanel extends ConsumerWidget {
       // so it carries the tier badge and goes through the same gate as the
       // menu entry; the opener falls back to the active selection.
       headerActions: (context, element) => <Widget>[
-        TextButton.icon(
-          onPressed: () {
-            if (!allowProAction(
-              context,
-              ref,
-              NetcruxAction.openSourceForElement,
-            )) {
-              return;
-            }
-            ref.read(openSourceForElementOpenerProvider)(context, ref);
-          },
-          icon: const Icon(Icons.code, size: 14),
-          label: Text(l10n.inspectorGoToSource),
-          style: TextButton.styleFrom(
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        // Inside an editor the RTL is in the editor, not in a source pane of
+        // NetCrux's own, so the action opens it there and carries no tier.
+        // The label is the short one: the dock is narrow.
+        if (editorHosted)
+          TextButton.icon(
+            onPressed: () => goToSourceInEditor(context, ref, element),
+            icon: const Icon(Icons.code, size: 14),
+            label: Text(l10n.inspectorGoToSource),
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            ),
+          )
+        else ...<Widget>[
+          TextButton.icon(
+            onPressed: () {
+              if (!allowProAction(
+                context,
+                ref,
+                NetcruxAction.openSourceForElement,
+              )) {
+                return;
+              }
+              ref.read(openSourceForElementOpenerProvider)(context, ref);
+            },
+            icon: const Icon(Icons.code, size: 14),
+            label: Text(l10n.inspectorGoToSource),
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            ),
           ),
-        ),
-        const SizedBox(width: 4),
-        NetCruxFeatureTierBadge(
-          requiredTier: NetcruxAction.openSourceForElement.requiredTier,
-        ),
+          const SizedBox(width: 4),
+          NetCruxFeatureTierBadge(
+            requiredTier: NetcruxAction.openSourceForElement.requiredTier,
+          ),
+        ],
       ],
       sections: <CruxInspectorSectionBuilder<SelectedElement>>[
         (context, element) => switch (element) {

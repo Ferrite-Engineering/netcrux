@@ -148,6 +148,17 @@ A flat scope of tens of thousands of cells lays out in about a minute and reads 
 
 ---
 
+### 6.7 Editor host bridge
+
+The web build can run inside an editor extension's webview. The extension's page shim sets two globals before `main.dart.js` runs: `cruxEditorHost`, a frozen `{kind, protocol}` the app reads synchronously at startup, and `cruxHostBridge`, the outbound `postMessage` seam. The shim owns the editor's API handle, which a webview hands out once, so the app never asks for it. The app announces `ready` once its `message` listener is installed, and the editor sends frames after that, because a `postMessage` sent before a listener exists is lost, not queued.
+
+- `lib/services/host_bridge/host_bridge_messages.dart` is the whole vocabulary: the global names, the frame kinds, and the validation of every inbound frame. Frames are untrusted; a malformed one is dropped and nothing throws.
+- `lib/services/host_bridge/host_bridge_web.dart` and `lib/services/host_bridge/host_bridge_stub.dart` are the transport behind a conditional export. Off the web there is no host and every call is a no-op, so no caller guards on the platform.
+- `lib/services/host_bridge/editor_host_bridge.dart` dispatches frames onto providers. A netlist (`open_netlist`) goes to `hostNetlistRequestProvider`, which the workspace screen opens as a tab through the loader a browser upload uses; a later netlist replaces that tab's design. The editor's colors (`theme_tokens`) go to `hostThemeTokensProvider`, and `bindEditorHostTheme` applies them through `applyEphemeral`, never `activate`, so the user's persisted preset is untouched.
+- Under a host, `netcruxEditorHostOverrides` turns off the page's own telemetry, first-run consent disclosure and update check, and `CruxEulaGate` presents no agreement: the editor's telemetry switch governs, and the extension is licensed on its own listing.
+- **Go to Source in Editor** is the schematic context-menu entry and the Inspector button that exist only under a host. They read the element's `src` attribute (`lib/services/host_bridge/element_source_location.dart`) and post `open_source`; the editor decides which file that is and whether it may open it.
+- The layout engine's worker cannot start from a webview's resource origin. The page shim stages it from a blob and publishes its URL as `cruxLayoutWorkerUrl`, which `lib/services/layout/elk_web_solver_web.dart` reads. `web/wasm/elk_wasm_worker.js` therefore must not declare a top-level name the wasm-bindgen glue exports, because the shim joins the two into one module.
+
 ## 8. Coding Standards & Conventions
 
 See `CLAUDE.md` for the binding day-to-day rules. The detailed rationale and the cross-platform mobile UI rules live in WaveCrux's `ARCHITECTURE.md` §8. netcrux inherits the Dart style, Riverpod, and testing conventions verbatim.

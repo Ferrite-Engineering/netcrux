@@ -8,23 +8,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/viewer/widgets/annotation_menu_entries.dart';
 import 'package:netcrux/features/viewer/widgets/cross_probe_menu_entries.dart';
+import 'package:netcrux/features/viewer/widgets/editor_host_menu_entries.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extension.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_context_menu_extensions_provider.dart';
 
 void main() {
   group('schematicContextMenuExtensionsProvider', () {
-    test('open-core default is cross-probe first, then annotations', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'open-core default is cross-probe first, then annotations, then the editor host',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      expect(
-        container.read(schematicContextMenuExtensionsProvider),
-        <SchematicContextMenuExtensionBuilder>[
-          buildCrossProbeMenuEntries,
-          buildAnnotationMenuEntries,
-        ],
-      );
-    });
+        expect(
+          container.read(schematicContextMenuExtensionsProvider),
+          <SchematicContextMenuExtensionBuilder>[
+            buildCrossProbeMenuEntries,
+            buildAnnotationMenuEntries,
+            buildEditorHostMenuEntries,
+          ],
+        );
+      },
+    );
 
     testWidgets(
       'override registers a builder that emits entries per target',

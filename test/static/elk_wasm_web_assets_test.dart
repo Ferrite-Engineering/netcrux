@@ -31,6 +31,26 @@ void main() {
     expect(worker, contains('glue.layoutJson'));
   });
 
+  test('the worker can be composed into one module with the glue', () {
+    // An editor webview cannot start a worker from its resource origin, so
+    // the extension's page shim fetches the glue, the worker and the wasm, and
+    // starts the worker from a blob that holds the glue's text, a definition of
+    // `self.cruxLayoutHosted`, and the worker's script. That module must not
+    // declare, at top level, a name the glue exports.
+    final worker = _read('web/wasm/elk_wasm_worker.js');
+    expect(worker, contains('self.cruxLayoutHosted'));
+    expect(
+      RegExp(
+        r'^(?:let|const|var|function)\s+layoutJsonWithProgress\b',
+        multiLine: true,
+      ).hasMatch(worker),
+      isFalse,
+      reason: 'the glue exports layoutJsonWithProgress',
+    );
+    final solver = _read('lib/services/layout/elk_web_solver_web.dart');
+    expect(solver, contains('kEditorHostLayoutWorkerGlobal'));
+  });
+
   test('the solver starts the committed worker by its web path', () {
     final solver = _read('lib/services/layout/elk_web_solver_web.dart');
     final path = RegExp(

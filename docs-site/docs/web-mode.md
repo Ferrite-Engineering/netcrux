@@ -110,6 +110,10 @@ subprocess, file watcher, or file system:
 - **Command-line arguments** — the web build skips the CLI surface
   entirely.
 
+## Inside VS Code {#vscode}
+
+The same viewer runs inside VS Code, in the [NetCrux extension](vscode.md#preview). The extension hands it the netlist as text, so there is no file pick and no URL. The viewer also follows the editor's theme and offers **Go to Source in Editor**, which opens the RTL behind an element in the editor. Inside an editor the viewer sends no usage statistics of its own and does not check for updates: the extension and the editor handle both.
+
 ## Deployment target
 
 The web build is deployed as a static bundle to `app.netcrux.app`
