@@ -150,34 +150,33 @@ void main() {
     expect(runner.requests, hasLength(2));
   });
 
-  test('a malformed library fails the elaboration naming the file', () async {
+  test('a malformed library is skipped and warned about, not fatal', () async {
     final bad = writeLib('bad.lib', 'library (x) {\n  cell (A) {\n');
-    open(<String>[bad]);
-    await expectLater(
-      container.read(loadedNetlistProvider.future),
-      throwsA(
-        isA<LoadedNetlistException>()
-            .having((e) => e.kind, 'kind', LoadedNetlistErrorKind.unknown)
-            .having((e) => e.detail, 'detail', contains(bad))
-            .having((e) => e.detail, 'detail', contains('line')),
-      ),
+    final good = writeLib('cells.lib', _cells);
+    open(<String>[bad, good]);
+    final result = await container.read(loadedNetlistProvider.future);
+    expect(result, isNotNull);
+    final sources = runner.requests.single.sources;
+    expect(
+      File(sources.first.path).readAsStringSync(),
+      contains('module INV'),
     );
-    expect(runner.requests, isEmpty);
+    final stderr = container.read(elaborationStderrProvider);
+    expect(stderr, startsWith('Warning: Cell library skipped'));
+    expect(stderr, contains(bad));
+    expect(stderr, contains('line'));
+    expect(stderr, endsWith('yosys says hi'));
   });
 
-  test('a missing library fails the elaboration naming the file', () async {
+  test('a missing library is skipped and warned about, not fatal', () async {
     final missing = p.join(dir.path, 'missing.lib');
     open(<String>[missing]);
-    await expectLater(
-      container.read(loadedNetlistProvider.future),
-      throwsA(
-        isA<LoadedNetlistException>().having(
-          (e) => e.detail,
-          'detail',
-          contains(missing),
-        ),
-      ),
-    );
+    final result = await container.read(loadedNetlistProvider.future);
+    expect(result, isNotNull);
+    expect(runner.requests, hasLength(1));
+    final stderr = container.read(elaborationStderrProvider);
+    expect(stderr, startsWith('Warning: Cell library skipped'));
+    expect(stderr, contains(missing));
   });
 
   test('buildRequest puts the stub ahead of every source', () {

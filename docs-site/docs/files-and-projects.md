@@ -84,7 +84,7 @@ Add cell libraries in any of these ways:
 
 A list changed with `File → Cell Libraries (Liberty)…` stays with the tab across restarts, even when the tab's project file does not list it; `File → Save Project As…` writes it into the project.
 
-Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time, so a library is read once until it changes. A library that is missing or is not valid Liberty fails the elaboration with the file name, and the line for a syntax error.
+Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time, so a library is read once until it changes. A library that is missing or is not valid Liberty is skipped, and the Diagnostics panel shows a warning with the file name, the line for a syntax error, and the reason. Before NetCrux 1.2 such a library stopped the elaboration instead. The design still elaborates with the other libraries, and the cells of the skipped one count as missing modules: with [black boxes](#black-boxes) on they are drawn as black boxes, and otherwise the elaboration stops with "is not part of the design" for the first cell it cannot find. Fix or remove the file in `File → Cell Libraries (Liberty)…` and apply.
 
 ### Missing modules as black boxes {#black-boxes}
 

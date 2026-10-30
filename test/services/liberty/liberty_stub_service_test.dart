@@ -4,7 +4,6 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netcrux/services/liberty/liberty_library.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:path/path.dart' as p;
 
@@ -99,26 +98,63 @@ void main() {
     expect(again.cellCount, 1);
   });
 
-  test('a malformed library fails naming the file', () async {
+  test('a malformed library is skipped with a warning naming it', () async {
+    final good = write('good.lib', _libA);
     final bad = write('bad.lib', 'library (x) {\n  cell (A) {\n');
-    await expectLater(
-      service.stubsFor(<String>[bad]),
-      throwsA(
-        isA<LibertyParseException>()
-            .having((e) => e.path, 'path', bad)
-            .having((e) => e.message, 'message', contains('never closed')),
-      ),
-    );
+    final stubs = await service.stubsFor(<String>[bad, good]);
+    expect(stubs.cellCount, 1);
+    expect(File(stubs.stubPath).readAsStringSync(), contains('module INV'));
+    expect(stubs.warnings, hasLength(1));
+    expect(stubs.warnings.single, contains(bad));
+    expect(stubs.warnings.single, contains('line'));
+    expect(stubs.warnings.single, contains('never closed'));
+    expect(stubs.warnings.single, contains('missing modules'));
   });
 
-  test('a missing library fails naming the file', () async {
+  test('a missing library is skipped with a warning naming it', () async {
+    final good = write('good.lib', _libA);
     final missing = p.join(root.path, 'nope.lib');
-    await expectLater(
-      service.stubsFor(<String>[missing]),
-      throwsA(
-        isA<LibertyParseException>().having((e) => e.path, 'path', missing),
-      ),
-    );
+    final stubs = await service.stubsFor(<String>[good, missing]);
+    expect(stubs.cellCount, 1);
+    expect(stubs.warnings.single, contains(missing));
+    expect(stubs.warnings.single, contains('file not found'));
+  });
+
+  test('a directory in place of a library is skipped', () async {
+    final dirPath = p.join(root.path, 'adir.lib');
+    Directory(dirPath).createSync();
+    final stubs = await service.stubsFor(<String>[dirPath]);
+    expect(stubs.cellCount, 0);
+    expect(stubs.warnings.single, contains('not a file'));
+  });
+
+  test('when every library is skipped the stub file is empty', () async {
+    final bad = write('bad.lib', 'library (x) {\n  cell (A) {\n');
+    final stubs = await service.stubsFor(<String>[bad]);
+    expect(stubs.cellCount, 0);
+    expect(File(stubs.stubPath).readAsStringSync(), isNot(contains('module')));
+    expect(stubs.warnings, hasLength(1));
+  });
+
+  test('a skipped library is reported again on the next run', () async {
+    final bad = write('bad.lib', 'library (x) {\n  cell (A) {\n');
+    final good = write('good.lib', _libA);
+    await service.stubsFor(<String>[bad, good]);
+    final again = await service.stubsFor(<String>[bad, good]);
+    expect(again.cellCount, 1);
+    expect(again.warnings.single, contains(bad));
+  });
+
+  test('fixing a skipped library brings its cells back', () async {
+    final lib = write('fix.lib', 'library (x) {\n  cell (A) {\n');
+    final broken = await service.stubsFor(<String>[lib]);
+    expect(broken.cellCount, 0);
+    File(lib).writeAsStringSync(_libA);
+    File(lib).setLastModifiedSync(DateTime(2001));
+    final fixed = await service.stubsFor(<String>[lib]);
+    expect(fixed.cellCount, 1);
+    expect(fixed.warnings, isEmpty);
+    expect(fixed.stubPath, isNot(broken.stubPath));
   });
 
   test('prunes old cache files but never the ones in use', () async {

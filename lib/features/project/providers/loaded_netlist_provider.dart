@@ -14,7 +14,6 @@ import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
-import 'package:netcrux/services/liberty/liberty_library.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
 import 'package:netcrux/services/telemetry/netcrux_design_language_mix.dart';
@@ -595,21 +594,17 @@ Future<NetlistModel?> _readPrebuiltNetlist(
 /// The black-box stubs for [project]'s cell libraries, or `null` when it
 /// has none.
 ///
-/// A library that is missing or is not valid Liberty fails the elaboration
-/// with a message naming the file (and the line, for a syntax error), shown
-/// as the error's detail.
+/// A library that is missing or is not valid Liberty does not stop the
+/// elaboration: [LibertyStubService.stubsFor] leaves it out and says so in
+/// the returned warnings, which [_withLibertyWarnings] puts in front of the
+/// run's stderr so they reach Diagnostics. Its cells are then missing
+/// modules, drawn as black boxes when the project asks for that and
+/// otherwise reported as the usual missing-module error.
 Future<LibertyStubs?> _libertyStubs(Ref ref, NetcruxProject project) async {
   if (project.libertyFiles.isEmpty) return null;
-  final service = ref.read(libertyStubServiceProvider);
-  try {
-    return await service.stubsFor(project.libertyFiles);
-  } on LibertyParseException catch (e) {
-    throw LoadedNetlistException(
-      'Cell library could not be read: ${e.description}',
-      cause: e,
-      detail: 'Cell library could not be read: ${e.description}',
-    );
-  }
+  return await ref
+      .read(libertyStubServiceProvider)
+      .stubsFor(project.libertyFiles);
 }
 
 /// [stderr] with [liberty]'s warnings in front, one `Warning:` line each,

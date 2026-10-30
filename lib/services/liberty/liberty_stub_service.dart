@@ -82,18 +82,29 @@ class LibertyStubService {
   /// Returns the stub file for [libertyFiles], in order (the first library
   /// to define a cell wins).
   ///
-  /// Throws [LibertyParseException] naming the file when a library is
-  /// missing, unreadable or not valid Liberty.
+  /// A library that is missing, unreadable or not valid Liberty is left out
+  /// and reported in [LibertyStubs.warnings], naming the file, the line when
+  /// there is one, and the reason; the others are still used. The cells of a
+  /// skipped library are then simply undefined, so the design sees them as
+  /// missing modules.
   Future<LibertyStubs> stubsFor(List<String> libertyFiles) async {
     final dir = await _cacheDir();
-    final keys = <String>[];
-    for (final path in libertyFiles) {
-      keys.add(await _fileKey(path));
+    final skipped = <String>[];
+    // Per input file: its cache key, or null once it has been skipped.
+    final keys = List<String?>.filled(libertyFiles.length, null);
+    for (var i = 0; i < libertyFiles.length; i++) {
+      try {
+        keys[i] = await _fileKey(libertyFiles[i]);
+      } on LibertyParseException catch (e) {
+        skipped.add(_skipWarning(e));
+      }
     }
     final libraries = List<LibertyLibrary?>.filled(libertyFiles.length, null);
     final misses = <int>[];
     for (var i = 0; i < libertyFiles.length; i++) {
-      final cached = await _readCached(dir, keys[i]);
+      final key = keys[i];
+      if (key == null) continue;
+      final cached = await _readCached(dir, key);
       if (cached == null) {
         misses.add(i);
       } else {
@@ -105,15 +116,23 @@ class LibertyStubService {
       final parsed = await Isolate.run(() => _parseAll(paths));
       for (var j = 0; j < misses.length; j++) {
         final result = parsed[j];
-        if (result is LibertyParseException) throw result;
+        final index = misses[j];
+        if (result is LibertyParseException) {
+          keys[index] = null;
+          skipped.add(_skipWarning(result));
+          continue;
+        }
         final library = result as LibertyLibrary;
-        libraries[misses[j]] = library;
-        await _writeCached(dir, keys[misses[j]], library);
+        libraries[index] = library;
+        await _writeCached(dir, keys[index]!, library);
       }
     }
-    final text = writeLibertyStubs(libraries.cast<LibertyLibrary>());
+    final usedKeys = <String>[for (final key in keys) ?key];
+    final text = writeLibertyStubs(<LibertyLibrary>[
+      for (final library in libraries) ?library,
+    ]);
     final stub = File(
-      p.join(dir.path, 'stubs-${_digest(keys.join('\n'))}.v'),
+      p.join(dir.path, 'stubs-${_digest(usedKeys.join('\n'))}.v'),
     );
     if (!stub.existsSync()) {
       await _writeAtomically(stub, text.verilog);
@@ -122,15 +141,20 @@ class LibertyStubService {
       dir,
       keep: <String>{
         stub.path,
-        for (final key in keys) p.join(dir.path, 'lib-$key.json'),
+        for (final key in usedKeys) p.join(dir.path, 'lib-$key.json'),
       },
     );
     return LibertyStubs(
       stubPath: stub.path,
       cellCount: text.cellCount,
-      warnings: text.warnings,
+      warnings: <String>[...skipped, ...text.warnings],
     );
   }
+
+  /// The warning for a library that was left out.
+  static String _skipWarning(LibertyParseException e) =>
+      'Cell library skipped, its cells are treated as missing modules: '
+      '${e.description}';
 
   /// Parses every path, returning a [LibertyLibrary] or the
   /// [LibertyParseException] for each, so one bad file reports itself
