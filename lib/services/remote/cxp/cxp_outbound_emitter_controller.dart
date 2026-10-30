@@ -3,6 +3,7 @@
 
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
@@ -50,6 +51,9 @@ class CxpOutboundEmitterController {
   }
 
   void _onSelectionChanged(Selection? previous, Selection next) {
+    // A browser has no socket to broadcast on, and the design id below reads
+    // the file system, which a browser does not have.
+    if (kIsWeb) return;
     final element = next.primary;
     if (element is SelectedElementNone) return;
 
