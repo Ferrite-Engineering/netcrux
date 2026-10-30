@@ -268,6 +268,9 @@ void _compareSrc(
   }
   final pa = _SrcParts.parse(a);
   final pr = _SrcParts.parse(r);
+  // Yosys before 0.60 gives a supply net no position (`0.0-0.0`); the native
+  // reader records where Yosys 0.69 does, and there is nothing to compare.
+  if (pr.span == '0.0-0.0') return;
   final same = options.src == SrcComparison.exact
       ? pa.file == pr.file && pa.span == pr.span
       : pa.file == pr.file && pa.firstLine == pr.firstLine;
