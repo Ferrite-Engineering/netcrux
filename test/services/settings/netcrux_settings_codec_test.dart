@@ -130,6 +130,21 @@ void main() {
       );
     });
 
+    test(
+      'round-trips the native gate-level reader switch, on by default',
+      () async {
+        expect((await codec.load(prefs)).nativeGateLevelReader, isTrue);
+        final off = const AppSettings.defaults().copyWith(
+          nativeGateLevelReader: false,
+        );
+        await codec.save(prefs, off);
+        expect(prefs.getBool('netcrux.nativeGateLevelReader'), isFalse);
+        expect((await codec.load(prefs)).nativeGateLevelReader, isFalse);
+        await codec.save(prefs, off.copyWith(nativeGateLevelReader: true));
+        expect((await codec.load(prefs)).nativeGateLevelReader, isTrue);
+      },
+    );
+
     test('round-trips Yosys path knobs', () async {
       final seeded = const AppSettings.defaults().copyWith(
         yosysPathMode: YosysPathMode.custom,

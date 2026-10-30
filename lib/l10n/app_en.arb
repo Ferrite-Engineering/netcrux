@@ -2732,7 +2732,7 @@
   "@statsSegmentElaboration": {
     "description": "Statistics strip segment: whether a Yosys elaboration is running."
   },
-  "statsSegmentElaborationTooltip": "Whether a Yosys subprocess is running right now. The Tab Diagnostics drawer reports what happened on the last run.",
+  "statsSegmentElaborationTooltip": "Whether a netlist is being read right now, and which reader read the design last: the native gate-level reader or Yosys. The Tab Diagnostics drawer reports what happened on the last run.",
   "@statsSegmentElaborationTooltip": {
     "description": "Tooltip for the elaboration indicator."
   },
@@ -3608,5 +3608,25 @@
   "settingsElaborationTimeLimitNone": "No limit",
   "@settingsElaborationTimeLimitNone": {
     "description": "Yosys time limit choice: Yosys runs until it finishes or the user cancels."
+  },
+  "settingsNativeReaderLabel": "Native gate-level reader (beta)",
+  "@settingsNativeReaderLabel": {
+    "description": "Settings > Engines row label for the switch that reads a structural (gate-level) Verilog netlist directly, without running Yosys. Marked beta."
+  },
+  "settingsNativeReaderDescription": "Reads a structural Verilog netlist directly, without running Yosys. A file the reader cannot handle faithfully is read by Yosys instead, and Diagnostics says why.",
+  "@settingsNativeReaderDescription": {
+    "description": "Help text under the native gate-level reader switch in Settings > Engines. Says what it does, that a file it cannot read faithfully is read by Yosys instead, and where the reason is shown."
+  },
+  "statsElaborationReadingNative": "Reading (native)",
+  "@statsElaborationReadingNative": {
+    "description": "Value of the Elaboration statistic while the native gate-level reader is reading a netlist (the Yosys passes are named instead while Yosys runs)."
+  },
+  "statsElaborationIdleNative": "Idle (native)",
+  "@statsElaborationIdleNative": {
+    "description": "Value of the Elaboration statistic when nothing is running and the design on screen was read by the native gate-level reader."
+  },
+  "statsElaborationIdleYosys": "Idle (Yosys)",
+  "@statsElaborationIdleYosys": {
+    "description": "Value of the Elaboration statistic when nothing is running and the design on screen was read through Yosys, by choice or because the native reader fell back."
   }
 }

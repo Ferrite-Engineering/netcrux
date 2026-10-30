@@ -56,6 +56,25 @@ void main() {
       },
     );
 
+    test('setNativeGateLevelReader persists the switch', () async {
+      final container = await _makeContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(appSettingsProvider.notifier);
+      await container.read(appSettingsProvider.future);
+      expect(
+        container.read(appSettingsProvider).value!.nativeGateLevelReader,
+        isTrue,
+      );
+
+      await notifier.setNativeGateLevelReader(enabled: false);
+      expect(
+        container.read(appSettingsProvider).value!.nativeGateLevelReader,
+        isFalse,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('netcrux.nativeGateLevelReader'), isFalse);
+    });
+
     // The ordering, cap and removal rules are the shared Recent list's (see
     // recent_lists_test.dart); the notifier only stores what it is handed.
     test('the recent-list setters replace each list and persist it', () async {

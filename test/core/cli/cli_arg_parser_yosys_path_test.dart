@@ -3,8 +3,10 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/cli/cli_arg_parser.dart';
+import 'package:netcrux/core/cli/cli_launch_intent.dart';
 
 void main() {
+  netlistReaderTests();
   group('CliArgParser.yosysPathOverride', () {
     const parser = CliArgParser();
 
@@ -55,6 +57,59 @@ void main() {
       );
       // openSourceFiles intent; the flag pair does not bleed into paths.
       expect(intent.runtimeType.toString(), 'OpenSourceFilesCliLaunch');
+    });
+  });
+}
+
+void netlistReaderTests() {
+  group('CliArgParser.netlistReaderOverride', () {
+    const parser = CliArgParser();
+
+    test('reads the next-arg and equals forms', () {
+      expect(
+        parser.netlistReaderOverride(const <String>[
+          '--netlist-reader',
+          'yosys',
+        ]),
+        'yosys',
+      );
+      expect(
+        parser.netlistReaderOverride(const <String>['--netlist-reader=native']),
+        'native',
+      );
+    });
+
+    test('is null when absent, empty or missing its value', () {
+      expect(parser.netlistReaderOverride(const <String>['top.v']), isNull);
+      expect(
+        parser.netlistReaderOverride(const <String>['--netlist-reader=']),
+        isNull,
+      );
+      expect(
+        parser.netlistReaderOverride(const <String>['--netlist-reader']),
+        isNull,
+      );
+    });
+
+    test('the value is not opened as a source file', () {
+      final intent = parser.parse(
+        const <String>['--netlist-reader', 'yosys', 'top.v'],
+      );
+      expect(
+        intent,
+        isA<OpenSourceFilesCliLaunch>().having(
+          (i) => i.paths,
+          'paths',
+          ['top.v'],
+        ),
+      );
+      final eq = parser.parse(const <String>['--netlist-reader=native', 'a.v']);
+      expect(
+        eq,
+        isA<OpenSourceFilesCliLaunch>().having((i) => i.paths, 'paths', [
+          'a.v',
+        ]),
+      );
     });
   });
 }

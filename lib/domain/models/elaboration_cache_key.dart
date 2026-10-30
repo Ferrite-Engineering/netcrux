@@ -61,8 +61,11 @@ class ElaborationCacheKey {
     List<String> extraCommands = const <String>[],
     List<ElaborationCacheFile> libertyFiles = const <ElaborationCacheFile>[],
     this.blackBoxMissingModules = false,
+    List<ElaborationCacheFile> cellModelFiles = const <ElaborationCacheFile>[],
+    this.reader = '',
   }) : files = List<ElaborationCacheFile>.unmodifiable(files),
        libertyFiles = List<ElaborationCacheFile>.unmodifiable(libertyFiles),
+       cellModelFiles = List<ElaborationCacheFile>.unmodifiable(cellModelFiles),
        defines = List<String>.unmodifiable(defines),
        includePaths = List<String>.unmodifiable(includePaths),
        extraCommands = List<String>.unmodifiable(extraCommands);
@@ -76,6 +79,15 @@ class ElaborationCacheKey {
   /// from [files]: the generated stub file is not fingerprinted, the
   /// libraries it is made from are.
   final List<ElaborationCacheFile> libertyFiles;
+
+  /// Per-file fingerprints of the Verilog cell model files the native
+  /// gate-level reader takes pin directions from, in project order.
+  final List<ElaborationCacheFile> cellModelFiles;
+
+  /// Which reader produced the model: empty for Yosys, `native` for the
+  /// native gate-level reader. The two build different models from the same
+  /// files, so they never share an entry.
+  final String reader;
 
   /// Whether the run leaves undefined modules in as black boxes (no
   /// `hierarchy -check`, pin directions inferred after parsing). It changes
@@ -119,6 +131,14 @@ class ElaborationCacheKey {
       }
       buf.write(']');
     }
+    if (cellModelFiles.isNotEmpty) {
+      buf.write(';cells=[');
+      for (final f in cellModelFiles) {
+        buf.write('${f.path}@${f.modifiedMicroseconds}:${f.sizeBytes},');
+      }
+      buf.write(']');
+    }
+    if (reader.isNotEmpty) buf.write(';reader=$reader');
     if (blackBoxMissingModules) buf.write(';blackbox');
     return buf.toString();
   }

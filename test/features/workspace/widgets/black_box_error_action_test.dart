@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/app.dart';
 import 'package:netcrux/core/shortcuts/netcrux_action.dart';
 import 'package:netcrux/core/shortcuts/shortcut_manager_widget.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
@@ -28,6 +29,7 @@ import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
+import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:netcrux/shared/widgets/workspace_managers_scope.dart';
@@ -145,6 +147,10 @@ void main() {
             executablePath: '/fake/yosys',
             versionString: 'Yosys fake',
           ),
+        ),
+        // This test is about the Yosys route.
+        cliNetlistReaderOverrideProvider.overrideWithValue(
+          NetlistReaderChoice.yosys,
         ),
         yosysRunnerProvider.overrideWith((ref) => runner),
       ],

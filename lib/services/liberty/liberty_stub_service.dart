@@ -33,6 +33,24 @@ class LibertyStubs {
   final List<String> warnings;
 }
 
+/// The cell interfaces of a project's Liberty files, and what the reading
+/// noticed.
+@immutable
+class LibertyLibraries {
+  /// Creates the result.
+  LibertyLibraries({
+    required List<LibertyLibrary> libraries,
+    required List<String> warnings,
+  }) : libraries = List<LibertyLibrary>.unmodifiable(libraries),
+       warnings = List<String>.unmodifiable(warnings);
+
+  /// One entry per library that could be read, in the project's order.
+  final List<LibertyLibrary> libraries;
+
+  /// Libraries skipped, and anything a reader noticed in the others.
+  final List<String> warnings;
+}
+
 /// Turns a project's Liberty files into one Verilog file of
 /// `(* blackbox *)` cell stubs, and keeps the result on disk so it is
 /// computed once per library version.
@@ -89,6 +107,61 @@ class LibertyStubService {
   /// missing modules.
   Future<LibertyStubs> stubsFor(List<String> libertyFiles) async {
     final dir = await _cacheDir();
+    final loaded = await _load(dir, libertyFiles);
+    final text = writeLibertyStubs(loaded.libraries);
+    final stub = File(
+      p.join(dir.path, 'stubs-${_digest(loaded.usedKeys.join('\n'))}.v'),
+    );
+    if (!stub.existsSync()) {
+      await _writeAtomically(stub, text.verilog);
+    }
+    _prune(
+      dir,
+      keep: <String>{
+        stub.path,
+        for (final key in loaded.usedKeys) p.join(dir.path, 'lib-$key.json'),
+      },
+    );
+    return LibertyStubs(
+      stubPath: stub.path,
+      cellCount: text.cellCount,
+      warnings: <String>[...loaded.skipped, ...text.warnings],
+    );
+  }
+
+  /// Returns the cell interfaces of [libertyFiles], in order, read through
+  /// the same cache as [stubsFor], for a reader that takes interfaces rather
+  /// than a stub file. A library that cannot be read is left out and
+  /// reported in [LibertyLibraries.warnings], as in [stubsFor].
+  Future<LibertyLibraries> librariesFor(List<String> libertyFiles) async {
+    final dir = await _cacheDir();
+    final loaded = await _load(dir, libertyFiles);
+    _prune(
+      dir,
+      keep: <String>{
+        for (final key in loaded.usedKeys) p.join(dir.path, 'lib-$key.json'),
+      },
+    );
+    final warnings = <String>[...loaded.skipped];
+    for (final library in loaded.libraries) {
+      warnings.addAll(library.warnings);
+    }
+    return LibertyLibraries(
+      libraries: loaded.libraries,
+      warnings: warnings,
+    );
+  }
+
+  /// Reads or parses every file of [libertyFiles] (cache first), skipping
+  /// the ones that fail.
+  Future<
+    ({
+      List<LibertyLibrary> libraries,
+      List<String> usedKeys,
+      List<String> skipped,
+    })
+  >
+  _load(Directory dir, List<String> libertyFiles) async {
     final skipped = <String>[];
     // Per input file: its cache key, or null once it has been skipped.
     final keys = List<String?>.filled(libertyFiles.length, null);
@@ -127,27 +200,10 @@ class LibertyStubService {
         await _writeCached(dir, keys[index]!, library);
       }
     }
-    final usedKeys = <String>[for (final key in keys) ?key];
-    final text = writeLibertyStubs(<LibertyLibrary>[
-      for (final library in libraries) ?library,
-    ]);
-    final stub = File(
-      p.join(dir.path, 'stubs-${_digest(usedKeys.join('\n'))}.v'),
-    );
-    if (!stub.existsSync()) {
-      await _writeAtomically(stub, text.verilog);
-    }
-    _prune(
-      dir,
-      keep: <String>{
-        stub.path,
-        for (final key in usedKeys) p.join(dir.path, 'lib-$key.json'),
-      },
-    );
-    return LibertyStubs(
-      stubPath: stub.path,
-      cellCount: text.cellCount,
-      warnings: <String>[...skipped, ...text.warnings],
+    return (
+      libraries: <LibertyLibrary>[for (final library in libraries) ?library],
+      usedKeys: <String>[for (final key in keys) ?key],
+      skipped: skipped,
     );
   }
 

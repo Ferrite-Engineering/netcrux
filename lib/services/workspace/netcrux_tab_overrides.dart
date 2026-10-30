@@ -19,6 +19,7 @@ import 'package:netcrux/features/project/providers/current_laid_out_graph_provid
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/netlist_reader_run_provider.dart';
 import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/source_pane/providers/source_pane_state_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
@@ -73,6 +74,9 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // Written by the layout pass above, so it follows the same scope.
     layoutTimingProvider.overrideWith(LayoutTimingNotifier.new),
     elaborationStderrProvider.overrideWith(ElaborationStderr.new),
+    // Which reader (native or Yosys) read the tab's design, written by the
+    // pipeline above and shown in the statistics strip.
+    netlistReaderRunProvider.overrideWith(NetlistReaderRunNotifier.new),
     elaborationDiagnosticFilterProvider.overrideWith(
       ElaborationDiagnosticFilter.new,
     ),

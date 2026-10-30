@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/enums/netcrux_source_language.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 
 /// Thrown when a `.netcrux` file is structurally invalid — missing
@@ -211,6 +212,13 @@ class NetcruxProjectFileReader {
       libertyFiles: _readStringList(json['libertyFiles']),
       // Optional too, and absent unless the option is on.
       blackBoxMissingModules: json['blackBoxMissingModules'] == true,
+      // Optional: Verilog cell model files for the native gate-level reader.
+      cellModelFiles: _readStringList(json['cellModelFiles']),
+      // Optional: an unknown value reads as `auto`, so a key a later build
+      // adds does not stop this one from opening the project.
+      netlistReader:
+          NetlistReaderChoice.parse(json['netlistReader'] as String?) ??
+          NetlistReaderChoice.auto,
     );
   }
 
@@ -346,6 +354,11 @@ class NetcruxProjectFileWriter {
     // Likewise only when on, so `.netcrux-project` stays v1 and a file
     // without it reads the same in every build.
     if (project.blackBoxMissingModules) 'blackBoxMissingModules': true,
+    // Both only when set, like the other optional keys.
+    if (project.cellModelFiles.isNotEmpty)
+      'cellModelFiles': List<String>.from(project.cellModelFiles),
+    if (project.netlistReader != NetlistReaderChoice.auto)
+      'netlistReader': project.netlistReader.name,
   };
 
   static String _languageToString(NetcruxSourceLanguage lang) {

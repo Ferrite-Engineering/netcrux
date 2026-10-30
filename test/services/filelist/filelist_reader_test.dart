@@ -41,6 +41,33 @@ void main() {
       },
     );
 
+    test('-v names a cell model file, not a source', () async {
+      final dir = Directory.systemTemp.createTempSync('filelist_models');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      File(p.join(dir.path, 'inner.f')).writeAsStringSync('-v lib/inner.v\n');
+      final list = File(p.join(dir.path, 'design.f'))
+        ..writeAsStringSync(
+          'top.v\n'
+          '-v models/cells.v -v models/io.v.gz\n'
+          '-f inner.f\n'
+          '-v\n',
+        );
+      final contents = await reader.read(list.path);
+      expect(contents.sourceFiles.map(p.basename), <String>['top.v']);
+      expect(
+        contents.cellModelFiles.map((f) => p.relative(f, from: dir.path)),
+        <String>[
+          p.join('models', 'cells.v'),
+          p.join('models', 'io.v.gz'),
+          p.join('lib', 'inner.v'),
+        ],
+      );
+      expect(
+        reader.toProject(contents).cellModelFiles,
+        contents.cellModelFiles,
+      );
+    });
+
     test('reads a simple flat filelist', () async {
       final contents = await reader.read(fixturePath('simple.f'));
       expect(contents.sourceFiles.length, 2);

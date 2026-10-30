@@ -129,6 +129,8 @@ class ElaborationCacheService {
   /// [libertyFilePaths] are the project's Liberty cell libraries,
   /// fingerprinted the same way: a changed library invalidates the entry.
   /// [blackBoxMissingModules] is the project option of that name.
+  /// [cellModelFilePaths] and [reader] key a model built by the native
+  /// gate-level reader: its cell model files, and the reader's name.
   ///
   /// Returns `null` if any source file does not exist — the caller
   /// shouldn't try to cache an invalid request. Stat failures other
@@ -143,11 +145,15 @@ class ElaborationCacheService {
     List<String> extraCommands = const <String>[],
     List<String> libertyFilePaths = const <String>[],
     bool blackBoxMissingModules = false,
+    List<String> cellModelFilePaths = const <String>[],
+    String reader = '',
   }) async {
     final files = await _fingerprint(sourceFilePaths);
     if (files == null) return null;
     final libertyFiles = await _fingerprint(libertyFilePaths);
     if (libertyFiles == null) return null;
+    final cellModelFiles = await _fingerprint(cellModelFilePaths);
+    if (cellModelFiles == null) return null;
     return ElaborationCacheKey(
       files: files,
       libertyFiles: libertyFiles,
@@ -157,6 +163,8 @@ class ElaborationCacheService {
       includePaths: includePaths,
       extraCommands: extraCommands,
       blackBoxMissingModules: blackBoxMissingModules,
+      cellModelFiles: cellModelFiles,
+      reader: reader,
     );
   }
 

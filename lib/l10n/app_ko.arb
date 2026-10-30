@@ -2379,7 +2379,7 @@
   "statsSegmentViewport": "뷰포트",
   "statsSegmentViewportTooltip": "뷰포트 컬링 후 마지막 프레임에서 실제로 그려진 셀과 엣지 수입니다.",
   "statsSegmentElaboration": "엘라보레이션",
-  "statsSegmentElaborationTooltip": "현재 Yosys 하위 프로세스가 실행 중인지 여부입니다. 탭 진단 서랍은 마지막 실행 결과를 보여줍니다.",
+  "statsSegmentElaborationTooltip": "현재 넷리스트를 읽는 중인지, 그리고 마지막으로 설계를 읽은 리더(네이티브 게이트 수준 리더 또는 Yosys)를 보여줍니다. 탭 진단 서랍은 마지막 실행 결과를 보여줍니다.",
   "statsElaborationRunning": "실행 중",
   "statsElaborationIdle": "유휴",
   "diagnosticsAppDialogSubtitle": "프로세스 전체 상태입니다. 이 정보는 기기 밖으로 나가지 않습니다.",
@@ -2766,5 +2766,10 @@
   "settingsElaborationTimeLimitDescription": "한 번의 엘라보레이션을 NetCrux가 중지하기까지 실행할 수 있는 시간입니다. 자동은 소스 크기에 비례한 시간, 연장은 그 4배, 제한 없음은 완료되거나 취소를 누를 때까지 실행합니다.",
   "settingsElaborationTimeLimitAutomatic": "자동",
   "settingsElaborationTimeLimitExtended": "연장",
-  "settingsElaborationTimeLimitNone": "제한 없음"
+  "settingsElaborationTimeLimitNone": "제한 없음",
+  "settingsNativeReaderLabel": "네이티브 게이트 수준 리더(베타)",
+  "settingsNativeReaderDescription": "Yosys를 실행하지 않고 구조적 Verilog 넷리스트를 직접 읽습니다. 리더가 정확하게 처리할 수 없는 파일은 Yosys가 대신 읽으며, 이유는 진단에 표시됩니다.",
+  "statsElaborationReadingNative": "읽는 중(네이티브)",
+  "statsElaborationIdleNative": "유휴(네이티브)",
+  "statsElaborationIdleYosys": "유휴(Yosys)"
 }

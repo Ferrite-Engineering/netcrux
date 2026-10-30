@@ -33,6 +33,7 @@ class AppSettings {
     this.autoCheckForUpdates = true,
     this.layoutCellLimit = kDefaultLayoutCellLimit,
     this.elaborationTimeLimit = ElaborationTimeLimit.automatic,
+    this.nativeGateLevelReader = true,
   });
 
   /// Standard defaults. Composes [CoreSettings.defaults] with empty recent-
@@ -48,7 +49,8 @@ class AppSettings {
       panelLayout = const PanelLayoutState(),
       autoCheckForUpdates = true,
       layoutCellLimit = kDefaultLayoutCellLimit,
-      elaborationTimeLimit = ElaborationTimeLimit.automatic;
+      elaborationTimeLimit = ElaborationTimeLimit.automatic,
+      nativeGateLevelReader = true;
 
   /// The cross-suite shared settings (theme, locale, plugin governance, …).
   final CoreSettings core;
@@ -118,6 +120,14 @@ class AppSettings {
   /// `elaborationTimeoutPolicyProvider`.
   final ElaborationTimeLimit elaborationTimeLimit;
 
+  /// Whether a gate-level Verilog netlist is read by the native reader
+  /// instead of through Yosys. On by default in the beta; a design the reader
+  /// cannot handle faithfully is read by Yosys either way. A project's
+  /// `netlistReader` key and the `--netlist-reader` command-line flag take
+  /// precedence (see `NetlistReaderChoice.useNative`). Surfaced in Settings,
+  /// Engines.
+  final bool nativeGateLevelReader;
+
   /// Forwarder for [CoreSettings.restoreTabsOnLaunch] — whether the persisted
   /// `workspace.json` is rehydrated at launch.
   ///
@@ -154,6 +164,7 @@ class AppSettings {
     bool? autoCheckForUpdates,
     int? layoutCellLimit,
     ElaborationTimeLimit? elaborationTimeLimit,
+    bool? nativeGateLevelReader,
   }) {
     return AppSettings(
       core: core ?? this.core,
@@ -168,6 +179,8 @@ class AppSettings {
       autoCheckForUpdates: autoCheckForUpdates ?? this.autoCheckForUpdates,
       layoutCellLimit: layoutCellLimit ?? this.layoutCellLimit,
       elaborationTimeLimit: elaborationTimeLimit ?? this.elaborationTimeLimit,
+      nativeGateLevelReader:
+          nativeGateLevelReader ?? this.nativeGateLevelReader,
     );
   }
 
@@ -183,6 +196,7 @@ class AppSettings {
     if (other.autoCheckForUpdates != autoCheckForUpdates) return false;
     if (other.layoutCellLimit != layoutCellLimit) return false;
     if (other.elaborationTimeLimit != elaborationTimeLimit) return false;
+    if (other.nativeGateLevelReader != nativeGateLevelReader) return false;
     if (!_listEquals(other.recentProjectPaths, recentProjectPaths)) {
       return false;
     }
@@ -208,6 +222,7 @@ class AppSettings {
     autoCheckForUpdates,
     layoutCellLimit,
     elaborationTimeLimit,
+    nativeGateLevelReader,
   );
 
   static bool _listEquals<T>(List<T> a, List<T> b) {

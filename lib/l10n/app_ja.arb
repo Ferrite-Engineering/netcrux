@@ -2379,7 +2379,7 @@
   "statsSegmentViewport": "ビューポート",
   "statsSegmentViewportTooltip": "ビューポートカリング後に直近のフレームで実際に描画されたセルとエッジの数。",
   "statsSegmentElaboration": "エラボレーション",
-  "statsSegmentElaborationTooltip": "現在 Yosys サブプロセスが実行中かどうか。タブ診断ドロワーは前回の実行結果を表示します。",
+  "statsSegmentElaborationTooltip": "ネットリストを読み込み中かどうか、および設計を前回読み込んだリーダー（ネイティブのゲートレベルリーダーまたは Yosys）を示します。タブ診断ドロワーは前回の実行結果を表示します。",
   "statsElaborationRunning": "実行中",
   "statsElaborationIdle": "アイドル",
   "diagnosticsAppDialogSubtitle": "プロセス全体の状態。この情報がマシンの外に出ることはありません。",
@@ -2766,5 +2766,10 @@
   "settingsElaborationTimeLimitDescription": "1 回のエラボレーションを NetCrux が停止するまでの実行時間です。自動はソースのサイズに比例した時間、延長はその 4 倍、制限なしは完了するかキャンセルを押すまで実行します。",
   "settingsElaborationTimeLimitAutomatic": "自動",
   "settingsElaborationTimeLimitExtended": "延長",
-  "settingsElaborationTimeLimitNone": "制限なし"
+  "settingsElaborationTimeLimitNone": "制限なし",
+  "settingsNativeReaderLabel": "ネイティブゲートレベルリーダー（ベータ）",
+  "settingsNativeReaderDescription": "Yosys を実行せずに、構造化 Verilog ネットリストを直接読み込みます。読み込めないファイルは Yosys が読み込み、理由は診断に表示されます。",
+  "statsElaborationReadingNative": "読み込み中（ネイティブ）",
+  "statsElaborationIdleNative": "アイドル（ネイティブ）",
+  "statsElaborationIdleYosys": "アイドル（Yosys）"
 }

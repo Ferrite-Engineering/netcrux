@@ -27,6 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/enums/netcrux_export_kind.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
@@ -44,6 +45,7 @@ import 'package:netcrux/features/viewer/services/schematic_export_controller.dar
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/search/design_search_service.dart';
 import 'package:netcrux/services/telemetry/telemetry_event_catalog.dart';
+import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 
@@ -169,6 +171,10 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         telemetryServiceProvider.overrideWithValue(telemetry),
+        // These tests are about the Yosys route.
+        cliNetlistReaderOverrideProvider.overrideWithValue(
+          NetlistReaderChoice.yosys,
+        ),
         yosysRunnerProvider.overrideWith((ref) => _FakeRunner(result)),
         yosysAvailabilityProvider.overrideWith((ref) async => availability),
       ],

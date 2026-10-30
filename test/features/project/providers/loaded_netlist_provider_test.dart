@@ -8,18 +8,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/enums/netcrux_source_language.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 
+import '../../../helpers/reader_note.dart';
 import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
@@ -176,6 +179,10 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ...netcruxTelemetryTestOverrides(),
+            // These tests are about the Yosys route.
+            cliNetlistReaderOverrideProvider.overrideWithValue(
+              NetlistReaderChoice.yosys,
+            ),
             yosysRunnerProvider.overrideWith((ref) => runner),
             yosysAvailabilityProvider.overrideWith(
               (ref) async => const YosysAvailability.available(
@@ -225,6 +232,10 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             ...netcruxTelemetryTestOverrides(),
+            // These tests are about the Yosys route.
+            cliNetlistReaderOverrideProvider.overrideWithValue(
+              NetlistReaderChoice.yosys,
+            ),
             yosysRunnerProvider.overrideWith((ref) => runner),
             yosysAvailabilityProvider.overrideWith(
               (ref) async => const YosysAvailability.available(
@@ -242,7 +253,10 @@ void main() {
         final first = await container.read(loadedNetlistProvider.future);
         expect(first?.topModule?.name, 'top');
         expect(runner.calls, 1);
-        expect(container.read(elaborationStderrProvider), 'warn: run 1');
+        expect(
+          withoutReaderNote(container.read(elaborationStderrProvider)),
+          'warn: run 1',
+        );
 
         // Same inputs → the rebuild is a cache hit: no second spawn, the
         // SAME parsed model instance, and the cached run's stderr restored
@@ -252,7 +266,10 @@ void main() {
         final second = await container.read(loadedNetlistProvider.future);
         expect(runner.calls, 1, reason: 'unchanged inputs must hit the cache');
         expect(second, same(first));
-        expect(container.read(elaborationStderrProvider), 'warn: run 1');
+        expect(
+          withoutReaderNote(container.read(elaborationStderrProvider)),
+          'warn: run 1',
+        );
 
         // Touching the source (different byte size → different fingerprint,
         // no mtime-resolution dependence) misses and re-spawns.
@@ -275,6 +292,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...netcruxTelemetryTestOverrides(),
+          // These tests are about the Yosys route.
+          cliNetlistReaderOverrideProvider.overrideWithValue(
+            NetlistReaderChoice.yosys,
+          ),
           yosysRunnerProvider.overrideWith((ref) => runner),
           yosysAvailabilityProvider.overrideWith(
             (ref) async => fail('a netlist load must not probe for Yosys'),
@@ -393,6 +414,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...netcruxTelemetryTestOverrides(),
+          // These tests are about the Yosys route.
+          cliNetlistReaderOverrideProvider.overrideWithValue(
+            NetlistReaderChoice.yosys,
+          ),
           yosysRunnerProvider.overrideWith((ref) => runner),
           yosysAvailabilityProvider.overrideWith(
             (ref) async => fail('a netlist load must not probe for Yosys'),
@@ -421,6 +446,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...netcruxTelemetryTestOverrides(),
+          // These tests are about the Yosys route.
+          cliNetlistReaderOverrideProvider.overrideWithValue(
+            NetlistReaderChoice.yosys,
+          ),
           yosysRunnerProvider.overrideWith((ref) => runner),
           yosysAvailabilityProvider.overrideWith(
             (ref) async => const YosysAvailability.available(
@@ -455,6 +484,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...netcruxTelemetryTestOverrides(),
+          // These tests are about the Yosys route.
+          cliNetlistReaderOverrideProvider.overrideWithValue(
+            NetlistReaderChoice.yosys,
+          ),
           yosysAvailabilityProvider.overrideWith(
             (ref) async => const YosysAvailability.notFound(reason: 'gone'),
           ),
@@ -577,6 +610,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...netcruxTelemetryTestOverrides(),
+          // These tests are about the Yosys route.
+          cliNetlistReaderOverrideProvider.overrideWithValue(
+            NetlistReaderChoice.yosys,
+          ),
           yosysRunnerProvider.overrideWith((ref) => runner),
           yosysAvailabilityServiceProvider.overrideWith((ref) => probe),
           yosysAvailabilityProvider.overrideWith(

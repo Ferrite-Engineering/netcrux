@@ -4,6 +4,7 @@
 import 'package:crux_cxp_ui/crux_cxp_ui.dart';
 import 'package:crux_ide_layout/crux_ide_layout.dart';
 import 'package:crux_settings/crux_settings.dart';
+import 'package:crux_settings_ui/crux_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -230,6 +231,27 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(_settings(container).layoutCellLimit, 20000);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Engines → the native gate-level reader switch is on, and '
+      'flipping it is saved', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final container = await _pump(tester);
+    final l10n = await l10nFor(const Locale('en'));
+
+    await _openCategory(tester, l10n.settingsEnginesSection);
+    expect(l10n.settingsNativeReaderLabel, contains('(beta)'));
+    expect(find.text(l10n.settingsNativeReaderLabel), findsWidgets);
+    const key = Key('settingsNativeGateLevelReaderSwitch');
+    expect(tester.widget<CruxFormRow>(find.byKey(key)).value, isTrue);
+
+    await tester.tap(find.byKey(key));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(tester.widget<CruxFormRow>(find.byKey(key)).value, isFalse);
+    expect(_settings(container).nativeGateLevelReader, isFalse);
     expect(tester.takeException(), isNull);
   });
 

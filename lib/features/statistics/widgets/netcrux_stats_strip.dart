@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/netlist_reader_run_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
@@ -46,6 +47,9 @@ class NetcruxStatsStrip extends ConsumerWidget {
     // The pass Yosys is executing right now, parsed from its stderr as it
     // streams. Null between passes or when the banner has not arrived yet.
     final pass = ref.watch(elaborationProgressProvider);
+    // Which reader is reading, or read the design on screen.
+    final reader = ref.watch(netlistReaderRunProvider);
+    final nativeReader = reader?.kind == NetlistReaderKind.native;
 
     return CruxStatsStrip(
       label: l10n.statsStripLabel,
@@ -110,8 +114,14 @@ class NetcruxStatsStrip extends ConsumerWidget {
           // elaboration otherwise reads as an undifferentiated "running"
           // with no sense of whether it is progressing.
           value: elaborating
-              ? (pass ?? l10n.statsElaborationRunning)
-              : l10n.statsElaborationIdle,
+              ? (nativeReader
+                    ? l10n.statsElaborationReadingNative
+                    : (pass ?? l10n.statsElaborationRunning))
+              : switch (reader?.kind) {
+                  null => l10n.statsElaborationIdle,
+                  NetlistReaderKind.native => l10n.statsElaborationIdleNative,
+                  NetlistReaderKind.yosys => l10n.statsElaborationIdleYosys,
+                },
           emphasis: elaborating
               ? CruxStatEmphasis.normal
               : CruxStatEmphasis.dimmed,

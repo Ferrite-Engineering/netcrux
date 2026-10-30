@@ -8,7 +8,8 @@ import 'package:netcrux/core/cli/cli_launch_intent.dart';
 import 'package:path/path.dart' as p;
 
 /// Pure-Dart parser that turns CLI args from `main(args)` into a
-/// [CliLaunchIntent] plus the optional flag overrides ([yosysPathOverride]).
+/// [CliLaunchIntent] plus the optional flag overrides ([yosysPathOverride],
+/// [netlistReaderOverride]).
 ///
 /// Positional rules:
 ///
@@ -115,6 +116,13 @@ class CliArgParser {
   String? yosysPathOverride(List<String> args) =>
       _flagValue(args, 'yosys-path');
 
+  /// Returns the value of the `--netlist-reader` flag (`yosys`, `native` or
+  /// `auto`), or `null` when absent or empty. Accepts `--netlist-reader
+  /// yosys` and `--netlist-reader=yosys`. The value is not validated here;
+  /// `bootstrap()` ignores one it does not know.
+  String? netlistReaderOverride(List<String> args) =>
+      _flagValue(args, 'netlist-reader');
+
   /// Returns the value of the `--session` flag, or `null` when absent.
   /// Accepts `--session foo.netcrux` and `--session=foo.netcrux`.
   String? sessionPathOverride(List<String> args) => _flagValue(args, 'session');
@@ -170,7 +178,12 @@ class CliArgParser {
   }
 
   /// The flags that take a value (`--flag value` or `--flag=value`).
-  static const _valueFlags = {'--workspace', '--session', '--yosys-path'};
+  static const _valueFlags = {
+    '--workspace',
+    '--session',
+    '--yosys-path',
+    '--netlist-reader',
+  };
 
   /// Strips flags from [args], leaving only positional file paths. A value
   /// flag in its `--flag value` form takes the next argument with it; every

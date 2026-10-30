@@ -35,6 +35,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
   static const _kAutoCheckForUpdates = 'netcrux.autoCheckForUpdates';
   static const _kLayoutCellLimit = 'netcrux.layoutCellLimit';
   static const _kElaborationTimeLimit = 'netcrux.elaborationTimeLimit';
+  static const _kNativeGateLevelReader = 'netcrux.nativeGateLevelReader';
   static const _kPanelHierarchyVisible =
       'netcrux.panelLayout.hierarchyTreeVisible';
   static const _kPanelInspectorVisible = 'netcrux.panelLayout.inspectorVisible';
@@ -87,6 +88,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       elaborationTimeLimit: _decodeTimeLimit(
         prefs.getString(_kElaborationTimeLimit),
       ),
+      nativeGateLevelReader: prefs.getBool(_kNativeGateLevelReader) ?? true,
     );
   }
 
@@ -115,6 +117,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
         _kElaborationTimeLimit,
         settings.elaborationTimeLimit.name,
       ),
+      prefs.setBool(_kNativeGateLevelReader, settings.nativeGateLevelReader),
     ]);
     await _writePanelLayout(prefs, settings.panelLayout);
   }

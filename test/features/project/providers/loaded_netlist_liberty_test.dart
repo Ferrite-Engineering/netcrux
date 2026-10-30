@@ -6,16 +6,19 @@ import 'dart:io';
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
+import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../helpers/reader_note.dart';
 import '../../../helpers/run_backed_keeping_json.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
@@ -67,6 +70,10 @@ void main() {
     container = ProviderContainer(
       overrides: [
         ...netcruxTelemetryTestOverrides(),
+        // These tests are about the Yosys route.
+        cliNetlistReaderOverrideProvider.overrideWithValue(
+          NetlistReaderChoice.yosys,
+        ),
         yosysRunnerProvider.overrideWith((ref) => runner),
         yosysAvailabilityProvider.overrideWith(
           (ref) async => const YosysAvailability.available(
@@ -132,7 +139,9 @@ void main() {
     );
     open(<String>[a, b]);
     await container.read(loadedNetlistProvider.future);
-    final stderr = container.read(elaborationStderrProvider);
+    final stderr = withoutReaderNote(
+      container.read(elaborationStderrProvider),
+    );
     expect(stderr, startsWith('Warning: Cell "INV" is defined in both'));
     expect(stderr, endsWith('yosys says hi'));
   });
@@ -162,7 +171,9 @@ void main() {
       File(sources.first.path).readAsStringSync(),
       contains('module INV'),
     );
-    final stderr = container.read(elaborationStderrProvider);
+    final stderr = withoutReaderNote(
+      container.read(elaborationStderrProvider),
+    );
     expect(stderr, startsWith('Warning: Cell library skipped'));
     expect(stderr, contains(bad));
     expect(stderr, contains('line'));
@@ -175,7 +186,9 @@ void main() {
     final result = await container.read(loadedNetlistProvider.future);
     expect(result, isNotNull);
     expect(runner.requests, hasLength(1));
-    final stderr = container.read(elaborationStderrProvider);
+    final stderr = withoutReaderNote(
+      container.read(elaborationStderrProvider),
+    );
     expect(stderr, startsWith('Warning: Cell library skipped'));
     expect(stderr, contains(missing));
   });

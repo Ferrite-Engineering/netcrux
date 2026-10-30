@@ -60,6 +60,9 @@ NetcruxProject resolveProjectPaths(
   final libertyFiles = <String>[
     for (final f in project.libertyFiles) resolve(f),
   ];
+  final cellModelFiles = <String>[
+    for (final f in project.cellModelFiles) resolve(f),
+  ];
   final languages = <String, NetcruxSourceLanguage>{
     for (final entry in project.sourceFileLanguages.entries)
       resolve(entry.key): entry.value,
@@ -70,6 +73,7 @@ NetcruxProject resolveProjectPaths(
     includePaths: includePaths,
     sourceFileLanguages: languages,
     libertyFiles: libertyFiles,
+    cellModelFiles: cellModelFiles,
   );
 }
 
@@ -111,6 +115,9 @@ NetcruxProject relativizeProjectPaths(
   final libertyFiles = <String>[
     for (final f in project.libertyFiles) relativize(f),
   ];
+  final cellModelFiles = <String>[
+    for (final f in project.cellModelFiles) relativize(f),
+  ];
   final languages = <String, NetcruxSourceLanguage>{
     for (final entry in project.sourceFileLanguages.entries)
       relativize(entry.key): entry.value,
@@ -121,5 +128,6 @@ NetcruxProject relativizeProjectPaths(
     includePaths: includePaths,
     sourceFileLanguages: languages,
     libertyFiles: libertyFiles,
+    cellModelFiles: cellModelFiles,
   );
 }

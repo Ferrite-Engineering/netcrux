@@ -8,21 +8,26 @@ import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/enums/netcrux_source_language.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/interfaces/elaboration_timeout_policy.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_timeout_policy_provider.dart';
+import 'package:netcrux/features/project/providers/netlist_reader_run_provider.dart';
+import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
 import 'package:netcrux/services/telemetry/netcrux_design_language_mix.dart';
+import 'package:netcrux/services/verilog/native_read_pipeline.dart';
 import 'package:netcrux/services/web/web_json_loader.dart';
 import 'package:netcrux/services/yosys/black_box_port_inference.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_provider.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_service.dart';
 import 'package:netcrux/services/yosys/isolate_netlist_parser.dart';
+import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
@@ -192,7 +197,7 @@ class LoadedNetlist extends _$LoadedNetlist {
     }
     final ({NetlistModel? model, bool cached}) outcome;
     try {
-      outcome = await _elaborate(project);
+      outcome = await _readOrElaborate(project);
     } on LoadedNetlistException catch (e) {
       _recordElaborationFailed(e.kind);
       rethrow;
@@ -294,6 +299,107 @@ class LoadedNetlist extends _$LoadedNetlist {
     return loaded?.model;
   }
 
+  /// `Info:` and `Warning:` lines saying which reader ran and why, for the
+  /// head of Diagnostics.
+  List<String> _readerNotes = const <String>[];
+
+  /// Reads the design with the native gate-level reader when it applies and
+  /// is chosen, and through Yosys otherwise or when the reader declines.
+  Future<({NetlistModel? model, bool cached})> _readOrElaborate(
+    NetcruxProject project,
+  ) async {
+    final run = ref.read(netlistReaderRunProvider.notifier);
+    _readerNotes = const <String>[];
+    final skipped = await _whyNotNative(ref, project);
+    if (skipped == null) {
+      run.set(const NetlistReaderRun(NetlistReaderKind.native));
+      final native = await _readNatively(project);
+      if (native != null) return native;
+      run.set(
+        const NetlistReaderRun(NetlistReaderKind.yosys, fellBack: true),
+      );
+    } else {
+      run.set(const NetlistReaderRun(NetlistReaderKind.yosys));
+      _readerNotes = <String>[yosysReadInfoLine(skipped)];
+    }
+    try {
+      return await _elaborate(project);
+    } on LoadedNetlistException catch (e) {
+      // A design the native reader declined, with no Yosys to fall back to:
+      // Diagnostics still says what the reader met.
+      if (_readerNotes.isNotEmpty &&
+          e.kind == LoadedNetlistErrorKind.yosysUnavailable) {
+        ref
+            .read(elaborationStderrProvider.notifier)
+            .set(_withWarnings(_readerNotes, ''));
+      }
+      rethrow;
+    }
+  }
+
+  /// Tries the native reader: the elaboration cache first, then the worker.
+  /// `null` means it declined and `_readerNotes` says why; a record with a
+  /// `null` model is a cancelled read.
+  Future<({NetlistModel? model, bool cached})?> _readNatively(
+    NetcruxProject project,
+  ) async {
+    // Cancel stops the read at any step, as it stops an elaboration.
+    final cancel = Completer<void>();
+    _cancel = cancel;
+    ref.onDispose(() {
+      if (!cancel.isCompleted) cancel.complete();
+    });
+    final cache = ref.read(elaborationCacheServiceProvider);
+    final cacheKey = await ElaborationCacheService.buildKey(
+      sourceFilePaths: project.sourceFiles,
+      yosysVersion: '',
+      topModule: project.topModule.isEmpty ? null : project.topModule,
+      libertyFilePaths: project.libertyFiles,
+      cellModelFilePaths: project.cellModelFiles,
+      reader: 'native',
+    );
+    if (cacheKey != null) {
+      final hit = cache.lookup(cacheKey);
+      if (hit != null) {
+        ref.read(elaborationStderrProvider.notifier).set(hit.stderr);
+        return (model: hit.model, cached: true);
+      }
+    }
+    ref.read(elaborationStderrProvider.notifier).set('');
+    final attempt = await attemptNativeRead(
+      project,
+      ref.read(libertyStubServiceProvider),
+      cancelSignal: cancel.future,
+    );
+    switch (attempt) {
+      case NativeAttemptCancelled():
+        return (model: null, cached: false);
+      case NativeAttemptDeclined(:final outcome):
+        _readerNotes = <String>[
+          outcome.diagnosticLine,
+          yosysReadInfoLine('the native gate-level reader declined'),
+        ];
+        return null;
+      case NativeAttemptRead(:final success):
+        final stderr = '${attempt.diagnosticLines.join('\n')}\n';
+        ref.read(elaborationStderrProvider.notifier).set(stderr);
+        // The model of a design this large is not kept in the cache once its
+        // tab is gone: reading it again is cheaper than holding it.
+        final approxBytes = success.stats.cells * 1024;
+        if (cacheKey != null && approxBytes <= cache.maxTotalBytes) {
+          cache.store(
+            cacheKey,
+            ElaborationCacheEntry(
+              model: success.model,
+              stderr: stderr,
+              approxBytes: approxBytes,
+            ),
+          );
+        }
+        return (model: success.model, cached: false);
+    }
+  }
+
   Future<({NetlistModel? model, bool cached})> _elaborate(
     NetcruxProject project,
   ) async {
@@ -381,7 +487,10 @@ class LoadedNetlist extends _$LoadedNetlist {
     // Publish stderr — successes and failures alike — so the
     // diagnostics drawer can surface warnings even on healthy runs. The cell
     // libraries' own warnings go first, in Yosys's `Warning:` form.
-    var stderr = _withLibertyWarnings(liberty, result.stderr);
+    var stderr = _withWarnings(
+      _readerNotes,
+      _withLibertyWarnings(liberty, result.stderr),
+    );
     ref.read(elaborationStderrProvider.notifier).set(stderr);
     // A killed subprocess is reported by its result type, not an
     // exit code. Branch on those before the success / failure handling.
@@ -581,6 +690,14 @@ Future<NetlistModel?> loadDesignNetlist(
   if (project.isPrebuiltNetlist || !ref.read(hdlElaborationSupportedProvider)) {
     return (await _readPrebuiltNetlist(ref, project))?.model;
   }
+  if (await _whyNotNative(ref, project) == null) {
+    final attempt = await attemptNativeRead(
+      project,
+      ref.read(libertyStubServiceProvider),
+    );
+    if (attempt is NativeAttemptRead) return attempt.success.model;
+    if (attempt is NativeAttemptCancelled) return null;
+  }
   await _requireYosys(ref);
   final liberty = await _libertyStubs(ref, project);
   final policy = ref.read(elaborationTimeoutPolicyProvider);
@@ -604,6 +721,50 @@ Future<NetlistModel?> loadDesignNetlist(
   } finally {
     document.dispose();
   }
+}
+
+/// Settings → Engines → Native gate-level reader (beta), as saved.
+///
+/// Read without waiting when the settings are loaded, which they are long
+/// before a design opens. While they still load the pipeline waits a moment
+/// for them rather than for ever, so a settings store that never answers
+/// leaves the reader at its default, on.
+Future<bool> _nativeReaderSetting(Ref ref) async {
+  final loaded = ref.read(appSettingsProvider).value;
+  if (loaded != null) return loaded.nativeGateLevelReader;
+  try {
+    final settings = await ref
+        .read(appSettingsProvider.future)
+        .timeout(const Duration(milliseconds: 250));
+    return settings.nativeGateLevelReader;
+  } on Object {
+    return true;
+  }
+}
+
+/// Why [project] is not read by the native gate-level reader, in words for
+/// the `Info:` line, or `null` when the reader should be tried first.
+Future<String?> _whyNotNative(Ref ref, NetcruxProject project) async {
+  final inapplicable = nativeReaderInapplicableReason(project);
+  if (inapplicable != null) {
+    return 'the native gate-level reader does not apply: $inapplicable';
+  }
+  final enabled = await _nativeReaderSetting(ref);
+  final decision = NetlistReaderChoice.resolve(
+    cli: ref.read(cliNetlistReaderOverrideProvider),
+    project: project.netlistReader,
+    settingEnabled: enabled,
+  );
+  if (decision.native) return null;
+  return switch (decision.source) {
+    NetlistReaderSource.commandLine =>
+      'the native gate-level reader was turned off with --netlist-reader',
+    NetlistReaderSource.project =>
+      "the native gate-level reader was turned off by the project's "
+          'netlistReader key',
+    NetlistReaderSource.setting =>
+      'the native gate-level reader is turned off in Settings > Engines',
+  };
 }
 
 /// Reads and parses the single netlist document [project] names.

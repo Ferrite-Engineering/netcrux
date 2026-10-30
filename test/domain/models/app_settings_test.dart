@@ -62,6 +62,23 @@ void main() {
       );
     });
 
+    test(
+      'the native gate-level reader is on by default and follows copyWith',
+      () {
+        const settings = AppSettings.defaults();
+        expect(settings.nativeGateLevelReader, isTrue);
+        final off = settings.copyWith(nativeGateLevelReader: false);
+        expect(off.nativeGateLevelReader, isFalse);
+        expect(off, isNot(settings));
+        expect(off.hashCode, isNot(settings.hashCode));
+        expect(off.copyWith(nativeGateLevelReader: true), settings);
+        expect(
+          settings.copyWith(layoutCellLimit: 0).nativeGateLevelReader,
+          isTrue,
+        );
+      },
+    );
+
     test('copyWith preserves unspecified fields', () {
       const settings = AppSettings.defaults();
       final updated = settings.copyWith(

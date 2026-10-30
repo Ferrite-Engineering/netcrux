@@ -170,6 +170,30 @@ The foundation is the pipeline spine everything else stands on: the `NetlistMode
   | `cellOf` describes each drawn cell as the graph does, on repeated calls | `[Coverage: UNIT]` (`schematic_scope_module_test.dart`) |
   | The million-cell steps 1 to 4 and 6 | `[Coverage: MANUAL]` |
 
+### 3.3c Native gate-level reader (beta, from 1.2)
+
+- **What it does.** A structural (gate-level) Verilog netlist is read straight into the netlist model by the native gate-level reader (`lib/services/verilog/`), on a worker isolate and through a fixed buffer, with no Yosys run and no JSON document. It reads `module`/`endmodule` with ANSI or non-ANSI ports, `input`/`output`/`inout`, `wire`/`tri`/`supply0`/`supply1` with constant ranges, named or positional instances, empty connections, bit and part selects, concatenations and replications, sized constants, escaped identifiers, `assign` between nets and constants, comments and attributes, and `.v.gz`. Pin directions come from the sources' own modules, then the project's Liberty libraries, then its cell model files (module headers only), then the wiring. Anything else (`always`, `generate`, expressions, parameter overrides, primitives, SystemVerilog, `` `define ``) is not guessed: Yosys reads the file and Diagnostics names the construct and its line. `Settings > Engines > Native gate-level reader (beta)` (on by default), the project key `netlistReader` and `--netlist-reader=yosys|native` choose the reader; Diagnostics and the statistics strip say which one ran.
+- **Setup.** A gate-level netlist and the Liberty file of its cells (`tool/gen_gate_netlist.py` with `--gates 100000 --out d.v --lib-out cells.lib`), or `test/fixtures/gate_level/`.
+- **Steps and expected behavior.**
+  1. Open `d.v` with `File > Open Source Files…` together with `cells.lib`, with no Yosys on the `PATH`. Expected: the design opens in about a second; the Elaboration figure in the statistics strip ends at **Idle (native)**; the first Diagnostics line is `Info: Netlist read by the native gate-level reader (beta)` with the module and cell counts.
+  2. Open the same files with `--netlist-reader=yosys`. Expected: the Elaboration figure ends at **Idle (Yosys)**, the first Diagnostics line says the native reader was turned off with `--netlist-reader`, and the schematic of every scope matches the first.
+  3. Turn `Settings > Engines > Native gate-level reader (beta)` off, open the file again, and then restore the switch. Expected: Yosys reads it, and the line names `Settings > Engines`.
+  4. Open an RTL file with an `always` block. Expected: Yosys reads it; the first Diagnostics line is `file:line: Warning: The native gate-level reader uses an `always` block…`, and choosing it opens the file at that line.
+  5. Open a netlist that instantiates cells no library defines. Expected: they are black boxes; Diagnostics lists the types and the pins whose direction was guessed, as for the black-box option.
+  6. Cross-probe a cell to the Source pane. Expected: the pane shows the instance's line in the netlist file.
+  7. Open a `.v.gz` copy. Expected: the same design, with memory no larger than for the plain file.
+  8. Close the tab while a large netlist is being read. Expected: the read stops at once.
+- **Edge cases.** A truncated file, a malformed token, an identifier longer than 64 KB, a module defined twice, an instance named twice, and a net tied to both 0 and 1 all go to Yosys with a message; none hangs or crashes. A project with `extraYosysCommands`, `lowerToStructural` or a non-Verilog source never uses the native reader. Yosys keeps every library cell as a black-box module and the native reader the cells the design instantiates; the pins are the same. Cell model files are read by the native reader only.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | The scanner: tokens, positions, comments, attributes, directives, escaped names, every buffer and chunk size, over-long tokens, unterminated constructs | `[Coverage: UNIT]` (`test/services/verilog/verilog_scanner_test.dart`) |
+  | The native model equals the Yosys JSON model (modules, ports, nets, cells, types, pins, directions, `src`, order, bit connectivity) for the fixtures in `test/fixtures/gate_level/`; the repository's RTL fixtures all fall back with a named construct | `[Coverage: INTEGRATION_TEST]` (`test/integration/native_vs_yosys_test.dart`, `test/support/netlist_equivalence.dart`; needs Yosys, skipped without it) |
+  | Cell model headers; the pipeline's choice, fallback, cache, cancellation and Diagnostics lines; precedence of the command line, the project and the setting | `[Coverage: UNIT]` (`verilog_cell_model_reader_test.dart`, `native_read_pipeline_test.dart`, `loaded_netlist_native_reader_test.dart`, `netlist_reader_choice_test.dart`) |
+  | The setting, the project keys, the filelist `-v`, the command-line flag, the statistics strip text | `[Coverage: UNIT/WIDGET]` (`app_settings_test.dart`, `netcrux_settings_codec_test.dart`, `settings_screen_categories_test.dart`, `netcrux_project_native_reader_test.dart`, `filelist_reader_test.dart`, `cli_arg_parser_yosys_path_test.dart`, `netcrux_stats_strip_reader_test.dart`) |
+  | Equivalence at scale, fuzzing, and open time and memory at 1 M, 3 M and 5 M cells | `[Coverage: MANUAL]` (`tool/compare_netlist_readers.dart`, `tool/bench_netlist_parse.dart`) |
+
 ### 3.4 Theme system — Material 3 light/dark on the muted-amber seed
 
 - **What it does.** `NetcruxTheme.dark()` / `NetcruxTheme.light()` build Material 3 `ThemeData` from the documented brand seed (`NetcruxColors.brandSeed = 0xFFD4A017`); `lib/core/theme/`. (The color-theme presets/overrides/packs surface lives in Settings → Appearance via `crux_theme`; see the suite-wide Color Theming section, §8.)

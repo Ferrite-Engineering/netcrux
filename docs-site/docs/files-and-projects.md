@@ -4,7 +4,7 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 
 | Artifact | Extension | What it holds |
 |---|---|---|
-| **Project** | `.netcrux-project` | A named source set for a design: sources, top module, include paths, defines, cell libraries. |
+| **Project** | `.netcrux-project` | A named source set for a design: sources, top module, include paths, defines, cell libraries and cell models. |
 | **Suite manifest** | `<design>.crux-project` | The design, described once for every EDACrux product. |
 | **Session** | `.netcrux` | One tab's view state — where you were and what you were looking at. |
 | **Workspace** | `.netcrux-workspace` | A named set of tabs and panes. |
@@ -13,12 +13,14 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 
 | Format | Extension | How it loads |
 |---|---|---|
-| Verilog / SystemVerilog | `.v`, `.vh` / `.sv`, `.svh` | Elaborated by Yosys `read_verilog` (IEEE 1364-2005 / IEEE 1800). |
+| Verilog / SystemVerilog | `.v`, `.vh` / `.sv`, `.svh` | Elaborated by Yosys `read_verilog` (IEEE 1364-2005 / IEEE 1800). A gate-level `.v` netlist is read directly by the [native gate-level reader](#native-reader) instead, from NetCrux 1.2. |
+| Compressed Verilog netlist | `.v.gz` | From NetCrux 1.2: a gzip-compressed gate-level netlist, read as a stream by the [native gate-level reader](#native-reader). |
 | VHDL | `.vhd`, `.vhdl` | Lowered to Verilog by `ghdl --synth`, then read by Yosys (IEEE 1076). |
 | NetCrux project | `.netcrux-project` | JSON describing sources, top module, include directories and defines. |
 | Suite manifest | `<design>.crux-project` | YAML naming the design's sources or a pre-built netlist. See [below](#crux-project). |
 | Vivado-style filelist | `.f` | Imported with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |
 | Liberty cell library | `.lib`, `.liberty`, `.lib.gz`, `.liberty.gz` | Read for its cells' interfaces, which Yosys sees as black boxes. A gzip-compressed library is read as it is. See [Cell libraries](#cell-libraries). |
+| Verilog cell model | `.v`, `.v.gz` listed as `cellModelFiles` or `-v` | From NetCrux 1.2: only the module headers are read, for the pin directions of the cells a gate-level netlist instantiates. See [Cell model files](#cell-models). |
 | Yosys JSON netlist | `.json` | Read directly — no Yosys run. See [below](#json). |
 
 A netlist your own flow already wrote with Yosys `write_json` opens without elaboration: choose `File → Open Netlist JSON…` (also on the toolbar), pass it on the [command line](cli/usage.md) (`netcrux build/top.json`), or name it under `artifacts.netlist` in a [design manifest](#crux-project). It is also the only thing the [web viewer](web-mode.md) opens. NetCrux parses it and renders the top module exactly as if it had run Yosys itself, and the netlist file is watched for changes like any source. A single `.json` file is always read as a netlist, never handed to Yosys. The file is read from disk in chunks rather than loaded whole, so its size is not limited: a netlist of several gigabytes opens, and the memory it takes is that of the design once parsed, about 4 to 5 GB for every million cells. (The [web viewer](web-mode.md) receives the document as text, so very large netlists belong in the desktop app.)
@@ -59,6 +61,61 @@ A manifest from an earlier release is named just `.crux-project`, which file pic
 
 **Everything except `version` is optional**, and keys a newer release understands but an older one does not are ignored, so a manifest never becomes unopenable. A manifest holds no view state and no personal settings — it says what the design *is*, not how you last looked at it. That is what sessions are for, and it is why a manifest is comfortable to share while a session generally is not.
 
+## Gate-level netlists: the native reader {#native-reader}
+
+A gate-level netlist, the structural Verilog a synthesis or place-and-route flow writes, has nothing left to elaborate: it is modules, nets and instances of library cells. Running it through Yosys only to read the result back is slow and memory-hungry, so from NetCrux 1.2 (beta) NetCrux reads such a file itself and builds the netlist model directly, with no Yosys run and no JSON document in between. The file is read as a stream on a worker, a block at a time, never as one string, so its size is not limited, and closing the tab or opening something else stops the read. A `.v.gz` file is decompressed as it is read.
+
+The native gate-level reader is **on by default in the beta**, for the files it can read. Turn it off, or force either reader, in any of these ways, from the strongest to the weakest:
+
+1. `--netlist-reader=yosys` or `--netlist-reader=native` on the [command line](cli/usage.md), for that launch.
+2. `"netlistReader": "yosys"` or `"native"` in a [project file](reference/project-format.md). The default, `"auto"`, follows the setting.
+3. `Settings → Engines → Native gate-level reader (beta)`, saved for the user.
+
+`native` means "try the native reader"; a file it cannot read is still read by Yosys, with the reason in Diagnostics. To compare the two routes on one file, open it twice, once with each flag.
+
+### What it reads
+
+- `module` and `endmodule`, with ANSI or non-ANSI port lists.
+- `input`, `output` and `inout` declarations, `wire` and `tri` nets, and `supply0` and `supply1` nets, with constant ranges (`[7:0]`, `[0:3]`).
+- Instances of library cells and of other modules, with named (`.A(n1)`) or positional connections, including empty connections (`.A()`) and nets that are only named in a connection.
+- Bit selects and part selects, concatenations and replications of them, sized constants such as `1'b0` and `4'hA`, and escaped identifiers such as `\u1/n[3] `.
+- `assign` between nets, bits, slices and constants, which merges the nets as Yosys does.
+- Comments, `(* attributes *)`, and the directives `` `timescale ``, `` `celldefine ``, `` `endcelldefine `` and `` `resetall ``.
+
+The model is the one the Yosys route builds: the same modules, instances, cell types, nets, connections and `src` locations (so the Source pane and cross-probing go to the netlist line), the same sorted order, and the same pin direction inference for black boxes. An instance of a cell no source, library or cell model defines is a black box automatically, and Diagnostics lists them and the pins whose direction was guessed, as the [black boxes](#black-boxes) option does.
+
+### What it leaves to Yosys {#native-fallback}
+
+The reader never guesses. For anything else it stops, Yosys reads the design instead, and Diagnostics names what it met with the file and line: `always` and `initial` blocks, `generate`, `function` and `task`, `parameter` and `defparam`, a parameter list on a module or an instance override, primitives and gate instances such as `and`, `reg` and other variables, expressions in an `assign` or a connection, unsized numbers, arrays of instances, SystemVerilog, and compiler directives such as `` `define `` and `` `include ``. A file that is truncated, malformed or inconsistent (a module defined twice, an instance named twice, a net tied to both 0 and 1, an identifier longer than 64 KB) also goes to Yosys, which reports it in its own words. The native reader is only used for Verilog (`.v`, `.vh`, `.v.gz`) sources, and not when the project runs extra Yosys commands or lowers the design.
+
+The status strip's Elaboration figure and the first lines of Diagnostics say which reader ran:
+
+```text
+Info: Netlist read by the native gate-level reader (beta): 91 modules, 100085 cells, top module top, 0.6 s. Yosys was not run.
+```
+
+```text
+/path/top.v:42: Warning: The native gate-level reader uses an `always` block, which it does not read; Yosys reads this design instead.
+Info: Netlist read by Yosys (the native gate-level reader declined).
+```
+
+A difference from the Yosys route you can see: Yosys keeps every cell of a Liberty library as a black-box module, while the native reader adds the library cells the design instantiates. The pins and their directions are the same.
+
+### Pin directions {#native-directions}
+
+The reader takes the direction of each pin of a library cell from, in this order:
+
+1. A module in the sources, if the netlist defines the cell itself.
+2. The project's [Liberty cell libraries](#cell-libraries), plain or gzip-compressed.
+3. The project's [cell model files](#cell-models).
+4. The wiring, as for [black boxes](#black-boxes): a pin the definitions do not declare, and every pin of a cell nothing defines, is inferred and listed in Diagnostics.
+
+### Cell model files {#cell-models}
+
+A vendor ships its standard cells as Verilog simulation models too, full of user-defined primitives, `specify` timing and tasks that no netlist viewer needs. When there is no Liberty file at hand, list those models as cell model files and the reader takes the pin names, directions and bus widths from each module's header and skips everything up to `endmodule`, so the body need not even be valid for it. A port whose range is not a number (`[WIDTH-1:0]`) has an unknown width. Unknown compiler directives in these files are skipped to the end of their line.
+
+Name them under `cellModelFiles` in a [project file](reference/project-format.md), or as `-v <file>` in a [filelist](#filelist). They are not sources and are not elaborated, and Yosys does not read them: a design that falls back to Yosys needs a Liberty library or the models as sources for its cells.
+
 ## Opening sources directly {#open-sources}
 
 1. **Choose the files.**
@@ -67,7 +124,7 @@ A manifest from an earlier release is named just `.crux-project`, which file pic
 
 2. **Elaborate.**
 
-    NetCrux runs Yosys (and GHDL for VHDL), reads the resulting netlist, and renders the top module. Close the tab with **Close Tab** (++cmd+w++ / ++ctrl+w++) or **Close Project** (++cmd+shift+w++ / ++ctrl+shift+w++).
+    NetCrux runs Yosys (and GHDL for VHDL), reads the resulting netlist, and renders the top module. A gate-level Verilog netlist is read by the [native reader](#native-reader) instead, without Yosys. Close the tab with **Close Tab** (++cmd+w++ / ++ctrl+w++) or **Close Project** (++cmd+shift+w++ / ++ctrl+shift+w++).
 
 Any `.lib` or `.liberty` file selected with the sources becomes one of the tab's [cell libraries](#cell-libraries) rather than a source.
 
@@ -114,7 +171,7 @@ A `.netcrux-project` file captures everything needed to re-elaborate a design: t
 
 ## Importing a Vivado filelist {#filelist}
 
-If you already maintain a `.f` filelist for a vendor flow, import it with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). NetCrux reads the source paths, `+incdir+` directories, `+define+` macros and [cell libraries](#cell-libraries) out of the filelist, following nested `-f` includes, expanding `$VAR` / `${VAR}` environment variables and reporting include cycles, and elaborates from there in a new tab. `-y`, `+libext+` and `--top` are not supported.
+If you already maintain a `.f` filelist for a vendor flow, import it with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). NetCrux reads the source paths, `+incdir+` directories, `+define+` macros and [cell libraries](#cell-libraries) out of the filelist, following nested `-f` includes, expanding `$VAR` / `${VAR}` environment variables and reporting include cycles, and elaborates from there in a new tab. `-v <file>` names a [cell model file](#cell-models). `-y`, `+libext+` and `--top` are not supported.
 
 An imported filelist is listed under **Recent Projects** on the welcome screen and reopens from there, and `netcrux <design>.f` opens one from a shell. A tab opened from a filelist re-reads it when the workspace is restored, the same way a `.netcrux-project` tab does, so its defines and include directories apply at the next launch too.
 

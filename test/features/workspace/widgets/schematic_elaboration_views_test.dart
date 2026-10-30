@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/netlist_reader_run_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
 import 'package:netcrux/features/workspace/widgets/project_tab_content.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_elaboration_progress_view.dart';
@@ -150,6 +151,24 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Reading the netlist…'), findsOneWidget);
+  });
+
+  testWidgets('a design the native reader is reading says it is being read', (
+    tester,
+  ) async {
+    final tab = await _pumpTab(tester);
+    expect(find.text('Elaborating the design…'), findsOneWidget);
+    tab
+        .read(netlistReaderRunProvider.notifier)
+        .set(const NetlistReaderRun(NetlistReaderKind.native));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Reading the netlist…'), findsOneWidget);
+    // After a fallback Yosys elaborates again.
+    tab
+        .read(netlistReaderRunProvider.notifier)
+        .set(const NetlistReaderRun(NetlistReaderKind.yosys, fellBack: true));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Elaborating the design…'), findsOneWidget);
   });
 
   for (final locale in _locales) {

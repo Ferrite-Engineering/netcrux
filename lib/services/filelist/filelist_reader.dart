@@ -60,6 +60,7 @@ class FilelistContents {
     required this.defines,
     required this.includePaths,
     this.libertyFiles = const <String>[],
+    this.cellModelFiles = const <String>[],
   });
 
   /// HDL source paths in declaration order, resolved to absolute
@@ -76,6 +77,10 @@ class FilelistContents {
   /// Liberty cell libraries (`.lib` / `.liberty` entries), in declaration
   /// order, resolved like [sourceFiles].
   final List<String> libertyFiles;
+
+  /// Verilog cell model files (`-v <file>` entries), in declaration order,
+  /// resolved like [sourceFiles].
+  final List<String> cellModelFiles;
 }
 
 /// Reads Vivado-style `.f` filelists.
@@ -89,6 +94,11 @@ class FilelistContents {
 ///   Liberty cell library, not a source, and goes to
 ///   [NetcruxProject.libertyFiles] (see [NetcruxProject.isLibertyPath]).
 ///   It resolves the same way as a source path.
+/// - **Cell models**: `-v <file>` names a Verilog library file, as simulators
+///   read it. Its module headers give the native gate-level reader the pin
+///   directions of the cells a netlist instantiates
+///   (`NetcruxProject.cellModelFiles`); the file is not a source and is not
+///   elaborated.
 /// - **`+define+NAME` / `+define+NAME=VALUE`**: preprocessor define.
 ///   Multiple `+define+` segments may appear on one line.
 /// - **`+incdir+PATH`**: include directory. Multiple `+incdir+`
@@ -149,6 +159,7 @@ class FilelistReader {
       defines: contents.defines,
       includePaths: contents.includePaths,
       libertyFiles: contents.libertyFiles,
+      cellModelFiles: contents.cellModelFiles,
     );
   }
 
@@ -180,6 +191,7 @@ class FilelistReader {
     final defines = <String, String>{};
     final includes = <String>[];
     final liberty = <String>[];
+    final cellModels = <String>[];
 
     for (final rawLine in lines) {
       final line = _stripComment(rawLine).trim();
@@ -204,7 +216,16 @@ class FilelistReader {
           }
           includes.addAll(nestedContents.includePaths);
           liberty.addAll(nestedContents.libertyFiles);
+          cellModels.addAll(nestedContents.cellModelFiles);
           i++; // consume the next token
+          continue;
+        }
+        if (token == '-v') {
+          // Next token is a Verilog cell model file.
+          if (i + 1 >= tokens.length) continue;
+          final model = _expandEnv(tokens[i + 1]);
+          if (model.isNotEmpty) cellModels.add(_resolveRelative(dir, model));
+          i++;
           continue;
         }
         if (token.startsWith('+define+')) {
@@ -237,6 +258,7 @@ class FilelistReader {
       defines: Map<String, String>.unmodifiable(defines),
       includePaths: List<String>.unmodifiable(includes),
       libertyFiles: List<String>.unmodifiable(liberty),
+      cellModelFiles: List<String>.unmodifiable(cellModels),
     );
   }
 

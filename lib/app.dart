@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async' show unawaited;
-import 'dart:io' show stdout;
+import 'dart:io' show stderr, stdout;
 import 'package:crux_a11y/crux_a11y.dart' show CruxRoutedContent;
 import 'package:crux_about_dialog/crux_about_dialog.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart'
@@ -46,6 +46,7 @@ import 'package:netcrux/core/updates/netcrux_update_strings.dart';
 import 'package:netcrux/core/web/web_launch_params.dart';
 import 'package:netcrux/core/web/web_launch_params_provider.dart';
 import 'package:netcrux/core/web/window_location.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/beta_expiry/widgets/beta_expiry_gate.dart';
 import 'package:netcrux/features/eula/netcrux_eula_overrides.dart';
@@ -71,6 +72,7 @@ import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
+import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/yosys_executable_provider.dart';
 import 'package:netcrux/shared/widgets/workspace_managers_scope.dart';
 import 'package:netcrux/shared/widgets/yosys_process_reaper.dart';
@@ -259,6 +261,14 @@ Future<void> bootstrap({
     openedDocument: incomingDocuments.initialDocument,
   );
   final yosysOverride = parser.yosysPathOverride(launchArgs);
+  final readerFlag = parser.netlistReaderOverride(launchArgs);
+  final readerOverride = NetlistReaderChoice.parse(readerFlag);
+  if (readerFlag != null && readerOverride == null) {
+    stderr.writeln(
+      'NetCrux: ignoring --netlist-reader=$readerFlag '
+      '(expected yosys or native).',
+    );
+  }
 
   // `--reset` is the documented escape hatch for a session so corrupt it
   // wedges startup: wipe the auto-managed workspace.json and every per-tab
@@ -306,6 +316,7 @@ Future<void> bootstrap({
         cruxCxpLaunchSettingsProvider.overrideWithValue(cxpLaunchSettings),
       cliLaunchIntentProvider.overrideWithValue(launchIntent),
       cliYosysPathOverrideProvider.overrideWithValue(yosysOverride),
+      cliNetlistReaderOverrideProvider.overrideWithValue(readerOverride),
       webLaunchParamsProvider.overrideWithValue(webLaunch),
       // `--no-restore` skips this launch's workspace rehydration without
       // deleting anything: the injected restore gate short-circuits

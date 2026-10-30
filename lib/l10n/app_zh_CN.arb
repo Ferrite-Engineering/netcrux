@@ -2379,7 +2379,7 @@
   "statsSegmentViewport": "视口",
   "statsSegmentViewportTooltip": "经视口剔除后上一帧实际绘制的单元和连线数量。",
   "statsSegmentElaboration": "详细化",
-  "statsSegmentElaborationTooltip": "当前是否有 Yosys 子进程正在运行。标签诊断抽屉显示上一次运行的结果。",
+  "statsSegmentElaborationTooltip": "当前是否正在读取网表，以及上一次由哪个读取器读取该设计：原生门级读取器或 Yosys。标签诊断抽屉显示上一次运行的结果。",
   "statsElaborationRunning": "运行中",
   "statsElaborationIdle": "空闲",
   "diagnosticsAppDialogSubtitle": "进程级状态。这些信息不会离开你的机器。",
@@ -2766,5 +2766,10 @@
   "settingsElaborationTimeLimitDescription": "单次详尽展开在 NetCrux 将其停止前可运行的时间。自动按源文件大小成比例给出时间；延长为其四倍；不限制则一直运行到完成或点击取消。",
   "settingsElaborationTimeLimitAutomatic": "自动",
   "settingsElaborationTimeLimitExtended": "延长",
-  "settingsElaborationTimeLimitNone": "不限制"
+  "settingsElaborationTimeLimitNone": "不限制",
+  "settingsNativeReaderLabel": "原生门级读取器（测试版）",
+  "settingsNativeReaderDescription": "无需运行 Yosys，直接读取结构化 Verilog 网表。读取器无法忠实处理的文件改由 Yosys 读取，诊断中会说明原因。",
+  "statsElaborationReadingNative": "读取中（原生）",
+  "statsElaborationIdleNative": "空闲（原生）",
+  "statsElaborationIdleYosys": "空闲（Yosys）"
 }

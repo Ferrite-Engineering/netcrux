@@ -3,6 +3,7 @@
 
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/enums/netcrux_source_language.dart';
+import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 
 /// Schema version constants for `.netcrux` project files.
 ///
@@ -53,6 +54,8 @@ class NetcruxProject {
     this.sourceFileLanguages = const <String, NetcruxSourceLanguage>{},
     this.libertyFiles = const <String>[],
     this.blackBoxMissingModules = false,
+    this.cellModelFiles = const <String>[],
+    this.netlistReader = NetlistReaderChoice.auto,
   });
 
   /// Convenience constructor — produces a v1 project with the
@@ -70,6 +73,8 @@ class NetcruxProject {
         const <String, NetcruxSourceLanguage>{},
     List<String> libertyFiles = const <String>[],
     bool blackBoxMissingModules = false,
+    List<String> cellModelFiles = const <String>[],
+    NetlistReaderChoice netlistReader = NetlistReaderChoice.auto,
   }) {
     return NetcruxProject(
       version: kNetcruxProjectVersion,
@@ -84,6 +89,8 @@ class NetcruxProject {
       ),
       libertyFiles: List<String>.unmodifiable(libertyFiles),
       blackBoxMissingModules: blackBoxMissingModules,
+      cellModelFiles: List<String>.unmodifiable(cellModelFiles),
+      netlistReader: netlistReader,
     );
   }
 
@@ -169,6 +176,19 @@ class NetcruxProject {
   /// [libertyFiles] is the exact route when a library is at hand.
   final bool blackBoxMissingModules;
 
+  /// Verilog cell model files, for a gate-level netlist that instantiates
+  /// standard cells: the native gate-level reader reads each module's port
+  /// declarations from them (and nothing else, so a vendor's simulation
+  /// model with timing and primitives is fine) to give the pins of those
+  /// cells their directions. A cell a Liberty library in [libertyFiles]
+  /// defines uses the library; a module in [sourceFiles] uses its own
+  /// definition. The Yosys route does not read these files.
+  final List<String> cellModelFiles;
+
+  /// The project's choice of reader; [NetlistReaderChoice.auto] follows the
+  /// user's Settings → Engines switch.
+  final NetlistReaderChoice netlistReader;
+
   /// Whether [path] names a Liberty cell library: a `.lib` or `.liberty`
   /// suffix, or either followed by `.gz` for a gzip-compressed one,
   /// case-insensitive. The open-files and filelist routes send these to
@@ -243,7 +263,9 @@ class NetcruxProject {
     if (lower.endsWith('.sv') || lower.endsWith('.svh')) {
       return NetcruxSourceLanguage.systemVerilog;
     }
-    if (lower.endsWith('.v') || lower.endsWith('.vh')) {
+    if (lower.endsWith('.v') ||
+        lower.endsWith('.vh') ||
+        lower.endsWith('.v.gz')) {
       return NetcruxSourceLanguage.verilog;
     }
     return NetcruxSourceLanguage.systemVerilog;
@@ -276,6 +298,8 @@ class NetcruxProject {
     Map<String, NetcruxSourceLanguage>? sourceFileLanguages,
     List<String>? libertyFiles,
     bool? blackBoxMissingModules,
+    List<String>? cellModelFiles,
+    NetlistReaderChoice? netlistReader,
   }) {
     return NetcruxProject(
       version: version ?? this.version,
@@ -303,6 +327,10 @@ class NetcruxProject {
           : List<String>.unmodifiable(libertyFiles),
       blackBoxMissingModules:
           blackBoxMissingModules ?? this.blackBoxMissingModules,
+      cellModelFiles: cellModelFiles == null
+          ? this.cellModelFiles
+          : List<String>.unmodifiable(cellModelFiles),
+      netlistReader: netlistReader ?? this.netlistReader,
     );
   }
 
@@ -314,6 +342,8 @@ class NetcruxProject {
     if (other.topModule != topModule) return false;
     if (other.lowerToStructural != lowerToStructural) return false;
     if (other.blackBoxMissingModules != blackBoxMissingModules) return false;
+    if (other.netlistReader != netlistReader) return false;
+    if (!_listEquals(other.cellModelFiles, cellModelFiles)) return false;
     if (!_listEquals(other.sourceFiles, sourceFiles)) return false;
     if (!_listEquals(other.includePaths, includePaths)) return false;
     if (!_listEquals(other.libertyFiles, libertyFiles)) return false;
@@ -336,6 +366,8 @@ class NetcruxProject {
     topModule,
     lowerToStructural,
     blackBoxMissingModules,
+    netlistReader,
+    Object.hashAll(cellModelFiles),
     Object.hashAll(sourceFiles),
     Object.hashAll(includePaths),
     Object.hashAll(libertyFiles),

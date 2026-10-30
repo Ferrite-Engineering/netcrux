@@ -82,7 +82,7 @@ The Hierarchy, Search, the Inspector and cone views all work on a scope that is 
 | macOS | `brew install yosys`, or OSS CAD Suite |
 | Windows | `winget install YosysHQ.Yosys`, or OSS CAD Suite |
 
-Without Yosys, elaboration fails with *"Yosys could not be found or run. Install Yosys, or set its path in Settings → Engines."* and the status bar shows **Yosys not found**.
+A gate-level Verilog netlist does not need Yosys: from NetCrux 1.2 the [native gate-level reader](files-and-projects.md#native-reader) reads it directly. Everything else needs it. Without Yosys, elaboration fails with *"Yosys could not be found or run. Install Yosys, or set its path in Settings → Engines."* and the status bar shows **Yosys not found**.
 
 ### Pointing NetCrux at a specific Yosys {#yosys-path}
 

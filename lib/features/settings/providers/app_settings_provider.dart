@@ -183,6 +183,15 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
     await _update((current) => current.copyWith(elaborationTimeLimit: limit));
   }
 
+  /// Turns the native gate-level reader on or off
+  /// ([AppSettings.nativeGateLevelReader]). Off sends every design through
+  /// Yosys, as before the reader existed.
+  Future<void> setNativeGateLevelReader({required bool enabled}) async {
+    await _update(
+      (current) => current.copyWith(nativeGateLevelReader: enabled),
+    );
+  }
+
   /// Persists a new [PanelLayoutState]. Called by `PanelLayoutNotifier`
   /// whenever the user toggles a side panel or drag-resizes a splitter.
   Future<void> updatePanelLayout(PanelLayoutState layout) async {

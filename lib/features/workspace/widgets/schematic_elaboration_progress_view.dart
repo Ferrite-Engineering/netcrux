@@ -7,17 +7,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/netlist_reader_run_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
 /// Shown in place of the schematic while the design is being elaborated by
-/// Yosys, or a pre-built netlist is being read: what is running, the Yosys
-/// pass when it has announced one, the time so far, and **Cancel**.
+/// Yosys, or a pre-built netlist or a gate-level netlist is being read: what
+/// is running, the Yosys pass when it has announced one, the time so far, and
+/// **Cancel**.
 ///
 /// Elaboration of a design of millions of gates takes minutes, and with the
 /// time limit set to No limit it takes as long as it takes, so the user can
-/// always stop it from here. Cancel kills Yosys (or the worker that parses
-/// its document) and leaves the canvas on [SchematicElaborationStoppedView].
+/// always stop it from here. Cancel kills Yosys (or the worker that parses its
+/// document or reads the netlist) and leaves the canvas on
+/// [SchematicElaborationStoppedView].
 class SchematicElaborationProgressView extends ConsumerStatefulWidget {
   /// Creates the progress view.
   const SchematicElaborationProgressView({super.key});
@@ -56,9 +59,17 @@ class _SchematicElaborationProgressViewState
   Widget build(BuildContext context) {
     final l10n = L10N.of(context);
     final theme = Theme.of(context);
-    final reading = ref.watch(
-      currentProjectProvider.select((project) => project.isPrebuiltNetlist),
-    );
+    // A pre-built netlist, and a design the native gate-level reader is
+    // reading, are read; only Yosys elaborates.
+    final reading =
+        ref.watch(
+          currentProjectProvider.select((project) => project.isPrebuiltNetlist),
+        ) ||
+        ref.watch(
+          netlistReaderRunProvider.select(
+            (run) => run?.kind == NetlistReaderKind.native,
+          ),
+        );
     final pass = ref.watch(elaborationProgressProvider);
     final seconds = (_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
     final elapsed = l10n.schematicLayoutElapsed(seconds);
