@@ -313,7 +313,7 @@
   "@elaborationErrorYosysUnavailable": {
     "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
   },
-  "elaborationErrorTimeout": "엘라보레이션이 {seconds}초 후 시간 초과되어 중지되었습니다. 설계가 매우 크거나 Yosys가 멈췄을 수 있습니다. 시간 제한을 늘리거나 최상위 모듈을 단순화하세요.",
+  "elaborationErrorTimeout": "엘라보레이션이 {seconds}초 후 시간 초과되어 중지되었습니다. 설계가 매우 크거나 Yosys가 멈췄을 수 있습니다. 설정 > 엔진에서 Yosys 시간 제한을 늘리거나 최상위 모듈을 단순화하세요.",
   "@elaborationErrorTimeout": {
     "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
     "placeholders": {
@@ -2757,5 +2757,14 @@
       }
     }
   },
-  "settingsLayoutCellLimitNone": "제한 없음"
+  "settingsLayoutCellLimitNone": "제한 없음",
+  "schematicElaborationInProgress": "설계를 엘라보레이션하는 중…",
+  "schematicNetlistReadInProgress": "넷리스트를 읽는 중…",
+  "schematicElaborationStopped": "엘라보레이션을 중지했습니다.",
+  "schematicElaborationRetry": "다시 엘라보레이션",
+  "settingsElaborationTimeLimitLabel": "Yosys 시간 제한",
+  "settingsElaborationTimeLimitDescription": "한 번의 엘라보레이션을 NetCrux가 중지하기까지 실행할 수 있는 시간입니다. 자동은 소스 크기에 비례한 시간, 연장은 그 4배, 제한 없음은 완료되거나 취소를 누를 때까지 실행합니다.",
+  "settingsElaborationTimeLimitAutomatic": "자동",
+  "settingsElaborationTimeLimitExtended": "연장",
+  "settingsElaborationTimeLimitNone": "제한 없음"
 }

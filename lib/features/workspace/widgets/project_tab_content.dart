@@ -37,6 +37,8 @@ import 'package:netcrux/features/viewer/widgets/netcrux_status_bar.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_gesture_handler.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_scrollbars.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
+import 'package:netcrux/features/workspace/widgets/schematic_elaboration_progress_view.dart';
+import 'package:netcrux/features/workspace/widgets/schematic_elaboration_stopped_view.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_error_view.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_layout_deferred_view.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
@@ -322,6 +324,20 @@ class _SchematicCenter extends ConsumerWidget {
     final filterViewMode = ref.watch(coiFilterViewModeProvider);
 
     final canvasKey = ref.watch(schematicCanvasKeyProvider);
+    // While Yosys elaborates (or a netlist is read) there is no scope yet:
+    // say what is running and let the user stop it. A cancelled run settles
+    // on no model for sources that exist; offer to start it again.
+    final netlist = ref.watch(loadedNetlistProvider);
+    if (!netlist.hasError) {
+      if (netlist.isLoading && netlist.value == null) {
+        return const SchematicElaborationProgressView();
+      }
+      if (!netlist.isLoading &&
+          netlist.value == null &&
+          ref.watch(currentProjectProvider).sourceFiles.isNotEmpty) {
+        return const SchematicElaborationStoppedView();
+      }
+    }
     // A scope above the layout limit is not laid out until the user asks: the
     // pipeline returned an empty graph without building anything, and this
     // says why the canvas is empty and what to do about it.

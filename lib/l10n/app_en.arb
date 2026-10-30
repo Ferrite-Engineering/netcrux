@@ -313,7 +313,7 @@
   "@elaborationErrorYosysUnavailable": {
     "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
   },
-  "elaborationErrorTimeout": "Elaboration timed out after {seconds}s and was stopped. The design may be very large, or Yosys may be stuck — raise the timeout or simplify the top module.",
+  "elaborationErrorTimeout": "Elaboration timed out after {seconds}s and was stopped. The design may be very large, or Yosys may be stuck. Raise the Yosys time limit in Settings > Engines, or simplify the top module.",
   "@elaborationErrorTimeout": {
     "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
     "placeholders": {
@@ -3572,5 +3572,41 @@
   "settingsLayoutCellLimitNone": "No limit",
   "@settingsLayoutCellLimitNone": {
     "description": "The segment of the layout limit control in Settings > Engines that lays every scope out when it is opened, whatever its size."
+  },
+  "schematicElaborationInProgress": "Elaborating the design…",
+  "@schematicElaborationInProgress": {
+    "description": "Progress message on the schematic canvas while Yosys elaborates the design's HDL sources, above the Cancel button."
+  },
+  "schematicNetlistReadInProgress": "Reading the netlist…",
+  "@schematicNetlistReadInProgress": {
+    "description": "Progress message on the schematic canvas while a pre-built Yosys JSON netlist is read and parsed, above the Cancel button."
+  },
+  "schematicElaborationStopped": "Elaboration stopped.",
+  "@schematicElaborationStopped": {
+    "description": "Shown on the schematic canvas after the user pressed Cancel during elaboration or while a netlist was being read, in place of the schematic."
+  },
+  "schematicElaborationRetry": "Elaborate again",
+  "@schematicElaborationRetry": {
+    "description": "Button under 'Elaboration stopped.' that starts the elaboration of the same sources again."
+  },
+  "settingsElaborationTimeLimitLabel": "Yosys time limit",
+  "@settingsElaborationTimeLimitLabel": {
+    "description": "Settings > Engines row label for how long one Yosys elaboration may run before NetCrux stops it."
+  },
+  "settingsElaborationTimeLimitDescription": "How long one elaboration may run before NetCrux stops it. Automatic allows time in proportion to the size of the sources; Extended allows four times that; No limit lets it run until it finishes or you press Cancel.",
+  "@settingsElaborationTimeLimitDescription": {
+    "description": "Help text under the Yosys time limit row in Settings > Engines. Automatic, Extended and No limit are the three choices of the control."
+  },
+  "settingsElaborationTimeLimitAutomatic": "Automatic",
+  "@settingsElaborationTimeLimitAutomatic": {
+    "description": "Yosys time limit choice: the budget the size of the sources gives."
+  },
+  "settingsElaborationTimeLimitExtended": "Extended",
+  "@settingsElaborationTimeLimitExtended": {
+    "description": "Yosys time limit choice: four times the automatic budget, for a slow or loaded machine."
+  },
+  "settingsElaborationTimeLimitNone": "No limit",
+  "@settingsElaborationTimeLimitNone": {
+    "description": "Yosys time limit choice: Yosys runs until it finishes or the user cancels."
   }
 }

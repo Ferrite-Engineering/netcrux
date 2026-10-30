@@ -13,6 +13,7 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
+import 'package:netcrux/features/project/providers/elaboration_timeout_policy_provider.dart';
 import 'package:netcrux/features/statistics/providers/elaboration_progress_provider.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
@@ -21,7 +22,6 @@ import 'package:netcrux/services/web/web_json_loader.dart';
 import 'package:netcrux/services/yosys/black_box_port_inference.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_provider.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_service.dart';
-import 'package:netcrux/services/yosys/elaboration_timeout_provider.dart';
 import 'package:netcrux/services/yosys/isolate_netlist_parser.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
@@ -213,6 +213,20 @@ class LoadedNetlist extends _$LoadedNetlist {
     return model;
   }
 
+  /// The cancel signal of the elaboration or netlist read in flight, the
+  /// same one disposing or re-running this notifier fires.
+  Completer<void>? _cancel;
+
+  /// Stops the elaboration in flight, whichever step it is in: Yosys is
+  /// killed (or the worker that parses its document, or a netlist file being
+  /// read), a temp file it wrote is deleted, and the notifier settles on no
+  /// model rather than on an error. The canvas offers to start again.
+  /// Does nothing when nothing is running.
+  void cancelElaboration() {
+    final cancel = _cancel;
+    if (cancel != null && !cancel.isCompleted) cancel.complete();
+  }
+
   void _recordElaborated({required bool cached}) {
     final project = ref.read(currentProjectProvider);
     final language = netcruxDesignLanguageMixFor(
@@ -257,6 +271,7 @@ class LoadedNetlist extends _$LoadedNetlist {
   /// the missing engine it is.
   Future<NetlistModel?> _loadPrebuiltNetlist(NetcruxProject project) async {
     final cancel = Completer<void>();
+    _cancel = cancel;
     ref.onDispose(() {
       if (!cancel.isCompleted) cancel.complete();
     });
@@ -282,6 +297,16 @@ class LoadedNetlist extends _$LoadedNetlist {
   Future<({NetlistModel? model, bool cached})> _elaborate(
     NetcruxProject project,
   ) async {
+    // Disposing this provider (tab close) or re-running it (superseding
+    // elaboration on a project change) fires onDispose, and so does
+    // [cancelElaboration]: either kills the in-flight Yosys and drops its
+    // late reply. Created first, so a cancel during the probe, the cache
+    // lookup or the cell-library stubs stops the run before it starts.
+    final cancel = Completer<void>();
+    _cancel = cancel;
+    ref.onDispose(() {
+      if (!cancel.isCompleted) cancel.complete();
+    });
     final availability = await _requireYosys(ref);
     final runner = ref.read(yosysRunnerProvider);
     final options = _buildRequest(project);
@@ -322,13 +347,6 @@ class LoadedNetlist extends _$LoadedNetlist {
     // from the source byte size; the runner kills Yosys if it overruns.
     final policy = ref.read(elaborationTimeoutPolicyProvider);
     final budget = policy.timeoutFor(await _estimateSize(project));
-    // Disposing this provider (tab close) or re-running it
-    // (superseding elaboration on a project change) fires onDispose,
-    // which kills the stale in-flight Yosys and drops its late reply.
-    final cancel = Completer<void>();
-    ref.onDispose(() {
-      if (!cancel.isCompleted) cancel.complete();
-    });
     // Live pass readout for the statistics strip. Yosys
     // announces each pass on stderr as it starts, so the strip can say
     // "HIERARCHY" rather than an undifferentiated "running" for a long

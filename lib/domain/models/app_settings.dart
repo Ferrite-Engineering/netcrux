@@ -3,6 +3,7 @@
 
 import 'package:crux_settings/crux_settings.dart';
 import 'package:meta/meta.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/panel_layout_state.dart';
 import 'package:netcrux/domain/models/schematic/scope_layout_gate.dart';
@@ -31,6 +32,7 @@ class AppSettings {
     this.panelLayout = const PanelLayoutState(),
     this.autoCheckForUpdates = true,
     this.layoutCellLimit = kDefaultLayoutCellLimit,
+    this.elaborationTimeLimit = ElaborationTimeLimit.automatic,
   });
 
   /// Standard defaults. Composes [CoreSettings.defaults] with empty recent-
@@ -45,7 +47,8 @@ class AppSettings {
       cxpEditorCommand = defaultCxpEditorCommand,
       panelLayout = const PanelLayoutState(),
       autoCheckForUpdates = true,
-      layoutCellLimit = kDefaultLayoutCellLimit;
+      layoutCellLimit = kDefaultLayoutCellLimit,
+      elaborationTimeLimit = ElaborationTimeLimit.automatic;
 
   /// The cross-suite shared settings (theme, locale, plugin governance, …).
   final CoreSettings core;
@@ -109,6 +112,12 @@ class AppSettings {
   /// `scopeLayoutGateProvider`.
   final int layoutCellLimit;
 
+  /// How long one Yosys elaboration may run before NetCrux stops it: the
+  /// budget the size of the sources gives, four times that, or no limit.
+  /// Surfaced in Settings, Engines and read by
+  /// `elaborationTimeoutPolicyProvider`.
+  final ElaborationTimeLimit elaborationTimeLimit;
+
   /// Forwarder for [CoreSettings.restoreTabsOnLaunch] — whether the persisted
   /// `workspace.json` is rehydrated at launch.
   ///
@@ -144,6 +153,7 @@ class AppSettings {
     PanelLayoutState? panelLayout,
     bool? autoCheckForUpdates,
     int? layoutCellLimit,
+    ElaborationTimeLimit? elaborationTimeLimit,
   }) {
     return AppSettings(
       core: core ?? this.core,
@@ -157,6 +167,7 @@ class AppSettings {
       panelLayout: panelLayout ?? this.panelLayout,
       autoCheckForUpdates: autoCheckForUpdates ?? this.autoCheckForUpdates,
       layoutCellLimit: layoutCellLimit ?? this.layoutCellLimit,
+      elaborationTimeLimit: elaborationTimeLimit ?? this.elaborationTimeLimit,
     );
   }
 
@@ -171,6 +182,7 @@ class AppSettings {
     if (other.panelLayout != panelLayout) return false;
     if (other.autoCheckForUpdates != autoCheckForUpdates) return false;
     if (other.layoutCellLimit != layoutCellLimit) return false;
+    if (other.elaborationTimeLimit != elaborationTimeLimit) return false;
     if (!_listEquals(other.recentProjectPaths, recentProjectPaths)) {
       return false;
     }
@@ -195,6 +207,7 @@ class AppSettings {
     panelLayout,
     autoCheckForUpdates,
     layoutCellLimit,
+    elaborationTimeLimit,
   );
 
   static bool _listEquals<T>(List<T> a, List<T> b) {

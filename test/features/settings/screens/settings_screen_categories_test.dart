@@ -7,6 +7,7 @@ import 'package:crux_settings/crux_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
@@ -151,6 +152,48 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Engines → the Yosys time limit offers Automatic, Extended and '
+      'No limit, and a choice is saved', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final container = await _pump(tester);
+    final l10n = await l10nFor(const Locale('en'));
+
+    await _openCategory(tester, l10n.settingsEnginesSection);
+    final control = tester.widget<CruxSegmentedControl<ElaborationTimeLimit>>(
+      find.byType(CruxSegmentedControl<ElaborationTimeLimit>),
+    );
+    expect(control.segments.map((s) => s.value), ElaborationTimeLimit.values);
+    expect(control.segments.map((s) => s.label), [
+      l10n.settingsElaborationTimeLimitAutomatic,
+      l10n.settingsElaborationTimeLimitExtended,
+      l10n.settingsElaborationTimeLimitNone,
+    ]);
+    expect(control.selected, ElaborationTimeLimit.automatic);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CruxSegmentedControl<ElaborationTimeLimit>),
+        matching: find.text(l10n.settingsElaborationTimeLimitNone),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      _settings(container).elaborationTimeLimit,
+      ElaborationTimeLimit.none,
+    );
+
+    await tester.tap(find.text(l10n.settingsElaborationTimeLimitExtended));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      _settings(container).elaborationTimeLimit,
+      ElaborationTimeLimit.extended,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Engines → the layout limit offers round numbers and No limit, '
       'and a choice is saved', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1000, 800));
@@ -173,7 +216,12 @@ void main() {
     expect(control.selected, 40000);
     expect(_settings(container).layoutCellLimit, 40000);
 
-    await tester.tap(find.text(l10n.settingsLayoutCellLimitNone));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CruxSegmentedControl<int>),
+        matching: find.text(l10n.settingsLayoutCellLimitNone),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(_settings(container).layoutCellLimit, 0);

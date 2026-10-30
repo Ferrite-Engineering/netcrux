@@ -313,7 +313,7 @@
   "@elaborationErrorYosysUnavailable": {
     "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
   },
-  "elaborationErrorTimeout": "エラボレーションは {seconds} 秒でタイムアウトし、停止されました。設計が非常に大きいか、Yosys が停止している可能性があります。タイムアウトを延長するか、トップモジュールを簡略化してください。",
+  "elaborationErrorTimeout": "エラボレーションは {seconds} 秒でタイムアウトし、停止されました。設計が非常に大きいか、Yosys が停止している可能性があります。設定 > エンジンで Yosys の制限時間を延長するか、トップモジュールを簡略化してください。",
   "@elaborationErrorTimeout": {
     "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
     "placeholders": {
@@ -2757,5 +2757,14 @@
       }
     }
   },
-  "settingsLayoutCellLimitNone": "制限なし"
+  "settingsLayoutCellLimitNone": "制限なし",
+  "schematicElaborationInProgress": "設計をエラボレーション中…",
+  "schematicNetlistReadInProgress": "ネットリストを読み込み中…",
+  "schematicElaborationStopped": "エラボレーションを停止しました。",
+  "schematicElaborationRetry": "再エラボレート",
+  "settingsElaborationTimeLimitLabel": "Yosys の制限時間",
+  "settingsElaborationTimeLimitDescription": "1 回のエラボレーションを NetCrux が停止するまでの実行時間です。自動はソースのサイズに比例した時間、延長はその 4 倍、制限なしは完了するかキャンセルを押すまで実行します。",
+  "settingsElaborationTimeLimitAutomatic": "自動",
+  "settingsElaborationTimeLimitExtended": "延長",
+  "settingsElaborationTimeLimitNone": "制限なし"
 }

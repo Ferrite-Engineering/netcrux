@@ -313,7 +313,7 @@
   "@elaborationErrorYosysUnavailable": {
     "description": "Schematic error-view body shown when the Yosys binary is missing or not runnable."
   },
-  "elaborationErrorTimeout": "详尽展开在 {seconds} 秒后超时并已停止。设计可能非常庞大，或 Yosys 可能已卡住——请调高超时时间或简化顶层模块。",
+  "elaborationErrorTimeout": "详尽展开在 {seconds} 秒后超时并已停止。设计可能非常庞大，或 Yosys 可能已卡住。请在设置 > 引擎中调高 Yosys 时间限制，或简化顶层模块。",
   "@elaborationErrorTimeout": {
     "description": "Schematic error-view body shown when the runner killed Yosys after its time budget elapsed. {seconds} is the elapsed budget in whole seconds.",
     "placeholders": {
@@ -2757,5 +2757,14 @@
       }
     }
   },
-  "settingsLayoutCellLimitNone": "不限制"
+  "settingsLayoutCellLimitNone": "不限制",
+  "schematicElaborationInProgress": "正在对设计进行详尽展开…",
+  "schematicNetlistReadInProgress": "正在读取网表…",
+  "schematicElaborationStopped": "详尽展开已停止。",
+  "schematicElaborationRetry": "重新详尽展开",
+  "settingsElaborationTimeLimitLabel": "Yosys 时间限制",
+  "settingsElaborationTimeLimitDescription": "单次详尽展开在 NetCrux 将其停止前可运行的时间。自动按源文件大小成比例给出时间；延长为其四倍；不限制则一直运行到完成或点击取消。",
+  "settingsElaborationTimeLimitAutomatic": "自动",
+  "settingsElaborationTimeLimitExtended": "延长",
+  "settingsElaborationTimeLimitNone": "不限制"
 }

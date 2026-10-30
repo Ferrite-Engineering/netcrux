@@ -26,7 +26,7 @@ class YosysTimeoutException implements Exception {
   String get message =>
       'Yosys elaboration timed out after ${budget.inSeconds}s and was '
       'terminated. The design may be pathologically large or Yosys may be '
-      'stuck; raise the timeout or simplify the top module.';
+      'stuck; raise the Yosys time limit in Settings > Engines or simplify the top module.';
 
   @override
   String toString() => 'YosysTimeoutException: $message';

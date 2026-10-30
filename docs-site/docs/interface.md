@@ -82,7 +82,7 @@ The **status bar** along the bottom of each tab shows the first source file, the
 - **General** — **Auto-reload on source change** (**Prompt me** / **Reload automatically** / **Don't reload**; from NetCrux 1.2 **Prompt** / **Auto** / **Off**), **Restore tabs on launch**, **Automatically check for updates**, and, in release builds, **Enable diagnostics surfaces**.
 - **Appearance** — the **Language** picker (English, 中文, 日本語, 한국어), color presets, per-token color overrides and theme packs. See [Appearance & themes](appearance-and-themes.md).
 - **Privacy** — **Send anonymous usage statistics**. See [Updates, issues & privacy](user-guide/updates-and-feedback.md#usage-statistics).
-- **Engines** — the Yosys binary path, and from NetCrux 1.2 **Largest scope laid out automatically**, the number of cells above which a scope waits for **Lay out anyway** instead of laying out when it opens (see [The layout engine](getting-started.md#layout-engine)).
+- **Engines** — the Yosys binary path, from NetCrux 1.2 the **Yosys time limit** (**Automatic**, **Extended** or **No limit**; see [The Yosys time limit](getting-started.md#yosys-time-limit)), and from NetCrux 1.2 **Largest scope laid out automatically**, the number of cells above which a scope waits for **Lay out anyway** instead of laying out when it opens (see [The layout engine](getting-started.md#layout-engine)).
 - **Editors** — **Editor command (open source)**, the command NetCrux runs when a cross-probe peer asks it to open a source location.
 - **CXP Cross-Probe** — the cross-probe server. See [Cross-probe & the suite](integrations.md#cxp-settings).
 - **Keyboard Shortcuts** — view, edit, reset, import and export key bindings. See [Keyboard & mouse reference](keyboard-mouse.md#customizing).

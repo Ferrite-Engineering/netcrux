@@ -1,54 +1,53 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/interfaces/elaboration_timeout_policy.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'elaboration_timeout_provider.g.dart';
-
-/// Open-core default [ElaborationTimeoutPolicy]: a size-aware budget with a
-/// 30 s floor and a 10 min cap.
+/// Open-core default [ElaborationTimeoutPolicy]: a budget that scales with the
+/// size of the sources, between a 30 s floor and a 12 h ceiling, times the
+/// factor of the user's [ElaborationTimeLimit].
 ///
 /// Pre-elaboration we only know the source byte size, so the budget scales
-/// linearly with it at [_bytesPerSecond] (a deliberately generous read +
-/// elaborate throughput floor — well below real Yosys speed, so honest
-/// designs never trip it; a wedged Yosys still gets killed). The floor
-/// keeps tiny designs from being killed on a slow cold start; the cap
-/// bounds the worst case so even a 1 GB include can't wait forever.
+/// linearly with it at [bytesPerSecond]: a throughput well below what Yosys
+/// reaches, so a design that is merely large is never stopped, while a
+/// wedged Yosys still is. Measured on a fast desktop, Yosys read and
+/// elaborated a 660 MB structural netlist of five million gates in 403 s
+/// (1.6 MB/s); at 256 KB/s that source is given 44 minutes, six and a half
+/// times as long, which leaves room for a machine several times slower. The
+/// floor keeps tiny designs from being killed on a slow cold start. The
+/// ceiling is a sanity bound far above any design NetCrux is asked to open;
+/// the user can remove the limit altogether, and Cancel always stops a run.
 class DefaultElaborationTimeoutPolicy implements ElaborationTimeoutPolicy {
-  /// Creates the default policy.
-  const DefaultElaborationTimeoutPolicy();
+  /// Creates the default policy for the user's [limit].
+  const DefaultElaborationTimeoutPolicy({
+    this.limit = ElaborationTimeLimit.automatic,
+  });
 
-  /// Minimum budget — covers subprocess startup + a small design on a cold,
+  /// The user's choice: the automatic budget, a multiple of it, or none.
+  final ElaborationTimeLimit limit;
+
+  /// Minimum budget: covers subprocess startup and a small design on a cold,
   /// loaded CI box.
   static const Duration floor = Duration(seconds: 30);
 
-  /// Maximum budget — the hard ceiling on any single elaboration.
-  static const Duration cap = Duration(minutes: 10);
+  /// Largest automatic budget. A source this large would be about 11 GB.
+  static const Duration ceiling = Duration(hours: 12);
 
-  /// Throughput floor used to scale the budget by input size. Conservative
-  /// on purpose: ~512 KB/s means even a slow box comfortably beats it, so
-  /// the budget only bites a genuinely stuck process.
-  static const int _bytesPerSecond = 512 * 1024;
+  /// Throughput the budget is computed from.
+  static const int bytesPerSecond = 256 * 1024;
 
   @override
   Duration timeoutFor(ElaborationSizeEstimate estimate) {
-    final scaledMs = estimate.totalSourceBytes / _bytesPerSecond * 1000;
-    final scaled = Duration(milliseconds: scaledMs.round());
-    if (scaled < floor) return floor;
-    if (scaled > cap) return cap;
-    return scaled;
+    final scaledMs = estimate.totalSourceBytes / bytesPerSecond * 1000;
+    var base = Duration(milliseconds: scaledMs.round());
+    if (base < floor) base = floor;
+    if (base > ceiling) base = ceiling;
+    // A factor of 0 is "no limit"; the budget is still finite, and
+    // [killOnTimeout] says it is not enforced.
+    return base * (limit.factor == 0 ? 1 : limit.factor);
   }
 
   @override
-  bool get killOnTimeout => true;
+  bool get killOnTimeout => limit != ElaborationTimeLimit.none;
 }
-
-/// The [ElaborationTimeoutPolicy] consulted by the elaboration pipeline
-/// before each Yosys run. Open-core registers [DefaultElaborationTimeoutPolicy];
-/// a Pro tier may override this in `lib/overrides.dart` to expose a
-/// user-configurable per-design budget. Bounding elaboration needs
-/// no Pro override — the default policy is sufficient on its own.
-@Riverpod(keepAlive: true)
-ElaborationTimeoutPolicy elaborationTimeoutPolicy(Ref ref) =>
-    const DefaultElaborationTimeoutPolicy();

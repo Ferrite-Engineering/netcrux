@@ -3,6 +3,7 @@
 
 import 'package:crux_settings/crux_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 
@@ -44,6 +45,21 @@ void main() {
       expect(raised, isNot(settings));
       expect(raised.hashCode, isNot(settings.hashCode));
       expect(raised.copyWith(layoutCellLimit: 40000), settings);
+    });
+
+    test('the Yosys time limit defaults to automatic and follows copyWith', () {
+      const settings = AppSettings.defaults();
+      expect(settings.elaborationTimeLimit, ElaborationTimeLimit.automatic);
+      final none = settings.copyWith(
+        elaborationTimeLimit: ElaborationTimeLimit.none,
+      );
+      expect(none.elaborationTimeLimit, ElaborationTimeLimit.none);
+      expect(none, isNot(settings));
+      expect(none.hashCode, isNot(settings.hashCode));
+      expect(
+        none.copyWith(elaborationTimeLimit: ElaborationTimeLimit.automatic),
+        settings,
+      );
     });
 
     test('copyWith preserves unspecified fields', () {

@@ -20,6 +20,7 @@ import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/settings/providers/extra_settings_categories_provider.dart';
 import 'package:netcrux/features/settings/widgets/color_theme_section.dart';
+import 'package:netcrux/features/settings/widgets/elaboration_time_limit_tile.dart';
 import 'package:netcrux/features/settings/widgets/layout_cell_limit_tile.dart';
 import 'package:netcrux/features/settings/widgets/settings_editors_section.dart';
 import 'package:netcrux/features/settings/widgets/shortcuts_settings_section.dart';
@@ -184,6 +185,7 @@ class _SettingsContent extends ConsumerWidget {
             _YosysPathModeTile(currentMode: settings.yosysPathMode),
             if (settings.yosysPathMode == YosysPathMode.custom)
               _YosysCustomPathTile(currentPath: settings.yosysCustomPath),
+            ElaborationTimeLimitTile(current: settings.elaborationTimeLimit),
             LayoutCellLimitTile(currentLimit: settings.layoutCellLimit),
           ],
         ),

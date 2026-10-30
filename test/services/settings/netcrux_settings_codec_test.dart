@@ -3,6 +3,7 @@
 
 import 'package:crux_settings/crux_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/panel_layout_state.dart';
@@ -104,6 +105,29 @@ void main() {
 
       await prefs.setInt('netcrux.layoutCellLimit', -5);
       expect((await codec.load(prefs)).layoutCellLimit, 40000);
+    });
+
+    test('round-trips the Yosys time limit', () async {
+      for (final limit in ElaborationTimeLimit.values) {
+        await codec.save(
+          prefs,
+          const AppSettings.defaults().copyWith(elaborationTimeLimit: limit),
+        );
+        expect((await codec.load(prefs)).elaborationTimeLimit, limit);
+      }
+    });
+
+    test('a missing or unknown Yosys time limit loads as automatic', () async {
+      await prefs.remove('netcrux.elaborationTimeLimit');
+      expect(
+        (await codec.load(prefs)).elaborationTimeLimit,
+        ElaborationTimeLimit.automatic,
+      );
+      await prefs.setString('netcrux.elaborationTimeLimit', 'forever');
+      expect(
+        (await codec.load(prefs)).elaborationTimeLimit,
+        ElaborationTimeLimit.automatic,
+      );
     });
 
     test('round-trips Yosys path knobs', () async {

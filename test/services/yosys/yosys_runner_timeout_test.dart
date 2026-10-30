@@ -4,15 +4,23 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:crux_settings/crux_settings.dart';
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
+import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
+import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 import 'package:netcrux/services/yosys/yosys_runner_provider.dart';
 import 'package:netcrux/services/yosys/yosys_timeout_exception.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../helpers/telemetry_test_overrides.dart';
 
 /// A [ProcessRunner] that reports a fixed [ProcessTermination] without
@@ -48,9 +56,13 @@ class _KilledProcessRunner implements ProcessRunner {
   }
 }
 
-ProviderContainer _container(_KilledProcessRunner processRunner) {
+ProviderContainer _container(
+  ProcessRunner processRunner, {
+  List<Override> extra = const <Override>[],
+}) {
   final container = ProviderContainer(
     overrides: [
+      ...extra,
       ...netcruxTelemetryTestOverrides(),
       // Yosys is "available" so build() proceeds to runner.run.
       yosysAvailabilityProvider.overrideWith(
@@ -95,6 +107,35 @@ Future<Object> _firstError(ProviderContainer container) {
       .whenComplete(sub.close);
 }
 
+/// A Yosys that runs until it is told to stop: finishes as cancelled when the
+/// cancel signal fires, as a real killed process would.
+class _HangingProcessRunner implements ProcessRunner {
+  Duration? capturedTimeout;
+  final Completer<void> started = Completer<void>();
+
+  @override
+  Future<ProcessRunResult> run(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    Map<String, String>? environment,
+    Duration? timeout,
+    Future<void>? cancelSignal,
+    String? stdoutFilePath,
+    void Function(String line)? onStderrLine,
+  }) async {
+    capturedTimeout = timeout;
+    started.complete();
+    await cancelSignal;
+    return const ProcessRunResult(
+      exitCode: -15,
+      stdout: '',
+      stderr: '',
+      termination: ProcessTermination.cancelled,
+    );
+  }
+}
+
 void main() {
   group('elaboration timeout wiring', () {
     test(
@@ -122,6 +163,58 @@ void main() {
         expect(runner.capturedTimeout, greaterThan(Duration.zero));
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test('the "none" time limit reaches the runner as no timeout', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'netcrux.elaborationTimeLimit': 'none',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final runner = _KilledProcessRunner(ProcessTermination.cancelled);
+      final container = _container(
+        runner,
+        extra: [
+          settingsServiceProvider.overrideWithValue(
+            SettingsService<AppSettings>(
+              const NetcruxSettingsCodec(),
+              prefsOverride: prefs,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(appSettingsProvider.future);
+      await container.read(loadedNetlistProvider.future);
+      expect(runner.capturedTimeout, isNull);
+      expect(
+        container.read(appSettingsProvider).value!.elaborationTimeLimit,
+        ElaborationTimeLimit.none,
+      );
+    });
+
+    test(
+      'Cancel stops a running elaboration and leaves no model, no error',
+      () async {
+        final runner = _HangingProcessRunner();
+        final container = _container(runner);
+        addTearDown(container.dispose);
+        final sub = container.listen<AsyncValue<NetlistModel?>>(
+          loadedNetlistProvider,
+          (_, _) {},
+        );
+        addTearDown(sub.close);
+        final loading = container.read(loadedNetlistProvider.future);
+        await runner.started.future.timeout(const Duration(seconds: 5));
+        expect(container.read(loadedNetlistProvider).isLoading, isTrue);
+
+        container.read(loadedNetlistProvider.notifier).cancelElaboration();
+
+        expect(await loading.timeout(const Duration(seconds: 5)), isNull);
+        final state = container.read(loadedNetlistProvider);
+        expect(state.hasError, isFalse);
+        expect(state.isLoading, isFalse);
+        expect(state.value, isNull);
+      },
     );
 
     test(

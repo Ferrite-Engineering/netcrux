@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_settings/crux_settings.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/panel_layout_state.dart';
@@ -33,6 +34,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
   static const _kCxpEditorCommand = 'netcrux.cxpEditorCommand';
   static const _kAutoCheckForUpdates = 'netcrux.autoCheckForUpdates';
   static const _kLayoutCellLimit = 'netcrux.layoutCellLimit';
+  static const _kElaborationTimeLimit = 'netcrux.elaborationTimeLimit';
   static const _kPanelHierarchyVisible =
       'netcrux.panelLayout.hierarchyTreeVisible';
   static const _kPanelInspectorVisible = 'netcrux.panelLayout.inspectorVisible';
@@ -82,6 +84,9 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       panelLayout: panelLayout,
       autoCheckForUpdates: autoCheckForUpdates,
       layoutCellLimit: layoutCellLimit,
+      elaborationTimeLimit: _decodeTimeLimit(
+        prefs.getString(_kElaborationTimeLimit),
+      ),
     );
   }
 
@@ -106,6 +111,10 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       prefs.setString(_kCxpEditorCommand, settings.cxpEditorCommand),
       prefs.setBool(_kAutoCheckForUpdates, settings.autoCheckForUpdates),
       prefs.setInt(_kLayoutCellLimit, settings.layoutCellLimit),
+      prefs.setString(
+        _kElaborationTimeLimit,
+        settings.elaborationTimeLimit.name,
+      ),
     ]);
     await _writePanelLayout(prefs, settings.panelLayout);
   }
@@ -161,6 +170,14 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
     double? value,
   ) {
     return value == null ? prefs.remove(key) : prefs.setDouble(key, value);
+  }
+
+  /// An unknown name (a later build's choice) reads as the automatic budget.
+  ElaborationTimeLimit _decodeTimeLimit(String? name) {
+    for (final limit in ElaborationTimeLimit.values) {
+      if (limit.name == name) return limit;
+    }
+    return ElaborationTimeLimit.automatic;
   }
 
   YosysPathMode _decodeYosysMode(String? name) {

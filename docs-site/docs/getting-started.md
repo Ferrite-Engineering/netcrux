@@ -98,6 +98,12 @@ These choose Yosys only. GHDL always resolves from `PATH`.
 
     `Settings → Engines` also offers **Bundled**. No Yosys or GHDL binary ships inside the NetCrux download, so this mode finds a binary only when the `NETCRUX_BUNDLED_BIN_DIR` environment variable points at a directory holding `<platform>/yosys` and `<platform>/ghdl` (`<platform>` is `linux-x86_64`, `macos-universal` or `windows-x86_64`), and otherwise falls back to the `PATH` lookup.
 
+### The Yosys time limit {#yosys-time-limit}
+
+NetCrux stops a Yosys run that takes too long, so a Yosys that has hung does not hold a tab forever. The time allowed grows with the size of the source files: 30 seconds at least, then about four minutes for every 64 MB of source. A five-million-gate structural netlist is 660 MB of Verilog; Yosys read and elaborated it in under seven minutes on a fast desktop, and NetCrux allows it 44 minutes, so a machine several times slower still finishes. Before NetCrux 1.2 the time allowed never exceeded ten minutes, whatever the size of the sources, which a multi-million-gate design on a slower machine could pass.
+
+`Settings → Engines → Yosys time limit` changes it for the next elaboration: **Automatic** (the default), **Extended** (four times the automatic time) or **No limit** (Yosys runs until it finishes or you stop it). While Yosys runs, or while a large netlist file is being read, the canvas shows what is running, the Yosys pass and the time so far, with a **Cancel** button. **Cancel** stops Yosys, shows **Elaboration stopped.** and offers **Elaborate again**.
+
 ## First launch {#first-launch}
 
 With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, the version, your **Recent projects** and **Recent source files** (and recent workspaces, once you have saved one), a **Clear recent** button, and the **Open Project…**, **Open Source Files…** and **Open Workspace…** buttons. From NetCrux 1.2 the second list is called **Recent files**, each recent list has its own **Clear** button and a remove button on every entry, a file that has moved is greyed as **File not found** and is dropped when you click it, and `File → Clear Recent Projects` clears the projects list from the menu or the command palette. You do not need a design loaded to explore the app — the menu bar, toolbar, command palette and Settings all work from the welcome screen.

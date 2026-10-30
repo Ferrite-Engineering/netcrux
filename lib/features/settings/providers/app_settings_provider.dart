@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_settings/crux_settings.dart';
+import 'package:netcrux/domain/enums/elaboration_time_limit.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/panel_layout_state.dart';
@@ -173,6 +174,13 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
     await _update(
       (current) => current.copyWith(layoutCellLimit: limit < 0 ? 0 : limit),
     );
+  }
+
+  /// Sets how long one Yosys elaboration may run (see
+  /// [AppSettings.elaborationTimeLimit]). Takes effect on the next
+  /// elaboration.
+  Future<void> setElaborationTimeLimit(ElaborationTimeLimit limit) async {
+    await _update((current) => current.copyWith(elaborationTimeLimit: limit));
   }
 
   /// Persists a new [PanelLayoutState]. Called by `PanelLayoutNotifier`

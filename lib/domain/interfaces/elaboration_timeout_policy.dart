@@ -34,10 +34,10 @@ class ElaborationSizeEstimate {
 ///
 /// The open-core default ([DefaultElaborationTimeoutPolicy] in
 /// `services/yosys/elaboration_timeout_provider.dart`) is a size-aware
-/// budget with a floor and a cap; it is sufficient on its own to close
-/// the "hung Yosys blocks the elaboration future forever" gap with no Pro
-/// override required. A Pro tier may override the provider to expose a
-/// user-configurable per-design budget.
+/// budget with a floor and a ceiling, scaled or removed by the user's choice
+/// in Settings; it is sufficient on its own to close the "hung Yosys blocks
+/// the elaboration future forever" gap with no Pro override required. A Pro
+/// tier may override the provider.
 ///
 /// Zero Flutter imports by design — this is a pure domain seam.
 abstract interface class ElaborationTimeoutPolicy {
