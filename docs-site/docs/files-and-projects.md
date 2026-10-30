@@ -30,7 +30,7 @@ From NetCrux 1.2, a netlist read this way gets the same pin direction inference 
 
 ## ROHD netlists {#rohd}
 
-[ROHD](https://github.com/intel/rohd), the hardware framework written in Dart, exports a netlist as a superset of Yosys JSON. From NetCrux 1.2 such a file opens like any other netlist (`File → Open Netlist JSON…`, the command line, a design manifest, or the [web viewer](web-mode.md)), with no Yosys run and no Dart toolchain, and what ROHD adds to the format is used rather than skipped. Every route reads it the same way, including the chunked file reader and the text reader the browser uses.
+[ROHD](https://github.com/intel/rohd), the hardware framework written in Dart, exports a netlist as a superset of Yosys JSON. From NetCrux 1.2 such a file opens like any other netlist (`File → Open Netlist JSON…`, the command line, a design manifest, or the [web viewer](web-mode.md)), with no Yosys run and no Dart toolchain, and what ROHD adds to the format is used rather than skipped. Every route reads it the same way, including the chunked file reader and the text reader the browser uses. [ROHD + EDACrux](rohd-and-edacrux.md) is the guide for ROHD users, from the export to the other EDACrux apps.
 
 **Exporting from ROHD.** Build the design, then write the JSON with `NetlistService`. Turn source tracing on to record where in your Dart code each signal and instance was created, and activate the tracer before the design is constructed:
 

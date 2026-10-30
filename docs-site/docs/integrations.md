@@ -94,6 +94,10 @@ From NetCrux 1.1, sending is free in every edition, like receiving: the send but
 
 You can also cross-probe from the schematic itself: right-click an element and choose **Cross-probe to *peer*** for any connected peer, for example **Cross-probe to WaveCrux** (the entry reads **Cross-probe (no peers)** when none are connected). From NetCrux 1.1 this is free in every edition of the downloaded app too. The Pro <span class="tier tier-pro">Pro</span> analysis panels also carry an **Open in WaveCrux** button on their headers, so you can send the selected crossing or element straight to a waveform.
 
+!!! note "Cross-probe from ROHD"
+
+    From NetCrux 1.2, a ROHD netlist opens in NetCrux, and its elements cross-probe with a ROHD waveform by hierarchical path like any other design. See [ROHD + EDACrux](rohd-and-edacrux.md#cross-probe).
+
 !!! note "Source locations over CXP"
 
     CXP also carries an open-source request: a tool can ask NetCrux to open a given `file:line`, which NetCrux hands to your editor command. That is how a cross-probe from another tool can land you directly in the RTL.

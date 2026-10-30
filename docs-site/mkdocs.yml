@@ -82,6 +82,7 @@ nav:
       - Slack overlay: slack-overlay.md
       - CXP integration reference: integrations/cxp.md
       - Use in VS Code: vscode.md
+      - ROHD + EDACrux, from 1.2: rohd-and-edacrux.md
   - Administration:
       - Org-wide configuration: administration.md
       - Policy file reference: https://edacrux.app/policy-reference
