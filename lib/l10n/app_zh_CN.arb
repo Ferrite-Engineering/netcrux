@@ -2718,5 +2718,44 @@
   "annotationCalloutsShownAnnouncement": "已显示注释标注框",
   "annotationCalloutsHiddenAnnouncement": "已隐藏注释标注框",
   "annotationCalloutSemantics": "注释 {number}：{heading}，位于{kind} {element}",
-  "annotationCalloutFoldTooltip": "折叠为编号圆点"
+  "annotationCalloutFoldTooltip": "折叠为编号圆点",
+  "schematicLayoutDeferredTitle": "此作用域过大，无法整体布局",
+  "schematicLayoutDeferredBody": "{scope} 含有 {cells} 个单元，超过 NetCrux 无需确认即可布局的 {limit} 个。如此大的作用域可能需要数分钟乃至数 GB 内存才能绘出。",
+  "@schematicLayoutDeferredBody": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "limit": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "schematicLayoutDeferredCone": "要查看其中一部分，请在层次结构中选择一个单元，或用搜索找到一个，然后选择视图 > 锥视图，查看驱动它的部分。",
+  "schematicLayoutDeferredAction": "仍然布局",
+  "schematicLayoutDeferredEstimate": "整个作用域预计需要约 {memory} 内存。上限可在设置 > 引擎中更改。",
+  "@schematicLayoutDeferredEstimate": {
+    "placeholders": {
+      "memory": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLayoutCellLimitLabel": "自动布局的最大作用域",
+  "settingsLayoutCellLimitDescription": "单元数超过此值的作用域在打开时不会自动布局，而是等待选择仍然布局；锥视图不受影响。",
+  "settingsLayoutCellLimitChoice": "{count}",
+  "@settingsLayoutCellLimitChoice": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsLayoutCellLimitNone": "不限制"
 }

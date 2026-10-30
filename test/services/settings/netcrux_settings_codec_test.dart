@@ -87,6 +87,25 @@ void main() {
       expect((await codec.load(prefs)).autoCheckForUpdates, isTrue);
     });
 
+    test('round-trips the layout limit, including no limit', () async {
+      final seeded = const AppSettings.defaults().copyWith(
+        layoutCellLimit: 80000,
+      );
+      await codec.save(prefs, seeded);
+      expect((await codec.load(prefs)).layoutCellLimit, 80000);
+
+      await codec.save(prefs, seeded.copyWith(layoutCellLimit: 0));
+      expect((await codec.load(prefs)).layoutCellLimit, 0);
+    });
+
+    test('a missing or negative layout limit loads as the default', () async {
+      await prefs.remove('netcrux.layoutCellLimit');
+      expect((await codec.load(prefs)).layoutCellLimit, 40000);
+
+      await prefs.setInt('netcrux.layoutCellLimit', -5);
+      expect((await codec.load(prefs)).layoutCellLimit, 40000);
+    });
+
     test('round-trips Yosys path knobs', () async {
       final seeded = const AppSettings.defaults().copyWith(
         yosysPathMode: YosysPathMode.custom,

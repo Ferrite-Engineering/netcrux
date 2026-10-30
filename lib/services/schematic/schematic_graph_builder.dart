@@ -84,14 +84,27 @@ class SchematicGraphBuilder {
   /// netlist, and search still selects it; the Inspector describes it from
   /// here, since the graph has no entry for it.
   SchematicCell? cellOf(NetlistModel model, Module module, String cellId) {
-    if (!module.cells.containsKey(cellId)) return null;
-    final patched = withDeclaredCellPorts(model, module);
-    return _schematicCell(
-      patched.cells[cellId]!,
-      drivenNetIds(patched),
-      initValuesByNetId(patched),
+    final cell = module.cells[cellId];
+    if (cell == null) return null;
+    // Only this cell needs its declared ports added, so the module is not
+    // copied to patch the others.
+    final patched = withDeclaredCellPorts(
+      model,
+      module.copyWith(cells: <String, Cell>{cellId: cell}),
+    ).cells[cellId]!;
+    // The tables below walk every cell of the module, and the Inspector asks
+    // for one cell after another in the same scope: a scope of hundreds of
+    // thousands of cells walked on every selection stalls the window. They
+    // are kept for as long as the module is.
+    final tables = _cellTables[module] ??= (
+      driven: drivenNetIds(module),
+      init: initValuesByNetId(module),
     );
+    return _schematicCell(patched, tables.driven, tables.init);
   }
+
+  static final Expando<({Set<int> driven, Map<int, String> init})> _cellTables =
+      Expando<({Set<int> driven, Map<int, String> init})>('cellOfTables');
 
   SchematicCell _schematicCell(
     Cell cell,

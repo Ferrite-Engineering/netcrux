@@ -166,6 +166,15 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
     );
   }
 
+  /// Sets the largest scope, in cells, that is laid out without asking
+  /// (see [AppSettings.layoutCellLimit]). `0` removes the limit; a negative
+  /// value is stored as `0`.
+  Future<void> setLayoutCellLimit(int limit) async {
+    await _update(
+      (current) => current.copyWith(layoutCellLimit: limit < 0 ? 0 : limit),
+    );
+  }
+
   /// Persists a new [PanelLayoutState]. Called by `PanelLayoutNotifier`
   /// whenever the user toggles a side panel or drag-resizes a splitter.
   Future<void> updatePanelLayout(PanelLayoutState layout) async {

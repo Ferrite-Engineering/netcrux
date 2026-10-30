@@ -65,6 +65,13 @@ While a scope lays out, the canvas shows how many cells it has, a progress bar, 
 
 Before NetCrux 1.2 a layout had a time limit, from two minutes up to twenty depending on the scope's size, after which it reported "layout timed out". From NetCrux 1.2 there is no time limit: a large scope on a slow machine finishes however long it takes, and you decide when to stop waiting.
 
+From NetCrux 1.2 a scope with more than 40,000 cells is not laid out when you open it, enter it or restore it. A flat post-synthesis scope of that size can take minutes and many gigabytes of memory to lay out whole, and a netlist of millions of gates has scopes of hundreds of thousands of cells. The canvas instead says how many cells the scope has and that it is too large to lay out whole, and offers two ways forward:
+
+- Select a cell in the Hierarchy, or find one with [Search Design](navigating.md#search), then choose `View > Cone View` to see what drives it. A [cone view](tracing.md#cone-view) lays out only that neighbourhood, so it stays quick however large the scope is.
+- Choose **Lay out anyway**. The button carries an estimate of the memory the whole layout needs (about 130 KB for every cell) and starts the usual layout, with its progress bar and **Cancel**.
+
+The Hierarchy, Search, the Inspector and cone views all work on a scope that is waiting. Change the number under `Settings → Engines → Largest scope laid out automatically`: 20,000, 40,000, 80,000, 160,000 cells, or **No limit** to lay out every scope when it opens. What a layout costs depends on how the netlist is wired as well as on its size. On generated gate-level netlists, 21,000 cells took between 1 and 5 seconds and up to 1.9 GB, 42,000 cells between 2 and 16 seconds and up to 4.3 GB, and 84,000 cells between 5 and 60 seconds and up to 11 GB.
+
 ### Install Yosys {#install-yosys}
 
 **NetCrux does not ship Yosys.** Install it yourself and make sure `yosys` (`yosys.exe` on Windows) is on your `PATH`.

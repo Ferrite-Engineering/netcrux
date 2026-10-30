@@ -2718,5 +2718,44 @@
   "annotationCalloutsShownAnnouncement": "注釈の吹き出しを表示しました",
   "annotationCalloutsHiddenAnnouncement": "注釈の吹き出しを非表示にしました",
   "annotationCalloutSemantics": "注釈 {number}: {heading}、{kind} {element}",
-  "annotationCalloutFoldTooltip": "番号付きの点にたたむ"
+  "annotationCalloutFoldTooltip": "番号付きの点にたたむ",
+  "schematicLayoutDeferredTitle": "このスコープは全体をレイアウトするには大きすぎます",
+  "schematicLayoutDeferredBody": "{scope} には {cells} セルあり、NetCrux が確認なしでレイアウトする上限の {limit} セルを超えています。これほど大きなスコープは、描画に数分以上、数 GB のメモリを要することがあります。",
+  "@schematicLayoutDeferredBody": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "limit": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "schematicLayoutDeferredCone": "一部を見るには、階層でセルを選ぶか検索で見つけてから、表示 > コーンビューを選ぶと、そのセルを駆動する部分を表示できます。",
+  "schematicLayoutDeferredAction": "それでもレイアウト",
+  "schematicLayoutDeferredEstimate": "スコープ全体の推定メモリ: 約 {memory}。上限は設定 > エンジンで変更できます。",
+  "@schematicLayoutDeferredEstimate": {
+    "placeholders": {
+      "memory": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLayoutCellLimitLabel": "自動でレイアウトする最大スコープ",
+  "settingsLayoutCellLimitDescription": "セル数がこれを超えるスコープは、開いても自動ではレイアウトされず、「それでもレイアウト」の操作を待ちます。コーンビューは影響を受けません。",
+  "settingsLayoutCellLimitChoice": "{count}",
+  "@settingsLayoutCellLimitChoice": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsLayoutCellLimitNone": "制限なし"
 }

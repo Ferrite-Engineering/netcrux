@@ -5,6 +5,7 @@ import 'package:crux_settings/crux_settings.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/panel_layout_state.dart';
+import 'package:netcrux/domain/models/schematic/scope_layout_gate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Concrete [SettingsCodec] for netcrux's [AppSettings].
@@ -31,6 +32,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
   static const _kYosysCustomPath = 'netcrux.yosysCustomPath';
   static const _kCxpEditorCommand = 'netcrux.cxpEditorCommand';
   static const _kAutoCheckForUpdates = 'netcrux.autoCheckForUpdates';
+  static const _kLayoutCellLimit = 'netcrux.layoutCellLimit';
   static const _kPanelHierarchyVisible =
       'netcrux.panelLayout.hierarchyTreeVisible';
   static const _kPanelInspectorVisible = 'netcrux.panelLayout.inspectorVisible';
@@ -57,6 +59,12 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
         AppSettings.defaultCxpEditorCommand;
     final autoCheckForUpdates = prefs.getBool(_kAutoCheckForUpdates) ?? true;
     final panelLayout = _readPanelLayout(prefs);
+    // A stored negative number reads as the default rather than as a limit
+    // nobody chose; 0 is the deliberate "no limit".
+    final storedLimit = prefs.getInt(_kLayoutCellLimit);
+    final layoutCellLimit = storedLimit == null || storedLimit < 0
+        ? kDefaultLayoutCellLimit
+        : storedLimit;
     return AppSettings(
       core: core,
       recentProjectPaths: List.unmodifiable(
@@ -73,6 +81,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       cxpEditorCommand: cxpEditorCommand,
       panelLayout: panelLayout,
       autoCheckForUpdates: autoCheckForUpdates,
+      layoutCellLimit: layoutCellLimit,
     );
   }
 
@@ -96,6 +105,7 @@ class NetcruxSettingsCodec implements SettingsCodec<AppSettings> {
       prefs.setString(_kYosysCustomPath, settings.yosysCustomPath),
       prefs.setString(_kCxpEditorCommand, settings.cxpEditorCommand),
       prefs.setBool(_kAutoCheckForUpdates, settings.autoCheckForUpdates),
+      prefs.setInt(_kLayoutCellLimit, settings.layoutCellLimit),
     ]);
     await _writePanelLayout(prefs, settings.panelLayout);
   }

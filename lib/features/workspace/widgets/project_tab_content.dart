@@ -20,6 +20,7 @@ import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dar
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/statistics/widgets/netcrux_stats_strip.dart';
 import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
 import 'package:netcrux/features/viewer/providers/pane_render_stats.dart';
@@ -37,6 +38,7 @@ import 'package:netcrux/features/viewer/widgets/schematic_gesture_handler.dart';
 import 'package:netcrux/features/viewer/widgets/schematic_scrollbars.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_error_view.dart';
+import 'package:netcrux/features/workspace/widgets/schematic_layout_deferred_view.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/collaboration/netlist_fingerprint.dart';
 import 'package:netcrux/services/collaboration/schematic_collaboration_service_provider.dart';
@@ -320,6 +322,11 @@ class _SchematicCenter extends ConsumerWidget {
     final filterViewMode = ref.watch(coiFilterViewModeProvider);
 
     final canvasKey = ref.watch(schematicCanvasKeyProvider);
+    // A scope above the layout limit is not laid out until the user asks: the
+    // pipeline returned an empty graph without building anything, and this
+    // says why the canvas is empty and what to do about it.
+    final gate = ref.watch(scopeLayoutGateProvider);
+    if (gate.deferred) return SchematicLayoutDeferredView(gate: gate);
     return laidOutAsync.when(
       // The scrollbars flank the gesture-handled canvas: dragging a thumb pans through the design's
       // laid-out bounds, and the thumbs track mouse/trackpad pan + zoom

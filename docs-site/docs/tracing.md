@@ -44,9 +44,11 @@ Where the one-step overlay stops at the immediate neighbors, the **Cone of Influ
 
 From NetCrux 1.2 you can lay out just the neighbourhood of an element instead of the whole scope. On a large flat netlist (a post-synthesis core with tens of thousands of cells in one module) the whole scope takes a while to lay out and is hard to read, while the question is usually local: what drives this pin. A cone view answers it with a small schematic of only the cells that matter.
 
+A scope with more cells than the [layout limit](getting-started.md#layout-engine) (40,000 by default) is not laid out when you open it; the canvas says so and waits. A cone view is the way into such a scope: it needs nothing laid out first, so on a scope of hundreds of thousands of cells it still opens in a couple of seconds.
+
 1. **Start from a cell, pin, port or net.**
 
-    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead.
+    Select it, then choose `View > Cone View` (also in the command palette), or right-click it and choose **Cone View**. You do not have to wait for the whole scope to finish laying out: select the element in [Search Design](navigating.md#search) or in the Hierarchy and choose **Cone View**, and NetCrux stops the whole-scope layout and lays out the cone instead. On a scope that is too large to lay out whole, nothing is running to stop: the cone is the first thing drawn.
 
 2. **Read the cone.**
 
@@ -58,7 +60,7 @@ From NetCrux 1.2 you can lay out just the neighbourhood of an element instead of
 
 4. **Go back to the whole scope.**
 
-    Choose **Show Whole Scope** in the bar or `View > Show Whole Scope`. The whole scope comes back from the layout cache, framed on the element you started from, with your selection kept. Moving to another scope (pushing into a cell, popping out, the Hierarchy or the breadcrumb) also ends the cone view.
+    Choose **Show Whole Scope** in the bar or `View > Show Whole Scope`. The whole scope comes back from the layout cache, framed on the element you started from, with your selection kept. A scope above the layout limit that you have not asked to lay out goes back to the message that it is too large instead; choose **Lay out anyway** there to draw it. Moving to another scope (pushing into a cell, popping out, the Hierarchy or the breadcrumb) also ends the cone view.
 
 The cone view is in NetCrux Open Core, at every depth up to eight levels, in the desktop app and the web viewer. Panning moves over the cone only: the rest of the scope is not drawn, and wires that leave the cone are not shown. A clock or reset net too wide to draw in the whole scope is not drawn in the cone either. A cone view is not saved in a session or a workspace.
 

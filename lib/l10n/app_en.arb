@@ -3512,5 +3512,65 @@
   "annotationCalloutFoldTooltip": "Fold to a numbered dot",
   "@annotationCalloutFoldTooltip": {
     "description": "Tooltip and spoken name of the control on an annotation callout's balloon that folds it to its numbered dot. Selecting the dot opens it again."
+  },
+  "schematicLayoutDeferredTitle": "This scope is too large to lay out whole",
+  "@schematicLayoutDeferredTitle": {
+    "description": "Heading shown on the schematic canvas, in place of the schematic, when the selected scope holds more cells than the layout limit and its whole-scope layout has not been asked for. Nothing has failed; the layout is waiting for the user."
+  },
+  "schematicLayoutDeferredBody": "{scope} holds {cells} cells, more than the {limit} that NetCrux lays out without asking. A scope this large can take many minutes and many gigabytes of memory to draw.",
+  "@schematicLayoutDeferredBody": {
+    "description": "Body of the 'too large to lay out whole' state on the schematic canvas. {scope} is the name of the scope, {cells} the number of cells in it and {limit} the layout limit from Settings > Engines, both shown with digit grouping.",
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "limit": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "schematicLayoutDeferredCone": "To look at part of it, select a cell in the Hierarchy or find one with Search, then choose View > Cone View to see what drives it.",
+  "@schematicLayoutDeferredCone": {
+    "description": "Second paragraph of the 'too large to lay out whole' state: the way forward that needs no whole-scope layout. Names the Hierarchy panel, Search and the View > Cone View menu entry by their menu labels."
+  },
+  "schematicLayoutDeferredAction": "Lay out anyway",
+  "@schematicLayoutDeferredAction": {
+    "description": "Button in the 'too large to lay out whole' state: lays out the whole scope although it is above the layout limit."
+  },
+  "schematicLayoutDeferredEstimate": "Estimated memory for the whole scope: about {memory}. The limit is in Settings > Engines.",
+  "@schematicLayoutDeferredEstimate": {
+    "description": "Line under the 'Lay out anyway' button. {memory} is the memory a whole-scope layout is estimated to need, with its unit, for example '5.2 GB'. Points at the Settings > Engines category where the limit is changed.",
+    "placeholders": {
+      "memory": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLayoutCellLimitLabel": "Largest scope laid out automatically",
+  "@settingsLayoutCellLimitLabel": {
+    "description": "Settings > Engines row label for the layout limit: the number of cells above which a scope is not laid out until the user asks."
+  },
+  "settingsLayoutCellLimitDescription": "A scope with more cells than this is not laid out when it is opened; it waits for Lay out anyway. Cone View works on it either way.",
+  "@settingsLayoutCellLimitDescription": {
+    "description": "Help text under the layout limit row in Settings > Engines."
+  },
+  "settingsLayoutCellLimitChoice": "{count}",
+  "@settingsLayoutCellLimitChoice": {
+    "description": "A segment of the layout limit control in Settings > Engines: a number of cells, shown with digit grouping.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsLayoutCellLimitNone": "No limit",
+  "@settingsLayoutCellLimitNone": {
+    "description": "The segment of the layout limit control in Settings > Engines that lays every scope out when it is opened, whatever its size."
   }
 }

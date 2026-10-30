@@ -35,6 +35,17 @@ void main() {
       expect(off.hashCode, isNot(on.hashCode));
     });
 
+    test('the layout limit defaults to 40,000 cells and follows copyWith', () {
+      const settings = AppSettings.defaults();
+      expect(settings.layoutCellLimit, 40000);
+      final raised = settings.copyWith(layoutCellLimit: 0);
+      expect(raised.layoutCellLimit, 0);
+      expect(raised.core, settings.core);
+      expect(raised, isNot(settings));
+      expect(raised.hashCode, isNot(settings.hashCode));
+      expect(raised.copyWith(layoutCellLimit: 40000), settings);
+    });
+
     test('copyWith preserves unspecified fields', () {
       const settings = AppSettings.defaults();
       final updated = settings.copyWith(

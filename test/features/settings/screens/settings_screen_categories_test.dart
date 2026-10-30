@@ -151,6 +151,67 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Engines → the layout limit offers round numbers and No limit, '
+      'and a choice is saved', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final container = await _pump(tester);
+    final l10n = await l10nFor(const Locale('en'));
+
+    await _openCategory(tester, l10n.settingsEnginesSection);
+    expect(find.text(l10n.settingsLayoutCellLimitLabel), findsWidgets);
+    final control = tester.widget<CruxSegmentedControl<int>>(
+      find.byType(CruxSegmentedControl<int>),
+    );
+    expect(control.segments.map((s) => s.value), [
+      20000,
+      40000,
+      80000,
+      160000,
+      0,
+    ]);
+    expect(control.selected, 40000);
+    expect(_settings(container).layoutCellLimit, 40000);
+
+    await tester.tap(find.text(l10n.settingsLayoutCellLimitNone));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(_settings(container).layoutCellLimit, 0);
+
+    await tester.tap(find.text(l10n.settingsLayoutCellLimitChoice(20000)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(_settings(container).layoutCellLimit, 20000);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Engines → a layout limit saved by hand is offered as a choice', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'netcrux.layoutCellLimit': 55000,
+    });
+    await _pump(tester);
+    final l10n = await l10nFor(const Locale('en'));
+
+    await _openCategory(tester, l10n.settingsEnginesSection);
+    final control = tester.widget<CruxSegmentedControl<int>>(
+      find.byType(CruxSegmentedControl<int>),
+    );
+    expect(control.segments.map((s) => s.value), [
+      20000,
+      40000,
+      55000,
+      80000,
+      160000,
+      0,
+    ]);
+    expect(control.selected, 55000);
+    expect(tester.takeException(), isNull);
+  });
+
   // No Yosys binary ships with NetCrux, so a Bundled choice would resolve
   // exactly as Auto-detect does and read as a shipped feature.
   testWidgets('Engines → the Yosys path control offers only Auto-detect and '

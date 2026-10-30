@@ -5,6 +5,7 @@ import 'package:crux_settings/crux_settings.dart';
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/enums/yosys_path_mode.dart';
 import 'package:netcrux/domain/models/panel_layout_state.dart';
+import 'package:netcrux/domain/models/schematic/scope_layout_gate.dart';
 
 /// NetCrux's per-product application settings.
 ///
@@ -29,6 +30,7 @@ class AppSettings {
     this.cxpEditorCommand = defaultCxpEditorCommand,
     this.panelLayout = const PanelLayoutState(),
     this.autoCheckForUpdates = true,
+    this.layoutCellLimit = kDefaultLayoutCellLimit,
   });
 
   /// Standard defaults. Composes [CoreSettings.defaults] with empty recent-
@@ -42,7 +44,8 @@ class AppSettings {
       yosysCustomPath = '',
       cxpEditorCommand = defaultCxpEditorCommand,
       panelLayout = const PanelLayoutState(),
-      autoCheckForUpdates = true;
+      autoCheckForUpdates = true,
+      layoutCellLimit = kDefaultLayoutCellLimit;
 
   /// The cross-suite shared settings (theme, locale, plugin governance, …).
   final CoreSettings core;
@@ -98,6 +101,14 @@ class AppSettings {
   /// `autoUpdateCheckEnabledProvider`.
   final bool autoCheckForUpdates;
 
+  /// The largest scope, in cells, that NetCrux lays out when it is opened,
+  /// entered or restored. A larger scope shows its size and waits for the
+  /// user to lay it out anyway or to look at part of it in a cone view.
+  /// `0` lays every scope out without asking. Defaults to
+  /// [kDefaultLayoutCellLimit]. Surfaced in Settings, Engines and read by
+  /// `scopeLayoutGateProvider`.
+  final int layoutCellLimit;
+
   /// Forwarder for [CoreSettings.restoreTabsOnLaunch] — whether the persisted
   /// `workspace.json` is rehydrated at launch.
   ///
@@ -132,6 +143,7 @@ class AppSettings {
     String? cxpEditorCommand,
     PanelLayoutState? panelLayout,
     bool? autoCheckForUpdates,
+    int? layoutCellLimit,
   }) {
     return AppSettings(
       core: core ?? this.core,
@@ -144,6 +156,7 @@ class AppSettings {
       cxpEditorCommand: cxpEditorCommand ?? this.cxpEditorCommand,
       panelLayout: panelLayout ?? this.panelLayout,
       autoCheckForUpdates: autoCheckForUpdates ?? this.autoCheckForUpdates,
+      layoutCellLimit: layoutCellLimit ?? this.layoutCellLimit,
     );
   }
 
@@ -157,6 +170,7 @@ class AppSettings {
     if (other.cxpEditorCommand != cxpEditorCommand) return false;
     if (other.panelLayout != panelLayout) return false;
     if (other.autoCheckForUpdates != autoCheckForUpdates) return false;
+    if (other.layoutCellLimit != layoutCellLimit) return false;
     if (!_listEquals(other.recentProjectPaths, recentProjectPaths)) {
       return false;
     }
@@ -180,6 +194,7 @@ class AppSettings {
     cxpEditorCommand,
     panelLayout,
     autoCheckForUpdates,
+    layoutCellLimit,
   );
 
   static bool _listEquals<T>(List<T> a, List<T> b) {

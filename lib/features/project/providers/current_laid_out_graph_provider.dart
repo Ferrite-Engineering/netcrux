@@ -9,6 +9,7 @@ import 'package:netcrux/domain/models/trace/cone_view.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
 import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
 import 'package:netcrux/features/viewer/services/schematic_scene_index.dart';
@@ -28,7 +29,8 @@ part 'current_laid_out_graph_provider.g.dart';
 /// Composition:
 ///   1. `loadedNetlistProvider` → NetlistModel?
 ///   2. `hierarchyTreeProvider.selected` → HierarchyNode?
-///   3. SchematicGraphBuilder → SchematicGraph
+///   3. SchematicGraphBuilder → SchematicGraph (skipped, with an empty
+///      result, for a scope above the layout limit: `scopeLayoutGateProvider`)
 ///   4. ElkLayoutService → NetlistLayout
 ///   5. Pair (3) + (4) → LaidOutGraph
 ///
@@ -61,6 +63,12 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   final model = modelAsync.value!;
   final module = node.resolve(model);
   if (module == null) return LaidOutGraph.empty;
+
+  // A scope with more cells than the layout limit waits for the user: the
+  // canvas says so and offers a cone view. Nothing for the whole scope is
+  // built, neither the schematic graph nor the layout input, so opening,
+  // entering or restoring a scope of millions of cells stays instant.
+  if (ref.watch(scopeLayoutGateProvider).deferred) return LaidOutGraph.empty;
 
   final graph = const SchematicGraphBuilder().build(model, node);
   if (graph.isEmpty) return LaidOutGraph.empty;

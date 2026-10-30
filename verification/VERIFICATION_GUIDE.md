@@ -144,6 +144,32 @@ The foundation is the pipeline spine everything else stands on: the `NetlistMode
   | Byte identity of the monitored engine on the netlist corpus and 5,000 random graphs against `2651159` | `[Coverage: MANUAL]` measurement (VENDORED.md change 5) |
   | CPU after Cancel, a scope change and a cone view switch on a live canvas; elkjs with no time limit (steps 2 to 5) | `[Coverage: MANUAL]` |
 
+### 3.3b A scope too large to lay out whole (from 1.2)
+
+- **What it does.** A scope with more cells than the layout limit (`Settings > Engines > Largest scope laid out automatically`, 40,000 by default, `No limit` turns it off) is not laid out when it is opened, entered or restored. The canvas shows **This scope is too large to lay out whole**, the scope's name and cell count, the way forward (select a cell in the Hierarchy or find one with Search, then `View > Cone View`), **Lay out anyway** and the estimated memory of the whole layout (130 KiB a cell). The schematic graph and the ELK input are not built for the scope, so opening a scope of 844,208 cells costs nothing. The Hierarchy, Search, the Inspector and cone views work while it waits; a cone view of the scope is laid out at once. **Lay out anyway** lays the scope out with the usual progress view and **Cancel**, and the choice lasts until the tab closes. A restored tab asks again.
+- **Setup.** Desktop build. A generated gate-level netlist of about a million cells (`tool/gen_gate_netlist.py` with `--gates 1000000`, then `yosys -p "read_liberty -lib cells.lib; read_verilog design.v; hierarchy -top top; proc; write_json design.json"`), opened with **Open Netlist JSON…**. Its flat scope is `u_core`.
+- **Steps and expected behavior.**
+  1. Open the netlist and choose `u_core` in the Hierarchy. Expected: at once, the message with 844,208 cells, **Lay out anyway** and an estimate of about 105 GB; no progress bar, no memory growth in the stats strip.
+  2. Type part of a cell's name in the Hierarchy filter, choose the cell, and open the Inspector. Expected: the cell is selected and described; there is no stall.
+  3. Choose `View > Cone View`. Expected: a cone of about two levels appears within a few seconds, with the bar above the canvas. Choose **Show Whole Scope**. Expected: the message comes back, not a layout.
+  4. Open Search Design, find a cell in `u_core` from the top scope, and choose the result. Expected: the scope opens held back with the cell selected.
+  5. Choose a scope under the limit, then `Settings > Engines`, choose `No limit`, and return to `u_core` on a small generated design of 50,000 cells (not the million-cell one). Expected: it lays out without asking.
+  6. With the million-cell netlist open on `u_core`, quit and relaunch with **Restore tabs on launch** on. Expected: the tab returns to the message; the app does not hang.
+  7. On a 50,000-cell design, choose **Lay out anyway** and then **Cancel**. Expected: **Layout stopped.** and **Lay out again**.
+- **Edge cases.** A setting saved by hand that is not one of the offered numbers is shown as one more choice. A negative saved value loads as the default. The estimate is the largest figure measured, so the layout usually needs less. How long a layout takes depends on the wiring: on generated netlists 42,000 cells took 2.4 s with local wiring and 16 s with long wires, and 84,000 cells took 5 s and 59 s.
+- **Measured** (Apple M4 Pro, 64 GB, native engine, whole-scope layout). Local wiring: 2,468 cells 0.27 s and 0.32 GB, 10,148 cells 0.61 s and 0.72 GB, 21,148 cells 1.2 s and 1.3 GB, 42,232 cells 2.4 s and 2.4 GB, 84,444 cells 4.9 s and 4.6 GB. Long wires: 5,084 cells 0.74 s and 0.56 GB, 10,148 cells 1.9 s and 0.95 GB, 21,148 cells 5.3 s and 1.9 GB, 42,232 cells 16 s and 4.3 GB, 84,444 cells 59 s and 11.4 GB (peak resident memory of the test process, which includes the design). Deciding that the 844,208-cell scope is held back reads one number and takes under a millisecond.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | `ScopeLayoutGate`: at, over and under the limit, no limit, approved, cone, the memory estimate, equality | `[Coverage: UNIT]` (`test/domain/models/schematic/scope_layout_gate_test.dart`) |
+  | The gate provider and the layout pipeline: a scope over the limit reaches the layout service zero times, an approved scope and a cone view reach it once, leaving the cone returns to the held-back state, a change of the limit applies at once; the same on a flat scope of 844,208 cells, and on a generated netlist when `NETCRUX_BIG_NETLIST` names one | `[Coverage: UNIT]` (`test/features/project/providers/scope_layout_gate_provider_test.dart`) |
+  | The held-back view in all five locales with digit grouping, **Lay out anyway** approving the scope, a focus walk with one named stop; the canvas shows it and lays out on the button | `[Coverage: WIDGET]` (`schematic_layout_deferred_view_test.dart`, `project_tab_content_layout_guard_test.dart`) |
+  | The held-back scope counts as a loaded netlist for the action flags | `[Coverage: UNIT]` (`active_tab_action_flags_layout_guard_test.dart`) |
+  | The setting: default, round trip, negative value, the Engines control and its saved choice | `[Coverage: UNIT/WIDGET]` (`app_settings_test.dart`, `netcrux_settings_codec_test.dart`, `app_settings_provider_test.dart`, `settings_screen_categories_test.dart`) |
+  | `cellOf` describes each drawn cell as the graph does, on repeated calls | `[Coverage: UNIT]` (`schematic_scope_module_test.dart`) |
+  | The million-cell steps 1 to 4 and 6 | `[Coverage: MANUAL]` |
+
 ### 3.4 Theme system — Material 3 light/dark on the muted-amber seed
 
 - **What it does.** `NetcruxTheme.dark()` / `NetcruxTheme.light()` build Material 3 `ThemeData` from the documented brand seed (`NetcruxColors.brandSeed = 0xFFD4A017`); `lib/core/theme/`. (The color-theme presets/overrides/packs surface lives in Settings → Appearance via `crux_theme`; see the suite-wide Color Theming section, §8.)

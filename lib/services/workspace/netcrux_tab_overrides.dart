@@ -19,9 +19,11 @@ import 'package:netcrux/features/project/providers/current_laid_out_graph_provid
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/source_pane/providers/source_pane_state_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
 import 'package:netcrux/features/viewer/providers/cone_view_notifier.dart';
+import 'package:netcrux/features/viewer/providers/layout_approval_notifier.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -63,6 +65,11 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // FunctionalProvider (top-level `@Riverpod`), so the override
     // form is `.overrideWith((ref) => currentLaidOutGraph(ref))`.
     currentLaidOutGraphProvider.overrideWith(currentLaidOutGraph),
+    // Whether the scope on the canvas is laid out now or waits for the user:
+    // it reads the tab's model, selection and cone view, and the pass above
+    // reads it. The scopes the user approved are this tab's.
+    scopeLayoutGateProvider.overrideWith(scopeLayoutGate),
+    layoutApprovalProvider.overrideWith(LayoutApprovalNotifier.new),
     // Written by the layout pass above, so it follows the same scope.
     layoutTimingProvider.overrideWith(LayoutTimingNotifier.new),
     elaborationStderrProvider.overrideWith(ElaborationStderr.new),

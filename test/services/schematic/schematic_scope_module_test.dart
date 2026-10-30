@@ -204,6 +204,24 @@ void main() {
       expect(cell.ports.first.tie, const PinTie.constant('0'));
     });
 
+    test('describes every drawn cell as the graph does, again and again', () {
+      final graph = const SchematicGraphBuilder().build(
+        model,
+        HierarchyNode.rootOf(model)!,
+      );
+      expect(graph.cells, isNotEmpty);
+      // Twice over: the second round reads the tables kept for the module.
+      for (var round = 0; round < 2; round++) {
+        for (final drawn in graph.cells) {
+          expect(
+            const SchematicGraphBuilder().cellOf(model, top, drawn.id),
+            drawn,
+            reason: '${drawn.id}, round $round',
+          );
+        }
+      }
+    });
+
     test('is null for a cell the module does not have', () {
       expect(const SchematicGraphBuilder().cellOf(model, top, 'nope'), isNull);
     });

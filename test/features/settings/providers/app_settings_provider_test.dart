@@ -34,6 +34,28 @@ void main() {
       expect(settings, const AppSettings.defaults());
     });
 
+    test(
+      'setLayoutCellLimit persists the limit and clamps below zero',
+      () async {
+        final container = await _makeContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(appSettingsProvider.notifier);
+        await container.read(appSettingsProvider.future);
+
+        await notifier.setLayoutCellLimit(120000);
+        expect(
+          container.read(appSettingsProvider).value!.layoutCellLimit,
+          120000,
+        );
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getInt('netcrux.layoutCellLimit'), 120000);
+
+        await notifier.setLayoutCellLimit(-3);
+        expect(container.read(appSettingsProvider).value!.layoutCellLimit, 0);
+        expect(prefs.getInt('netcrux.layoutCellLimit'), 0);
+      },
+    );
+
     // The ordering, cap and removal rules are the shared Recent list's (see
     // recent_lists_test.dart); the notifier only stores what it is handed.
     test('the recent-list setters replace each list and persist it', () async {

@@ -9,12 +9,14 @@ import 'package:netcrux/domain/interfaces/annotation_store.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/activity/waveform_source.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/scope_layout_gate.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
 import 'package:netcrux/features/diff/providers/diff_pane_state_provider.dart';
 import 'package:netcrux/features/fsm/providers/selected_fsm_provider.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/reset_domain/providers/reset_domain_analysis_state_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
@@ -227,9 +229,14 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
     }
     final container = manager.containerFor(activeTabId);
 
+    // A netlist is loaded when the canvas shows a laid-out scope, and also
+    // when the scope on it is held back for its size: its graph is empty on
+    // purpose, while Save Session, the exports and the other actions that
+    // work from the netlist still apply.
     bool netlistLoaded(AsyncValue<LaidOutGraph?> laidOut) {
       final graph = laidOut.value;
-      return graph != null && !graph.isEmpty;
+      return (graph != null && !graph.isEmpty) ||
+          container.read(scopeLayoutGateProvider).deferred;
     }
 
     bool coneView(AsyncValue<LaidOutGraph?> laidOut) =>
@@ -242,15 +249,22 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
         snapshot.annotations.any((note) => note.sessionLayerId != null);
 
     final subs = <ProviderSubscription<Object?>>[
-      container.listen<AsyncValue<LaidOutGraph?>>(
-        currentLaidOutGraphProvider,
-        (_, next) => _apply(
-          (s) => s.copyWith(
-            hasNetlist: netlistLoaded(next),
-            inConeView: coneView(next),
-          ),
-        ),
-      ),
+      container.listen<AsyncValue<LaidOutGraph?>>(currentLaidOutGraphProvider, (
+        _,
+        next,
+      ) {
+        // Read now, not in the deferred update: the tab's container may be
+        // disposed by the time the microtask runs.
+        final loaded = netlistLoaded(next);
+        final inCone = coneView(next);
+        _apply((s) => s.copyWith(hasNetlist: loaded, inConeView: inCone));
+      }),
+      container.listen<ScopeLayoutGate>(scopeLayoutGateProvider, (_, next) {
+        final loaded =
+            next.deferred ||
+            netlistLoaded(container.read(currentLaidOutGraphProvider));
+        _apply((s) => s.copyWith(hasNetlist: loaded));
+      }),
       container.listen<Selection>(
         selectedElementProvider,
         (_, next) => _apply((s) => s.copyWith(hasSelection: next.isNotEmpty)),
