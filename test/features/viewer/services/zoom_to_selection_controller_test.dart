@@ -13,6 +13,7 @@ import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -118,6 +119,33 @@ void main() {
     final rect = Offset.zero & viewport;
     expect(rect.contains(project(100, 100)), isTrue);
     expect(rect.contains(project(3960, 1940)), isTrue);
+  });
+
+  test('with only, frames that part of the selection alone', () async {
+    final container = await _container();
+    container
+        .read(selectedElementProvider.notifier)
+        .replace(
+          Selection(
+            elements: <SelectedElement>{
+              const SelectedElement.cell(cellId: 'near'),
+              const SelectedElement.cell(cellId: 'far'),
+            },
+            primary: const SelectedElement.cell(cellId: 'far'),
+          ),
+        );
+
+    final framed = ZoomToSelectionController(container).run(
+      viewport: viewport,
+      only: <SelectedElement>{const SelectedElement.cell(cellId: 'near')},
+    );
+
+    // The same camera as for `near` selected on its own.
+    expect(framed, isTrue);
+    final transform = container.read(viewportTransformProvider);
+    expect(transform.zoom, 1.5);
+    expect(transform.offset.dx, closeTo(400 - 130 * 1.5, 1e-9));
+    expect(transform.offset.dy, closeTo(300 - 120 * 1.5, 1e-9));
   });
 
   test('leaves the camera alone with nothing selected', () async {

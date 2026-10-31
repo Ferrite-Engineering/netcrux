@@ -3,6 +3,8 @@
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -28,17 +30,22 @@ class ZoomToSelectionController {
   /// size when [viewport] is null. Returns false, leaving the camera alone,
   /// when nothing is selected, nothing resolves to laid-out geometry, or the
   /// canvas is not laid out.
-  bool run({Size? viewport}) {
+  ///
+  /// With [only], frames just those elements of a larger selection (and not
+  /// the trace overlay), such as one register of a selected timing path.
+  bool run({Size? viewport, Set<SelectedElement>? only}) {
     // Selection first: with nothing selected there is nothing to frame, and
     // reading the laid-out graph would start a layout nobody asked for.
-    final selection = _container.read(selectedElementProvider);
+    final selection = only ?? _container.read(selectedElementProvider).elements;
     if (selection.isEmpty) return false;
     final laidOut = _container.read(currentLaidOutGraphProvider).value;
     if (laidOut == null) return false;
     final bounds = selectionBounds(
       laidOut,
-      selection: selection.elements,
-      overlay: _container.read(traceOverlayProvider),
+      selection: selection,
+      overlay: only == null
+          ? _container.read(traceOverlayProvider)
+          : TraceOverlay.empty,
     );
     final size = viewport ?? _liveCanvasSize();
     if (bounds == null || size == null) return false;

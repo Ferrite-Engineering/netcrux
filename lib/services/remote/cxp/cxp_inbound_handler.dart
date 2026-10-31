@@ -62,6 +62,38 @@ typedef SelectionFramer = bool Function(ProviderContainer tab);
 bool _zoomToSelection(ProviderContainer tab) =>
     ZoomToSelectionController(tab).run();
 
+/// Frames [elements], a part of a tab's selection, the way Zoom to Selection
+/// frames the whole of it. Returns false when it could not, as
+/// [SelectionFramer] does.
+typedef ElementFramer =
+    bool Function(ProviderContainer tab, Set<SelectedElement> elements);
+
+bool _zoomToElements(ProviderContainer tab, Set<SelectedElement> elements) =>
+    ZoomToSelectionController(tab).run(only: elements);
+
+/// The selection a received timing path made in a tab, and what each end
+/// register of the path contributed to it, so a directed highlight of an end
+/// that follows the path keeps the path selected.
+class _AppliedTimingPath {
+  _AppliedTimingPath({
+    required this.tab,
+    required this.selection,
+    required this.ends,
+  });
+
+  final ProviderContainer tab;
+
+  /// The selection as the path (or a highlight of one of its ends) left it.
+  Selection selection;
+
+  /// Each end register's part of [selection], by [_endKey].
+  final Map<String, Selection> ends;
+}
+
+/// The key of a register placed at [name] among a timing path's ends.
+String _endKey(CxpScopedName name) =>
+    '${name.scope.path.join('\u0000')}\u0001${name.leaf}';
+
 /// Tells the user about a request a peer started, as a toast built from the
 /// app's strings: a request has no `BuildContext`, so whoever builds the
 /// handler supplies the strings and the toast (the publisher passes the
@@ -85,7 +117,10 @@ const String kCxpElementNotInDesign =
 ///     A `signal` or `net` rooted at the top is found in the scope it names;
 ///     a formal property's failing signal also shows its fanin; a `cell` is
 ///     selected by its netlist name; a `property` is the Pro union cone
-///     ([inboundPropertyConeProvider]); a `timing_path` is declined.
+///     ([inboundPropertyConeProvider]); a `timing_path` is declined. A
+///     `signal` naming an end register of the timing path shown last, while
+///     that path is still selected, keeps the path selected and frames the
+///     register.
 ///   - [`RequestOpenSource`] — shell out to the configured editor.
 ///   - [`RequestOpenArtifact`] — open a `source` or `project` artifact, or
 ///     hand a `flow_run` / `timing_report` to [flowArtifactOpenerProvider].
@@ -108,10 +143,12 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     EditorOpenService? editorService,
     NameResolver? nameResolver,
     SelectionFramer? selectionFramer,
+    ElementFramer? elementFramer,
     CxpInboundNotice? notice,
     this._revealInspector,
   }) : _editorService = editorService ?? EditorOpenService(),
        _frame = selectionFramer ?? _zoomToSelection,
+       _frameElements = elementFramer ?? _zoomToElements,
        _nameResolver = nameResolver ?? const NetcruxNameResolver(),
        _notice = notice ?? _noNotice;
 
@@ -141,7 +178,11 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
   final EditorOpenService _editorService;
   final NameResolver _nameResolver;
   final SelectionFramer _frame;
+  final ElementFramer _frameElements;
   final CxpInboundNotice _notice;
+
+  /// The selection the last timing path made, while it may still be current.
+  _AppliedTimingPath? _appliedPath;
   final void Function()? _revealInspector;
 
   /// Deferred post-open highlight subscriptions/timers. A shared-workspace open
@@ -193,6 +234,15 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       );
     }
     final tab = activeTabContainerLookup();
+    // A peer that sends a timing path follows it with a directed highlight
+    // of the path's endpoint register (SimCrux's "Cross-probe to"). Replacing
+    // the selection would leave one register of a two-register path
+    // highlighted, so an end of the path just shown keeps the path and is
+    // framed instead.
+    if (tab != null && _keepTimingPath(tab, element)) {
+      _recordCrossProbe(honored: true);
+      return CruxCxpHandlerResult.ok;
+    }
     final result = await _resolveAndAct(
       element,
       request.metadata,
@@ -364,6 +414,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       for (final e in message.elements)
         if (e.kind == ElementKind.source) _statementLabel(e.path),
     ];
+    _appliedPath = null;
     if (tab == null || model == null) {
       _recordPathHighlighted(fidelity, resolved: false);
       return;
@@ -379,9 +430,13 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
         .firstOrNull;
     final registers = <TimingPathRegister>[];
     Selection? selection;
+    // The registers are sent start first, so the path's two ends are the
+    // first and the last.
+    final endIndices = <int>{0, placed.length - 1};
+    final ends = <String, Selection>{};
     if (shown != null) {
       final module = shown.resolve(model);
-      for (final (name, scoped) in placed) {
+      for (final (index, (name, scoped)) in placed.indexed) {
         if (scoped == null) {
           registers.add(
             TimingPathRegister(
@@ -403,6 +458,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
         final net = findNetNamed(module, scoped.leaf)!;
         final found = selectionForNet(module, net);
         if (found != null) {
+          if (endIndices.contains(index)) ends[_endKey(scoped)] = found;
           selection = selection == null
               ? found
               : Selection(
@@ -421,6 +477,11 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       if (selection != null) {
         tab.read(selectedElementProvider.notifier).replace(selection);
         _revealElement(tab, selection.primary);
+        _appliedPath = _AppliedTimingPath(
+          tab: tab,
+          selection: selection,
+          ends: ends,
+        );
       }
     } else {
       registers.addAll(<TimingPathRegister>[
@@ -442,6 +503,43 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     _revealInspectorTab();
     _recordPathHighlighted(fidelity, resolved: path.resolved);
     if (path.resolved) _requestAttentionForSelection();
+  }
+
+  /// Whether a directed highlight of [element] names an end register of the
+  /// timing path applied last in [tab], with that path's selection still
+  /// current. When it does, the path stays selected with the register as its
+  /// primary, the register is revealed and framed, and true is returned; any
+  /// other highlight returns false and replaces the selection as usual.
+  bool _keepTimingPath(ProviderContainer tab, ElementId element) {
+    final applied = _appliedPath;
+    if (applied == null || !identical(applied.tab, tab)) return false;
+    if (tab.read(selectedElementProvider) != applied.selection) {
+      // The user (or another message) has moved on from the path.
+      _appliedPath = null;
+      return false;
+    }
+    if (element.kind != ElementKind.signal && element.kind != ElementKind.net) {
+      return false;
+    }
+    final tree = tab.read(hierarchyTreeProvider);
+    final model = tree.model;
+    final local = _nameResolver.toLocal(element);
+    if (model == null || local == null || local.isEmpty) return false;
+    final placed = _placeRegister(model, tree.selected, local);
+    final end = placed == null ? null : applied.ends[_endKey(placed)];
+    if (end == null) return false;
+    final kept = Selection(
+      elements: <SelectedElement>{
+        ...applied.selection.elements,
+        ...end.elements,
+      },
+      primary: end.primary,
+    );
+    tab.read(selectedElementProvider.notifier).replace(kept);
+    applied.selection = kept;
+    _revealElement(tab, end.primary);
+    _frameWhenReady(tab, only: end.elements);
+    return true;
   }
 
   /// Places a register name a timing path carries: in the scope its rooted
@@ -928,9 +1026,11 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
   /// just loaded for a deferred select), as soon as it is. The retry waits two
   /// frames after the layout lands so the canvas' own fit-to-view for a new
   /// layout runs first and does not undo the framing. Bounded like the
-  /// deferred select; [dispose] tears it down.
-  void _frameWhenReady(ProviderContainer tab) {
-    if (_frame(tab)) return;
+  /// deferred select; [dispose] tears it down. With [only], frames just those
+  /// elements of the selection.
+  void _frameWhenReady(ProviderContainer tab, {Set<SelectedElement>? only}) {
+    bool frame() => only == null ? _frame(tab) : _frameElements(tab, only);
+    if (frame()) return;
     ProviderSubscription<Object?>? sub;
     Timer? timer;
     var done = false;
@@ -955,7 +1055,7 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
           if (done) return;
-          if (_frame(tab)) cleanup();
+          if (frame()) cleanup();
         });
       });
       SchedulerBinding.instance.scheduleFrame();

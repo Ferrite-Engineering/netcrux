@@ -162,6 +162,7 @@ implementation-flow results send, and advertises the kinds as
 | Kind | Element kind | Effect |
 | --- | --- | --- |
 | `request_highlight` | `signal` or `net` whose path starts with the top module | Found in the scope the path names, which is then shown. It is never matched by its last segment in another scope; a name that is not there is `honored: false`. |
+| `request_highlight` | `signal` or `net` naming the start or end register of the timing path received last, while that path is still selected | The path stays selected, the register becomes the primary selection, and the view is framed on it. Any change of selection in between makes it an ordinary highlight. |
 | `request_highlight` | `signal` with `formal.property_kind` or `formal.property_label` | A formal property's failing signal: selected, and its one-step fanin drawn. NetCrux Pro's cone of influence widens it. |
 | `request_highlight` | `cell` | Selected by its netlist name in its scope and centred. |
 | `request_highlight` | `property` | The cone of every signal the property reads, a NetCrux Pro feature. Open core answers `honored: false` and says so in a message. NetCrux reads the property only from a source file of the design you have open. |

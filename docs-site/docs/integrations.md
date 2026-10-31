@@ -56,7 +56,9 @@ path's registers together, in the scope of the path's endpoint, and the Inspecto
 shows **Timing path from SimCrux**: how the registers were mapped, the start and
 end registers, which of them sit in another scope or are not in this design, and
 the statements. **Dismiss** removes it. It lands in the tab that is active when
-it arrives. A timing path sent on its own, with no registers beside it, is
+it arrives. When SimCrux follows the path with a request to show its end
+register, as **Cross-probe to** does, both registers stay highlighted and the
+view is framed on the end register. A timing path sent on its own, with no registers beside it, is
 declined, because its id is opaque.
 
 ### Fidelity labels {#fidelity}

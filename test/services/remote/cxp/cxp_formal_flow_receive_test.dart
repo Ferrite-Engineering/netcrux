@@ -23,6 +23,7 @@ import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
+import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
@@ -153,7 +154,14 @@ class _Rig {
     handler = NetcruxCxpRequestHandler(
       rootContainer: root,
       activeTabContainerLookup: () => active ?? tab,
-      selectionFramer: (_) => true,
+      selectionFramer: (_) {
+        selectionFrames++;
+        return true;
+      },
+      elementFramer: (_, elements) {
+        elementFrames.add(elements);
+        return true;
+      },
       notice: (message) => notices.add(message(_en)),
       revealInspector: () => inspectorReveals++,
     );
@@ -168,6 +176,12 @@ class _Rig {
   final List<String> notices = <String>[];
   int attention = 0;
   int inspectorReveals = 0;
+
+  /// How often the whole selection was framed (Zoom to Selection).
+  int selectionFrames = 0;
+
+  /// The parts of the selection framed on their own, in order.
+  final List<Set<SelectedElement>> elementFrames = <Set<SelectedElement>>[];
 
   static final L10N _en = lookupL10N(const Locale('en'));
 
@@ -519,6 +533,110 @@ void main() {
       await rig.settle();
       expect(other.read(receivedTimingPathProvider), isNotNull);
       expect(rig.tab.read(receivedTimingPathProvider), isNull);
+    });
+
+    group('followed by a directed highlight of one of its ends', () {
+      /// What a highlight of [signal] selects on its own, with no path
+      /// before it: the register's part of the path's selection.
+      Future<Selection> alone(String signal) async {
+        final rig = _Rig();
+        addTearDown(rig.dispose);
+        final ack = await rig.highlight(ElementKind.signal, signal);
+        expect(ack.honored, isTrue, reason: ack.reason);
+        final selection = rig.tab.read(selectedElementProvider);
+        return selection;
+      }
+
+      test('the end register keeps both ends selected and is framed', () async {
+        final end = await alone('top.full');
+        final start = await alone('top.cnt_q');
+        final rig = _Rig();
+        addTearDown(rig.dispose);
+        // SimCrux's order: the path as a selection, then the endpoint.
+        rig.handler.selection(
+          path(<String>['top.cnt_q', 'top.full']),
+          _simcrux,
+        );
+        await rig.settle();
+        final ack = await rig.highlight(ElementKind.signal, 'top.full');
+        await rig.settle();
+
+        expect(ack.honored, isTrue, reason: ack.reason);
+        final selection = rig.tab.read(selectedElementProvider);
+        expect(selection.elements, containsAll(start.elements));
+        expect(selection.elements, containsAll(end.elements));
+        expect(selection.primary, end.primary);
+        expect(rig.elementFrames, <Set<SelectedElement>>[end.elements]);
+        expect(rig.selectionFrames, 0);
+        // The Inspector still names both ends of the path.
+        final shown = rig.tab.read(receivedTimingPathProvider)!;
+        expect(shown.registers.map((r) => r.name), <String>[
+          'top.cnt_q',
+          'top.full',
+        ]);
+        expect(
+          shown.registers.map((r) => r.place),
+          everyElement(TimingPathRegisterPlace.shown),
+        );
+      });
+
+      test('the start register keeps the path too, as its primary', () async {
+        final start = await alone('top.cnt_q');
+        final rig = _Rig();
+        addTearDown(rig.dispose);
+        rig.handler.selection(
+          path(<String>['top.cnt_q', 'top.full']),
+          _simcrux,
+        );
+        await rig.settle();
+        final before = rig.tab.read(selectedElementProvider).elements;
+        final ack = await rig.highlight(ElementKind.signal, 'top.cnt_q');
+
+        expect(ack.honored, isTrue, reason: ack.reason);
+        final selection = rig.tab.read(selectedElementProvider);
+        expect(selection.elements, before);
+        expect(selection.primary, start.primary);
+        expect(rig.elementFrames, <Set<SelectedElement>>[start.elements]);
+      });
+
+      test(
+        'once the selection has moved on, the highlight replaces it',
+        () async {
+          final end = await alone('top.full');
+          final rig = _Rig();
+          addTearDown(rig.dispose);
+          rig.handler.selection(
+            path(<String>['top.cnt_q', 'top.full']),
+            _simcrux,
+          );
+          await rig.settle();
+          rig.tab
+              .read(selectedElementProvider.notifier)
+              .select(const SelectedElement.cell(cellId: 'esc_reg'));
+          final ack = await rig.highlight(ElementKind.signal, 'top.full');
+
+          expect(ack.honored, isTrue, reason: ack.reason);
+          expect(rig.tab.read(selectedElementProvider), end);
+          expect(rig.elementFrames, isEmpty);
+          expect(rig.selectionFrames, 1);
+        },
+      );
+
+      test('a register that is not an end replaces the selection', () async {
+        final other = await alone('top.sub_o');
+        final rig = _Rig();
+        addTearDown(rig.dispose);
+        rig.handler.selection(
+          path(<String>['top.cnt_q', 'top.full']),
+          _simcrux,
+        );
+        await rig.settle();
+        final ack = await rig.highlight(ElementKind.signal, 'top.sub_o');
+
+        expect(ack.honored, isTrue, reason: ack.reason);
+        expect(rig.tab.read(selectedElementProvider), other);
+        expect(rig.elementFrames, isEmpty);
+      });
     });
   });
 
