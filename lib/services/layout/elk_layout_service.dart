@@ -15,6 +15,8 @@ import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
+import 'package:netcrux/domain/models/schematic/boundary_port_label.dart';
+import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 // Conditional import: the desktop worker's solver factory picks the native
 // elkrs engine, or elkjs on a JavaScript engine when kept by environment or
 // when the native library cannot start. Web never reaches it.
@@ -298,23 +300,42 @@ Map<String, Object?> buildElkInput(
   final edges = <Map<String, Object?>>[];
   var cellCount = 0;
 
+  final netEdges = enumerateNetEdges(module);
+
   // Module ports become nodes on the boundary so ELK can route edges to
-  // them as endpoints.
+  // them as endpoints. Each carries its name as a sized label outside the
+  // box, on the side its wire does not use (see [BoundaryPortLabel]), so
+  // ELK leaves room for the name: a neighbouring port or cell is never placed
+  // over it, and the name never lies over the port's own wire.
+  final drivingPorts = <String>{
+    for (final group in netEdges)
+      for (final edge in group.edges)
+        if (edge.sourcePortId.startsWith('port:')) edge.sourcePortId,
+  };
   for (final entry in module.ports.entries) {
     final port = entry.value;
-    if (only != null && !only.boundaryPortIds.contains('port:${port.name}')) {
-      continue;
-    }
+    final id = 'port:${port.name}';
+    if (only != null && !only.boundaryPortIds.contains(id)) continue;
+    final west = BoundaryPortLabel.onWest(
+      direction: port.direction,
+      drivesWire: drivingPorts.contains(id),
+    );
     children.add(<String, Object?>{
-      'id': 'port:${port.name}',
+      'id': id,
       'width': 16,
       'height': 16,
       'labels': <Map<String, Object?>>[
-        <String, Object?>{'text': port.name},
+        <String, Object?>{
+          'text': port.name,
+          'width': BoundaryPortLabel.widthFor(port.name),
+          'height': BoundaryPortLabel.height,
+        },
       ],
-      'properties': <String, Object?>{
-        'kind': 'port',
-        'direction': port.direction.toJsonString(),
+      'layoutOptions': <String, Object?>{
+        'elk.nodeLabels.placement': west
+            ? '[OUTSIDE, H_LEFT, V_CENTER]'
+            : '[OUTSIDE, H_RIGHT, V_CENTER]',
+        'elk.spacing.labelNode': '${SchematicDetailMarks.boundaryLabelGap}',
       },
     });
   }
@@ -384,7 +405,7 @@ Map<String, Object?> buildElkInput(
   // The edges come from the enumeration the schematic graph is built
   // from, with their ids unchanged: a skipped net renumbers nothing, so a
   // routed edge's id names the same wire in the graph.
-  for (final group in enumerateNetEdges(module)) {
+  for (final group in netEdges) {
     if (group.edges.length > highFanoutEdgeCap) continue;
     for (final edge in group.edges) {
       if (only != null && !only.edgeIds.contains(edge.id)) continue;

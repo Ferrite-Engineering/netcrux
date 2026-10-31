@@ -18,7 +18,7 @@ import 'package:netcrux/domain/models/activity/activity_color_scheme.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
-import 'package:netcrux/domain/models/netlist/port_direction.dart';
+import 'package:netcrux/domain/models/schematic/boundary_port_label.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/pin_tie.dart';
@@ -2013,14 +2013,13 @@ class SchematicCanvasRenderObject extends RenderBox {
       'b:${port.id}:${band.name}',
       port.name,
       style,
-      80,
+      BoundaryPortLabel.maxWidth,
     );
-    // The label goes on the side the port's wire does not use. An input's
-    // wire leaves its east face, so its name sits to the west; an output's
-    // (and an inout's) wire arrives at the west face, so its name sits to
-    // the east. On the wire side the name was drawn over its own wire.
+    // The label goes on the side the port's wire does not use, where the
+    // layout left room for it (see [BoundaryPortLabel.onWest]). On the wire
+    // side the name was drawn over its own wire.
     final origin = Offset(
-      port.direction == PortDirection.input
+      BoundaryPortLabel.onWestIn(_laidOut.graph, port)
           ? rect.left - SchematicDetailMarks.boundaryLabelGap - painter.width
           : rect.right + SchematicDetailMarks.boundaryLabelGap,
       rect.center.dy - painter.height / 2,

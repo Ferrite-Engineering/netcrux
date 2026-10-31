@@ -560,6 +560,79 @@ void main() {
       expect(labels.first.right, lessThanOrEqualTo(inputBox.x));
       expect(labels.last.left, greaterThanOrEqualTo(outputBox.x + 16));
     });
+
+    test('an inout that drives its net is named on its west side, one that '
+        'another driver drives on its east', () {
+      // A supply port nothing else drives is the source of its wires, which
+      // leave the east face of its box, as an input's do.
+      const vdd = SchematicBoundaryPort(
+        id: 'port:vdd',
+        name: 'vdd',
+        direction: PortDirection.inout,
+        width: 1,
+      );
+      const pad = SchematicBoundaryPort(
+        id: 'port:pad',
+        name: 'pad',
+        direction: PortDirection.inout,
+        width: 1,
+      );
+      const vddBox = BoundingBox(x: 200, y: 40, width: 16, height: 16);
+      const padBox = BoundingBox(x: 400, y: 40, width: 16, height: 16);
+      const laidOut = LaidOutGraph(
+        graph: SchematicGraph(
+          moduleName: 'top',
+          cells: <SchematicCell>[],
+          boundaryPorts: <SchematicBoundaryPort>[vdd, pad],
+          edges: <SchematicEdge>[
+            SchematicEdge(
+              id: 'e0',
+              sourcePortId: 'port:vdd',
+              targetPortId: 'u0:VPWR',
+              netId: 2,
+            ),
+            SchematicEdge(
+              id: 'e1',
+              sourcePortId: 'u0:Y',
+              targetPortId: 'port:pad',
+              netId: 3,
+            ),
+          ],
+        ),
+        layout: NetlistLayout(
+          nodes: <NodePosition>[
+            NodePosition(id: 'port:vdd', bounds: vddBox),
+            NodePosition(id: 'port:pad', bounds: padBox),
+          ],
+          edges: <EdgeRoute>[],
+          bounds: BoundingBox(x: 0, y: 0, width: 600, height: 100),
+        ),
+      );
+      final renderObject = SchematicCanvasRenderObject(
+        laidOut: laidOut,
+        transform: ViewportTransform.identity,
+        theme: ThemeData.light(),
+        statsSink: const NoopRenderStatsSink(),
+      )..layout(BoxConstraints.tight(const Size(800, 200)));
+      final context = TestRecordingPaintingContext(TestRecordingCanvas());
+      renderObject.paint(context, Offset.zero);
+      final labels = <({double left, double right})>[
+        for (final recorded
+            in (context.canvas as TestRecordingCanvas).invocations)
+          if (recorded.invocation.memberName == #drawParagraph)
+            () {
+              final args = recorded.invocation.positionalArguments;
+              final left = (args[1] as Offset).dx;
+              return (
+                left: left,
+                right: left + (args[0] as Paragraph).longestLine,
+              );
+            }(),
+      ]..sort((a, b) => a.left.compareTo(b.left));
+      expect(labels, hasLength(2));
+      expect(labels.first.right, lessThanOrEqualTo(vddBox.x));
+      expect(labels.last.left, greaterThanOrEqualTo(padBox.x + 16));
+    });
   });
 
   group('SchematicCanvas widget', () {

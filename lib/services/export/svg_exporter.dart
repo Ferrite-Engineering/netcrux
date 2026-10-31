@@ -7,7 +7,7 @@ import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
-import 'package:netcrux/domain/models/netlist/port_direction.dart';
+import 'package:netcrux/domain/models/schematic/boundary_port_label.dart';
 import 'package:netcrux/domain/models/schematic/exported_cell_symbol.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/pin_tie.dart';
@@ -192,20 +192,20 @@ class SvgExporter {
         'height="${b.height}" '
         'fill="${palette.port}" />',
       );
-      final input = port.direction == PortDirection.input;
+      final west = BoundaryPortLabel.onWestIn(graph.graph, port);
       _writeText(
         buffer,
         port.name,
-        x: input
+        x: west
             ? b.x - SchematicDetailMarks.boundaryLabelGap
             : b.right + SchematicDetailMarks.boundaryLabelGap,
         y: b.y + b.height / 2,
-        anchor: input ? 'end' : 'start',
+        anchor: west ? 'end' : 'start',
         baseline: 'middle',
         fontSize: labelFontSize,
         fill: palette.label,
         cssClass: 'port-label',
-        maxWidth: 80,
+        maxWidth: BoundaryPortLabel.maxWidth,
       );
     }
 
