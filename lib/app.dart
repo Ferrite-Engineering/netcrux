@@ -3,6 +3,7 @@
 
 import 'dart:async' show unawaited;
 import 'dart:io' show stderr, stdout;
+
 import 'package:crux_a11y/crux_a11y.dart' show CruxRoutedContent;
 import 'package:crux_about_dialog/crux_about_dialog.dart';
 import 'package:crux_cxp_ui/crux_cxp_ui.dart'
@@ -13,6 +14,8 @@ import 'package:crux_cxp_ui/crux_cxp_ui.dart'
 import 'package:crux_eula/crux_eula.dart';
 import 'package:crux_file_dialogs/crux_file_dialogs.dart';
 import 'package:crux_issue_reporter/crux_issue_reporter.dart';
+import 'package:crux_keybindings/crux_keybindings.dart'
+    show installLinuxKeyEventRepair;
 import 'package:crux_license/crux_license.dart';
 import 'package:crux_linux_integration/crux_linux_integration.dart';
 import 'package:crux_settings_ui/crux_settings_ui.dart'
@@ -218,6 +221,9 @@ Future<void> bootstrap({
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+  // Over X forwarding from XQuartz the engine reads Backspace, Escape, Return
+  // and Tab as printable keys; this turns them back into the control keys.
+  installLinuxKeyEventRepair();
   // file_picker's Linux dialogs need a desktop session's DBus portal, which a
   // remotely displayed host often lacks; the runner draws them with GTK.
   useGtkFileDialogsOnLinux();
@@ -351,10 +357,8 @@ Future<void> bootstrap({
     // The Pro overlay's `extraTabOverrides` spread AFTER the open-core
     // list so later overrides win, matching the root-container conflict
     // semantics above. Open-core passes an empty list.
-    overridesFactory: (tabId) => layeredOverrides(
-      netcruxTabOverridesFactory(tabId),
-      extraTabOverrides,
-    ),
+    overridesFactory: (tabId) =>
+        layeredOverrides(netcruxTabOverridesFactory(tabId), extraTabOverrides),
   );
   final paneContainerManager = PaneContainerManager(
     rootContainer: rootContainer,
