@@ -324,18 +324,22 @@ Map<String, Object?> buildElkInput(
       'id': id,
       'width': 16,
       'height': 16,
+      // Whole numbers, written as integers: a double prints as `21.0` on
+      // desktop and `21` in the browser, and the input must be the same text
+      // on both (its hash keys the layout caches and the parity references).
       'labels': <Map<String, Object?>>[
         <String, Object?>{
           'text': port.name,
-          'width': BoundaryPortLabel.widthFor(port.name),
-          'height': BoundaryPortLabel.height,
+          'width': BoundaryPortLabel.widthFor(port.name).ceil(),
+          'height': BoundaryPortLabel.height.ceil(),
         },
       ],
       'layoutOptions': <String, Object?>{
         'elk.nodeLabels.placement': west
             ? '[OUTSIDE, H_LEFT, V_CENTER]'
             : '[OUTSIDE, H_RIGHT, V_CENTER]',
-        'elk.spacing.labelNode': '${SchematicDetailMarks.boundaryLabelGap}',
+        'elk.spacing.labelNode':
+            '${SchematicDetailMarks.boundaryLabelGap.ceil()}',
       },
     });
   }
