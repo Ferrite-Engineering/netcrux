@@ -16,6 +16,16 @@ const int kNetcruxProjectVersion = 1;
 /// detecting project intent on the CLI.
 const String kNetcruxProjectExtension = 'netcrux-project';
 
+/// The Yosys passes [NetcruxProject.lowerToStructural] adds to an
+/// elaboration. The script already runs `proc` after `hierarchy`, so with
+/// these the run is `proc; opt; memory; opt`. They go ahead of the project's
+/// [NetcruxProject.extraYosysCommands].
+const List<String> kLowerToStructuralCommands = <String>[
+  'opt',
+  'memory',
+  'opt',
+];
+
 /// On-disk representation of a NetCrux **project**.
 ///
 /// A project is a *durable, version-controllable* description of an
@@ -135,17 +145,20 @@ class NetcruxProject {
   /// resolves earlier entries first).
   final List<String> includePaths;
 
-  /// Extra Yosys commands appended after `read_verilog ... hierarchy`
-  /// but before `write_json`. Power users set this to e.g.
-  /// `['proc', 'opt', 'memory']` to force lowering, or `['flatten']`
-  /// to collapse the design.
+  /// Extra Yosys commands appended after `read_verilog ... hierarchy; proc`
+  /// (and after the lowering passes when [lowerToStructural] is set) but
+  /// before `write_json`. Power users set this to e.g. `['flatten']` to
+  /// collapse the design.
   final List<String> extraYosysCommands;
 
-  /// When `true`, the elaboration pipeline runs the full structural
-  /// lowering passes (`proc; opt; memory; opt`) — closer to
-  /// Vivado's *Synthesized Design* view. When `false`, only
-  /// `hierarchy` runs and behavioural blocks survive as black-box
-  /// cells — closer to *Elaborated Design*.
+  /// When `true`, the elaboration runs the structural lowering passes
+  /// (`proc; opt; memory; opt`, see [kLowerToStructuralCommands]): memories
+  /// become flip-flops and logic, and constant and redundant cells are
+  /// folded away, closer to Vivado's *Synthesized Design* view. When
+  /// `false`, the run stops after `hierarchy; proc`, closer to *Elaborated
+  /// Design*. Part of the elaboration cache key, through the request's
+  /// extra commands. The native gate-level reader does not lower, so a
+  /// project that sets this is read by Yosys.
   final bool lowerToStructural;
 
   /// Per-source-file language overrides keyed by the absolute path

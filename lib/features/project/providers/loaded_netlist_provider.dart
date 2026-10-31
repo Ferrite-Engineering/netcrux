@@ -422,7 +422,9 @@ class LoadedNetlist extends _$LoadedNetlist {
     final options = _buildRequest(project);
     // Elaboration cache (a re-open of an unchanged design is a sub-50 ms cache
     // hit): fingerprint = per-file path+size+mtime (sources and Liberty cell
-    // libraries) + yosys version + the request options. A hit returns the
+    // libraries) + yosys version + the request options (the extra commands
+    // carry the lowering passes, so `lowerToStructural` keys the entry
+    // too). A hit returns the
     // previously parsed model and its stderr without spawning yosys or
     // re-parsing. A null key (a source vanished) simply bypasses the cache.
     final cache = ref.read(elaborationCacheServiceProvider);
@@ -648,7 +650,13 @@ class LoadedNetlist extends _$LoadedNetlist {
           if (entry.value.isEmpty) entry.key else '${entry.key}=${entry.value}',
       ],
       includePaths: project.includePaths,
-      extraCommands: project.extraYosysCommands,
+      // The lowering passes run first, so the user's own extra commands see
+      // the lowered design (a `flatten` or `opt_clean` of their own then
+      // works on gates and flip-flops, not on processes).
+      extraCommands: <String>[
+        if (project.lowerToStructural) ...kLowerToStructuralCommands,
+        ...project.extraYosysCommands,
+      ],
       vhdlTopUnit: project.topModule.isEmpty ? null : project.topModule,
       allowUndefinedModules: project.blackBoxMissingModules,
     );

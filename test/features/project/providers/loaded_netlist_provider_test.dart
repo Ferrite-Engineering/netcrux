@@ -594,6 +594,94 @@ void main() {
       expect(request.defines, contains('DEBUG'));
       expect(request.defines, isNot(contains('FAST=')));
     });
+
+    test('lowerToStructural adds the lowering passes ahead of the extra '
+        'commands', () {
+      final project = NetcruxProject.create(
+        sourceFiles: const <String>['top.v'],
+        extraYosysCommands: const <String>['flatten'],
+        lowerToStructural: true,
+      );
+      final request = LoadedNetlist.buildRequest(project);
+      expect(request.extraCommands, <String>[
+        'opt',
+        'memory',
+        'opt',
+        'flatten',
+      ]);
+      // The script runs `proc` itself, so the run is `proc; opt; memory; opt`
+      // and then the user's own commands.
+      final script = YosysRunner.buildScript(
+        request,
+        jsonOutputPath: '/tmp/out.json',
+      );
+      expect(script, contains('proc; opt; memory; opt; flatten; write_json'));
+    });
+
+    test('without lowerToStructural only the extra commands run', () {
+      final project = NetcruxProject.create(
+        sourceFiles: const <String>['top.v'],
+        extraYosysCommands: const <String>['flatten'],
+      );
+      final request = LoadedNetlist.buildRequest(project);
+      expect(request.extraCommands, <String>['flatten']);
+      final script = YosysRunner.buildScript(
+        request,
+        jsonOutputPath: '/tmp/out.json',
+      );
+      expect(script, contains('proc; flatten; write_json'));
+      expect(script, isNot(contains('memory')));
+    });
+  });
+
+  group('lowerToStructural reaches the elaboration', () {
+    test('the run carries the lowering passes and a change of the flag '
+        'misses the elaboration cache', () async {
+      final dir = Directory.systemTemp.createTempSync('netcrux_elab_lower_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final src = File('${dir.path}/top.v')
+        ..writeAsStringSync('module top(); endmodule\n');
+      final runner = _CountingRunner(_fakeRawJson);
+      final container = ProviderContainer(
+        overrides: [
+          ...netcruxTelemetryTestOverrides(),
+          cliNetlistReaderOverrideProvider.overrideWithValue(
+            NetlistReaderChoice.yosys,
+          ),
+          yosysRunnerProvider.overrideWith((ref) => runner),
+          yosysAvailabilityProvider.overrideWith(
+            (ref) async => const YosysAvailability.available(
+              executablePath: '/fake/yosys',
+              versionString: 'Yosys fake',
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(currentProjectProvider.notifier);
+      final lowered = NetcruxProject.create(
+        sourceFiles: <String>[src.path],
+        lowerToStructural: true,
+      );
+
+      notifier.setProject(lowered);
+      await container.read(loadedNetlistProvider.future);
+      expect(runner.calls, 1);
+      expect(runner.lastRequest?.extraCommands, kLowerToStructuralCommands);
+
+      notifier.setProject(lowered.copyWith(lowerToStructural: false));
+      await container.read(loadedNetlistProvider.future);
+      expect(
+        runner.calls,
+        2,
+        reason: 'the unlowered design is not the cached lowered one',
+      );
+      expect(runner.lastRequest?.extraCommands, isEmpty);
+
+      notifier.setProject(lowered);
+      await container.read(loadedNetlistProvider.future);
+      expect(runner.calls, 2, reason: 'the lowered design is cached');
+    });
   });
   group('a SystemVerilog construct the built-in reader refuses', () {
     Future<(ProviderContainer, _FrontendGapRunner, _SlangProbe)> boot({

@@ -999,7 +999,8 @@ This section covers the project/session file formats, filelist import, VHDL (and
   2. Hand-edit the file's `version` to a future integer, re-open. Expected: rejected with a snackbar. Add an unknown field. Expected: silently ignored.
   3. **Save Project As….** Import a `.f` with `+define+` and `+incdir+` entries (§5.3 step 4), then **File → Save Project As…** into the filelist's directory, accepting the suggested name. Expected: a "Saved to …" snackbar; the file holds the sources and the include directory as paths relative to it and the define; the welcome screen's Recent Projects lists it. Quit with the tab open and relaunch with restore on. Expected: the tab re-reads the saved project. Save again under a name without the extension. Expected: `.netcrux-project` is appended and the file opens as a project, not as HDL.
   4. Save a project whose sources live on another drive (Windows). Expected: those paths are written absolute; the rest relative.
-- **Edge cases.** An unknown field from a newer build is dropped, not fatal. A save into an unwritable directory shows the localized failure snackbar and records nothing: no tab project file, no recent, no audit line.
+  5. **`lowerToStructural`.** Open a project over RTL with an `always` block and a small memory array, then set `"lowerToStructural": true` in the file and reopen. Expected: the schematic shows flip-flops, multiplexers and gates where the unlowered design showed process and memory cells, and Diagnostics names the `OPT` and `MEMORY` passes. Set it back to `false`. Expected: the unlowered design returns (a fresh elaboration, not the lowered cache entry).
+- **Edge cases.** An unknown field from a newer build is dropped, not fatal. With both `lowerToStructural` and `extraYosysCommands`, the lowering runs first and the extra commands see the lowered design. A save into an unwritable directory shows the localized failure snackbar and records nothing: no tab project file, no recent, no audit line.
 - **Automation Assessment.**
 
   | Test | Coverage |
@@ -1008,6 +1009,9 @@ This section covers the project/session file formats, filelist import, VHDL (and
   | Reader/Writer forward-compat (unknown field ignore, unknown version reject), pretty-print, atomic write | `[Coverage: UNIT]` (`test/services/project/netcrux_project_file_test.dart`) |
   | Save Project As…: relative paths where the root is shared, absolute otherwise, keys of per-file languages rewritten in step, a round trip through `resolveProjectPaths` | `[Coverage: UNIT]` (`test/services/project/netcrux_project_path_resolver_test.dart`) |
   | `ProjectSaveController.saveToPath` writes a file the reader opens with the same design; the extension is appended; a failed write reports and returns false | `[Coverage: UNIT]` (`test/features/project/services/project_save_controller_test.dart`) |
+  | `lowerToStructural` puts `opt; memory; opt` after `proc` and ahead of the extra commands, and a change of it misses the elaboration cache | `[Coverage: UNIT]` (`test/features/project/providers/loaded_netlist_provider_test.dart`) |
+  | Every project field changes the Yosys request or is read where it acts; a new field fails until accounted for | `[Coverage: UNIT]` (`test/static/project_field_reachability_test.dart`) |
+  | The lowered schematic on a real host | `[Coverage: MANUAL]` (step 5), needs Yosys |
   | The OS save dialog, the tab's project file and the recent entry after a save | `[Coverage: MANUAL]` (step 3) |
   | Live Open Project → elaborate on a real host | `[Coverage: MANUAL]` — needs Yosys; the format is unit-covered. |
 
