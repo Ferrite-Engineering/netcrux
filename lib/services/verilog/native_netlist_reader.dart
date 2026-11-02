@@ -139,8 +139,13 @@ class NativeReadFallbackOutcome extends NativeReadOutcome {
   /// The 1-based line, or `0`.
   final int line;
 
-  /// The Diagnostics line, `path:line: Warning: ...`, naming the construct
-  /// and where it is and saying Yosys reads the design instead.
+  /// The Diagnostics line, `path:line: Info: ...` or `path:line: Warning: ...`,
+  /// naming the construct and where it is and saying Yosys reads the design
+  /// instead.
+  ///
+  /// A construct the reader does not read ([NativeReaderStop.unsupported]) is
+  /// ordinary RTL, so it is reported at Info level. A file that looks
+  /// structural but is malformed or inconsistent stays a Warning.
   String get diagnosticLine {
     final where = path.isEmpty ? '' : (line > 0 ? '$path:$line: ' : '$path: ');
     final what = switch (stop) {
@@ -148,7 +153,8 @@ class NativeReadFallbackOutcome extends NativeReadOutcome {
       NativeReaderStop.malformed => 'could not read this file ($message)',
       NativeReaderStop.inconsistent => 'found a problem ($message)',
     };
-    return '${where}Warning: The native gate-level reader $what; '
+    final label = stop == NativeReaderStop.unsupported ? 'Info' : 'Warning';
+    return '$where$label: The native gate-level reader $what; '
         'Yosys reads this design instead.';
   }
 }
@@ -177,9 +183,7 @@ NativeReadOutcome? readGateLevelNetlist(
           maxTokenBytes: request.maxTokenBytes,
         );
         interfaces.addModels(path, file.cells);
-        warnings.addAll(
-          file.warnings.map((w) => 'Warning: $w'),
-        );
+        warnings.addAll(file.warnings.map((w) => 'Warning: $w'));
       } on VerilogSourceException catch (e) {
         warnings.add(
           '${e.path}: Warning: cell model file skipped: ${e.message}',

@@ -180,7 +180,7 @@ The foundation is the pipeline spine everything else stands on: the `NetlistMode
   1. Open `d.v` with `File > Open Source Files…` together with `cells.lib`, with no Yosys on the `PATH`. Expected: the design opens in about a second; the Elaboration figure in the statistics strip ends at **Idle (native)**; the first Diagnostics line is `Info: Netlist read by the native gate-level reader (beta)` with the module and cell counts.
   2. Open the same files with `--netlist-reader=yosys`. Expected: the Elaboration figure ends at **Idle (Yosys)**, the first Diagnostics line says the native reader was turned off with `--netlist-reader`, and the schematic of every scope matches the first.
   3. Turn `Settings > Engines > Native gate-level reader (beta)` off, open the file again, and then restore the switch. Expected: Yosys reads it, and the line names `Settings > Engines`.
-  4. Open an RTL file with an `always` block. Expected: Yosys reads it; the first Diagnostics line is `file:line: Warning: The native gate-level reader uses an `always` block…`, and choosing it opens the file at that line.
+  4. Open an RTL file with an `always` block. Expected: Yosys reads it; the first Diagnostics line is `file:line: Info: The native gate-level reader uses an `always` block…`, it is an Info row (no Warning appears), and choosing it opens the file at that line.
   5. Open a netlist that instantiates cells no library defines. Expected: they are black boxes; Diagnostics lists the types and the pins whose direction was guessed, as for the black-box option.
   6. Cross-probe a cell to the Source pane. Expected: the pane shows the instance's line in the netlist file.
   7. Open a `.v.gz` copy. Expected: the same design, with memory no larger than for the plain file.

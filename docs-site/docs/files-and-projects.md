@@ -126,7 +126,7 @@ The model is the one the Yosys route builds: the same modules, instances, cell t
 
 ### What it leaves to Yosys {#native-fallback}
 
-The reader never guesses. For anything else it stops, Yosys reads the design instead, and Diagnostics names what it met with the file and line: `always` and `initial` blocks, `generate`, `function` and `task`, `parameter` and `defparam`, a parameter list on a module or an instance override, primitives and gate instances such as `and`, `reg` and other variables, expressions in an `assign` or a connection, unsized numbers, arrays of instances, SystemVerilog, and compiler directives such as `` `define `` and `` `include ``. A file that is truncated, malformed or inconsistent (a module defined twice, an instance named twice, a net tied to both 0 and 1, an identifier longer than 64 KB) also goes to Yosys, which reports it in its own words. The native reader is only used for Verilog (`.v`, `.vh`, `.v.gz`) sources, and not when the project runs extra Yosys commands or lowers the design.
+The reader never guesses. For anything else it stops, Yosys reads the design instead, and Diagnostics names what it met with the file and line: `always` and `initial` blocks, `generate`, `function` and `task`, `parameter` and `defparam`, a parameter list on a module or an instance override, primitives and gate instances such as `and`, `reg` and other variables, expressions in an `assign` or a connection, unsized numbers, arrays of instances, SystemVerilog, and compiler directives such as `` `define `` and `` `include ``. A construct the reader does not read is ordinary RTL, so Diagnostics shows it as an Info row, not a Warning. A file that is truncated, malformed or inconsistent (a module defined twice, an instance named twice, a net tied to both 0 and 1, an identifier longer than 64 KB) also goes to Yosys, which reports it in its own words; the reader's note about it is a Warning, because a file that looks like a netlist but cannot be read is worth a look. The native reader is only used for Verilog (`.v`, `.vh`, `.v.gz`) sources, and not when the project runs extra Yosys commands or lowers the design.
 
 The status strip's Elaboration figure and the first lines of Diagnostics say which reader ran:
 
@@ -135,7 +135,7 @@ Info: Netlist read by the native gate-level reader (beta): 91 modules, 100085 ce
 ```
 
 ```text
-/path/top.v:42: Warning: The native gate-level reader uses an `always` block, which it does not read; Yosys reads this design instead.
+/path/top.v:42: Info: The native gate-level reader uses an `always` block, which it does not read; Yosys reads this design instead.
 Info: Netlist read by Yosys (the native gate-level reader declined).
 ```
 

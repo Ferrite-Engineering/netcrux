@@ -244,7 +244,7 @@ void main() {
         final lines = stderr.split('\n');
         expect(
           lines.first,
-          '$top:2: Warning: The native gate-level reader uses an `always` block, '
+          '$top:2: Info: The native gate-level reader uses an `always` block, '
           'which it does not read; Yosys reads this design instead.',
         );
         expect(lines[1], contains('Info: Netlist read by Yosys'));
@@ -258,6 +258,14 @@ void main() {
             .read(elaborationDiagnosticsProvider)
             .firstWhere((d) => d.line == 2);
         expect(entry.filePath, top);
+        expect(entry.severity, YosysDiagnosticSeverity.info);
+        // Opening ordinary RTL puts no Warning in Diagnostics.
+        expect(
+          c
+              .read(elaborationDiagnosticsProvider)
+              .where((d) => d.severity == YosysDiagnosticSeverity.warning),
+          isEmpty,
+        );
       },
     );
 

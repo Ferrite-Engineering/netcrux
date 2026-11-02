@@ -188,7 +188,7 @@ void main() {
         expect(declined.path, path);
         expect(declined.line, greaterThan(0));
         expect(declined.message, isNot(startsWith('an internal error')));
-        expect(declined.diagnosticLine, contains(':${declined.line}: Warning'));
+        expect(declined.diagnosticLine, contains(':${declined.line}: Info'));
       });
     }
   });

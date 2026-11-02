@@ -175,7 +175,7 @@ endmodule
       final declined = (attempt as NativeAttemptDeclined).outcome;
       expect(declined.line, 2);
       expect(declined.diagnosticLine, contains('an `initial` block'));
-      expect(declined.diagnosticLine, startsWith('$top:2: Warning:'));
+      expect(declined.diagnosticLine, startsWith('$top:2: Info:'));
     });
 
     test('a cancelled read is reported as cancelled', () async {

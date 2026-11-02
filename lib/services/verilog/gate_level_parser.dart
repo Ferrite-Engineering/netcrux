@@ -671,6 +671,11 @@ class GateLevelParser {
       }
       _s.next();
       _expression(_scratchRight, implicit: false);
+      // An operator after the right-hand side is RTL, whatever the widths of
+      // the part read so far; say so before comparing them.
+      if (!_sym(0x2C) && !_sym(0x3B) && _s.kind == VerilogToken.symbol) {
+        _unsupported('an expression in an assignment', line: line);
+      }
       if (_scratchLeft.length != _scratchRight.length) {
         _inconsistent(
           'an assignment between widths ${_scratchLeft.length} and '

@@ -3,6 +3,7 @@
 
 import 'dart:io';
 
+import 'package:crux_yosys/crux_yosys.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/verilog/native_netlist_reader.dart';
@@ -95,10 +96,16 @@ endmodule
       );
       expect(bits(ports['b']!.bits), ["'0", "'z", "'z", "'1"]);
       expect(bits(ports['c']!.bits), ["'x", "'x", "'x", "'x"]);
-      expect(
-        bits(ports['d']!.bits),
-        ["'0", "'0", "'0", "'1", "'0", "'0", "'1", "'1"],
-      );
+      expect(bits(ports['d']!.bits), [
+        "'0",
+        "'0",
+        "'0",
+        "'1",
+        "'0",
+        "'0",
+        "'1",
+        "'1",
+      ]);
     });
 
     test('a concatenation lists its last element first; {n{x}} repeats', () {
@@ -441,6 +448,11 @@ endmodule
         'module t (input a);\n  wire w = a;\nendmodule',
         'a net declaration with an assignment',
       ),
+      'expression whose operand widths differ from the target': (
+        'module t (input [3:0] a, input [3:0] b, output [4:0] y);\n'
+            '  assign y = a + b;\nendmodule',
+        'an expression in an assignment',
+      ),
       'indexed part select': (
         'module t (input [7:0] a);\n  CELL u (.A(a[0 +: 2]));\nendmodule',
         'an indexed part select',
@@ -482,7 +494,17 @@ endmodule
       );
       expect(d.line, 4);
       expect(d.path, endsWith('n.v'));
-      expect(d.diagnosticLine, startsWith('${d.path}:4: Warning:'));
+      expect(d.diagnosticLine, startsWith('${d.path}:4: Info:'));
+    });
+
+    test('RTL declines at Info severity, with no Warning row', () {
+      final d = declined(
+        'module t (input a);\n\n\n  always @(a) begin end\nendmodule',
+      );
+      final rows = const YosysDiagnosticParser().parse(d.diagnosticLine);
+      expect(rows, hasLength(1));
+      expect(rows.single.severity, YosysDiagnosticSeverity.info);
+      expect(d.diagnosticLine, isNot(contains('Warning')));
     });
   });
 
@@ -491,6 +513,15 @@ endmodule
       final d = declined('module t (input a);\n  CELL u (.A(a)');
       expect(d.stop, NativeReaderStop.malformed);
       expect(d.diagnosticLine, contains('could not read this file'));
+      expect(d.diagnosticLine, contains('Warning:'));
+      final rows = const YosysDiagnosticParser().parse(d.diagnosticLine);
+      expect(rows.single.severity, YosysDiagnosticSeverity.warning);
+    });
+
+    test('an inconsistent netlist stays a Warning row', () {
+      final d = declined('module t (input a);\n  assign ghost = a;\nendmodule');
+      final rows = const YosysDiagnosticParser().parse(d.diagnosticLine);
+      expect(rows.single.severity, YosysDiagnosticSeverity.warning);
     });
 
     test('a stray token before any module', () {
@@ -601,7 +632,12 @@ endmodule
     final reference = (read(text, top: 't') as NativeReadSuccess).model;
     for (final size in const [48, 61, 100, 256]) {
       final small =
-          read(text, top: 't', bufferSize: size, maxTokenBytes: 40)
+          read(
+                text,
+                top: 't',
+                bufferSize: size,
+                maxTokenBytes: 40,
+              )
               as NativeReadSuccess;
       expect(small.model, reference, reason: 'buffer $size');
     }
