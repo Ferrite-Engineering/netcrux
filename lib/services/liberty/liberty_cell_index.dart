@@ -29,7 +29,7 @@ class LibertyCellRecord {
   final List<LibertyLibrary> definedIn;
 
   /// How the cell is drawn, worked out on first use; `null` when it is
-  /// drawn as a plain box with no supply pins to place.
+  /// drawn as a plain box and has no supply pins.
   late final LibertyCellSymbol? symbol = libertyCellSymbolFor(cell);
 }
 
@@ -105,7 +105,7 @@ class LibertyCellIndex {
 
 /// How [cell] is drawn: the symbol its function maps to, its clock pins and
 /// its supply pins. `null` for a cell that keeps the plain box and has no
-/// supply pin to place.
+/// `pg_pin`.
 ///
 /// A gate symbol needs a cell with one output, scalar signal pins only, and
 /// an output `function` that is one of the [LibertyGate]s over exactly its
@@ -116,6 +116,7 @@ class LibertyCellIndex {
 LibertyCellSymbol? libertyCellSymbolFor(LibertyCell cell) {
   final power = <String>{};
   final ground = <String>{};
+  final other = <String>{};
   for (final entry in cell.pgPins.entries) {
     switch (_isPowerPin(entry.key, entry.value)) {
       case true:
@@ -123,14 +124,14 @@ LibertyCellSymbol? libertyCellSymbolFor(LibertyCell cell) {
       case false:
         ground.add(entry.key);
       case null:
-        break;
+        other.add(entry.key);
     }
   }
   final kind = _kindOf(cell);
   final clocks = kind == CellKind.flipFlop
       ? _clockPinsOf(cell)
       : const <String>{};
-  if (kind == CellKind.generic && power.isEmpty && ground.isEmpty) {
+  if (kind == CellKind.generic && cell.pgPins.isEmpty) {
     return null;
   }
   return LibertyCellSymbol(
@@ -138,6 +139,7 @@ LibertyCellSymbol? libertyCellSymbolFor(LibertyCell cell) {
     clockPins: clocks,
     powerPins: power,
     groundPins: ground,
+    otherSupplyPins: other,
   );
 }
 

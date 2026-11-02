@@ -6,6 +6,7 @@ import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/net.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/services/schematic/declared_cell_ports.dart';
@@ -34,17 +35,27 @@ bool schematicDrawsCell(Module module, String cellId) {
 
 /// Whether the schematic draws a pin [portName] on the cell [cellId] of
 /// [module]: the cell is drawn, and the pin is one it connects or its
-/// module or Yosys primitive declares.
+/// module or Yosys primitive declares. An unconnected power or ground pin of
+/// a cell in [liberty] is drawn only when the scope connects some supply
+/// pin ([withoutUnconnectedSupplyPins]).
 bool schematicDrawsCellPort(
   NetlistModel model,
   Module module,
   String cellId,
-  String portName,
-) {
+  String portName, {
+  LibertyCellSymbols liberty = LibertyCellSymbols.none,
+}) {
   if (!schematicDrawsCell(module, cellId)) return false;
   final cell = module.cells[cellId]!;
-  return cell.connections.containsKey(portName) ||
+  final bits = cell.connections[portName];
+  if (bits != null && bits.isNotEmpty) return true;
+  final declared =
+      bits != null ||
       (declaredPortsFor(model, cell.type)?.containsKey(portName) ?? false);
+  if (!declared) return false;
+  final library = liberty[cell.type];
+  if (library == null || !library.isSupplyPin(portName)) return true;
+  return scopeConnectsSupplyPins(module, liberty);
 }
 
 /// Whether [module] has a boundary port named [portName].

@@ -83,7 +83,7 @@ LaidOutGraph layOutScope(
   }
   final graph = SchematicGraphBuilder(liberty: liberty).build(model, node);
   final input = buildElkInput(
-    schematicScopeModule(model, module),
+    schematicScopeModule(model, module, liberty: liberty),
     liberty: liberty,
   );
   final layout = NetlistLayout.fromJson(

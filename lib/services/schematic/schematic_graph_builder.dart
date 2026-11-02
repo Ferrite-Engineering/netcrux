@@ -37,7 +37,9 @@ class SchematicGraphBuilder {
   /// How the design's cell-library cells are drawn: a cell whose type has
   /// an entry, and no built-in symbol of its own, takes the entry's symbol,
   /// its clock pins are marked, and its power and ground pins go on the top
-  /// and bottom faces, where the layout puts them (`buildElkInput`).
+  /// and bottom faces, where the layout puts them (`buildElkInput`). In a
+  /// scope that connects no supply pin, the unconnected ones are not drawn
+  /// ([schematicScopeModule]).
   final LibertyCellSymbols liberty;
 
   /// How many whole-scope graphs [build] has built in this isolate. A test
@@ -59,7 +61,7 @@ class SchematicGraphBuilder {
     buildCount++;
     final resolved = node.resolve(model);
     if (resolved == null) return SchematicGraph.empty;
-    final module = schematicScopeModule(model, resolved);
+    final module = schematicScopeModule(model, resolved, liberty: liberty);
     final driven = drivenNetIds(module);
     final initByNet = initValuesByNetId(module);
 

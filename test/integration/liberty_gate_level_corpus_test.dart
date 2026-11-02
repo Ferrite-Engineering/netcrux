@@ -14,16 +14,23 @@
 // `pg_pin` in a cell's black box, so the synthesized JSON has no supply pins
 // at all, while the native reader (like the project's own Yosys route, which
 // `native_vs_yosys_test.dart` holds it to) declares every `pg_pin` of the
-// library and draws it, unconnected, on the face its type names.
+// library. Neither draws one: a scope that connects no supply pin draws none
+// of the unconnected ones. A hand-written powered netlist
+// (`test/fixtures/gate_level/sky130_fd_sc_hd_powered/`) connects them, and
+// there every supply pin is drawn, the one it leaves unconnected included, on
+// the face its type names.
 
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
+// The netlist shims each re-export the whole model, `Cell` included.
+import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
@@ -72,7 +79,7 @@ class _Opened {
     final symbols = index.symbolsFor(model);
     graph = SchematicGraphBuilder(liberty: symbols).build(model, top);
     elkInput = buildElkInput(
-      schematicScopeModule(model, top.resolve(model)!),
+      schematicScopeModule(model, top.resolve(model)!, liberty: symbols),
       liberty: symbols,
     );
   }
@@ -112,6 +119,27 @@ class _Opened {
         },
       }),
   };
+
+  /// The `elk.port.side` of every pin of every cell in the ELK input, supply
+  /// pins included.
+  Map<String, Map<String, String?>> get elkSides {
+    final cells = <String>{for (final c in graph.cells) c.id};
+    return <String, Map<String, String?>>{
+      for (final node
+          in (elkInput['children']! as List<Object?>)
+              .cast<Map<String, Object?>>())
+        if (cells.contains(node['id']))
+          node['id']! as String: <String, String?>{
+            for (final port
+                in (node['ports']! as List<Object?>)
+                    .cast<Map<String, Object?>>())
+              (port['id']! as String).split(':').last:
+                  (port['layoutOptions']
+                          as Map<String, Object?>?)?['elk.port.side']
+                      as String?,
+          },
+    };
+  }
 
   /// The `elk.port.side` of every signal pin of every cell in the ELK input.
   Map<String, Map<String, String?>> get elkSignalSides {
@@ -232,39 +260,38 @@ void main() {
         expect(json.drawing, native.drawing);
       });
 
-      test('the native reader puts every supply pin on the face the oracle '
-          'names; the synthesized JSON has none', () {
-        for (final cell in native.graph.cells) {
-          final type = native.types[cell.id]!;
-          final library = native.libraryCell(cell.id);
-          final supplies = <String, SchematicPortSide>{
-            for (final p in cell.ports)
-              if (library.pgPins.containsKey(p.name)) p.name: p.side,
-          };
-          expect(
-            supplies.keys.toSet(),
-            <String>{
-              ...oracleList(type, 'power'),
-              ...oracleList(type, 'ground'),
-            },
-            reason: cell.id,
-          );
-          for (final entry in supplies.entries) {
+      test('a synthesized netlist connects no supply pin, so neither reader '
+          'draws or lays out one, and every signal pin stays', () {
+        // The native reader declares every pg_pin; the rule takes them away.
+        final declared = native.model.modules[design]!.cells.values.first;
+        expect(
+          native.model.modules[declared.type]!.ports.keys,
+          containsAll(<String>['VPWR', 'VGND', 'VPB', 'VNB']),
+        );
+        for (final route in <_Opened>[native, json]) {
+          for (final cell in route.graph.cells) {
+            final library = route.libraryCell(cell.id);
             expect(
-              entry.value,
-              expectedFace(type, library, entry.key),
-              reason: '${cell.id}.${entry.key}',
+              cell.ports.where((p) => library.pgPins.containsKey(p.name)),
+              isEmpty,
+              reason: '${route.route}: ${cell.id}',
+            );
+            expect(
+              <String>{for (final p in cell.ports) p.name},
+              <String>{
+                for (final port in library.ports)
+                  if (!library.pgPins.containsKey(port.name)) port.name,
+              },
+              reason: '${route.route}: signal pins of ${cell.id}',
+            );
+            expect(
+              route.elkSides[cell.id]!.keys.toSet(),
+              <String>{for (final p in cell.ports) p.name},
+              reason: '${route.route}: ELK ports of ${cell.id}',
             );
           }
         }
-        for (final cell in json.graph.cells) {
-          final library = json.libraryCell(cell.id);
-          expect(
-            cell.ports.where((p) => library.pgPins.containsKey(p.name)),
-            isEmpty,
-            reason: cell.id,
-          );
-        }
+        expect(json.elkSides, native.elkSides);
       });
 
       test('the ELK input of both readers puts each signal pin on the side '
@@ -380,6 +407,160 @@ void main() {
       });
     });
   }
+
+  group('powered (supplies wired, one left unconnected)', () {
+    late _Opened powered;
+    setUpAll(() {
+      final outcome = readGateLevelNetlist(
+        NativeReadRequest(
+          sourceFiles: const <String>[
+            'test/fixtures/gate_level/sky130_fd_sc_hd_powered/powered.v',
+          ],
+          libertyLibraries: <LibertyLibrary>[library],
+          topModule: 'powered',
+        ),
+      );
+      expect(outcome, isA<NativeReadSuccess>());
+      powered = _Opened(
+        'powered',
+        (outcome! as NativeReadSuccess).model,
+        index,
+      );
+    });
+
+    // From the netlist text: each instance's supply connections.
+    const supplies = <String>{'VPWR', 'VGND', 'VPB', 'VNB'};
+    const unconnected = <String, Set<String>>{
+      'u_nand': <String>{},
+      'u_aoi': <String>{'VNB'},
+      'u_ff': <String>{},
+    };
+
+    test('every supply pin is drawn on the face its type names, the '
+        'unconnected one included', () {
+      expect(
+        <String>{for (final c in powered.graph.cells) c.id},
+        unconnected.keys.toSet(),
+      );
+      for (final cell in powered.graph.cells) {
+        final type = powered.types[cell.id]!;
+        final library = powered.libraryCell(cell.id);
+        final drawn = <String, SchematicPort>{
+          for (final p in cell.ports)
+            if (library.pgPins.containsKey(p.name)) p.name: p,
+        };
+        expect(drawn.keys.toSet(), supplies, reason: cell.id);
+        for (final entry in drawn.entries) {
+          expect(
+            entry.value.side,
+            expectedFace(type, library, entry.key),
+            reason: '${cell.id}.${entry.key}',
+          );
+          expect(
+            entry.value.tie == PinTie.unconnected,
+            unconnected[cell.id]!.contains(entry.key),
+            reason: '${cell.id}.${entry.key} is ${entry.value.tie}',
+          );
+        }
+        expect(
+          powered.elkSides[cell.id],
+          containsPair('VNB', 'SOUTH'),
+          reason: cell.id,
+        );
+        expect(
+          powered.elkSides[cell.id],
+          containsPair('VPWR', 'NORTH'),
+          reason: cell.id,
+        );
+      }
+    });
+
+    void expectSupplyFaces(NetlistLayout layout) {
+      for (final cell in powered.graph.cells) {
+        final node = layout.findNode(cell.id);
+        expect(node, isNotNull, reason: cell.id);
+        final library = powered.libraryCell(cell.id);
+        final laid = <String>{};
+        for (final entry in node!.ports.entries) {
+          final pin = entry.key.split(':').last;
+          laid.add(pin);
+          expect(
+            symbolPinFace(entry.value, node.bounds.width, node.bounds.height),
+            expectedFace(powered.types[cell.id]!, library, pin),
+            reason: entry.key,
+          );
+        }
+        expect(laid, containsAll(supplies), reason: cell.id);
+      }
+    }
+
+    test('the native engine lays every supply pin on its face', () {
+      if (!requireElkFfiLibrary()) return;
+      final solver = NativeElkSolver.open();
+      addTearDown(solver.dispose);
+      expectSupplyFaces(
+        NetlistLayout.fromJson(
+          jsonDecode(solver.solve(jsonEncode(powered.elkInput)))
+              as Map<String, Object?>,
+        ),
+      );
+    });
+
+    if (Platform.isMacOS) {
+      test('elkjs lays every supply pin on the same face', () {
+        final ElkJsHost host;
+        try {
+          host = createDefaultElkJsHost();
+          initElkRuntime(
+            host,
+            File('assets/elk/elk.bundled.js').readAsStringSync(),
+          );
+        } on Object catch (e) {
+          markTestSkipped('no JavaScript engine here: $e');
+          return;
+        }
+        addTearDown(host.dispose);
+        expectSupplyFaces(
+          NetlistLayout.fromJson(
+            jsonDecode(runElkLayoutOnHost(host, jsonEncode(powered.elkInput)))
+                as Map<String, Object?>,
+          ),
+        );
+      });
+    }
+
+    test('removing the one supply connection of a one-cell scope hides its '
+        'unconnected supply pins again', () {
+      final model = powered.model;
+      final top = model.modules['powered']!;
+      final symbols = index.symbolsFor(model);
+      expect(scopeConnectsSupplyPins(top, symbols), isTrue);
+      final aoi = top.cells['u_aoi']!;
+      final bare = top.copyWith(
+        cells: <String, Cell>{
+          'u_aoi': aoi.copyWith(
+            connections: <String, List<BitRef>>{
+              for (final e in aoi.connections.entries)
+                if (!supplies.contains(e.key)) e.key: e.value,
+            },
+          ),
+        },
+      );
+      expect(scopeConnectsSupplyPins(bare, symbols), isFalse);
+      final drawn = schematicScopeModule(model, bare, liberty: symbols);
+      expect(drawn.cells['u_aoi']!.connections.keys.toSet(), <String>{
+        'A1',
+        'A2',
+        'B1',
+        'Y',
+      });
+      // Without the libraries nothing is taken away.
+      expect(
+        schematicScopeModule(model, bare).cells['u_aoi']!.connections.keys,
+        containsAll(supplies),
+      );
+    });
+  });
 }
 
 List<String> _sorted(Set<String>? values) => <String>[...?values]..sort();

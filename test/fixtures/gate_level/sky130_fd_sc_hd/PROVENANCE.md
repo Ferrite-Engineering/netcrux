@@ -50,5 +50,7 @@ other change as long as both files come from the same run.
 
 The Yosys JSON has no supply pins: `read_liberty -lib` keeps no `pg_pin` in a
 cell's black box. The native reader, like the app's own Yosys route, declares
-each `pg_pin` the library lists, so there every cell shows its supply pins,
-unconnected, on the top and bottom faces.
+each `pg_pin` the library lists, but neither route draws them: no instance of
+a synthesized netlist connects a supply pin, and a scope that connects none
+draws none of the unconnected ones. The powered counterpart, where every
+supply pin is drawn, is `test/fixtures/gate_level/sky130_fd_sc_hd_powered/`.

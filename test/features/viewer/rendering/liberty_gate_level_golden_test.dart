@@ -14,42 +14,47 @@ import 'package:netcrux/services/verilog/native_netlist_reader.dart';
 
 import '../../../helpers/elk_ffi_library_gate.dart';
 
-/// End-to-end render golden: `adder4` synthesized to sky130_fd_sc_hd
-/// (`test/fixtures/gate_level/sky130_fd_sc_hd/`), read by the native
-/// gate-level reader with the library, laid out by the native engine and
-/// painted by the canvas. Its XNOR gates and the `maj3` boxes, with every
-/// cell's supply pins on its top and bottom faces, pin the whole path from
-/// the Liberty file to the pixels.
+/// End-to-end render goldens of gate-level netlists on sky130_fd_sc_hd, read
+/// by the native gate-level reader with the library, laid out by the native
+/// engine and painted by the canvas, pinning the whole path from the Liberty
+/// file to the pixels.
+///
+/// - `adder4` synthesized (`test/fixtures/gate_level/sky130_fd_sc_hd/`): its
+///   XNOR gates and `maj3` boxes, with no supply pins, since a netlist
+///   straight out of synthesis connects none.
+/// - `powered` (`test/fixtures/gate_level/sky130_fd_sc_hd_powered/`), wired
+///   as place and route writes it: every supply pin on the top and bottom
+///   faces, the one left unconnected on purpose among them.
 ///
 /// Painted in the mid band (symbols, no labels) so the image does not hang
 /// on font rasterisation. Recorded on the CI renderer only, through the
 /// Rebaseline goldens workflow; never re-recorded for a local-only diff.
 void main() {
-  testWidgets('adder4 on sky130_fd_sc_hd, native read and native layout', (
-    tester,
-  ) async {
-    if (!requireElkFfiLibrary()) return;
+  Future<void> expectRender(
+    WidgetTester tester, {
+    required String source,
+    required String top,
+    required String golden,
+  }) async {
     final library = LibertyParser.parseFile(
       'test/fixtures/liberty/pdk/sky130_fd_sc_hd/'
       'sky130_fd_sc_hd__tt_025C_1v80.lib.gz',
     );
     final outcome = readGateLevelNetlist(
       NativeReadRequest(
-        sourceFiles: const <String>[
-          'test/fixtures/gate_level/sky130_fd_sc_hd/adder4.v',
-        ],
+        sourceFiles: <String>[source],
         libertyLibraries: <LibertyLibrary>[library],
-        topModule: 'adder4',
+        topModule: top,
       ),
     );
     expect(outcome, isA<NativeReadSuccess>());
     final model = (outcome! as NativeReadSuccess).model;
-    final top = HierarchyNode.rootOf(model)!;
+    final root = HierarchyNode.rootOf(model)!;
     final solver = NativeElkSolver.open();
     addTearDown(solver.dispose);
     final laidOut = layOutScope(
       model,
-      top,
+      root,
       solver.solve,
       liberty: LibertyCellIndex(<LibertyLibrary>[library]).symbolsFor(model),
     );
@@ -85,7 +90,31 @@ void main() {
     expect(tester.takeException(), isNull);
     await expectLater(
       find.byType(SchematicCanvas),
-      matchesGoldenFile('goldens/liberty_adder4_sky130.png'),
+      matchesGoldenFile(golden),
+    );
+  }
+
+  testWidgets('adder4 on sky130_fd_sc_hd, native read and native layout', (
+    tester,
+  ) async {
+    if (!requireElkFfiLibrary()) return;
+    await expectRender(
+      tester,
+      source: 'test/fixtures/gate_level/sky130_fd_sc_hd/adder4.v',
+      top: 'adder4',
+      golden: 'goldens/liberty_adder4_sky130.png',
+    );
+  });
+
+  testWidgets('a powered netlist on sky130_fd_sc_hd draws every supply pin', (
+    tester,
+  ) async {
+    if (!requireElkFfiLibrary()) return;
+    await expectRender(
+      tester,
+      source: 'test/fixtures/gate_level/sky130_fd_sc_hd_powered/powered.v',
+      top: 'powered',
+      golden: 'goldens/liberty_powered_sky130.png',
     );
   });
 }

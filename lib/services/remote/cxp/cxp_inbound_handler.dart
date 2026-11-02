@@ -16,6 +16,7 @@ import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
@@ -24,6 +25,7 @@ import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
 import 'package:netcrux/features/inspector/providers/received_timing_path_provider.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
+import 'package:netcrux/features/project/providers/liberty_cell_providers.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
@@ -1504,7 +1506,15 @@ class NetcruxCxpRequestHandler extends CruxCxpRequestHandler {
     return switch (element) {
       SelectedElementCell(:final cellId) => schematicDrawsCell(module, cellId),
       SelectedElementPort(:final cellId, :final portName) =>
-        schematicDrawsCellPort(model, module, cellId, portName),
+        schematicDrawsCellPort(
+          model,
+          module,
+          cellId,
+          portName,
+          liberty:
+              tabContainer.read(libertyCellSymbolsProvider).value ??
+              LibertyCellSymbols.none,
+        ),
       SelectedElementWire() => false,
       SelectedElementBoundaryPort(:final portId) => module.ports.values.any(
         (p) => 'port:${p.name}' == portId,

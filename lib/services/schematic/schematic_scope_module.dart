@@ -5,20 +5,97 @@
 import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/netlist/port_direction.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/services/schematic/declared_cell_ports.dart';
 
 /// The module the schematic draws and lays out for [module] of [model]:
 /// the cells it hides ([isHiddenFromSchematic]) left out, then every
 /// remaining cell's declared-but-unconnected ports added
-/// ([withDeclaredCellPorts]).
+/// ([withDeclaredCellPorts]), then, in a scope that connects no supply pin
+/// of its cell libraries, the unconnected supply pins taken away again
+/// ([withoutUnconnectedSupplyPins]).
 ///
 /// The graph builder and the layout both take their module from here, so
 /// every cell the canvas draws has a place in the layout and the layout
 /// places nothing the canvas does not draw. The hidden cells stay in the
 /// netlist model, so search still finds them and the Inspector still
 /// describes them.
-Module schematicScopeModule(NetlistModel model, Module module) =>
-    withDeclaredCellPorts(model, withoutHiddenCells(module));
+Module schematicScopeModule(
+  NetlistModel model,
+  Module module, {
+  LibertyCellSymbols liberty = LibertyCellSymbols.none,
+}) => withoutUnconnectedSupplyPins(
+  withDeclaredCellPorts(model, withoutHiddenCells(module)),
+  liberty,
+  scope: module,
+);
+
+/// Whether any cell of [module] connects one of the power or ground pins
+/// ([LibertyCellSymbol.isSupplyPin]) its cell library declares to a net or a
+/// constant.
+///
+/// A netlist after place and route, or one written for power-aware
+/// simulation, wires its supplies; one straight out of synthesis does not.
+bool scopeConnectsSupplyPins(Module module, LibertyCellSymbols liberty) {
+  if (liberty.isEmpty) return false;
+  for (final cell in module.cells.values) {
+    final library = liberty[cell.type];
+    if (library == null) continue;
+    for (final entry in cell.connections.entries) {
+      if (entry.value.isNotEmpty && library.isSupplyPin(entry.key)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// [module] without the unconnected power and ground pins of its
+/// cell-library cells, when no cell of [scope] (by default [module] itself)
+/// connects any supply pin ([scopeConnectsSupplyPins]); otherwise [module]
+/// unchanged.
+///
+/// A synthesized netlist leaves every cell's supplies to place and route,
+/// and drawn, each cell carries four unconnected pins on sky130. Once any
+/// instance of the scope is wired to a supply, every supply pin is drawn,
+/// connected or not, so a missing connection stays in sight. Signal pins
+/// are never taken away, and neither is a supply pin that is connected.
+/// [module] itself is returned when nothing is taken away, so the ELK
+/// input of a design without such pins does not change.
+Module withoutUnconnectedSupplyPins(
+  Module module,
+  LibertyCellSymbols liberty, {
+  Module? scope,
+}) {
+  if (liberty.isEmpty) return module;
+  if (scopeConnectsSupplyPins(scope ?? module, liberty)) return module;
+  Map<String, Cell>? patched;
+  for (final entry in module.cells.entries) {
+    final cell = entry.value;
+    final library = liberty[cell.type];
+    if (library == null) continue;
+    bool hidden(String pin, List<BitRef> bits) =>
+        bits.isEmpty && library.isSupplyPin(pin);
+    if (!cell.connections.entries.any((e) => hidden(e.key, e.value))) {
+      continue;
+    }
+    final connections = <String, List<BitRef>>{
+      for (final pin in cell.connections.entries)
+        if (!hidden(pin.key, pin.value)) pin.key: pin.value,
+    };
+    (patched ??= Map<String, Cell>.of(module.cells))[entry.key] = cell.copyWith(
+      connections: connections,
+      portDirections: <String, PortDirection>{
+        for (final direction in cell.portDirections.entries)
+          if (connections.containsKey(direction.key) ||
+              !library.isSupplyPin(direction.key))
+            direction.key: direction.value,
+      },
+    );
+  }
+  return patched == null ? module : module.copyWith(cells: patched);
+}
 
 /// Whether the schematic leaves [cell] out.
 ///

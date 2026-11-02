@@ -132,7 +132,7 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
     // The same module the graph builder draws from, so every pin it adds
     // for a declared-but-unconnected port has a place, and the cells it
     // hides take no room.
-    final patched = schematicScopeModule(model, module);
+    final patched = schematicScopeModule(model, module, liberty: liberty);
     final shown = members == null ? graph : coneSubgraph(graph, members);
     final layout = await service.layout(
       patched,
