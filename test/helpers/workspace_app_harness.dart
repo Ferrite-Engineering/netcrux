@@ -21,6 +21,7 @@ import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/workspace/services/active_tab_navigator.dart';
@@ -45,6 +46,7 @@ class RowLayoutService extends ElkLayoutService {
   Future<NetlistLayout> layout(
     Module module, {
     CellSymbolGeometries symbols = CellSymbolGeometries.none,
+    LibertyCellSymbols liberty = LibertyCellSymbols.none,
     ElkSubgraph? only,
   }) async {
     final names = <String>[

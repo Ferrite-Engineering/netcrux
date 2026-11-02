@@ -9,7 +9,9 @@ import 'dart:typed_data';
 import 'package:netcrux/services/liberty/liberty_library.dart';
 
 /// Reads the cell interfaces out of a Liberty (`.lib`) file: each cell's
-/// name and its ports, with directions and bus widths. Nothing else.
+/// name and its ports, with directions and bus widths, and the few data-sheet
+/// attributes a schematic shows (pin functions, clock pins, power and ground
+/// pin types, the `ff` or `latch` group and the area). Nothing else.
 ///
 /// A standard-cell Liberty file runs to hundreds of megabytes, nearly all
 /// of it timing and power tables. The reader is a single forward pass over
@@ -23,8 +25,12 @@ import 'package:netcrux/services/liberty/liberty_library.dart';
 ///
 /// - `pin(A)` and `pin(A, B)` with `direction : input | output | inout`;
 ///   `internal` pins are left out, and a pin with no direction is `inout`.
+///   A pin's `function` and `clock : true` are kept.
 /// - `pg_pin(VDD)` as an `inout` port, so RTL that wires power and ground
-///   still connects.
+///   still connects, with its `pg_type`.
+/// - The cell's `area`, and its `ff` or `latch` group with the expressions
+///   in it. A cell with more than one, or an `ff_bank`, `latch_bank` or
+///   `statetable`, is marked as storing state some other way.
 /// - `bus(D)` with `bus_type`, resolved through a `type(NAME)` group (in
 ///   the library or the cell) to a vector `[bit_from:bit_to]`. The `pin`
 ///   groups inside a bus belong to it. With no usable type the range comes
@@ -98,6 +104,7 @@ class LibertyParser {
     final cells = <LibertyCell>[];
     final seen = <String>{};
     var sawLibrary = false;
+    String? libraryName;
     while (true) {
       final token = _lexer.next();
       if (token.kind == _Kind.eof) break;
@@ -105,6 +112,7 @@ class LibertyParser {
       if (statement is! _Group) continue;
       if (statement.name == 'library') {
         sawLibrary = true;
+        if (statement.args.isNotEmpty) libraryName ??= statement.args.first;
         for (final cell in _library()) {
           if (seen.add(cell.name)) {
             cells.add(cell);
@@ -125,7 +133,12 @@ class LibertyParser {
         'no library(...) group found; is this a Liberty file?',
       );
     }
-    return LibertyLibrary(path: _path, cells: cells, warnings: _warnings);
+    return LibertyLibrary(
+      path: _path,
+      name: libraryName,
+      cells: cells,
+      warnings: _warnings,
+    );
   }
 
   /// Reads a `library` body (its `{` already consumed) and returns its
@@ -152,38 +165,60 @@ class LibertyParser {
       group.args.isEmpty ? '' : group.args.first,
       group.line,
     );
-    _body('cell', (child) {
-      switch (child.name) {
-        case 'pin':
-          final pin = _pin('pin');
-          for (final name in child.args) {
-            cell.addScalar(name, pin.direction);
-          }
-        case 'pg_pin':
-          _lexer.skipGroupBody(child.name, child.line);
-          for (final name in child.args) {
-            cell.addScalar(name, 'inout');
-          }
-        case 'bus':
-          final bus = _bus();
-          for (final name in child.args) {
-            cell.addBus(name, bus);
-          }
-        case 'bundle':
-          final bundle = _bundle();
-          for (final member in bundle.members) {
-            cell.addScalar(
-              member,
-              bundle.memberDirections[member] ?? bundle.direction,
-            );
-          }
-        case 'type':
-          final type = _type();
-          if (child.args.isNotEmpty) cell.types[child.args.first] = type;
-        default:
-          _lexer.skipGroupBody(child.name, child.line);
-      }
-    });
+    _body(
+      'cell',
+      (child) {
+        switch (child.name) {
+          case 'pin':
+            final pin = _pin('pin');
+            for (final name in child.args) {
+              cell.addScalar(name, pin.direction);
+              if (pin.direction == 'internal') continue;
+              final function = pin.function;
+              if (function != null && function.isNotEmpty) {
+                cell.functions.putIfAbsent(name, () => function);
+              }
+              if (pin.clock && !cell.clocks.contains(name)) {
+                cell.clocks.add(name);
+              }
+            }
+          case 'pg_pin':
+            final pgType = _pgPin();
+            for (final name in child.args) {
+              cell.addScalar(name, 'inout');
+              cell.pgPins.putIfAbsent(name, () => pgType);
+            }
+          case 'ff' || 'latch':
+            final storage = _storage(child);
+            cell.storageGroups++;
+            cell.storage ??= storage;
+          case 'ff_bank' || 'latch_bank' || 'statetable':
+            _lexer.skipGroupBody(child.name, child.line);
+            cell.storageGroups += 2;
+          case 'bus':
+            final bus = _bus();
+            for (final name in child.args) {
+              cell.addBus(name, bus);
+            }
+          case 'bundle':
+            final bundle = _bundle();
+            for (final member in bundle.members) {
+              cell.addScalar(
+                member,
+                bundle.memberDirections[member] ?? bundle.direction,
+              );
+            }
+          case 'type':
+            final type = _type();
+            if (child.args.isNotEmpty) cell.types[child.args.first] = type;
+          default:
+            _lexer.skipGroupBody(child.name, child.line);
+        }
+      },
+      onSimple: (name, value) {
+        if (name == 'area') cell.area = double.tryParse(value);
+      },
+    );
     if (cell.name.isEmpty) {
       throw LibertyParseException(
         _path,
@@ -194,17 +229,61 @@ class LibertyParser {
     return cell;
   }
 
-  /// Reads a `pin` body. Only `direction` matters.
+  /// Reads a `pin` body: its `direction`, `function` and `clock`.
   _Pin _pin(String what) {
     String? direction;
+    String? function;
+    var clock = false;
     _body(
       what,
       (group) => _lexer.skipGroupBody(group.name, group.line),
       onSimple: (name, value) {
-        if (name == 'direction') direction = value.toLowerCase();
+        switch (name) {
+          case 'direction':
+            direction = value.toLowerCase();
+          case 'function':
+            function = value.trim();
+          case 'clock':
+            clock = value.toLowerCase() == 'true';
+        }
       },
     );
-    return _Pin(direction);
+    return _Pin(direction, function: function, clock: clock);
+  }
+
+  /// Reads a `pg_pin` body and returns its `pg_type`, or `null`.
+  String? _pgPin() {
+    String? pgType;
+    _body(
+      'pg_pin',
+      (group) => _lexer.skipGroupBody(group.name, group.line),
+      onSimple: (name, value) {
+        if (name == 'pg_type') pgType = value.toLowerCase();
+      },
+    );
+    return pgType;
+  }
+
+  /// Reads an `ff` or `latch` body: the expressions that drive its state.
+  LibertyStorage _storage(_Group group) {
+    final values = <String, String>{};
+    _body(
+      group.name,
+      (child) => _lexer.skipGroupBody(child.name, child.line),
+      onSimple: (name, value) => values[name] = value.trim(),
+    );
+    return LibertyStorage(
+      kind: group.name == 'ff'
+          ? LibertyStorageKind.flipFlop
+          : LibertyStorageKind.latch,
+      stateNames: group.args,
+      clockedOn: values['clocked_on'],
+      nextState: values['next_state'],
+      enable: values['enable'],
+      dataIn: values['data_in'],
+      clear: values['clear'],
+      preset: values['preset'],
+    );
   }
 
   _Bus _bus() {
@@ -438,7 +517,23 @@ class LibertyParser {
         );
       }
     }
-    return LibertyCell(name: raw.name, ports: ports);
+    final names = <String>{for (final port in ports) port.name};
+    return LibertyCell(
+      name: raw.name,
+      ports: ports,
+      area: raw.area,
+      functions: <String, String>{
+        for (final entry in raw.functions.entries)
+          if (names.contains(entry.key)) entry.key: entry.value,
+      },
+      clockPins: <String>[
+        for (final pin in raw.clocks)
+          if (names.contains(pin)) pin,
+      ],
+      pgPins: raw.pgPins,
+      storage: raw.storageGroups == 1 ? raw.storage : null,
+      hasOtherStorage: raw.storageGroups > 1,
+    );
   }
 
   /// Maps a Liberty direction to a port direction; `null` drops the pin.
@@ -519,8 +614,10 @@ final class _Complex extends _Statement {
 }
 
 class _Pin {
-  _Pin(this.direction);
+  _Pin(this.direction, {this.function, this.clock = false});
   final String? direction;
+  final String? function;
+  final bool clock;
 }
 
 class _Bus {
@@ -568,6 +665,15 @@ class _RawCell {
   final List<_RawPort> ports = <_RawPort>[];
   final Set<String> _names = <String>{};
   final Map<String, _BusType> types = <String, _BusType>{};
+  final Map<String, String> functions = <String, String>{};
+  final List<String> clocks = <String>[];
+  final Map<String, String?> pgPins = <String, String?>{};
+  double? area;
+  LibertyStorage? storage;
+
+  /// How many storage groups the cell declares; a bank or state table
+  /// counts as more than one.
+  int storageGroups = 0;
 
   void addScalar(String name, String? direction) {
     if (_names.add(name)) ports.add(_RawPort(name, direction, null));

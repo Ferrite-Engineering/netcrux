@@ -145,7 +145,18 @@ class SvgExporter {
       } else {
         final shape = custom is ExportedCellSymbolUnrenderable
             ? genericBoxShape(box.width, box.height)
-            : symbolShapeFor(cell.kind, box.width, box.height);
+            : <SymbolPrimitive>[
+                ...symbolShapeFor(
+                  cell.kind,
+                  box.width,
+                  box.height,
+                  clockAtPins: cell.hasClockPins,
+                ),
+                // A cell-library flip-flop's wedges, at its clock pins, as
+                // the canvas draws them.
+                if (graph.symbolCells[cell.id] == null)
+                  ...clockWedgeShapes(cell, box.width, box.height, pos.ports),
+              ];
         _writeShape(buffer, cell, box, shape, palette);
       }
       final anchoredPins = graph.symbolCells[cell.id];

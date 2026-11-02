@@ -19,6 +19,7 @@ import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/trace/cone_view.dart';
@@ -138,6 +139,7 @@ class _RecordingLayoutService extends ElkLayoutService {
   Future<NetlistLayout> layout(
     Module module, {
     CellSymbolGeometries symbols = CellSymbolGeometries.none,
+    LibertyCellSymbols liberty = LibertyCellSymbols.none,
     ElkSubgraph? only,
   }) async {
     lastSymbols = symbols;

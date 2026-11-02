@@ -8,6 +8,7 @@ import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/trace/cone_view.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
+import 'package:netcrux/features/project/providers/liberty_cell_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/statistics/providers/layout_timing_provider.dart';
@@ -70,13 +71,18 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   // entering or restoring a scope of millions of cells stays instant.
   if (ref.watch(scopeLayoutGateProvider).deferred) return LaidOutGraph.empty;
 
-  final graph = const SchematicGraphBuilder().build(model, node);
-  if (graph.isEmpty) return LaidOutGraph.empty;
-
   // Custom cell symbols shape the cells they draw, so a symbol added,
   // removed or re-anchored lays the scope out again. Open core always has
   // none, and the provider is value-equal, so this never re-solves there.
   final symbols = ref.watch(cellSymbolGeometriesProvider);
+
+  // The cell libraries decide how their cells are drawn and where their
+  // supply pins sit. Awaited before anything is built, so a gate-level scope
+  // is laid out once, with its gate symbols, rather than first as boxes.
+  final liberty = await ref.watch(libertyCellSymbolsProvider.future);
+
+  final graph = SchematicGraphBuilder(liberty: liberty).build(model, node);
+  if (graph.isEmpty) return LaidOutGraph.empty;
 
   // A cone view of this scope lays out the cone instead of the scope. The
   // cone is resolved on the graph above, before any layout, so a scope too
@@ -131,6 +137,7 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
     final layout = await service.layout(
       patched,
       symbols: symbols,
+      liberty: liberty,
       only: members == null
           ? null
           : ElkSubgraph(

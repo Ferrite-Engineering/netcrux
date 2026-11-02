@@ -18,6 +18,7 @@ import 'package:netcrux/features/inspector/providers/received_timing_path_provid
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/elaboration_diagnostics_provider.dart';
+import 'package:netcrux/features/project/providers/liberty_cell_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/project/providers/netlist_reader_run_provider.dart';
 import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
@@ -67,6 +68,11 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // FunctionalProvider (top-level `@Riverpod`), so the override
     // form is `.overrideWith((ref) => currentLaidOutGraph(ref))`.
     currentLaidOutGraphProvider.overrideWith(currentLaidOutGraph),
+    // The tab's cell libraries, read for the design the tab loaded, and
+    // what the pass above draws their cells as. Derived from the tab's
+    // project and netlist, so they follow them.
+    libertyCellIndexProvider.overrideWith(libertyCellIndex),
+    libertyCellSymbolsProvider.overrideWith(libertyCellSymbols),
     // Whether the scope on the canvas is laid out now or waits for the user:
     // it reads the tab's model, selection and cone view, and the pass above
     // reads it. The scopes the user approved are this tab's.

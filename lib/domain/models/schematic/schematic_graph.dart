@@ -37,6 +37,7 @@ class SchematicPort {
     required this.direction,
     required this.side,
     this.tie = PinTie.net,
+    this.clock = false,
   });
 
   /// `<cellName>:<portName>` — stable across builder runs.
@@ -57,6 +58,11 @@ class SchematicPort {
   /// inspector's "Tied to" row.
   final PinTie tie;
 
+  /// Whether the pin is an edge-triggered clock: a cell-library flip-flop's
+  /// `clock` pin, or one its `clocked_on` names. The canvas draws a clock
+  /// wedge at it.
+  final bool clock;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -65,10 +71,11 @@ class SchematicPort {
           other.name == name &&
           other.direction == direction &&
           other.side == side &&
-          other.tie == tie);
+          other.tie == tie &&
+          other.clock == clock);
 
   @override
-  int get hashCode => Object.hash(id, name, direction, side, tie);
+  int get hashCode => Object.hash(id, name, direction, side, tie, clock);
 
   @override
   String toString() => 'SchematicPort($id, $direction, $side, $tie)';
@@ -115,6 +122,10 @@ class SchematicCell {
 
   /// Convenience: the text the renderer should show for the cell.
   String get displayLabel => label ?? id;
+
+  /// Whether any pin is marked as a clock ([SchematicPort.clock]): the
+  /// clock wedges are then drawn at those pins rather than at a fixed place.
+  bool get hasClockPins => ports.any((p) => p.clock);
 
   @override
   bool operator ==(Object other) {

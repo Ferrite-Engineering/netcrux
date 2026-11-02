@@ -90,6 +90,16 @@ SymbolPainter painterFor(CellKind kind) {
       return paintLatch;
     case CellKind.generic:
       return paintGenericBox;
+    case CellKind.buffer:
+      return paintBuffer;
+    case CellKind.nandGate:
+      return paintNandGate;
+    case CellKind.norGate:
+      return paintNorGate;
+    case CellKind.xorGate:
+      return paintXorGate;
+    case CellKind.xnorGate:
+      return paintXnorGate;
   }
 }
 
@@ -182,3 +192,28 @@ void paintLatch(Canvas canvas, Size size, SymbolPaintContext ctx) =>
 /// cell's display label on top.
 void paintGenericBox(Canvas canvas, Size size, SymbolPaintContext ctx) =>
     paintSymbolShape(canvas, genericBoxShape(size.width, size.height), ctx);
+
+/// Buffer body ([bufferShape]).
+void paintBuffer(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, bufferShape(size.width, size.height), ctx);
+
+/// NAND-gate body ([nandGateShape]).
+void paintNandGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, nandGateShape(size.width, size.height), ctx);
+
+/// NOR-gate body ([norGateShape]).
+void paintNorGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, norGateShape(size.width, size.height), ctx);
+
+/// XOR-gate body ([xorGateShape]).
+void paintXorGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, xorGateShape(size.width, size.height), ctx);
+
+/// XNOR-gate body ([xnorGateShape]).
+void paintXnorGate(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, xnorGateShape(size.width, size.height), ctx);
+
+/// A flip-flop's body without its fixed clock wedge ([flipFlopBodyShape]),
+/// for a cell whose clock pins carry their own wedges.
+void paintFlipFlopBody(Canvas canvas, Size size, SymbolPaintContext ctx) =>
+    paintSymbolShape(canvas, flipFlopBodyShape(size.width, size.height), ctx);

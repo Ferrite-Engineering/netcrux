@@ -16,6 +16,10 @@
 //   --region X,Y,W,H    the part of the layout to show, in layout units
 //   --theme dark|light  SVG and PNG colours (default dark)
 //   --font FILE.ttf     label font for a PNG (default: Arial where present)
+//   --liberty FILE.lib  a cell library, repeatable: its cells are drawn as
+//                       the app draws them (gate symbols from their
+//                       functions, supply pins on the top and bottom), and
+//                       sources are elaborated with its cells as black boxes
 //
 // Sources are elaborated with Yosys as NetCrux elaborates them; a single
 // `.json` argument is read as an already elaborated Yosys netlist. The layout
@@ -31,13 +35,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crux_yosys/crux_yosys.dart';
+import 'package:netcrux/services/liberty/liberty_library.dart';
+import 'package:netcrux/services/liberty/liberty_parser.dart';
+import 'package:netcrux/services/liberty/liberty_stub_writer.dart';
 import 'package:path/path.dart' as p;
 
 const _usage =
     'usage: dart run tool/render_schematic.dart [--top NAME] [--scope PATH] '
     '[-D NAME[=VALUE]]... [-I DIR]... [--zoom Z] [--region X,Y,W,H] '
-    '[--theme dark|light] [--font FILE.ttf] --out FILE.svg|FILE.png '
-    '<sources... | netlist.json>';
+    '[--theme dark|light] [--font FILE.ttf] [--liberty FILE.lib]... '
+    '--out FILE.svg|FILE.png <sources... | netlist.json>';
 
 const _defaultFonts = <String>[
   '/System/Library/Fonts/Supplemental/Arial.ttf',
@@ -61,6 +68,7 @@ Future<void> main(List<String> argv) async {
   String? font;
   final defines = <String>[];
   final includes = <String>[];
+  final libraries = <String>[];
   final inputs = <String>[];
 
   String value(int i, String flag) {
@@ -91,6 +99,8 @@ Future<void> main(List<String> argv) async {
         }
       case '--font':
         font = value(++i, arg);
+      case '--liberty':
+        libraries.add(value(++i, arg));
       case '-D':
       case '--define':
         defines.add(value(++i, arg));
@@ -119,7 +129,7 @@ Future<void> main(List<String> argv) async {
     _fail('--out must end in .svg or .png', 64);
   }
   if (inputs.isEmpty) _fail('no sources given\n$_usage', 64);
-  for (final input in inputs) {
+  for (final input in <String>[...inputs, ...libraries]) {
     if (!File(input).existsSync()) _fail('no such file: $input', 64);
   }
 
@@ -129,7 +139,22 @@ Future<void> main(List<String> argv) async {
     if (inputs.length == 1 && p.extension(inputs.single) == '.json') {
       netlist = p.absolute(inputs.single);
     } else {
-      netlist = await _elaborate(work, inputs, top, defines, includes);
+      final sources = <String>[...inputs];
+      if (libraries.isNotEmpty) {
+        // The cells reach Yosys as black boxes, as they do in the app.
+        final stub = File(p.join(work.path, 'liberty_stubs.v'));
+        try {
+          stub.writeAsStringSync(
+            writeLibertyStubs(<LibertyLibrary>[
+              for (final library in libraries) LibertyParser.parseFile(library),
+            ]).verilog,
+          );
+        } on LibertyParseException catch (e) {
+          _fail(e.description, 64);
+        }
+        sources.add(stub.path);
+      }
+      netlist = await _elaborate(work, sources, top, defines, includes);
     }
     font ??= _defaultFonts.firstWhere(
       (f) => File(f).existsSync(),
@@ -143,6 +168,8 @@ Future<void> main(List<String> argv) async {
       'region': region,
       'theme': theme,
       if (font.isNotEmpty) 'font': p.absolute(font),
+      if (libraries.isNotEmpty)
+        'liberty': <String>[for (final l in libraries) p.absolute(l)],
     };
     final encoded = base64Url.encode(utf8.encode(jsonEncode(request)));
     final harness = Process.runSync(

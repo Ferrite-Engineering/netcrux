@@ -189,6 +189,30 @@ A list changed with `File → Cell Libraries (Liberty)…` stays with the tab ac
 
 Liberty files run to hundreds of megabytes, almost all of it timing tables. NetCrux reads only the cell interfaces and keeps the result in its app-support folder, keyed by each file's path, size and modification time (for a compressed library, those of the `.gz` file), so a library is read once until it changes. A library that is missing or is not valid Liberty is skipped, and the Diagnostics panel shows a warning with the file name, the line for a syntax error, and the reason. Before NetCrux 1.2 such a library stopped the elaboration instead. The design still elaborates with the other libraries, and the cells of the skipped one count as missing modules: with [black boxes](#black-boxes) on they are drawn as black boxes, and otherwise the elaboration stops with "is not part of the design" for the first cell it cannot find. Fix or remove the file in `File → Cell Libraries (Liberty)…` and apply.
 
+From NetCrux 1.2 NetCrux also reads, for each cell, the few data-sheet attributes a schematic shows: each output pin's `function`, the `clock` flag on clock pins, the `pg_type` of each power and ground pin, the cell's `ff` or `latch` group and its `area`. It still skips every timing and power table.
+
+### Standard cells as gate symbols (from 1.2) {#cell-symbols}
+
+From NetCrux 1.2, a cell from the project's cell libraries is drawn as the gate its Liberty description says it is, instead of a labelled box, so a gate-level or post-route netlist reads like a schematic without a symbol library made by hand. NetCrux works out each output's function from its truth table, so `!(A&B)`, `!A+!B` and `(A B)'` are all a NAND:
+
+| The cell's Liberty description | Drawn as |
+|---|---|
+| One output, `function` is its one input (`A`) | Buffer: a triangle |
+| One output, `function` inverts its one input (`!A`) | Inverter: a triangle with a bubble |
+| One output, the AND, OR or XOR of all its inputs | AND, OR or XOR gate |
+| One output, the inverted AND, OR or XOR of all its inputs | NAND, NOR or XNOR gate, with a bubble on the output |
+| One output, one input choosing between the other two (`(A0&!S)+(A1&S)`) | Two-input multiplexer |
+| An `ff` group, outputs reading only its state (`Q : IQ`) | Flip-flop, with a clock wedge at each clock pin |
+| A `latch` group, outputs reading only its state | Latch |
+
+A clock pin is one marked `clock : true` or named in the flip-flop's `clocked_on`. Its wedge sits beside the pin, wherever the layout put it on the left edge.
+
+Every other cell keeps its box: a compound gate such as an AOI or OAI, a cell with more than one output such as a full adder, a cell with an inverted input such as `and2b`, an inverting multiplexer, a cell with a tri-state enable, a cell with no `function` or one NetCrux cannot read, and a cell that stores state through a bank or a `statetable`. A gate of more than six inputs keeps its box too.
+
+On every cell from a library, power and ground pins keep to the top and bottom edges: a `pg_pin` whose `pg_type` is `primary_power`, `backup_power`, `internal_power`, `nwell` or `deepnwell` on the top, and one that is `primary_ground`, `backup_ground`, `internal_ground`, `pwell` or `deeppwell` on the bottom. A `pg_pin` with no `pg_type` goes by its name: `VDD`, `VCC`, `VPWR` and `VPB` on the top, `VSS`, `GND`, `VGND` and `VNB` on the bottom. The gate's inputs and output then have the left and right edges to themselves, and the cell is no taller than its signal pins need.
+
+A [custom symbol](customizing.md) <span class="tier tier-pro">Pro</span> made for a cell type still takes precedence. If one of your sources defines a module with a cell's name, that module is the definition and its instances are drawn as before. The SVG export draws the same symbols as the canvas.
+
 ### Missing modules as black boxes {#black-boxes}
 
 Without a library at hand, a design that instantiates a module nothing defines stops with "is not part of the design". From NetCrux 1.1.3 the error view offers **Show missing modules as black boxes**, which turns the option on for the tab's project and elaborates again. The same option is a checkbox in `File → Cell Libraries (Liberty)…`, and a `.netcrux-project` stores it as `"blackBoxMissingModules": true`.

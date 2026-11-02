@@ -16,6 +16,7 @@ import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/boundary_port_label.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 // Conditional import: the desktop worker's solver factory picks the native
 // elkrs engine, or elkjs on a JavaScript engine when kept by environment or
@@ -285,6 +286,12 @@ class ElkSubgraph {
 /// one (see [symbolCellNodeSize] and [symbolPortCentres]). With no
 /// [symbols] the input is exactly what it was before symbols existed.
 ///
+/// A cell whose `type` has an entry in [liberty] with power or ground pins
+/// (and no custom symbol) puts its power pins on the top face and its ground
+/// pins on the bottom, so a gate symbol's inputs and output keep the left
+/// and right faces to themselves, and its node is as tall as those pins
+/// need. Every other cell's node is unchanged by [liberty].
+///
 /// With [only], the input holds just that part of the scope: the cells,
 /// boundary ports and wires it names, each built exactly as for the whole
 /// scope and under the same id. A net too wide to route in the whole scope
@@ -294,6 +301,7 @@ class ElkSubgraph {
 Map<String, Object?> buildElkInput(
   Module module, {
   CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  LibertyCellSymbols liberty = LibertyCellSymbols.none,
   ElkSubgraph? only,
 }) {
   final children = <Map<String, Object?>>[];
@@ -366,21 +374,28 @@ Map<String, Object?> buildElkInput(
       children.add(_symbolCellNode(cell, geometry));
       continue;
     }
-    final ports = <Map<String, Object?>>[
-      for (final portName in cell.connections.keys)
-        <String, Object?>{
-          'id': '${cell.name}:$portName',
-          'width': 4,
-          'height': 4,
-          'layoutOptions': <String, Object?>{
-            'elk.port.side': elkPortSideFor(cell.portDirections[portName]),
-          },
+    final library = liberty[cell.type];
+    final supply = library != null && library.hasSupplyPins ? library : null;
+    // Pins on the left and right faces, which set the node's height.
+    var sidePins = 0;
+    final ports = <Map<String, Object?>>[];
+    for (final portName in cell.connections.keys) {
+      final face = supply?.supplyFace(portName);
+      if (face == null) sidePins++;
+      ports.add(<String, Object?>{
+        'id': '${cell.name}:$portName',
+        'width': 4,
+        'height': 4,
+        'layoutOptions': <String, Object?>{
+          'elk.port.side':
+              face ?? elkPortSideFor(cell.portDirections[portName]),
         },
-    ];
+      });
+    }
     children.add(<String, Object?>{
       'id': cell.name,
       'width': 80,
-      'height': 32 + (ports.length * 10),
+      'height': 32 + (sidePins * 10),
       'labels': <Map<String, Object?>>[
         <String, Object?>{'text': '${cell.name}\\n(${cell.type})'},
       ],
@@ -850,7 +865,8 @@ class ElkLayoutService {
   ///
   /// Cells whose type has an entry in [symbols] are laid out in their custom
   /// symbol's shape (see [buildElkInput]); that changes the ELK input, and
-  /// so the cache key, only for scopes that contain such a cell.
+  /// so the cache key, only for scopes that contain such a cell. The same
+  /// holds for cell-library cells with supply pins in [liberty].
   ///
   /// With [only], the layout is of that part of the scope (a cone view; see
   /// [buildElkInput]). Such a layout is cheap to solve again, so it is kept
@@ -860,9 +876,15 @@ class ElkLayoutService {
   Future<NetlistLayout> layout(
     Module module, {
     CellSymbolGeometries symbols = CellSymbolGeometries.none,
+    LibertyCellSymbols liberty = LibertyCellSymbols.none,
     ElkSubgraph? only,
   }) async {
-    final input = buildElkInput(module, symbols: symbols, only: only);
+    final input = buildElkInput(
+      module,
+      symbols: symbols,
+      liberty: liberty,
+      only: only,
+    );
     final inputJson = jsonEncode(input);
     final key = _cacheKey(inputJson);
 

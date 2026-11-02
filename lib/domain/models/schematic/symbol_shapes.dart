@@ -170,63 +170,155 @@ const double symbolStrokeWidth = 1.4;
 
 /// The pieces that draw a cell of [kind] in a [width] by [height] box, in
 /// paint order.
+///
+/// With [clockAtPins], a flip-flop is drawn without the clock wedge at its
+/// fixed place: the cell marks its clock pins, and [clockWedgeShapes] draws
+/// a wedge at each of them, where the layout put it.
 List<SymbolPrimitive> symbolShapeFor(
   CellKind kind,
   double width,
-  double height,
-) => switch (kind) {
+  double height, {
+  bool clockAtPins = false,
+}) => switch (kind) {
   CellKind.andGate => andGateShape(width, height),
   CellKind.orGate => orGateShape(width, height),
   CellKind.notGate => notGateShape(width, height),
   CellKind.mux => muxShape(width, height),
-  CellKind.flipFlop => flipFlopShape(width, height),
+  CellKind.flipFlop =>
+    clockAtPins
+        ? flipFlopBodyShape(width, height)
+        : flipFlopShape(width, height),
   CellKind.latch => latchShape(width, height),
   CellKind.generic => genericBoxShape(width, height),
+  CellKind.buffer => bufferShape(width, height),
+  CellKind.nandGate => nandGateShape(width, height),
+  CellKind.norGate => norGateShape(width, height),
+  CellKind.xorGate => xorGateShape(width, height),
+  CellKind.xnorGate => xnorGateShape(width, height),
 };
+
+/// The AND body between [left] and [right]: flat back, rounded front.
+SymbolPath _andBody(double left, double right, double top, double bottom) {
+  final radius = (bottom - top) / 2;
+  final flatRight = math.max(left, right - radius);
+  return SymbolPath(<SymbolPathCommand>[
+    SymbolMoveTo(left, top),
+    SymbolLineTo(flatRight, top),
+    SymbolArcTo(flatRight, bottom, radius),
+    SymbolLineTo(left, bottom),
+    const SymbolClose(),
+  ]);
+}
+
+/// The OR body between [left] and [tip]: curved back, pointed front.
+SymbolPath _orBody(double left, double tip, double top, double bottom) {
+  final midY = (top + bottom) / 2;
+  // Back: a concave curve from top-left to bottom-left. Top arc and
+  // bottom arc meet at the gate tip (right midpoint).
+  final controlX = left + (tip - left) * 0.55;
+  return SymbolPath(<SymbolPathCommand>[
+    SymbolMoveTo(left, top),
+    // Concave back.
+    SymbolQuadTo(left + (tip - left) * 0.2, midY, left, bottom),
+    // Bottom curve toward the tip.
+    SymbolQuadTo(controlX, bottom, tip, midY),
+    // Top curve back to start.
+    SymbolQuadTo(controlX, top, left, top),
+    const SymbolClose(),
+  ]);
+}
+
+/// The radius of the inversion bubble on a [width]-wide gate with [inset].
+double _bubbleRadius(double width, double inset) => (width - 2 * inset) * 0.06;
 
 /// ANSI/IEEE 91-style AND-gate body: flat back, rounded front-right. A
 /// small inset keeps the body off the box's edges so the pin stubs look
 /// like they touch the body.
 List<SymbolPrimitive> andGateShape(double width, double height) {
   final inset = width * 0.06;
-  final left = inset;
-  final right = width - inset;
-  final top = inset;
-  final bottom = height - inset;
-  final radius = (bottom - top) / 2;
-  final flatRight = right - radius;
   return <SymbolPrimitive>[
-    SymbolPath(<SymbolPathCommand>[
-      SymbolMoveTo(left, top),
-      SymbolLineTo(flatRight, top),
-      SymbolArcTo(flatRight, bottom, radius),
-      SymbolLineTo(left, bottom),
-      const SymbolClose(),
-    ]),
+    _andBody(inset, width - inset, inset, height - inset),
   ];
 }
 
 /// IEEE 91-style OR-gate body: curved back, pointed front.
 List<SymbolPrimitive> orGateShape(double width, double height) {
   final inset = width * 0.06;
-  final left = inset;
+  return <SymbolPrimitive>[
+    _orBody(inset, width - inset, inset, height - inset),
+  ];
+}
+
+/// NAND: the AND body, shortened to leave room for a bubble on the output.
+List<SymbolPrimitive> nandGateShape(double width, double height) {
+  final inset = width * 0.06;
+  final bubble = _bubbleRadius(width, inset);
+  final bodyRight = width - inset - 2 * bubble;
+  return <SymbolPrimitive>[
+    _andBody(inset, bodyRight, inset, height - inset),
+    SymbolCircle(bodyRight + bubble, height / 2, bubble),
+  ];
+}
+
+/// NOR: the OR body, shortened to leave room for a bubble on the output.
+List<SymbolPrimitive> norGateShape(double width, double height) {
+  final inset = width * 0.06;
+  final bubble = _bubbleRadius(width, inset);
+  final tip = width - inset - 2 * bubble;
+  return <SymbolPrimitive>[
+    _orBody(inset, tip, inset, height - inset),
+    SymbolCircle(tip + bubble, height / 2, bubble),
+  ];
+}
+
+/// The second curve behind an XOR body, at [left], drawn as a stroke.
+SymbolPath _xorBack(double left, double width, double top, double bottom) {
+  final midY = (top + bottom) / 2;
+  return SymbolPath(<SymbolPathCommand>[
+    SymbolMoveTo(left, top),
+    SymbolQuadTo(left + width * 0.2, midY, left, bottom),
+  ], style: SymbolPrimitiveStyle.strokeOnly);
+}
+
+/// XOR: the OR body moved right, with a second curve behind its back.
+List<SymbolPrimitive> xorGateShape(double width, double height) {
+  final inset = width * 0.06;
   final right = width - inset;
+  final gap = (right - inset) * 0.1;
   final top = inset;
   final bottom = height - inset;
-  final midY = (top + bottom) / 2;
-  final tip = right;
-  // Back: a concave curve from top-left to bottom-left. Top arc and
-  // bottom arc meet at the gate tip (right midpoint).
-  final controlX = left + (right - left) * 0.55;
+  return <SymbolPrimitive>[
+    _orBody(inset + gap, right, top, bottom),
+    _xorBack(inset, right - inset - gap, top, bottom),
+  ];
+}
+
+/// XNOR: the XOR body, shortened to leave room for a bubble on the output.
+List<SymbolPrimitive> xnorGateShape(double width, double height) {
+  final inset = width * 0.06;
+  final bubble = _bubbleRadius(width, inset);
+  final tip = width - inset - 2 * bubble;
+  final gap = (width - 2 * inset) * 0.1;
+  final top = inset;
+  final bottom = height - inset;
+  return <SymbolPrimitive>[
+    _orBody(inset + gap, tip, top, bottom),
+    _xorBack(inset, tip - inset - gap, top, bottom),
+    SymbolCircle(tip + bubble, height / 2, bubble),
+  ];
+}
+
+/// Buffer: the inverter's triangle without the bubble, its point on the
+/// output.
+List<SymbolPrimitive> bufferShape(double width, double height) {
+  final inset = width * 0.06;
+  final top = inset;
+  final bottom = height - inset;
   return <SymbolPrimitive>[
     SymbolPath(<SymbolPathCommand>[
-      SymbolMoveTo(left, top),
-      // Concave back.
-      SymbolQuadTo(left + (right - left) * 0.2, midY, left, bottom),
-      // Bottom curve toward the tip.
-      SymbolQuadTo(controlX, bottom, tip, midY),
-      // Top curve back to start.
-      SymbolQuadTo(controlX, top, left, top),
+      SymbolMoveTo(inset, top),
+      SymbolLineTo(width - inset, (top + bottom) / 2),
+      SymbolLineTo(inset, bottom),
       const SymbolClose(),
     ]),
   ];
@@ -286,6 +378,43 @@ List<SymbolPrimitive> flipFlopShape(double width, double height) {
       SymbolLineTo(inset, clockY + triangleSize),
       const SymbolClose(),
     ], style: SymbolPrimitiveStyle.strokeOnly),
+  ];
+}
+
+/// A flip-flop's rounded rectangle alone, for a cell whose clock pins are
+/// marked one by one ([clockWedgeShapes]).
+List<SymbolPrimitive> flipFlopBodyShape(double width, double height) {
+  final inset = width * 0.06;
+  return <SymbolPrimitive>[
+    SymbolRect(inset, inset, width - inset, height - inset, cornerRadius: 4),
+  ];
+}
+
+/// The clock wedge of each clock pin of [cell] on the west face of its
+/// [width] by [height] node, at the pin's laid-out place: [pinBoxes] maps a
+/// pin id to its box relative to the node. A clock pin the layout put on
+/// another face, or did not place, gets no wedge. Empty for a cell with no
+/// clock pins, so a cell whose kind draws a fixed wedge keeps that one.
+List<SymbolPrimitive> clockWedgeShapes(
+  SchematicCell cell,
+  double width,
+  double height,
+  Map<String, BoundingBox> pinBoxes,
+) {
+  if (!cell.hasClockPins) return const <SymbolPrimitive>[];
+  final inset = width * 0.06;
+  final size = math.min(height * 0.07, 4).toDouble();
+  return <SymbolPrimitive>[
+    for (final port in cell.ports)
+      if (port.clock)
+        if (pinBoxes[port.id] case final box?)
+          if (symbolPinFace(box, width, height) == SchematicPortSide.west)
+            SymbolPath(<SymbolPathCommand>[
+              SymbolMoveTo(inset, box.y + box.height / 2 - size),
+              SymbolLineTo(inset + size * 1.4, box.y + box.height / 2),
+              SymbolLineTo(inset, box.y + box.height / 2 + size),
+              const SymbolClose(),
+            ], style: SymbolPrimitiveStyle.strokeOnly),
   ];
 }
 

@@ -12,6 +12,7 @@ import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/netlist/hierarchy_node.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/schematic/schematic_scope_module.dart';
@@ -66,19 +67,25 @@ HierarchyNode scopeAtPath(NetlistModel model, String path) {
 /// from [SchematicGraphBuilder], the layout from [buildElkInput] over the same
 /// module ([schematicScopeModule]), solved by [solve]
 /// (ELK JSON in, laid-out ELK JSON out; `NativeElkSolver.solve` on desktop).
+/// With [liberty], cell-library cells are drawn and placed as the canvas
+/// draws them for a project with those libraries.
 LaidOutGraph layOutScope(
   NetlistModel model,
   HierarchyNode node,
-  String Function(String inputJson) solve,
-) {
+  String Function(String inputJson) solve, {
+  LibertyCellSymbols liberty = LibertyCellSymbols.none,
+}) {
   final module = node.resolve(model);
   if (module == null) {
     throw ScopeRenderException(
       'the scope ${node.canonicalPath(model)} does not resolve to a module',
     );
   }
-  final graph = const SchematicGraphBuilder().build(model, node);
-  final input = buildElkInput(schematicScopeModule(model, module));
+  final graph = SchematicGraphBuilder(liberty: liberty).build(model, node);
+  final input = buildElkInput(
+    schematicScopeModule(model, module),
+    liberty: liberty,
+  );
   final layout = NetlistLayout.fromJson(
     jsonDecode(solve(jsonEncode(input))) as Map<String, Object?>,
   );

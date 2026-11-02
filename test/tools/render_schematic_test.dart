@@ -6,7 +6,8 @@
 // has the Flutter engine the painter needs, with the request in the
 // NETCRUX_RENDER define: base64url of a JSON object with `netlist` (a Yosys
 // JSON file), `scope`, `out` (.svg or .png), `zoom`, `region`, `theme`
-// (`dark` or `light`) and `font` (a .ttf for the labels, optional).
+// (`dark` or `light`), `font` (a .ttf for the labels, optional) and
+// `liberty` (cell library paths, optional).
 //
 // Without the define, as in the ordinary test run, it is skipped.
 
@@ -24,6 +25,9 @@ import 'package:netcrux/features/viewer/services/svg_export_palette_from_theme.d
 import 'package:netcrux/services/export/scope_render.dart';
 import 'package:netcrux/services/export/svg_exporter.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
+import 'package:netcrux/services/liberty/liberty_cell_index.dart';
+import 'package:netcrux/services/liberty/liberty_library.dart';
+import 'package:netcrux/services/liberty/liberty_parser.dart';
 import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 
 const String _request = String.fromEnvironment('NETCRUX_RENDER');
@@ -48,8 +52,18 @@ void main() {
       ),
     );
     final node = scopeAtPath(model!, (request['scope'] as String?) ?? '');
+    final libraries = <LibertyLibrary>[
+      for (final path
+          in (request['liberty'] as List<Object?>?) ?? const <Object?>[])
+        LibertyParser.parseFile(path! as String),
+    ];
     final solver = NativeElkSolver.open();
-    final laidOut = layOutScope(model, node, solver.solve);
+    final laidOut = layOutScope(
+      model,
+      node,
+      solver.solve,
+      liberty: LibertyCellIndex(libraries).symbolsFor(model),
+    );
     solver.dispose();
     final frame = renderFrame(laidOut, region: region);
     final base = request['theme'] == 'light'

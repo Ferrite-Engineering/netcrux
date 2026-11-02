@@ -34,6 +34,23 @@ enum CellKind {
   /// User-defined module instance, or any unrecognized primitive
   /// rendered as a labeled rectangle.
   generic,
+
+  /// Buffer: a triangle without the inverter's bubble. Drawn for a Liberty
+  /// cell whose function is its one input.
+  buffer,
+
+  /// NAND gate: the AND body with a bubble on the output. Drawn for a
+  /// Liberty cell whose function is the inverted AND of all its inputs.
+  nandGate,
+
+  /// NOR gate: the OR body with a bubble on the output.
+  norGate,
+
+  /// XOR gate: the OR body with a second curve behind its back.
+  xorGate,
+
+  /// XNOR gate: the XOR body with a bubble on the output.
+  xnorGate,
 }
 
 /// Maps a Yosys cell type string (`$and`, `$mux`, `cpu`, …) into the

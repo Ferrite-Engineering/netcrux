@@ -8,6 +8,7 @@ import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/cell_kind.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/services/schematic/declared_cell_ports.dart';
@@ -29,8 +30,15 @@ import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 /// that elkjs can lay
 /// it out interactively.
 class SchematicGraphBuilder {
-  /// Creates a builder. Stateless — instances are interchangeable.
-  const SchematicGraphBuilder();
+  /// Creates a builder. Stateless — instances with the same [liberty] are
+  /// interchangeable.
+  const SchematicGraphBuilder({this.liberty = LibertyCellSymbols.none});
+
+  /// How the design's cell-library cells are drawn: a cell whose type has
+  /// an entry, and no built-in symbol of its own, takes the entry's symbol,
+  /// its clock pins are marked, and its power and ground pins go on the top
+  /// and bottom faces, where the layout puts them (`buildElkInput`).
+  final LibertyCellSymbols liberty;
 
   /// How many whole-scope graphs [build] has built in this isolate. A test
   /// reads it before and after an action to assert the action built none:
@@ -120,6 +128,8 @@ class SchematicGraphBuilder {
     Map<int, String> initByNet,
   ) {
     final ports = <SchematicPort>[];
+    final builtIn = cellKindFromYosysType(cell.type);
+    final library = builtIn == CellKind.generic ? liberty[cell.type] : null;
     // Yosys keeps `connections` in declaration order via LinkedHashMap; that
     // order is the source of truth for the renderer's pin layout. We split
     // sides by direction so the symbol painter doesn't have to guess.
@@ -128,23 +138,29 @@ class SchematicGraphBuilder {
       // to "input" so we don't lose the pin entirely.
       final direction =
           cell.portDirections[portEntry.key] ?? PortDirection.input;
+      final supply = library?.supplyFace(portEntry.key);
       ports.add(
         SchematicPort(
           id: '${cell.name}:${portEntry.key}',
           name: portEntry.key,
           direction: direction,
-          side: _sideForDirection(direction),
+          side: switch (supply) {
+            'NORTH' => SchematicPortSide.north,
+            'SOUTH' => SchematicPortSide.south,
+            _ => _sideForDirection(direction),
+          },
           tie: pinTieFor(
             portEntry.value,
             direction: direction,
             drivenNets: driven,
           ),
+          clock: library?.clockPins.contains(portEntry.key) ?? false,
         ),
       );
     }
     return SchematicCell(
       id: cell.name,
-      kind: cellKindFromYosysType(cell.type),
+      kind: library?.kind ?? builtIn,
       type: cell.type,
       ports: ports,
       initValue: _initValueFor(cell, initByNet),

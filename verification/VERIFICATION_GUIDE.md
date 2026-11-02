@@ -937,6 +937,29 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | Stub geometry: constant labels, undriven ring, bare unconnected pin | `[Coverage: UNIT]` golden (`test/features/viewer/rendering/schematic_painter_golden_test.dart`, `goldens/tied_pins_lut.png`) |
   | Readability across the six presets and real designs (steps 5, 6) | `[Coverage: MANUAL]` |
 
+## 4.13 Standard cells drawn as gate symbols (from 1.2)
+
+- **What it does.** A cell whose type comes from one of the project's Liberty libraries (and that no source module defines) is drawn as the gate its Liberty description says it is. `LibertyParser` keeps each pin's `function` and `clock`, each `pg_pin`'s `pg_type`, the `ff` or `latch` group and the `area`; `libertyCellSymbolFor` (`lib/services/liberty/liberty_cell_index.dart`) classifies the cell by its output function's truth table (`classifyLibertyFunction`, `lib/services/liberty/liberty_function.dart`): one output and all signal inputs read gives buffer, inverter, AND, NAND, OR, NOR, XOR, XNOR or a two-input mux; one `ff` or `latch` group with outputs reading only its state gives a flip-flop or latch. Anything else keeps the box. Power pins go on the top face and ground pins on the bottom (ELK `NORTH` / `SOUTH`, `buildElkInput(liberty:)`), and a flip-flop's clock pins (`clock : true`, or named by `clocked_on`) get a wedge at their laid-out place (`clockWedgeShapes`), on the canvas and in the SVG export. A Pro custom symbol still wins. Without libraries the graph and the ELK input are exactly as before.
+- **Setup.** The sky130 HD library (`sky130_fd_sc_hd__tt_025C_1v80.lib` from a LibreLane PDK) and a structural netlist instantiating its cells with power pins, for example a `nand2_1` into an `inv_1`, an `xor2_1`, a `mux2_1`, a `dfxtp_1`, a `nor2_1` and an `a21oi_1`. Add the library with `File → Cell Libraries (Liberty)…`. `dart run tool/render_schematic.dart --liberty <lib> --out demo.png demo.v` renders the same picture headlessly.
+- **Steps and expected behavior.**
+  1. Open the netlist. Expected: the NAND, inverter, XOR, mux, flip-flop and NOR are drawn as their gates, NAND, inverter and NOR with an output bubble; the AOI is a box. The flip-flop's wedge sits beside CLK, not at a fixed height.
+  2. Look at any cell's VPWR, VPB (top edge) and VGND, VNB (bottom edge). Expected: the left edge holds only inputs and the right only the output, the output meets the gate's tip or bubble, and the gate is no taller than its signal pins need.
+  3. Export SVG. Expected: the same symbols and wedge as the canvas.
+  4. In Pro, give the NAND type a custom symbol. Expected: the custom symbol, laid out in its shape, with no library wedge or face placement.
+  5. Switch the layout engine to elkjs (`NETCRUX_LAYOUT_ENGINE`) and reopen. Expected: the same faces.
+- **Edge cases.** A source module named like a library cell is drawn as that module. A `pg_pin` without `pg_type` is placed by name (`VDD`, `VCC`, `VPWR`, `VPB` top; `VSS`, `GND`, `VGND`, `VNB` bottom) or left where its direction puts it. A library cache written before 1.2 is read again once (the cache format moved to 2).
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | Expression grammar, precedence and the gate classifier, from hand-written truth tables | `[Coverage: UNIT]` (`test/services/liberty/liberty_function_test.dart`) |
+  | Data-sheet parsing, the cache round trip, the symbol of each sky130-style cell, supply faces, clock pins, shadowing by a source module | `[Coverage: UNIT]` (`test/services/liberty/liberty_cell_index_test.dart`) |
+  | Graph kinds and ports, ELK faces and node height, identity without libraries, both engines' placement, the SVG wedge at the clock pin | `[Coverage: UNIT]` (`test/services/liberty/liberty_drawing_test.dart`; the native-engine cases need `libelk_ffi`, the elkjs case runs on macOS) |
+  | Canvas wedge at the clock pin, the fixed wedge for Yosys flip-flops, none under a custom symbol | `[Coverage: WIDGET]` (`test/features/viewer/rendering/schematic_clock_wedge_test.dart`) |
+  | New symbol shapes drawn from the shared pieces, canvas and SVG alike | `[Coverage: UNIT]` (`test/features/viewer/symbols/symbol_painters_test.dart`, `test/services/export/svg_exporter_test.dart`); PNG goldens for buffer, NAND, NOR, XOR and XNOR are not yet recorded on the CI renderer |
+  | The layout pass draws library cells once, with their drawing | `[Coverage: UNIT]` (`test/features/project/providers/liberty_cell_providers_test.dart`) |
+  | A real library and real post-route netlist (steps 1 to 5) | `[Coverage: MANUAL]` |
+
 ---
 
 ## 5. Project Files, VHDL, Web Read-Only

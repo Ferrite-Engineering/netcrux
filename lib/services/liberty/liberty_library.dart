@@ -82,21 +82,139 @@ class LibertyPort {
       '${isVector ? '[$msb:$lsb] ' : ''}$name)';
 }
 
-/// One `cell` group: its name and its ports in declaration order.
+/// Which storage group a sequential cell declares.
+enum LibertyStorageKind {
+  /// An `ff` group: edge-triggered.
+  flipFlop,
+
+  /// A `latch` group: level-sensitive.
+  latch,
+}
+
+/// The `ff` or `latch` group of a sequential cell: the names of its state
+/// variables and the expressions that drive them, as the file writes them.
+@immutable
+class LibertyStorage {
+  /// Creates a storage description.
+  LibertyStorage({
+    required this.kind,
+    required List<String> stateNames,
+    this.clockedOn,
+    this.nextState,
+    this.enable,
+    this.dataIn,
+    this.clear,
+    this.preset,
+  }) : stateNames = List<String>.unmodifiable(stateNames);
+
+  /// Decodes a description written by [toJson].
+  factory LibertyStorage.fromJson(Map<String, Object?> json) => LibertyStorage(
+    kind: LibertyStorageKind.values.byName(json['kind']! as String),
+    stateNames: <String>[
+      for (final name in json['state']! as List<Object?>) name! as String,
+    ],
+    clockedOn: json['clocked_on'] as String?,
+    nextState: json['next_state'] as String?,
+    enable: json['enable'] as String?,
+    dataIn: json['data_in'] as String?,
+    clear: json['clear'] as String?,
+    preset: json['preset'] as String?,
+  );
+
+  /// Whether this is a flip-flop or a latch.
+  final LibertyStorageKind kind;
+
+  /// The group's arguments: the state variable and its complement
+  /// (`ff (IQ, IQN)`), which output pin functions refer to.
+  final List<String> stateNames;
+
+  /// A flip-flop's `clocked_on` expression.
+  final String? clockedOn;
+
+  /// A flip-flop's `next_state` expression.
+  final String? nextState;
+
+  /// A latch's `enable` expression.
+  final String? enable;
+
+  /// A latch's `data_in` expression.
+  final String? dataIn;
+
+  /// The `clear` expression, when the cell has one.
+  final String? clear;
+
+  /// The `preset` expression, when the cell has one.
+  final String? preset;
+
+  /// The cache's JSON form.
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': kind.name,
+    'state': stateNames,
+    if (clockedOn != null) 'clocked_on': clockedOn,
+    if (nextState != null) 'next_state': nextState,
+    if (enable != null) 'enable': enable,
+    if (dataIn != null) 'data_in': dataIn,
+    if (clear != null) 'clear': clear,
+    if (preset != null) 'preset': preset,
+  };
+}
+
+/// One `cell` group: its name and its ports in declaration order, and the
+/// parts of its data sheet a schematic shows: the function of each output
+/// pin, which pins are clocks, the type of each power and ground pin, its
+/// storage group and its area.
 @immutable
 class LibertyCell {
   /// Creates a cell.
-  LibertyCell({required this.name, required List<LibertyPort> ports})
-    : ports = List<LibertyPort>.unmodifiable(ports);
+  LibertyCell({
+    required this.name,
+    required List<LibertyPort> ports,
+    this.area,
+    Map<String, String> functions = const <String, String>{},
+    List<String> clockPins = const <String>[],
+    Map<String, String?> pgPins = const <String, String?>{},
+    this.storage,
+    this.hasOtherStorage = false,
+  }) : ports = List<LibertyPort>.unmodifiable(ports),
+       functions = Map<String, String>.unmodifiable(functions),
+       clockPins = List<String>.unmodifiable(clockPins),
+       pgPins = Map<String, String?>.unmodifiable(pgPins);
 
   /// Decodes a cell written by [toJson].
-  factory LibertyCell.fromJson(Map<String, Object?> json) => LibertyCell(
-    name: json['name']! as String,
-    ports: <LibertyPort>[
-      for (final port in json['ports']! as List<Object?>)
-        LibertyPort.fromJson(port! as Map<String, Object?>),
-    ],
-  );
+  factory LibertyCell.fromJson(Map<String, Object?> json) {
+    final storage = json['storage'];
+    return LibertyCell(
+      name: json['name']! as String,
+      ports: <LibertyPort>[
+        for (final port in json['ports']! as List<Object?>)
+          LibertyPort.fromJson(port! as Map<String, Object?>),
+      ],
+      area: (json['area'] as num?)?.toDouble(),
+      functions: <String, String>{
+        for (final entry
+            in ((json['functions'] as Map<String, Object?>?) ??
+                    const <String, Object?>{})
+                .entries)
+          entry.key: entry.value! as String,
+      },
+      clockPins: <String>[
+        for (final pin
+            in (json['clocks'] as List<Object?>?) ?? const <Object?>[])
+          pin! as String,
+      ],
+      pgPins: <String, String?>{
+        for (final entry
+            in ((json['pg'] as Map<String, Object?>?) ??
+                    const <String, Object?>{})
+                .entries)
+          entry.key: entry.value as String?,
+      },
+      storage: storage == null
+          ? null
+          : LibertyStorage.fromJson(storage as Map<String, Object?>),
+      hasOtherStorage: json['other_storage'] == true,
+    );
+  }
 
   /// The cell name, which is the module name the RTL instantiates.
   final String name;
@@ -104,10 +222,37 @@ class LibertyCell {
   /// The cell's ports, in the order the Liberty file declares them.
   final List<LibertyPort> ports;
 
+  /// The `area` attribute, in the library's units (square micrometres in
+  /// every common library), or `null` when the cell has none.
+  final double? area;
+
+  /// The `function` of each pin that has one, by pin name, as written.
+  final Map<String, String> functions;
+
+  /// The pins marked `clock : true`, in declaration order.
+  final List<String> clockPins;
+
+  /// Every `pg_pin` by name, with its `pg_type` (`primary_power`,
+  /// `primary_ground`, `nwell`, ...) or `null` when it declares none.
+  final Map<String, String?> pgPins;
+
+  /// The cell's single `ff` or `latch` group, or `null`.
+  final LibertyStorage? storage;
+
+  /// Whether the cell describes its state some other way: more than one
+  /// storage group, an `ff_bank` or `latch_bank`, or a `statetable`.
+  final bool hasOtherStorage;
+
   /// The cache's JSON form.
   Map<String, Object?> toJson() => <String, Object?>{
     'name': name,
     'ports': <Object?>[for (final port in ports) port.toJson()],
+    if (area != null) 'area': area,
+    if (functions.isNotEmpty) 'functions': functions,
+    if (clockPins.isNotEmpty) 'clocks': clockPins,
+    if (pgPins.isNotEmpty) 'pg': pgPins,
+    if (storage != null) 'storage': storage!.toJson(),
+    if (hasOtherStorage) 'other_storage': true,
   };
 
   @override
@@ -121,6 +266,7 @@ class LibertyLibrary {
   LibertyLibrary({
     required this.path,
     required List<LibertyCell> cells,
+    this.name,
     List<String> warnings = const <String>[],
   }) : cells = List<LibertyCell>.unmodifiable(cells),
        warnings = List<String>.unmodifiable(warnings);
@@ -128,6 +274,7 @@ class LibertyLibrary {
   /// Decodes a library written by [toJson].
   factory LibertyLibrary.fromJson(Map<String, Object?> json) => LibertyLibrary(
     path: json['path']! as String,
+    name: json['name'] as String?,
     cells: <LibertyCell>[
       for (final cell in json['cells']! as List<Object?>)
         LibertyCell.fromJson(cell! as Map<String, Object?>),
@@ -141,6 +288,11 @@ class LibertyLibrary {
   /// The Liberty file the cells came from.
   final String path;
 
+  /// The name the `library (...)` group gives, which for a characterised
+  /// library usually names its corner (`..._tt_025C_1v80`); `null` when the
+  /// group has none.
+  final String? name;
+
   /// Every cell in the file, in declaration order.
   final List<LibertyCell> cells;
 
@@ -151,6 +303,7 @@ class LibertyLibrary {
   /// The cache's JSON form.
   Map<String, Object?> toJson() => <String, Object?>{
     'path': path,
+    if (name != null) 'name': name,
     'cells': <Object?>[for (final cell in cells) cell.toJson()],
     'warnings': warnings,
   };

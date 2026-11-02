@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/features/viewer/symbols/symbol_painters.dart';
 
@@ -18,9 +19,14 @@ import 'package:netcrux/features/viewer/symbols/symbol_painters.dart';
 /// fresh SVG parse.
 typedef CellBodyPainterFactory = SymbolPainter Function(SchematicCell cell);
 
-/// The open-core default factory — always returns the built-in
-/// [SymbolPainter] for `cell.kind`. Pure, stateless, safe to share
-/// across paints.
+/// The open-core default factory — returns the built-in [SymbolPainter]
+/// for `cell.kind`, except that a flip-flop whose clock pins are marked
+/// ([SchematicCell.hasClockPins]) is drawn without the fixed clock wedge:
+/// the canvas draws a wedge at each clock pin instead. Pure, stateless,
+/// safe to share across paints.
 SymbolPainter defaultCellBodyPainterFactory(SchematicCell cell) {
+  if (cell.kind == CellKind.flipFlop && cell.hasClockPins) {
+    return paintFlipFlopBody;
+  }
   return painterFor(cell.kind);
 }

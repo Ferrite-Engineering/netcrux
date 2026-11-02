@@ -778,8 +778,17 @@ class SchematicCanvasRenderObject extends RenderBox {
       // The overview band returned above; this loop draws the mid and
       // detail bands, which share the symbol body and differ in labels.
       _cellBodyPainterFactory(cell)(canvas, rect.size, symbolCtx);
+      final anchoredPins = _laidOut.symbolCells[cell.id];
+      // A cell-library flip-flop marks its clock pins, each with a wedge
+      // where the layout put the pin. A custom symbol draws its own.
+      if (anchoredPins == null && cell.hasClockPins) {
+        paintSymbolShape(
+          canvas,
+          clockWedgeShapes(cell, rect.width, rect.height, position.ports),
+          symbolCtx,
+        );
+      }
       if (band == LodBand.detail) {
-        final anchoredPins = _laidOut.symbolCells[cell.id];
         if (anchoredPins == null) {
           _paintCellLabel(canvas, rect.size, cell, labelStyle, band);
         } else {
@@ -894,9 +903,12 @@ class SchematicCanvasRenderObject extends RenderBox {
 
   Color _overviewColorFor(CellKind kind, bool isHighlighted) {
     final base = switch (kind) {
-      CellKind.andGate => Colors.lightBlueAccent.shade100,
-      CellKind.orGate => Colors.lightGreenAccent.shade100,
-      CellKind.notGate => Colors.pinkAccent.shade100,
+      CellKind.andGate || CellKind.nandGate => Colors.lightBlueAccent.shade100,
+      CellKind.orGate ||
+      CellKind.norGate ||
+      CellKind.xorGate ||
+      CellKind.xnorGate => Colors.lightGreenAccent.shade100,
+      CellKind.notGate || CellKind.buffer => Colors.pinkAccent.shade100,
       CellKind.mux => Colors.orangeAccent.shade100,
       CellKind.flipFlop => Colors.purpleAccent.shade100,
       CellKind.latch => Colors.tealAccent.shade100,
