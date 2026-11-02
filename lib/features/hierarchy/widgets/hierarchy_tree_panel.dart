@@ -13,6 +13,7 @@ import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dar
 import 'package:netcrux/features/hierarchy/providers/scope_flash_notifier.dart';
 import 'package:netcrux/features/hierarchy/widgets/hierarchy_leaf_row.dart';
 import 'package:netcrux/features/hierarchy/widgets/hierarchy_tree_row.dart';
+import 'package:netcrux/features/project/providers/liberty_cell_providers.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/viewer/providers/reveal_request_notifier.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -465,6 +466,17 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
     final selectedElement = ref.watch(selectedElementProvider).primary;
     final notifier = ref.read(hierarchyTreeProvider.notifier);
     final l10n = L10N.of(context);
+    // Each scope's cell area from the cell libraries, summed per module the
+    // first time a row of it is built and kept for the design.
+    final areas = ref.watch(moduleAreaRollupProvider);
+    String? areaLabelOf(HierarchyVisibleRow row) {
+      final area = areas?.areaOf(row.moduleName);
+      if (area == null || !area.isKnown) return null;
+      return area.partial
+          ? l10n.hierarchyAreaPartialLabel(area.area)
+          : l10n.hierarchyAreaLabel(area.area);
+    }
+
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
@@ -531,6 +543,7 @@ class _HierarchyTreeListState extends ConsumerState<_HierarchyTreeList> {
               isSelected: state.isSelected(row.node),
               hasChildren: row.hasChildren,
               cellCount: row.cellCount,
+              areaLabel: areaLabelOf(row),
               instanceName: row.instanceName,
               moduleName: row.moduleName,
               flashSignal: flashSignal,

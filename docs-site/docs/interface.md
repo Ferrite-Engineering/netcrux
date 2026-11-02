@@ -36,13 +36,17 @@ Stubs show from zoom 0.25 up; the constant labels need zoom 0.75 or more, like t
 ## Hierarchy tree {#hierarchy}
 
 The left panel is the **hierarchy tree**: an expandable view of the module hierarchy. Each row shows the instance name and its module type, for example `cpu_core (cpu)`, and the number of cells in that scope. Type in **Filter scopes and cells…** to narrow the tree, use the chevrons to expand and collapse, and click a row to show that scope on the canvas. Toggle the panel with ++cmd+1++ / ++ctrl+1++.
+
+From NetCrux 1.2, when the project has [cell libraries](files-and-projects.md#cell-libraries), each row also shows the scope's cell area, such as `area 1,234.5`: the Liberty `area` of every standard cell under it, summed down the hierarchy. The row says `partial` when some cell under it has no area in any library, such as a Yosys primitive or a black box, and the sum then counts only the others.
+
 The filter matches scopes by instance or module name, and lists the cells that match it, by cell name or cell type, under their scope. A cell row has a chip icon and shows the cell type beside its name. A name too long for the panel is cut at the start, not the end, so `servant.servile.cpu.alu.add_cy_r_SB_LUT4_I3_1` reads `…alu.add_cy_r_SB_LUT4_I3_1` and the part that tells the cells apart stays in view; hover the row to see the whole name. Clicking it shows its scope, selects the cell and centers the canvas on it, the same as choosing a cell in [Search](navigating.md#search). Each scope lists its first 100 matching cells, then a **Show more** row that lists the next 100. An instance of one of your own modules stays a scope row, and clicking it shows that scope. On a flat post-synthesis netlist, where the whole design is one scope, the filter is the quickest way to find a cell by name: filtering for `add_cy` in a SERV core synthesized for iCE40 lists eleven cells, one `SB_DFF` and ten `SB_LUT4`. Nets are not listed; find them with Search.
 
 ## Inspector {#inspector}
 
 The right panel is the **inspector**, showing the details of whatever is selected:
 
-- **Cell**: instance name, type, kind, parameters, and its ports with their directions and what each is tied to.- **Port**: the instance, port name, direction, width and **Tied to**: the net it is on, a constant, `x`, undriven or unconnected. A module boundary port shows `(boundary)` as its instance.
+- **Cell**: instance name, type, kind, parameters, and its ports with their directions and what each is tied to. From NetCrux 1.2, a standard cell from the project's cell libraries also shows its [data sheet](source-and-inspection.md#cell-data-sheet), and an instance of one of your modules shows the area of the cells inside it.
+- **Port**: the instance, port name, direction, width and **Tied to**: the net it is on, a constant, `x`, undriven or unconnected. A module boundary port shows `(boundary)` as its instance.
 - **Wire**: net name, net ID, driver and sinks.
 
 The **Go to source** button above the details, badged <span class="tier tier-pro">Pro</span>, opens the RTL behind the selection in the Pro [RTL source pane](source-and-inspection.md#source-pane); in Open Core it says it requires NetCrux Pro. Toggle the inspector with ++cmd+2++ / ++ctrl+2++.

@@ -68,11 +68,13 @@ List<Override> netcruxTabOverridesFactory(TabId tabId) {
     // FunctionalProvider (top-level `@Riverpod`), so the override
     // form is `.overrideWith((ref) => currentLaidOutGraph(ref))`.
     currentLaidOutGraphProvider.overrideWith(currentLaidOutGraph),
-    // The tab's cell libraries, read for the design the tab loaded, and
-    // what the pass above draws their cells as. Derived from the tab's
+    // The tab's cell libraries, read for the design the tab loaded: what the
+    // pass above draws their cells as, what the Inspector shows about them,
+    // and the module areas the hierarchy shows. Derived from the tab's
     // project and netlist, so they follow them.
     libertyCellIndexProvider.overrideWith(libertyCellIndex),
     libertyCellSymbolsProvider.overrideWith(libertyCellSymbols),
+    moduleAreaRollupProvider.overrideWith(moduleAreaRollup),
     // Whether the scope on the canvas is laid out now or waits for the user:
     // it reads the tab's model, selection and cone view, and the pass above
     // reads it. The scopes the user approved are this tab's.

@@ -10,6 +10,7 @@ import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
+import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
@@ -20,6 +21,7 @@ import 'package:netcrux/features/inspector/services/pin_tie_text.dart';
 import 'package:netcrux/features/inspector/widgets/annotation_inspector_section.dart';
 import 'package:netcrux/features/inspector/widgets/timing_path_inspector_section.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/project/providers/liberty_cell_providers.dart';
 import 'package:netcrux/features/viewer/providers/schematic_canvas_key_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/services/go_to_source_in_editor.dart';
@@ -27,10 +29,14 @@ import 'package:netcrux/features/workspace/services/pro_action_gate.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_openers.dart';
 import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
+import 'package:netcrux/services/liberty/liberty_cell_index.dart';
+import 'package:netcrux/services/liberty/liberty_library.dart';
+import 'package:netcrux/services/liberty/module_area_rollup.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/source_pane/source_pane_openers.dart';
 import 'package:netcrux/services/yosys/rohd_netlist_extensions.dart';
 import 'package:netcrux/shared/widgets/netcrux_feature_tier_badge.dart';
+import 'package:path/path.dart' as p;
 
 /// The right dock's Inspector: the properties of the schematic's primary
 /// selection, on the shared [CruxInspector].
@@ -65,6 +71,11 @@ class InspectorPanel extends ConsumerWidget {
     final model = tree.model;
     final module = (model == null) ? null : tree.selected?.resolve(model);
     final schematic = laidOut.graph;
+    final liberty =
+        ref.watch(libertyCellSymbolsProvider).value ?? LibertyCellSymbols.none;
+    final libraries =
+        ref.watch(libertyCellIndexProvider).value ?? LibertyCellIndex.empty;
+    final areas = ref.watch(moduleAreaRollupProvider);
     // A cell the schematic hides (a memory-init cell, or one wired only to
     // constants) is still in the netlist, and search still selects it: the
     // Inspector describes it from the model.
@@ -75,8 +86,27 @@ class InspectorPanel extends ConsumerWidget {
           schematic.cells.where((c) => c.id == cellId).firstOrNull ??
           (model == null || module == null
               ? null
-              : const SchematicGraphBuilder().cellOf(model, module, cellId)),
+              : SchematicGraphBuilder(
+                  liberty: liberty,
+                ).cellOf(model, module, cellId)),
     );
+    // The library record of a selected cell, when a cell library defines
+    // its type and no module of the design does.
+    LibertyCellRecord? recordOf(String cellId) {
+      if (model == null) return null;
+      final type = module?.cells[cellId]?.type ?? cellNamed(cellId)?.type;
+      return type == null ? null : libraries.forCellType(model, type);
+    }
+
+    // The summed area of a selected instance of a module of the design.
+    ModuleArea? moduleAreaOf(String cellId) {
+      final type = module?.cells[cellId]?.type;
+      final child = type == null ? null : model?.modules[type];
+      if (child == null || child.isBlackBox) return null;
+      final area = areas?.areaOf(type!);
+      return area != null && area.isKnown ? area : null;
+    }
+
     final overlayInstalled = ref.watch(proOverlayInstalledProvider);
     final editorHosted = ref.watch(isEditorHostedProvider);
     final pro = ref.watch(proInspectorSectionsProvider);
@@ -159,6 +189,7 @@ class InspectorPanel extends ConsumerWidget {
             l10n,
             cellNamed(cellId),
             offerSymbolEditor: !overlayInstalled,
+            moduleArea: moduleAreaOf(cellId),
           ),
           SelectedElementPort(:final cellId, :final portName) => _portSection(
             l10n,
@@ -174,6 +205,15 @@ class InspectorPanel extends ConsumerWidget {
           ),
           SelectedElementWire() || SelectedElementNone() => null,
         },
+        (context, element) => element is SelectedElementCell
+            ? _librarySection(l10n, recordOf(element.cellId))
+            : null,
+        (context, element) => element is SelectedElementCell
+            ? _libraryPinsSection(l10n, recordOf(element.cellId))
+            : null,
+        (context, element) => element is SelectedElementCell
+            ? _supplyPinsSection(l10n, recordOf(element.cellId))
+            : null,
         (context, element) => element is SelectedElementCell
             ? _parametersSection(l10n, module, element.cellId)
             : null,
@@ -241,6 +281,7 @@ Widget? _cellSection(
   L10N l10n,
   SchematicCell? cell, {
   required bool offerSymbolEditor,
+  ModuleArea? moduleArea,
 }) {
   if (cell == null) return null;
   return CruxInspectorSection(
@@ -252,6 +293,13 @@ Widget? _cellSection(
         label: l10n.inspectorFieldKind,
         value: cell.kind.name,
       ),
+      // An instance of a module of the design: the area of the library
+      // cells inside it, summed down its hierarchy.
+      if (moduleArea != null)
+        CruxInspectorValueRow(
+          label: l10n.inspectorFieldArea,
+          value: _areaText(l10n, moduleArea),
+        ),
       // The module type's custom symbol is a Pro capability. A build with the
       // overlay shows its own "Custom symbol" section; without it the entry
       // stays here, badged, and its gate says what unlocks it.
@@ -290,6 +338,122 @@ Widget? _cellSection(
               ),
             ],
           ),
+        ),
+    ],
+  );
+}
+
+String _areaText(L10N l10n, ModuleArea area) => area.partial
+    ? l10n.inspectorAreaPartialValue(area.area)
+    : l10n.inspectorAreaValue(area.area);
+
+/// The cell's data from its Liberty library: the function of each output,
+/// its storage group, its area, the library file the design uses, and every
+/// library (one per corner, typically) that defines a cell of that name.
+/// Expressions and names are shown as the library writes them.
+Widget? _librarySection(L10N l10n, LibertyCellRecord? record) {
+  if (record == null) return null;
+  final cell = record.cell;
+  final storage = cell.storage;
+  final functions = cell.functions.entries.toList(growable: false);
+  return CruxInspectorSection(
+    title: l10n.inspectorLibraryHeader,
+    children: <Widget>[
+      for (var i = 0; i < functions.length; i++)
+        CruxInspectorValueRow(
+          // The label names the first row only, so the rows read as a list.
+          label: i == 0 ? l10n.inspectorFieldFunction : '',
+          value: '${functions[i].key} = ${functions[i].value}',
+        ),
+      if (storage != null) ...<Widget>[
+        CruxInspectorValueRow(
+          label: l10n.inspectorFieldStorage,
+          value: switch (storage.kind) {
+            LibertyStorageKind.flipFlop =>
+              storage.nextState != null && storage.clockedOn != null
+                  ? l10n.inspectorStorageFlipFlop(
+                      storage.nextState!,
+                      storage.clockedOn!,
+                    )
+                  : l10n.inspectorStorageFlipFlopPlain,
+            LibertyStorageKind.latch =>
+              storage.dataIn != null && storage.enable != null
+                  ? l10n.inspectorStorageLatch(
+                      storage.dataIn!,
+                      storage.enable!,
+                    )
+                  : l10n.inspectorStorageLatchPlain,
+          },
+        ),
+        if (storage.clear case final clear?)
+          CruxInspectorValueRow(label: l10n.inspectorFieldClear, value: clear),
+        if (storage.preset case final preset?)
+          CruxInspectorValueRow(
+            label: l10n.inspectorFieldPreset,
+            value: preset,
+          ),
+      ],
+      if (cell.area case final area?)
+        CruxInspectorValueRow(
+          label: l10n.inspectorFieldArea,
+          value: l10n.inspectorAreaValue(area),
+        ),
+      CruxInspectorValueRow(
+        label: l10n.inspectorFieldLibraryFile,
+        value: record.library.path,
+      ),
+      for (var i = 0; i < record.definedIn.length; i++)
+        CruxInspectorValueRow(
+          label: i == 0 ? l10n.inspectorFieldDefinedIn : '',
+          value: _libraryText(l10n, record.definedIn[i]),
+        ),
+    ],
+  );
+}
+
+/// One library of the Defined in list: its name, which usually names the
+/// corner, and its file.
+String _libraryText(L10N l10n, LibertyLibrary library) {
+  final file = p.basename(library.path);
+  final name = library.name;
+  return name == null || name.isEmpty
+      ? file
+      : l10n.inspectorLibraryCorner(name, file);
+}
+
+/// The cell's signal pins as its library declares them, clocks marked.
+Widget? _libraryPinsSection(L10N l10n, LibertyCellRecord? record) {
+  if (record == null) return null;
+  final cell = record.cell;
+  final pins = <LibertyPort>[
+    for (final port in cell.ports)
+      if (!cell.pgPins.containsKey(port.name)) port,
+  ];
+  if (pins.isEmpty) return null;
+  return CruxInspectorSection(
+    title: l10n.inspectorLibraryPinsHeader,
+    children: <Widget>[
+      for (final pin in pins)
+        CruxInspectorValueRow(
+          label: pin.isVector ? '${pin.name}[${pin.msb}:${pin.lsb}]' : pin.name,
+          value: cell.clockPins.contains(pin.name)
+              ? l10n.inspectorClockPin(pin.direction.name)
+              : pin.direction.name,
+        ),
+    ],
+  );
+}
+
+/// The cell's power and ground pins, each with its `pg_type`.
+Widget? _supplyPinsSection(L10N l10n, LibertyCellRecord? record) {
+  if (record == null || record.cell.pgPins.isEmpty) return null;
+  return CruxInspectorSection(
+    title: l10n.inspectorSupplyPinsHeader,
+    children: <Widget>[
+      for (final entry in record.cell.pgPins.entries)
+        CruxInspectorValueRow(
+          label: entry.key,
+          value: entry.value ?? l10n.inspectorSupplyPinNoType,
         ),
     ],
   );

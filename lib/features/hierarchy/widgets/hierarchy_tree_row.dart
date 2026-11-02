@@ -41,6 +41,7 @@ class HierarchyTreeRow extends StatefulWidget {
     this.focusNode,
     this.isTabStop = true,
     this.onFocusChange,
+    this.areaLabel,
     super.key,
   });
 
@@ -105,6 +106,12 @@ class HierarchyTreeRow extends StatefulWidget {
 
   /// Called when the row gains or loses keyboard focus.
   final ValueChanged<bool>? onFocusChange;
+
+  /// The scope's cell area summed from its cell libraries, already worded
+  /// ("area 1,234.5", or with "partial"), shown after the cell count and
+  /// read with it. `null` when the design has no cell libraries or nothing
+  /// under the scope has an area.
+  final String? areaLabel;
 
   @override
   State<HierarchyTreeRow> createState() => _HierarchyTreeRowState();
@@ -190,6 +197,7 @@ class _HierarchyTreeRowState extends State<HierarchyTreeRow>
         : theme.colorScheme.onSurfaceVariant;
     final label = _composeLabel(l10n);
     final cellCount = l10n.hierarchyCellCountLabel(widget.cellCount);
+    final area = widget.areaLabel;
 
     final row = SizedBox(
       height: HierarchyTreeRow.rowHeight,
@@ -219,6 +227,13 @@ class _HierarchyTreeRowState extends State<HierarchyTreeRow>
             cellCount,
             style: theme.textTheme.labelSmall?.copyWith(color: mutedColor),
           ),
+          if (area != null) ...<Widget>[
+            const SizedBox(width: 8),
+            Text(
+              area,
+              style: theme.textTheme.labelSmall?.copyWith(color: mutedColor),
+            ),
+          ],
           const SizedBox(width: 8),
         ],
       ),
@@ -237,7 +252,9 @@ class _HierarchyTreeRowState extends State<HierarchyTreeRow>
         button: true,
         selected: widget.isSelected,
         expanded: widget.hasChildren ? widget.isExpanded : null,
-        label: '$label\n$cellCount',
+        label: area == null
+            ? '$label\n$cellCount'
+            : '$label\n$cellCount\n$area',
         onTap: widget.onTap,
         child: Focus(
           focusNode: _focusNode,

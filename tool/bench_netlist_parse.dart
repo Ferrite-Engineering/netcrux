@@ -23,14 +23,22 @@
 // Liberty libraries and cell model files given, and the black-box pin
 // inference the app runs after it. A native read needs no Yosys.
 //
-// Prints one JSON object: parse seconds, module and cell counts, and the
-// process's peak resident set size in bytes.
+// With `--liberty`, in either mode, it then times what the app does with the
+// libraries once the design is open: indexing their cells, working out how
+// each cell type the design uses is drawn, and summing the area of the top
+// module (which sums every module under it).
+//
+// Prints one JSON object: parse seconds, module and cell counts, the
+// library timings when there are libraries, and the process's peak resident
+// set size in bytes.
 
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/services/liberty/liberty_cell_index.dart';
 import 'package:netcrux/services/liberty/liberty_parser.dart';
+import 'package:netcrux/services/liberty/module_area_rollup.dart';
 import 'package:netcrux/services/verilog/native_netlist_reader.dart';
 import 'package:netcrux/services/yosys/isolate_netlist_parser.dart';
 
@@ -104,6 +112,33 @@ Future<void> main(List<String> args) async {
     cells += module.cells.length;
     nets += module.nets.length;
   }
+  // With libraries, what the app does once the design has loaded: index
+  // the cells, work out how each is drawn, and sum the area of the top
+  // module, which sums every module under it.
+  final areas = <String, Object?>{};
+  if (liberty.isNotEmpty) {
+    final libraries = [for (final l in liberty) LibertyParser.parseFile(l)];
+    final step = Stopwatch()..start();
+    final index = LibertyCellIndex(libraries);
+    final indexMs = step.elapsedMicroseconds / 1000;
+    step.reset();
+    final symbols = index.symbolsFor(model);
+    final symbolsMs = step.elapsedMicroseconds / 1000;
+    final top = model.topModule;
+    step.reset();
+    final area = top == null
+        ? null
+        : ModuleAreaRollup(model, index).areaOf(top.name);
+    final rollupMs = step.elapsedMicroseconds / 1000;
+    areas.addAll(<String, Object?>{
+      'libertyIndexMs': indexMs,
+      'libertySymbolsMs': symbolsMs,
+      'drawnCellTypes': symbols.byType.length,
+      'areaRollupMs': rollupMs,
+      'topArea': area?.area,
+      'topAreaPartial': area?.partial,
+    });
+  }
   stdout.writeln(
     jsonEncode(<String, Object?>{
       'file': files.join(','),
@@ -118,6 +153,7 @@ Future<void> main(List<String> args) async {
       'modules': model.modules.length,
       'cells': cells,
       'nets': nets,
+      ...areas,
       'peakRssBytes': ProcessInfo.maxRss,
     }),
   );

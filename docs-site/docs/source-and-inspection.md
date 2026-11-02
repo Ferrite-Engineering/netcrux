@@ -8,7 +8,7 @@ The right-hand **inspector** (toggle with ++cmd+2++ / ++ctrl+2++) shows the deta
 
 | Selection | What the inspector shows |
 |---|---|
-| Cell | **Instance**, **Type** (the Yosys cell type or module name), **Kind**, **Parameters** when the cell has any, and its **Ports**, each with its direction and what it is tied to. |
+| Cell | **Instance**, **Type** (the Yosys cell type or module name), **Kind**, **Parameters** when the cell has any, and its **Ports**, each with its direction and what it is tied to. From NetCrux 1.2, a standard cell from the project's cell libraries also shows its **Cell library** data sheet (see below), and an instance of one of your modules shows its **Area**. |
 | Port | The **Instance**, the port name, **Direction**, **Width** and **Tied to**. A module boundary port shows `(boundary)` as its instance and no tie. |
 | Wire | The **Net** name, **Net ID**, **Driver** and **Sinks**. |
 
@@ -21,6 +21,18 @@ The right-hand **inspector** (toggle with ++cmd+2++ / ++ctrl+2++) shows the deta
 - **Unconnected**, when the cell's module or primitive declares the port but the netlist connects nothing to it.
 
 The canvas marks the same ties with [pin stubs](interface.md#pin-stubs).
+
+### A standard cell's data sheet (from 1.2) {#cell-data-sheet}
+
+From NetCrux 1.2, selecting a cell whose type comes from one of the project's [Liberty cell libraries](files-and-projects.md#cell-libraries) adds three sections below the cell's details, read from the library:
+
+| Section | What it shows |
+|---|---|
+| **Cell library** | **Function**: each output pin's Boolean function, as the library writes it, such as `Y = !(A&B)`. **Storage** for a sequential cell: `Flip-flop, next state D, clocked on CLK` or `Latch, data D, enabled by GATE`, with **Clear** and **Preset** when the cell has them. **Area**, in the library's units (square micrometres in common libraries). **Library file**: the Liberty file whose definition the design uses. **Defined in**: every library in the project that defines a cell of that name, each with the name its `library` group gives, which usually names its corner, such as `sky130_fd_sc_hd__tt_025C_1v80 (sky130_fd_sc_hd__tt_025C_1v80.lib)`. |
+| **Library pins** | Each signal pin with its direction; a clock pin reads `input, clock`. |
+| **Power and ground pins** | Each `pg_pin` with its `pg_type`, such as `primary_power`, `primary_ground`, `nwell` or `pwell`, or `no pg_type` when the library gives none. |
+
+A cell whose type one of your sources defines as a module shows no data sheet, since that module is the definition the design uses. Selecting an instance of one of your own modules shows its **Area**: the area of every standard cell inside it, summed down its hierarchy, followed by `(partial)` when some cell inside has no area in any library. The [hierarchy tree](interface.md#hierarchy) shows the same sum on every scope's row.
 
 **Parameters** show a number the way you would write it. Yosys stores a numeric parameter as a string of bits, so a `$dff` of width one carries `WIDTH` as `00000000000000000000000000000001`; the inspector shows `1`. A value that needs more than eight bits also shows its hex form, such as `4294901760 (0xFFFF0000)`, and a value wider than 64 bits shows hex alone. Hover the row to see the bits exactly as Yosys wrote them. A parameter that is a real string, or has `x` or `z` bits, is shown as written.
 

@@ -3665,5 +3665,149 @@
   "statsElaborationIdleYosys": "Idle (Yosys)",
   "@statsElaborationIdleYosys": {
     "description": "Value of the Elaboration statistic when nothing is running and the design on screen was read through Yosys, by choice or because the native reader fell back."
+  },
+  "inspectorLibraryHeader": "Cell library",
+  "@inspectorLibraryHeader": {
+    "description": "Title of the Inspector section that shows a selected standard cell's data from its Liberty cell library: function, storage, area and the libraries that define it."
+  },
+  "inspectorFieldFunction": "Function",
+  "@inspectorFieldFunction": {
+    "description": "Inspector field label for the Boolean function of a cell's output pin, as the Liberty library writes it (for example 'Y = !(A&B)')."
+  },
+  "inspectorFieldStorage": "Storage",
+  "@inspectorFieldStorage": {
+    "description": "Inspector field label for what a sequential cell stores: a flip-flop or a latch, with the expressions that drive it."
+  },
+  "inspectorStorageFlipFlop": "Flip-flop, next state {nextState}, clocked on {clock}",
+  "@inspectorStorageFlipFlop": {
+    "description": "Storage row of a flip-flop cell. {nextState} and {clock} are Liberty expressions copied from the library, never translated.",
+    "placeholders": {
+      "nextState": {
+        "type": "String",
+        "example": "D"
+      },
+      "clock": {
+        "type": "String",
+        "example": "CLK"
+      }
+    }
+  },
+  "inspectorStorageLatch": "Latch, data {data}, enabled by {enable}",
+  "@inspectorStorageLatch": {
+    "description": "Storage row of a latch cell. {data} and {enable} are Liberty expressions copied from the library, never translated.",
+    "placeholders": {
+      "data": {
+        "type": "String",
+        "example": "D"
+      },
+      "enable": {
+        "type": "String",
+        "example": "GATE"
+      }
+    }
+  },
+  "inspectorStorageFlipFlopPlain": "Flip-flop",
+  "@inspectorStorageFlipFlopPlain": {
+    "description": "Storage row of a flip-flop cell whose library leaves out its next state or its clock."
+  },
+  "inspectorStorageLatchPlain": "Latch",
+  "@inspectorStorageLatchPlain": {
+    "description": "Storage row of a latch cell whose library leaves out its data or its enable."
+  },
+  "inspectorFieldClear": "Clear",
+  "@inspectorFieldClear": {
+    "description": "Inspector field label for the expression that clears (resets to 0) a flip-flop or latch, as the Liberty library writes it."
+  },
+  "inspectorFieldPreset": "Preset",
+  "@inspectorFieldPreset": {
+    "description": "Inspector field label for the expression that presets (sets to 1) a flip-flop or latch, as the Liberty library writes it. The electrical preset of a register, not a saved settings preset."
+  },
+  "inspectorFieldArea": "Area",
+  "@inspectorFieldArea": {
+    "description": "Inspector field label for a cell's area from its Liberty library, or a module instance's area summed over the library cells inside it."
+  },
+  "inspectorAreaValue": "{area}",
+  "@inspectorAreaValue": {
+    "description": "An area, in the cell library's own units (square micrometres in common libraries), formatted for the locale.",
+    "placeholders": {
+      "area": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "inspectorAreaPartialValue": "{area} (partial)",
+  "@inspectorAreaPartialValue": {
+    "description": "A module instance's summed area when some cells inside it have no area in any library, so the sum counts only the others.",
+    "placeholders": {
+      "area": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "inspectorFieldLibraryFile": "Library file",
+  "@inspectorFieldLibraryFile": {
+    "description": "Inspector field label for the Liberty file whose definition of the selected cell the design uses."
+  },
+  "inspectorFieldDefinedIn": "Defined in",
+  "@inspectorFieldDefinedIn": {
+    "description": "Inspector field label heading the list of every Liberty library (one per corner, typically) that defines the selected cell."
+  },
+  "inspectorLibraryCorner": "{library} ({file})",
+  "@inspectorLibraryCorner": {
+    "description": "One row of the Defined in list: the library's name from its library group, usually naming its corner, then the file name.",
+    "placeholders": {
+      "library": {
+        "type": "String",
+        "example": "sky130_fd_sc_hd__tt_025C_1v80"
+      },
+      "file": {
+        "type": "String",
+        "example": "sky130_fd_sc_hd__tt_025C_1v80.lib"
+      }
+    }
+  },
+  "inspectorLibraryPinsHeader": "Library pins",
+  "@inspectorLibraryPinsHeader": {
+    "description": "Title of the Inspector list of a standard cell's signal pins and their directions, as its Liberty library declares them."
+  },
+  "inspectorClockPin": "{direction}, clock",
+  "@inspectorClockPin": {
+    "description": "A pin row in Library pins for a clock pin: its direction, then that it is a clock.",
+    "placeholders": {
+      "direction": {
+        "type": "String",
+        "example": "input"
+      }
+    }
+  },
+  "inspectorSupplyPinsHeader": "Power and ground pins",
+  "@inspectorSupplyPinsHeader": {
+    "description": "Title of the Inspector list of a standard cell's power and ground pins, each with its Liberty pg_type (primary_power, primary_ground, nwell, ...)."
+  },
+  "inspectorSupplyPinNoType": "no pg_type",
+  "@inspectorSupplyPinNoType": {
+    "description": "Value of a power or ground pin row whose Liberty pg_pin declares no pg_type. pg_type is the Liberty attribute name, never translated."
+  },
+  "hierarchyAreaLabel": "area {area}",
+  "@hierarchyAreaLabel": {
+    "description": "Compact suffix on a hierarchy row: the module's cell area summed from its cell libraries, in the library's units.",
+    "placeholders": {
+      "area": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "hierarchyAreaPartialLabel": "area {area}, partial",
+  "@hierarchyAreaPartialLabel": {
+    "description": "Compact suffix on a hierarchy row when some cells under the module have no area in any library, so the sum counts only the others.",
+    "placeholders": {
+      "area": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
   }
 }

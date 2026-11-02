@@ -960,6 +960,27 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | The layout pass draws library cells once, with their drawing | `[Coverage: UNIT]` (`test/features/project/providers/liberty_cell_providers_test.dart`) |
   | A real library and real post-route netlist (steps 1 to 5) | `[Coverage: MANUAL]` |
 
+## 4.14 A standard cell's data sheet, and area by module (from 1.2)
+
+- **What it does.** Selecting a library cell adds **Cell library** (each output's function, storage with clear and preset, area, the library file in use, and every library that defines the cell, by its `library` name and file), **Library pins** (direction, `clock` marked) and **Power and ground pins** (`pg_type`) to the Inspector. `ModuleAreaRollup` (`lib/services/liberty/module_area_rollup.dart`) sums the Liberty `area` of leaf cells per module, on first request and memoised, multiplying a submodule's area by its instance count; `partial` when a leaf has no area (a Yosys primitive, a black box, a library cell without `area`, a self-instantiating module). The hierarchy rows show `area N` or `area N, partial`, and an instance of a design module shows **Area** in the Inspector. All three providers (`libertyCellIndexProvider`, `libertyCellSymbolsProvider`, `moduleAreaRollupProvider`) are per tab.
+- **Setup.** As §4.13, with the library listed twice for two corners (`tt` and `ss`), and a design with at least one level of hierarchy.
+- **Steps and expected behavior.**
+  1. Select a NAND. Expected: `Y = !(A&B)`, its area, the library file, both corners under **Defined in**, the pins, and VPWR `primary_power`, VGND `primary_ground`, VPB `nwell`, VNB `pwell`.
+  2. Select a `dfrtp`. Expected: `Flip-flop, next state D, clocked on CLK`, **Clear** `!RESET_B`, CLK reads `input, clock`.
+  3. Look at the hierarchy tree. Expected: every scope row shows its area; a scope holding a Yosys primitive says `partial`. Select an instance of a module: its **Area** matches its row.
+  4. Repeat steps 1 to 3 in each shipped locale. Expected: the labels are translated; the expressions, `pg_type` values and numbers are not, and numbers use the locale's grouping.
+- **Edge cases.** A design without libraries shows no area anywhere. A library that cannot be read leaves the index empty and is reported by elaboration as before.
+- **Cost.** On the 1 M-cell netlist `tool/gen_gate_netlist.py` writes with `--gates 1000000`, the roll-up of the top module (which sums every module) takes 13 ms in the AOT-compiled `tool/bench_netlist_parse.dart`, run as `bench --native --liberty cells.lib design.v`; indexing a library and working out how each of its cells is drawn takes about 10 ms for the 428 cells of sky130 HD. Both run once per design load.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | Sums, instance multiplication, partial, bookkeeping cells, shadowing, self-instantiation, memoisation | `[Coverage: UNIT]` (`test/services/liberty/module_area_rollup_test.dart`) |
+  | Inspector sections and module area in five locales | `[Coverage: WIDGET]` (`test/features/inspector/widgets/inspector_library_section_test.dart`) |
+  | Hierarchy rows show and announce the area, none without libraries | `[Coverage: WIDGET]` (`test/features/hierarchy/widgets/hierarchy_area_test.dart`) |
+  | The providers read the project's libraries after the design loads | `[Coverage: UNIT]` (`test/features/project/providers/liberty_cell_providers_test.dart`) |
+  | Per-tab scoping | `[Coverage: STATIC]` (`test/static/per_tab_provider_scope_leak_test.dart`) + `[Coverage: UNIT]` (`test/services/workspace/netcrux_tab_overrides_test.dart`) |
+
 ---
 
 ## 5. Project Files, VHDL, Web Read-Only

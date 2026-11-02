@@ -7,6 +7,7 @@ import 'package:netcrux/features/project/providers/current_project_provider.dart
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/services/liberty/liberty_cell_index.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
+import 'package:netcrux/services/liberty/module_area_rollup.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'liberty_cell_providers.g.dart';
@@ -51,4 +52,16 @@ Future<LibertyCellSymbols> libertyCellSymbols(Ref ref) async {
   } on Object {
     return LibertyCellSymbols.none;
   }
+}
+
+/// The cell area of each module of the tab's design, rolled up from the
+/// Liberty `area` of its leaf cells and computed per module when first
+/// asked ([ModuleAreaRollup]). `null` while the design or its libraries are
+/// loading, and when the tab has no libraries.
+@Riverpod(keepAlive: true)
+ModuleAreaRollup? moduleAreaRollup(Ref ref) {
+  final model = ref.watch(loadedNetlistProvider).value;
+  final index = ref.watch(libertyCellIndexProvider).value;
+  if (model == null || index == null || index.isEmpty) return null;
+  return ModuleAreaRollup(model, index);
 }

@@ -165,9 +165,12 @@ void main() {
     final symbols = await c.read(libertyCellSymbolsProvider.future);
     expect(symbols['NAND2']!.kind, CellKind.nandGate);
     expect(symbols['NAND2']!.powerPins, <String>{'VDD'});
+    final areas = c.read(moduleAreaRollupProvider)!;
+    expect(areas.areaOf('top')!.area, 5);
+    expect(areas.areaOf('top')!.partial, isFalse);
   });
 
-  test('a project without libraries has none', () async {
+  test('a project without libraries has none, and no area', () async {
     final c = container();
     c.read(currentProjectProvider.notifier).setLibertyFiles(const <String>[]);
     expect((await c.read(libertyCellIndexProvider.future)).isEmpty, isTrue);
@@ -175,6 +178,7 @@ void main() {
       await c.read(libertyCellSymbolsProvider.future),
       LibertyCellSymbols.none,
     );
+    expect(c.read(moduleAreaRollupProvider), isNull);
   });
 
   test(

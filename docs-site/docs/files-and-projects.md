@@ -211,7 +211,7 @@ Every other cell keeps its box: a compound gate such as an AOI or OAI, a cell wi
 
 On every cell from a library, power and ground pins keep to the top and bottom edges: a `pg_pin` whose `pg_type` is `primary_power`, `backup_power`, `internal_power`, `nwell` or `deepnwell` on the top, and one that is `primary_ground`, `backup_ground`, `internal_ground`, `pwell` or `deeppwell` on the bottom. A `pg_pin` with no `pg_type` goes by its name: `VDD`, `VCC`, `VPWR` and `VPB` on the top, `VSS`, `GND`, `VGND` and `VNB` on the bottom. The gate's inputs and output then have the left and right edges to themselves, and the cell is no taller than its signal pins need.
 
-A [custom symbol](customizing.md) <span class="tier tier-pro">Pro</span> made for a cell type still takes precedence. If one of your sources defines a module with a cell's name, that module is the definition and its instances are drawn as before. The SVG export draws the same symbols as the canvas.
+A [custom symbol](customizing.md) <span class="tier tier-pro">Pro</span> made for a cell type still takes precedence. If one of your sources defines a module with a cell's name, that module is the definition and its instances are drawn as before. The SVG export draws the same symbols as the canvas. Selecting a cell shows its library data in the inspector, and the hierarchy tree shows each scope's cell area; see [A standard cell's data sheet](source-and-inspection.md#cell-data-sheet).
 
 ### Missing modules as black boxes {#black-boxes}
 
