@@ -59,23 +59,27 @@ class _SettingsEditorsSectionState
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: TextField(
-            controller: _controller,
-            decoration: InputDecoration(
-              labelText: l10n.settingsCxpEditorCommandLabel,
-              // The default template, not a translated string: its tokens
-              // are the ones EditorOpenService substitutes, and a hint a
-              // user copies into the field has to work.
-              hintText: AppSettings.defaultCxpEditorCommand,
-              border: const OutlineInputBorder(),
+          // A form row, not a floating label: the desktop theme shows a
+          // label only while the field is empty, and a command template in
+          // use must still say what it is.
+          child: CruxFormRow(
+            label: l10n.settingsCxpEditorCommandLabel,
+            child: TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                // The default template, not a translated string: its tokens
+                // are the ones EditorOpenService substitutes, and a hint a
+                // user copies into the field has to work.
+                hintText: AppSettings.defaultCxpEditorCommand,
+              ),
+              onChanged: (value) {
+                unawaited(
+                  ref
+                      .read(appSettingsProvider.notifier)
+                      .setCxpEditorCommand(value),
+                );
+              },
             ),
-            onChanged: (value) {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setCxpEditorCommand(value),
-              );
-            },
           ),
         ),
       ],
