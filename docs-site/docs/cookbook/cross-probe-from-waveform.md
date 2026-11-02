@@ -11,7 +11,7 @@ You are staring at a glitch in WaveCrux and you want to see the logic that produ
 
 ## Setup, once {#setup}
 
-1. Leave `Settings → CXP Cross-Probe → Enable CXP server` on in both apps — it is on by default in both.
+1. Leave `Settings → CXP Cross-Probe → Enable CXP server` on in both apps: it is on by default in both.
 2. Set `Settings → Editors → Editor command (open source)` if you want source-open requests to land in your editor. The default is `code -g {file}:{line}`.
 3. Start both apps on the same machine. Discovery is file-based and takes a couple of seconds.
 
@@ -21,10 +21,10 @@ Confirm it worked: open the Cross-Probe panel (++cmd+shift+x++ / ++ctrl+shift+x+
 
 Load the design in NetCrux and the matching trace in WaveCrux, then ask WaveCrux to highlight the signal's scope or net. NetCrux:
 
-- navigates the hierarchy to that scope, or selects the instance, port or net if it exists in the current scope — a bare signal name is matched against the current scope's nets, ports and cells;
+- navigates the hierarchy to that scope, or selects the instance, port or net if it exists in the current scope: a bare signal name is matched against the current scope's nets, ports and cells;
 - acks `honored: true`, or `honored: false` with a reason such as `Scope top.cpu.alu not found in current design` when the loaded design does not contain it.
 
-Then press ++bracket-left++ in NetCrux to walk back to the driver — see [Trace a signal to its source](../cookbook-trace-a-signal.md).
+Then press ++bracket-left++ in NetCrux to walk back to the driver: see [Trace a signal to its source](../cookbook-trace-a-signal.md).
 
 ## Schematic → waveform {#to-waveform}
 
@@ -40,5 +40,5 @@ Or right-click the element and choose **Cross-probe to WaveCrux** instead (free 
 | --- | --- |
 | No peers in the panel | Is the server enabled in both apps? Is anything else holding port 54323? |
 | Peer visible, selections do not follow | Is **Broadcast selection automatically** on in the app you are clicking in? |
-| Highlight refused | Read the reason on the ack — usually the design is not loaded or the path is not in the current scope. |
+| Highlight refused | Read the reason on the ack: usually the design is not loaded or the path is not in the current scope. |
 | Nothing works in the browser | CXP is desktop-only. Web builds cannot open sockets. |

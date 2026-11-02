@@ -1,6 +1,6 @@
 # Installation & first elaboration
 
-NetCrux is a desktop application for Linux, macOS and Windows. It does not synthesize or simulate — it drives **Yosys** as a subprocess to elaborate your RTL, lays the result out with ELK, and renders an interactive schematic. There is no account to create and no license key to enter before you elaborate your first design. This page covers how to get the app, how the toolchain fits together, and how to open your first source files.
+NetCrux is a desktop application for Linux, macOS and Windows. It does not synthesize or simulate: it drives **Yosys** as a subprocess to elaborate your RTL, lays the result out with ELK, and renders an interactive schematic. There is no account to create and no license key to enter before you elaborate your first design. This page covers how to get the app, how the toolchain fits together, and how to open your first source files.
 
 ## Platforms {#platforms}
 
@@ -53,7 +53,7 @@ Yosys's built-in `read_verilog -sv` reads the synthesizable core of SystemVerilo
 
 When the built-in reader stops at one of these, NetCrux says which construct it was and that the design is not at fault. If your Yosys includes the [yosys-slang](https://github.com/povik/yosys-slang) front end (the OSS CAD Suite build does; Homebrew's does not), NetCrux reads the design again with `read_slang`, which handles the full language, and opens it. Otherwise install such a Yosys and point NetCrux at it in Settings, or convert the sources with [sv2v](https://github.com/zachjs/sv2v) first. A design read with `read_slang` draws each port connection as a buffer cell and an asynchronously reset flip-flop as `$aldff`.
 
-VHDL is lowered to Verilog first: NetCrux runs `ghdl --synth --out=verilog <vhdl files> -e <top>` as a separate process and hands the emitted Verilog to Yosys. You need `ghdl` on your `PATH` and nothing else — no `ghdl-yosys-plugin`, and no plugin-capable Yosys build. GHDL elaborates the top unit named by the project's top module; VHDL files opened without a project that names one are elaborated with the entity name `top`. GHDL is GPLv2 and is invoked as a separate program, never linked in.
+VHDL is lowered to Verilog first: NetCrux runs `ghdl --synth --out=verilog <vhdl files> -e <top>` as a separate process and hands the emitted Verilog to Yosys. You need `ghdl` on your `PATH` and nothing else: no `ghdl-yosys-plugin`, and no plugin-capable Yosys build. GHDL elaborates the top unit named by the project's top module; VHDL files opened without a project that names one are elaborated with the entity name `top`. GHDL is GPLv2 and is invoked as a separate program, never linked in.
 
 ### The layout engine {#layout-engine}
 
@@ -88,9 +88,9 @@ A Yosys JSON netlist your flow already wrote does not need Yosys: [`File → Ope
 
 Three ways, in precedence order:
 
-1. `--yosys-path /opt/oss-cad-suite/bin/yosys` on the [command line](cli/usage.md) — wins for that launch.
+1. `--yosys-path /opt/oss-cad-suite/bin/yosys` on the [command line](cli/usage.md): wins for that launch.
 2. `Settings → Engines → Yosys binary path` → **Custom**, then an absolute path in **Yosys executable path**. NetCrux runs the binary as you type and shows **Detected:** and the version under the field, or the reason it could not run. Open Settings with ++cmd+comma++ / ++ctrl+comma++.
-3. `Settings → Engines → Yosys binary path` → **Auto-detect** (the default) — the operating system resolves `yosys` against `PATH`.
+3. `Settings → Engines → Yosys binary path` → **Auto-detect** (the default): the operating system resolves `yosys` against `PATH`.
 
 These choose Yosys only. GHDL always resolves from `PATH`.
 
@@ -106,7 +106,7 @@ NetCrux stops a Yosys run that takes too long, so a Yosys that has hung does not
 
 ## First launch {#first-launch}
 
-With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, the version, your **Recent projects** and **Recent source files** (and recent workspaces, once you have saved one), a **Clear recent** button, and the **Open Project…**, **Open Source Files…** and **Open Workspace…** buttons. From NetCrux 1.2 the second list is called **Recent files**, each recent list has its own **Clear** button and a remove button on every entry, a file that has moved is greyed as **File not found** and is dropped when you click it, and `File → Clear Recent Projects` clears the projects list from the menu or the command palette. You do not need a design loaded to explore the app — the menu bar, toolbar, command palette and Settings all work from the welcome screen.
+With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, the version, your **Recent projects** and **Recent source files** (and recent workspaces, once you have saved one), a **Clear recent** button, and the **Open Project…**, **Open Source Files…** and **Open Workspace…** buttons. From NetCrux 1.2 the second list is called **Recent files**, each recent list has its own **Clear** button and a remove button on every entry, a file that has moved is greyed as **File not found** and is dropped when you click it, and `File → Clear Recent Projects` clears the projects list from the menu or the command palette. You do not need a design loaded to explore the app: the menu bar, toolbar, command palette and Settings all work from the welcome screen.
 
 ## Elaborate your first design {#first-elaboration}
 
@@ -116,7 +116,7 @@ With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, 
 
 2. **Let NetCrux detect the language.**
 
-    The language comes from the file extension — you do not choose Verilog versus VHDL by hand. `.vhd` and `.vhdl` go through GHDL; `.sv` and `.svh` are read as SystemVerilog; `.v` and `.vh` as Verilog.
+    The language comes from the file extension: you do not choose Verilog versus VHDL by hand. `.vhd` and `.vhdl` go through GHDL; `.sv` and `.svh` are read as SystemVerilog; `.v` and `.vh` as Verilog.
 
 3. **Read the schematic.**
 
@@ -141,17 +141,17 @@ The full story on projects, auto-reload, sessions, workspaces and export lives o
 
 !!! warning "Elaboration errors surface in Diagnostics"
 
-    If Yosys cannot run, times out, or exits with an error — a syntax error, an unresolved module, a VHDL file GHDL cannot lower — the canvas shows the reason and the **Diagnostics** panel (++cmd+3++ / ++ctrl+3++) lists the parsed errors and warnings with their `file:line`. See [Inspector & RTL source](source-and-inspection.md#diagnostics).
+    If Yosys cannot run, times out, or exits with an error (a syntax error, an unresolved module, a VHDL file GHDL cannot lower) the canvas shows the reason and the **Diagnostics** panel (++cmd+3++ / ++ctrl+3++) lists the parsed errors and warnings with their `file:line`. See [Inspector & RTL source](source-and-inspection.md#diagnostics).
 
 ## Staying up to date {#staying-up-to-date}
 
-NetCrux checks a release manifest on launch, once a day while it is running, and when you switch back to the app. When a newer version is out, a strip appears above the app content — **View Changes** opens the changelog, **Update Now** opens the download page in your browser, and **✕** dismisses it. There is no in-app download and no self-update: NetCrux tells you, you decide.
+NetCrux checks a release manifest on launch, once a day while it is running, and when you switch back to the app. When a newer version is out, a strip appears above the app content: **View Changes** opens the changelog, **Update Now** opens the download page in your browser, and **✕** dismisses it. There is no in-app download and no self-update: NetCrux tells you, you decide.
 
-Turn the automatic check off in `Settings → General → Automatically check for updates`. You can always check by hand from `Help → Check for Updates` (in the NetCrux application menu on macOS), the command palette, or the About box — the manual check runs even when the automatic one is off. The request is a plain fetch of a static manifest and carries nothing but your app version and operating system. Details in [Updates, issues & privacy](user-guide/updates-and-feedback.md#update-checks).
+Turn the automatic check off in `Settings → General → Automatically check for updates`. You can always check by hand from `Help → Check for Updates` (in the NetCrux application menu on macOS), the command palette, or the About box: the manual check runs even when the automatic one is off. The request is a plain fetch of a static manifest and carries nothing but your app version and operating system. Details in [Updates, issues & privacy](user-guide/updates-and-feedback.md#update-checks).
 
 ## Reporting issues {#reporting-issues}
 
-The fastest way to get something fixed is the built-in issue reporter — open it from `Help → Submit Issue…`, the command palette, or the **Submit Issue…** button in the About box (++f1++). The report gathers your app version and build, platform, OS and locale; session state as counts and fixed vocabulary only (open tabs, whether Yosys was detected, source-file and module/cell/net counts, elaboration state, which analysis panes are open); the recent warning-and-error log; and, on desktop, an optional screenshot. Each category except the app and environment block is a toggle with a live preview of exactly what will be sent. Source-file paths, project paths, module/instance/net names and Yosys stderr are never included. Details in [Updates, issues & privacy](user-guide/updates-and-feedback.md#reporting-issues).
+The fastest way to get something fixed is the built-in issue reporter: open it from `Help → Submit Issue…`, the command palette, or the **Submit Issue…** button in the About box (++f1++). The report gathers your app version and build, platform, OS and locale; session state as counts and fixed vocabulary only (open tabs, whether Yosys was detected, source-file and module/cell/net counts, elaboration state, which analysis panes are open); the recent warning-and-error log; and, on desktop, an optional screenshot. Each category except the app and environment block is a toggle with a live preview of exactly what will be sent. Source-file paths, project paths, module/instance/net names and Yosys stderr are never included. Details in [Updates, issues & privacy](user-guide/updates-and-feedback.md#reporting-issues).
 
 !!! note "Next steps"
 

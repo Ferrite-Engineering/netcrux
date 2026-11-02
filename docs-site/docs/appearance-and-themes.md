@@ -44,7 +44,7 @@ On top of the active preset you can override individual colors, token by token, 
 
 ## Theme packs {#packs}
 
-A complete theme travels as a `.crux-theme.json` file — a **theme pack**. The **Theme packs** browser in `Settings → Appearance` imports packs and exports the current theme. Imported packs are installed into the `themes` directory inside NetCrux's application-support folder, and the default export file name is `netcrux-theme.crux-theme.json`.
+A complete theme travels as a `.crux-theme.json` file: a **theme pack**. The **Theme packs** browser in `Settings → Appearance` imports packs and exports the current theme. Imported packs are installed into the `themes` directory inside NetCrux's application-support folder, and the default export file name is `netcrux-theme.crux-theme.json`.
 
 Your active preset and any token overrides persist across launches.
 

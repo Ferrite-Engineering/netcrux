@@ -1,10 +1,10 @@
 # Navigating the schematic
 
-A real design is ten levels deep. NetCrux is built so you can move through that hierarchy with the keyboard and never lose your place — push in, pop out, jump to the top, and search the whole design from one dialog.
+A real design is ten levels deep. NetCrux is built so you can move through that hierarchy with the keyboard and never lose your place: push in, pop out, jump to the top, and search the whole design from one dialog.
 
 ## Push in and pop out {#push-pop}
 
-A NetCrux tab always shows exactly one **scope** — one module instance's interior. To descend into a submodule instance, **double-click** it on the canvas (or select it and press ++enter++), or click its row in the [hierarchy tree](interface.md#hierarchy) (++cmd+1++ / ++ctrl+1++) to jump straight to that scope — from the keyboard, move to the row with the arrow keys and press ++enter++ (see [Hierarchy tree keys](keyboard-mouse.md#hierarchy-keys)). To come back up one level, use **Pop Out of Scope** (++cmd+bracket-left++ / ++ctrl+bracket-left++), the toolbar's **Pop Out of Scope** button, ++backspace++ on the focused canvas, or double-click empty canvas. Pushing in, popping out and jumping to the top clear the selection and any trace overlay.
+A NetCrux tab always shows exactly one **scope**: one module instance's interior. To descend into a submodule instance, **double-click** it on the canvas (or select it and press ++enter++), or click its row in the [hierarchy tree](interface.md#hierarchy) (++cmd+1++ / ++ctrl+1++) to jump straight to that scope, from the keyboard, move to the row with the arrow keys and press ++enter++ (see [Hierarchy tree keys](keyboard-mouse.md#hierarchy-keys)). To come back up one level, use **Pop Out of Scope** (++cmd+bracket-left++ / ++ctrl+bracket-left++), the toolbar's **Pop Out of Scope** button, ++backspace++ on the focused canvas, or double-click empty canvas. Pushing in, popping out and jumping to the top clear the selection and any trace overlay.
 
 | Action | Input | Effect |
 | --- | --- | --- |
@@ -16,9 +16,9 @@ A NetCrux tab always shows exactly one **scope** — one module instance's inter
 
 ## The breadcrumb and Jump to Top {#breadcrumb}
 
-The breadcrumb bar across the top of the canvas shows your full scope path — for example `top › cpu › alu`. Click any crumb to jump straight to that level. To return to the very top of the hierarchy in one move, use **Jump to Top** (++cmd+home++ / ++ctrl+home++) or the toolbar button of the same name.
+The breadcrumb bar across the top of the canvas shows your full scope path, for example `top › cpu › alu`. Click any crumb to jump straight to that level. To return to the very top of the hierarchy in one move, use **Jump to Top** (++cmd+home++ / ++ctrl+home++) or the toolbar button of the same name.
 
-A scope path is dot-separated and starts at the design root — `top.cpu.alu`. This is the same canonical form NetCrux uses on the wire for [cross-probe](integrations/cxp.md#path-formats), and **Copy Path** on the canvas context menu puts an element's full path on the clipboard in that form.
+A scope path is dot-separated and starts at the design root: `top.cpu.alu`. This is the same canonical form NetCrux uses on the wire for [cross-probe](integrations/cxp.md#path-formats), and **Copy Path** on the canvas context menu puts an element's full path on the clipboard in that form.
 
 ## Zoom and pan {#zoom-pan}
 
@@ -36,7 +36,7 @@ It is also the way back to an element after panning away: choose a cell in [Sear
 
 ## Three-band level-of-detail {#lod}
 
-As you zoom out, NetCrux drops detail in three bands so a large module stays readable: at zoom 0.75 and above you see full symbols with port and wire labels; between 0.25 and 0.75 labels drop out and wires simplify; below 0.25 cells collapse to solid blocks colored by cell family. You do not configure this — it tracks the zoom level automatically, and it is what keeps the frame rate flat on large scopes.
+As you zoom out, NetCrux drops detail in three bands so a large module stays readable: at zoom 0.75 and above you see full symbols with port and wire labels; between 0.25 and 0.75 labels drop out and wires simplify; below 0.25 cells collapse to solid blocks colored by cell family. You do not configure this: it tracks the zoom level automatically, and it is what keeps the frame rate flat on large scopes.
 
 ## Search Design {#search}
 
@@ -53,12 +53,12 @@ The **Search Design** dialog (++cmd+f++ / ++ctrl+f++, or the toolbar's **Search�
     | Mode | Behaviour |
     | --- | --- |
     | **Substring** | The name contains the query. |
-    | **Glob** | `*` and `?` wildcards, matched against the whole name — `*_valid` finds every name ending in `_valid`. |
+    | **Glob** | `*` and `?` wildcards, matched against the whole name: `*_valid` finds every name ending in `_valid`. |
     | **Regex** | A regular expression, matched anywhere in the name. |
 
 3. **Jump to a result.**
 
-    Choosing a result (click it, or ++arrow-up++ / ++arrow-down++ then ++enter++) navigates to the owning scope, clears any trace overlay, and centers the canvas on the result. An instance or cell is selected. A net has no body of its own, so NetCrux selects the cell that drives it; an undriven net — a module input or a constant — leaves nothing selected.
+    Choosing a result (click it, or ++arrow-up++ / ++arrow-down++ then ++enter++) navigates to the owning scope, clears any trace overlay, and centers the canvas on the result. An instance or cell is selected. A net has no body of its own, so NetCrux selects the cell that drives it; an undriven net, a module input or a constant, leaves nothing selected.
 
 On a scope that is too large to lay out whole, a result takes you there and selects the cell, and because there is no whole-scope layout to centre on, NetCrux opens the cell's cone view at once, so the selection is on screen; see [Cone view](tracing.md#cone-view). The same happens when you choose a cell in the Hierarchy filter or another tool cross-probes a cell, a pin, a port or a net into the scope.
 
@@ -66,7 +66,7 @@ To find a cell without opening a dialog, type part of its name or its type in th
 
 ## The command palette {#palette}
 
-The **command palette** (++cmd+shift+p++ / ++ctrl+shift+p++) is a fuzzy-filtered list of every action that can run right now. If you can name it, you can run it from the palette without hunting through menus — and the palette shows each action's keyboard shortcut and tier, so it doubles as a way to learn the bindings.
+The **command palette** (++cmd+shift+p++ / ++ctrl+shift+p++) is a fuzzy-filtered list of every action that can run right now. If you can name it, you can run it from the palette without hunting through menus, and the palette shows each action's keyboard shortcut and tier, so it doubles as a way to learn the bindings.
 
 ## Panel toggles {#panels}
 

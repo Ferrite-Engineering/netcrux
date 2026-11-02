@@ -6,12 +6,12 @@ A metastability bug is hiding at a clock-domain crossing somewhere in the design
 |---|---|
 | **Goal** | Find clock-domain crossings without proper synchronizers and confirm the structure of the ones that have them. |
 | **Time** | About 8 minutes |
-| **Tier** | <span class="tier tier-pro">Pro</span> — CDC analysis. |
+| **Tier** | <span class="tier tier-pro">Pro</span>: CDC analysis. |
 | **You will use** | [CDC analysis](analysis.md#cdc), the [inspector](source-and-inspection.md#inspector), and [the RTL source pane](source-and-inspection.md#source-pane). |
 
 ## Before you start {#before}
 
-Elaborate the design and make sure the clocks are real clocks — a CDC view is only as good as the design's clock structure. If a crossing looks wrong, the [reset-domain view](analysis.md#reset) is a useful companion. Know the analysis's blind spots: it does not recognize Gray-coded buses or verify handshakes yet, so those crossings come out rated critical and need a manual look.
+Elaborate the design and make sure the clocks are real clocks: a CDC view is only as good as the design's clock structure. If a crossing looks wrong, the [reset-domain view](analysis.md#reset) is a useful companion. Know the analysis's blind spots: it does not recognize Gray-coded buses or verify handshakes yet, so those crossings come out rated critical and need a manual look.
 
 ## Steps {#steps}
 
@@ -21,7 +21,7 @@ Elaborate the design and make sure the clocks are real clocks — a CDC view is 
 
 2. **Filter to the critical crossings.**
 
-    Use the severity chips to hide **Info** and focus on **Critical** — missing synchronizers and single-flop captures are the ones that can actually bite.
+    Use the severity chips to hide **Info** and focus on **Critical**: missing synchronizers and single-flop captures are the ones that can actually bite.
 
 3. **Highlight one crossing.**
 

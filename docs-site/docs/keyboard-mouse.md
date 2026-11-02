@@ -1,10 +1,10 @@
 # Keyboard & mouse reference
 
-NetCrux is built to be driven without the mouse: every command carries a menu, a label and — for the common ones — a default key binding you can change. This page is the single-screen reference for the default bindings, the keys the schematic canvas handles directly, and the pointer gestures on the canvas. The platform modifier is ++cmd++ on macOS and ++ctrl++ on Linux and Windows; bindings below are written macOS first.
+NetCrux is built to be driven without the mouse: every command carries a menu, a label and, for the common ones, a default key binding you can change. This page is the single-screen reference for the default bindings, the keys the schematic canvas handles directly, and the pointer gestures on the canvas. The platform modifier is ++cmd++ on macOS and ++ctrl++ on Linux and Windows; bindings below are written macOS first.
 
 ## Keyboard shortcuts {#shortcuts}
 
-These are the default bindings that ship with NetCrux. Every one of them is rebindable in `Settings → Keyboard Shortcuts`, and every command is also reachable from the menu bar and — when it can run — the command palette. The **Menu** column is where the command lives; `NetCrux` is the application menu on macOS (on Linux and Windows those commands sit at the bottom of `File`).
+These are the default bindings that ship with NetCrux. Every one of them is rebindable in `Settings → Keyboard Shortcuts`, and every command is also reachable from the menu bar and, when it can run, the command palette. The **Menu** column is where the command lives; `NetCrux` is the application menu on macOS (on Linux and Windows those commands sit at the bottom of `File`).
 
 | Shortcut | Action | Menu |
 |---|---|---|
@@ -19,7 +19,7 @@ These are the default bindings that ship with NetCrux. Every one of them is rebi
 | ++cmd+w++ / ++ctrl+w++ | Close Tab | File |
 | ++cmd+shift+w++ / ++ctrl+shift+w++ | Close Project | File |
 | ++cmd+comma++ / ++ctrl+comma++ | Settings… | NetCrux |
-| ++cmd+q++ / ++ctrl+q++ | Quit NetCrux — **Exit** on Linux and Windows | NetCrux (File on Linux and Windows) |
+| ++cmd+q++ / ++ctrl+q++ | Quit NetCrux: **Exit** on Linux and Windows | NetCrux (File on Linux and Windows) |
 | ++cmd+shift+p++ / ++ctrl+shift+p++ | Command Palette… | View |
 | ++cmd+equal++ or ++cmd+plus++ / ++ctrl+equal++ or ++ctrl+plus++ | Zoom In | View |
 | ++cmd+minus++ / ++ctrl+minus++ | Zoom Out | View |
@@ -55,11 +55,11 @@ Zoom In answers to the modifier with `=` and with `+`, so it works on every keyb
 
 !!! note "The two bracket bindings"
 
-    The ++bracket-left++ pairing is deliberate. A bare ++bracket-left++ shows the fanin of the current selection; ++cmd+bracket-left++ / ++ctrl+bracket-left++ pops out of the current hierarchy scope. The two live on the same key because they are the same mental direction — backwards, toward the driver or toward the parent.
+    Both bindings use ++bracket-left++. A bare ++bracket-left++ shows the fanin of the current selection; ++cmd+bracket-left++ / ++ctrl+bracket-left++ pops out of the current hierarchy scope. The two live on the same key because they are the same mental direction: backwards, toward the driver or toward the parent.
 
 !!! note "Actions without a default binding"
 
-    A number of actions ship with no default key: **Close Pane**, **Focus Other Pane** and **Move Tab to Other Pane**; **New Workspace**, **Open Workspace…**, **Save Workspace As…** and **Reset Workspace…**; **Documentation**, **Check for Updates** and **Submit Issue…**; **Share Session…**, **Join Session…** and **Leave Session**; and every Pro action — cone of influence, X-Trace, the RTL source pane, the netlist diff (including **Next Diff** and **Previous Diff**), custom symbols, FSM, CDC, reset-domain and switching-activity analysis. All of them are reachable from the menu bar and the command palette, Pro actions also from the schematic context menu, and any of them can be given a binding of your own in `Settings → Keyboard Shortcuts`. The command palette opener also has a menu entry, so unbinding its key cannot lock you out of it.
+    A number of actions ship with no default key: **Close Pane**, **Focus Other Pane** and **Move Tab to Other Pane**; **New Workspace**, **Open Workspace…**, **Save Workspace As…** and **Reset Workspace…**; **Documentation**, **Check for Updates** and **Submit Issue…**; **Share Session…**, **Join Session…** and **Leave Session**; and every Pro action: cone of influence, X-Trace, the RTL source pane, the netlist diff (including **Next Diff** and **Previous Diff**), custom symbols, FSM, CDC, reset-domain and switching-activity analysis. All of them are reachable from the menu bar and the command palette, Pro actions also from the schematic context menu, and any of them can be given a binding of your own in `Settings → Keyboard Shortcuts`. The command palette opener also has a menu entry, so unbinding its key cannot lock you out of it.
 
 ## Schematic canvas keys {#canvas-keys}
 
@@ -71,16 +71,16 @@ The canvas handles a small set of keys directly whenever it has keyboard focus. 
 | ++plus++ / ++equal++ / numpad ++plus++ | Zoom in around the center of the view. |
 | ++minus++ / numpad ++minus++ | Zoom out around the center of the view. |
 | ++0++ / numpad ++0++ | Fit the scope to the view. |
-| ++alt+arrow-down++ / ++alt+arrow-up++ | Select the next / previous cell or module port, top to bottom then left to right — what a click does. |
+| ++alt+arrow-down++ / ++alt+arrow-up++ | Select the next / previous cell or module port, top to bottom then left to right: what a click does. |
 | ++alt+arrow-right++ / ++alt+arrow-left++ | Step through the pins of that cell, each followed by the net on it (on a module port, its net). A net shared by two pins is visited once. |
-| ++shift++ with either of the above | Add to the selection instead of replacing it — what a shift-click does. |
-| ++enter++ | Push into the selected instance — what a double-click does. |
+| ++shift++ with either of the above | Add to the selection instead of replacing it: what a shift-click does. |
+| ++enter++ | Push into the selected instance: what a double-click does. |
 | ++shift+f10++ / ++menu++ | Open the context menu for the selected element: Copy Path, the traces, Find in Hierarchy, the cross-probe entries, and in Pro the analysis entries. |
 | ++backspace++ | Pop out of the scope, clearing the selection and trace overlay. |
 | ++cmd+bracket-left++ / ++ctrl+bracket-left++ | Pop out of the scope. |
 | ++escape++ | Clear the selection, the trace overlay, and a selected CDC or reset crossing, in one press. |
 
-A screen reader announces each element the keyboard selects — a cell with its type, a module port, a pin with its cell, or a net by name — so the selection can be followed without seeing the canvas.
+A screen reader announces each element the keyboard selects (a cell with its type, a module port, a pin with its cell, or a net by name) so the selection can be followed without seeing the canvas.
 
 ## Hierarchy tree keys {#hierarchy-keys}
 
@@ -127,7 +127,7 @@ Pointer gestures on the schematic canvas cover navigation and selection. Selecti
 
 Open **Settings** (++cmd+comma++ / ++ctrl+comma++) and select the **Keyboard Shortcuts** category. Every action is listed with its current binding. From there you can:
 
-- **Start from a preset.** The **Preset** chooser loads a complete key map in one step — **NetCrux (Default)** ships today — and reads **Custom** once you hand-edit any binding.
+- **Start from a preset.** The **Preset** chooser loads a complete key map in one step (**NetCrux (Default)** ships today) and reads **Custom** once you hand-edit any binding.
 - **Change a shortcut** with the pencil button, then type the new keys (++escape++ cancels).
 - **Remove a shortcut**, leaving the action reachable from the menus and the palette.
 - **Reset to default** for one action.
@@ -136,7 +136,7 @@ Open **Settings** (++cmd+comma++ / ++ctrl+comma++) and select the **Keyboard Sho
 
 The list is keyboard-driven too: ++arrow-up++ and ++arrow-down++ move between shortcuts, ++enter++ changes the selected one, ++delete++ removes it and ++shift+delete++ restores its default.
 
-Conflicts are detected as you type: a binding that collides shows **Also used by…**, the one that wins says **Takes precedence over…**, and the one that loses says **Won't fire — shadowed by…**, so you never end up with a silently dead key.
+Conflicts are detected as you type: a binding that collides shows **Also used by…**, the one that wins says **Takes precedence over…**, and the one that loses says **Won't fire: shadowed by…**, so you never end up with a silently dead key.
 
 !!! note "Next steps"
 

@@ -13,10 +13,10 @@ You found the thing. Now you need someone else to see it. This recipe picks the 
 
 | You want to… | Use |
 | --- | --- |
-| Paste a picture into a PR comment or chat | **PNG** — ++cmd+shift+e++ / ++ctrl+shift+e++ |
-| Put a diagram in a document or slide | **SVG** — ++alt+e++ |
-| Hand the netlist to another tool | **JSON** — ++alt+j++ |
-| Let a colleague navigate it themselves | **Session** — ++cmd+s++ / ++ctrl+s++ |
+| Paste a picture into a PR comment or chat | **PNG**: ++cmd+shift+e++ / ++ctrl+shift+e++ |
+| Put a diagram in a document or slide | **SVG**: ++alt+e++ |
+| Hand the netlist to another tool | **JSON**: ++alt+j++ |
+| Let a colleague navigate it themselves | **Session**: ++cmd+s++ / ++ctrl+s++ |
 
 ## The picture route {#picture}
 
@@ -26,7 +26,7 @@ You found the thing. Now you need someone else to see it. This recipe picks the 
 
 2. **Export PNG.**
 
-    ++cmd+shift+e++ / ++ctrl+shift+e++ — the export captures the visible canvas *as drawn*, overlay and dimming included, which is exactly what makes the point. Only the part of the scope inside the canvas is in the image.
+    ++cmd+shift+e++ / ++ctrl+shift+e++: the export captures the visible canvas *as drawn*, overlay and dimming included, which is exactly what makes the point. Only the part of the scope inside the canvas is in the image.
 
 3. **Or export SVG.**
 

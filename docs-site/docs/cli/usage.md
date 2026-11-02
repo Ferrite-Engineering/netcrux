@@ -67,7 +67,7 @@ netcrux --workspace review.netcrux-workspace
 
 There is no `--version`, `--top` or `--ghdl-path` flag.
 
-Unknown flags are not rejected — they are stripped, and the argument after one is read as a path. A misspelled value flag therefore turns its value into a file to open: `netcrux --yosys-pth /opt/yosys/bin/yosys top.v` tries to open the Yosys binary as a source. Check your spelling.
+Unknown flags are not rejected: they are stripped, and the argument after one is read as a path. A misspelled value flag therefore turns its value into a file to open: `netcrux --yosys-pth /opt/yosys/bin/yosys top.v` tries to open the Yosys binary as a source. Check your spelling.
 
 ## Web builds
 

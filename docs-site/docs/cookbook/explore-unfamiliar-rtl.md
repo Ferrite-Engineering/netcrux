@@ -33,16 +33,16 @@ Someone handed you a block you have never seen, and you want its shape before yo
 
 6. **Check the size.**
 
-    The status bar shows the cell count for the whole elaborated design — a fast sanity check for "is this a small glue block or a big one?".
+    The status bar shows the cell count for the whole elaborated design: a fast sanity check for "is this a small glue block or a big one?".
 
 7. **Remember where you were.**
 
     With `Settings → General → Restore tabs on launch` on, the tab comes back at the next launch. **Copy Path** on the canvas context menu puts an element's full path on the clipboard for your notes.
 
-    For a view you want to come back to deliberately rather than automatically, `File → Save Session As…` (++cmd+s++ / ++ctrl+s++) writes a `.netcrux` session. Reopening one re-elaborates its sources and then puts the view back — the scope you were in, the expanded hierarchy rows, the selection, and the zoom and pan. If the saved scope no longer exists in the design, the tab opens at the top, fitted. The trace overlay is deliberately not restored: re-issue the trace and it recomputes. See [Sessions](../files-and-projects.md#sessions).
+    For a view you want to come back to on purpose rather than automatically, `File → Save Session As…` (++cmd+s++ / ++ctrl+s++) writes a `.netcrux` session. Reopening one re-elaborates its sources and then puts the view back: the scope you were in, the expanded hierarchy rows, the selection, and the zoom and pan. If the saved scope no longer exists in the design, the tab opens at the top, fitted. The trace overlay is not restored: re-issue the trace and it recomputes. See [Sessions](../files-and-projects.md#sessions).
 
 ## Tips {#tips}
 
 - Search (++cmd+f++ / ++ctrl+f++) in **Glob** mode is the fast way to find the clock and reset nets: `*clk*`, `*rst*`.
 - Elaboration results are cached, so reopening the same sources is instant.
-- Set `Settings → General → Auto-reload on source change` to **Reload automatically** (**Auto** from NetCrux 1.2) while you are editing the RTL — save the file and the schematic re-elaborates.
+- Set `Settings → General → Auto-reload on source change` to **Reload automatically** (**Auto** from NetCrux 1.2) while you are editing the RTL: save the file and the schematic re-elaborates.

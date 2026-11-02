@@ -1,6 +1,6 @@
 # CXP integration reference
 
-**CXP** — the Cross-Tool eXchange Protocol — is how the EDACrux tools talk to
+**CXP**, the Cross-Tool eXchange Protocol, is how the EDACrux tools talk to
 each other on your machine. Click a net in NetCrux and the matching
 signal lights up in WaveCrux; ask WaveCrux to highlight a scope and
 NetCrux navigates there. For the user-level overview, see
@@ -26,15 +26,15 @@ that make interop work. The protocol itself is specified at
 
 `Settings → CXP Cross-Probe`:
 
-- **Enable CXP server** — on by default. Cross-probe is a suite-defining
+- **Enable CXP server**, on by default. Cross-probe is a suite-defining
   capability and is meant to work without setup.
-- **CXP port** — default `54323`, any value from 1 to 65535. The port is
+- **CXP port**: default `54323`, any value from 1 to 65535. The port is
   applied when you press Enter, and the server restarts on it. From
   NetCrux 1.2 the change takes effect at once, with no relaunch.
-- **Request attention on cross-probe** — on by default. Bounces the dock
+- **Request attention on cross-probe**, on by default. Bounces the dock
   icon (or flashes the taskbar) when a peer's cross-probe is acted on. It
   never steals focus.
-- **Broadcast selection automatically** — on by default. Announces your
+- **Broadcast selection automatically**, on by default. Announces your
   selection to connected peers as you select. When off, only explicit
   sends from the Cross-Probe panel go out.
 
@@ -86,7 +86,7 @@ peers drop it as soon as they see the process is gone (on Linux and macOS),
 or when it goes stale (on Windows).
 
 NetCrux **dials manifests that already exist**. It does not launch peers.
-If WaveCrux is not running, nothing happens — start it and NetCrux picks
+If WaveCrux is not running, nothing happens: start it and NetCrux picks
 it up within a couple of seconds. Failed dials are retried every 5
 seconds with backoff.
 
@@ -134,9 +134,9 @@ primary element. NetCrux never sends `request_open_source`.
 | `request_highlight` | `signal`, or a `net` / `instance` / `port` that did not resolve exactly | Matches the last path segment against the current scope's nets, then boundary ports, then cells. |
 | `request_highlight` | `source` | Opens the location with your configured editor command. |
 | `request_highlight` | `marker`, `rule`, `test`, `breakpoint`, unknown | `honored: false` with a reason. Never throws. |
-| `notify_selection` | first `signal` / `instance` / `port` / `net` that resolves | Selected exactly as for `request_highlight`. No ack — `notify_selection` is fire-and-forget. |
-| `request_open_source` | — | `{file_path, line, column?}` handed to the editor command. |
-| `request_open_artifact` | — | `kind: source` loads that one HDL file into the active tab. `kind: project` (from NetCrux 1.1) opens a `.netcrux-project`, a `<design>.crux-project` manifest or a `.f` filelist through the project loader into the active tab, so a multi-file design arrives with its source list, top module, defines and include paths. Any other kind, and a `project` file NetCrux cannot read as a project, is `honored: false` with a reason. |
+| `notify_selection` | first `signal` / `instance` / `port` / `net` that resolves | Selected exactly as for `request_highlight`. No ack: `notify_selection` is fire-and-forget. |
+| `request_open_source` | – | `{file_path, line, column?}` handed to the editor command. |
+| `request_open_artifact` | – | `kind: source` loads that one HDL file into the active tab. `kind: project` (from NetCrux 1.1) opens a `.netcrux-project`, a `<design>.crux-project` manifest or a `.f` filelist through the project loader into the active tab, so a multi-file design arrives with its source list, top module, defines and include paths. Any other kind, and a `project` file NetCrux cannot read as a project, is `honored: false` with a reason. |
 
 When an element does not resolve and the message carries a `crux.design_id`
 that the suite's shared workspace maps to a design source, NetCrux opens
@@ -179,7 +179,7 @@ start SimCrux.
 Each NetCrux window announces the name of the design in its active tab, so
 another product's **Cross-probe to** menu can tell two NetCrux windows apart.
 
-## Path formats — the interop contract {#path-formats}
+## Path formats: the interop contract {#path-formats}
 
 This is the part another tool has to get right.
 
@@ -238,15 +238,15 @@ every one of these lists.
 toggles the **Cross-Probe** dock tab. It shows:
 
 - **Cross-probe server is offline.** when the server is not running.
-- **Connected peers** — every connected peer as product name and version over
+- **Connected peers**: every connected peer as product name and version over
   its peer id (from NetCrux 1.2 the toolbar badge counts connected peers, not
   discovered ones), each with a **Send selection to this peer** button that sends a
   `request_highlight` for whatever is selected right now. From NetCrux 1.1
   the targeted send is free in every edition and the button carries no tier
   badge.
-- **Unreachable peers** — persistent warnings for peers that could not be
+- **Unreachable peers**: persistent warnings for peers that could not be
   reached.
-- **Recent events** — a rolling log of the last 50 events: inbound messages,
+- **Recent events**: a rolling log of the last 50 events: inbound messages,
   peer presence changes, and your panel sends. **Clear events** empties it.
 
 !!! warning "What the event log does not show"
@@ -274,6 +274,6 @@ toggles the **Cross-Probe** dock tab. It shows:
 | --- | --- |
 | No peers ever appear | Is the server enabled in both apps? Does the manifest directory exist and contain a `.json` per running app? |
 | Peer appears, selections do not follow | Is **Broadcast selection automatically** on in the sending app? NetCrux acts on inbound `notify_selection` only when the element resolves in the current scope. |
-| Highlight is refused | Read the `reason` on the ack — usually "No design loaded" or a path that does not exist in the current scope. |
-| Source-open does nothing | `Settings → Editors → Editor command (open source)` is empty, or the command is not on `PATH`. The command is split on whitespace before `{file}` is substituted, and there is no shell or quoting — a file path with spaces is passed intact, but an editor executable path with spaces cannot be configured. |
+| Highlight is refused | Read the `reason` on the ack: usually "No design loaded" or a path that does not exist in the current scope. |
+| Source-open does nothing | `Settings → Editors → Editor command (open source)` is empty, or the command is not on `PATH`. The command is split on whitespace before `{file}` is substituted, and there is no shell or quoting: a file path with spaces is passed intact, but an editor executable path with spaces cannot be configured. |
 | Works on desktop, not in the browser | Web builds cannot open TCP sockets. CXP is desktop-only. |

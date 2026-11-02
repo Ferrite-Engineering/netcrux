@@ -6,7 +6,7 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 |---|---|---|
 | **Project** | `.netcrux-project` | A named source set for a design: sources, top module, include paths, defines, cell libraries and cell models. |
 | **Suite manifest** | `<design>.crux-project` | The design, described once for every EDACrux product. |
-| **Session** | `.netcrux` | One tab's view state — where you were and what you were looking at. |
+| **Session** | `.netcrux` | One tab's view state, where you were and what you were looking at. |
 | **Workspace** | `.netcrux-workspace` | A named set of tabs and panes. |
 
 ## Input formats {#inputs}
@@ -21,7 +21,7 @@ NetCrux distinguishes between the *sources* it elaborates and the *state* it sav
 | Vivado-style filelist | `.f` | Imported with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |
 | Liberty cell library | `.lib`, `.liberty`, `.lib.gz`, `.liberty.gz` | Read for its cells' interfaces, which Yosys sees as black boxes. A gzip-compressed library is read as it is. See [Cell libraries](#cell-libraries). |
 | Verilog cell model | `.v`, `.v.gz` listed as `cellModelFiles` or `-v` | From NetCrux 1.2: only the module headers are read, for the pin directions of the cells a gate-level netlist instantiates. See [Cell model files](#cell-models). |
-| Yosys JSON netlist | `.json` | Read directly — no Yosys run. See [below](#json). A netlist exported by ROHD is read the same way; see [ROHD netlists](#rohd). |
+| Yosys JSON netlist | `.json` | Read directly: no Yosys run. See [below](#json). A netlist exported by ROHD is read the same way; see [ROHD netlists](#rohd). |
 
 A netlist your own flow already wrote with Yosys `write_json` opens without elaboration: choose `File → Open Netlist JSON…` (also on the toolbar), pass it on the [command line](cli/usage.md) (`netcrux build/top.json`), or name it under `artifacts.netlist` in a [design manifest](#crux-project). It is also the only thing the [web viewer](web-mode.md) opens. NetCrux parses it and renders the top module exactly as if it had run Yosys itself, and the netlist file is watched for changes like any source. A single `.json` file is always read as a netlist, never handed to Yosys. From NetCrux 1.2 the file is read from disk in chunks rather than loaded whole, so its size is not limited (before 1.2 a netlist over 2 GB could not open): a netlist of several gigabytes opens, and the memory it takes is that of the design once parsed, about 4 to 5 GB for every million cells. (The [web viewer](web-mode.md) receives the document as text, so very large netlists belong in the desktop app.)
 {: #json }
@@ -70,7 +70,7 @@ Anything else in the file is ignored: a field NetCrux does not know, a newer ROH
 
 ## Opening a design with `<design>.crux-project` {#crux-project}
 
-A design usually spans more than one EDACrux product — the dump in WaveCrux, the RTL in NetCrux, the lint project in LintCrux, the regression suite in SimCrux. Without help that is four file-open rituals, each with its own recents list and its own chance of picking a stale file.
+A design usually spans more than one EDACrux product: the dump in WaveCrux, the RTL in NetCrux, the lint project in LintCrux, the regression suite in SimCrux. Without help that is four file-open rituals, each with its own recents list and its own chance of picking a stale file.
 
 A design manifest at the root of your design replaces all four. It is a small YAML file named after the design, such as `uart_tx.crux-project`, that you write once and check in alongside the RTL:
 
@@ -99,7 +99,7 @@ Every path is relative to the manifest's own directory, so the file travels with
 
 A manifest from an earlier release is named just `.crux-project`, which file pickers hide; NetCrux still opens it and tells you the name to rename it to, and a later release stops reading the bare name.
 
-**Everything except `version` is optional**, and keys a newer release understands but an older one does not are ignored, so a manifest never becomes unopenable. A manifest holds no view state and no personal settings — it says what the design *is*, not how you last looked at it. That is what sessions are for, and it is why a manifest is comfortable to share while a session generally is not.
+**Everything except `version` is optional**, and keys a newer release understands but an older one does not are ignored, so a manifest never becomes unopenable. A manifest holds no view state and no personal settings: it says what the design *is*, not how you last looked at it. That is what sessions are for, and it is why a manifest is comfortable to share while a session generally is not.
 
 ## Gate-level netlists: the native reader {#native-reader}
 
@@ -243,7 +243,7 @@ An imported filelist is listed under **Recent Projects** on the welcome screen a
 
 Source paths and `+incdir+` directories may contain spaces. A `+define+` value may not: Yosys has no way to accept one, so NetCrux reports the define as an error instead of elaborating without it. The same holds for the defines and include paths in a `.netcrux-project`.
 
-Import it from inside NetCrux rather than double-clicking it. On Linux a `.f` file belongs to Fortran, and NetCrux deliberately leaves that association alone rather than taking `.f` from Fortran editors; a double-clicked `.f` therefore opens in whatever your desktop already uses for Fortran. Every other format on this page — projects, sessions, workspaces, design manifests and HDL sources — opens on a double-click.
+Import it from inside NetCrux rather than double-clicking it. On Linux a `.f` file belongs to Fortran, and NetCrux leaves that association alone rather than taking `.f` from Fortran editors; a double-clicked `.f` therefore opens in whatever your desktop already uses for Fortran. Every other format on this page (projects, sessions, workspaces, design manifests and HDL sources) opens on a double-click.
 
 ## Auto-reload {#auto-reload}
 
@@ -252,7 +252,7 @@ NetCrux watches the source files behind the current schematic. What happens when
 | Mode | Behavior |
 |---|---|
 | **Prompt me** *(default)* | Notify you that the source changed and offer to re-elaborate. From 1.1 this is a banner across the top with **Ignore** and **Reload**, which stays until you choose. |
-| **Reload automatically** | Re-elaborate on save — the file-watching pattern of a modern editor. |
+| **Reload automatically** | Re-elaborate on save: the file-watching pattern of a modern editor. |
 | **Don't reload** | Ignore changes; re-elaborate only when you reopen. |
 
 From NetCrux 1.2 the three segments read **Prompt**, **Auto** and **Off**, in that order, and mean what the rows above say: **Prompt** is **Prompt me**, **Auto** is **Reload automatically** and **Off** is **Don't reload**.
@@ -267,7 +267,7 @@ Sessions reference source *paths*; they do not embed your RTL, so a session is o
 
 ## Workspaces {#workspaces}
 
-The workspace — every open tab and pane — is saved automatically and restored at launch while `Settings → General → Restore tabs on launch` is on. A tab opened from a `.netcrux-project` re-reads that file when it is restored, so its defines, include paths and extra Yosys commands apply, including any edits made since. Turning that off keeps the saved workspace on disk, so turning it back on brings your tabs back. A tab saved on a scope of more than 40,000 cells comes back showing the message that the scope is too large to lay out whole, instead of laying it out again, so restoring a workspace of very large designs stays quick; the [layout limit](getting-started.md#layout-engine) is in `Settings → Engines`. To keep several sets of tabs, save a named `.netcrux-workspace` with `File → Save Workspace As…` and reopen it with `File → Open Workspace…` or `netcrux --workspace <file>`. `File → New Workspace` and `File → Reset Workspace…` close every tab after a confirmation. The welcome screen lists recent workspaces alongside recent projects and source files.
+The workspace, every open tab and pane, is saved automatically and restored at launch while `Settings → General → Restore tabs on launch` is on. A tab opened from a `.netcrux-project` re-reads that file when it is restored, so its defines, include paths and extra Yosys commands apply, including any edits made since. Turning that off keeps the saved workspace on disk, so turning it back on brings your tabs back. A tab saved on a scope of more than 40,000 cells comes back showing the message that the scope is too large to lay out whole, instead of laying it out again, so restoring a workspace of very large designs stays quick; the [layout limit](getting-started.md#layout-engine) is in `Settings → Engines`. To keep several sets of tabs, save a named `.netcrux-workspace` with `File → Save Workspace As…` and reopen it with `File → Open Workspace…` or `netcrux --workspace <file>`. `File → New Workspace` and `File → Reset Workspace…` close every tab after a confirmation. The welcome screen lists recent workspaces alongside recent projects and source files.
 
 If the auto-saved workspace is corrupt at launch, NetCrux sets the file aside, tells you, and starts with a clean workspace rather than failing.
 
@@ -278,10 +278,10 @@ NetCrux exports the **current scope** in three formats. Each opens a save dialog
 | Format | Menu item | Key | Default file name | Contents |
 |---|---|---|---|---|
 | **PNG** | `File → Export as PNG…` | ++cmd+shift+e++ / ++ctrl+shift+e++ | `schematic.png` | A 2× raster of the visible canvas exactly as drawn, including the trace overlay and any dimming. |
-| **SVG** | `File → Export as SVG…` | ++alt+e++ | `schematic.svg` | Vector geometry for the whole current scope — cells as labeled boxes, boundary ports and wires — on a dark background. No overlay or dimming. |
+| **SVG** | `File → Export as SVG…` | ++alt+e++ | `schematic.svg` | Vector geometry for the whole current scope (cells as labeled boxes, boundary ports and wires) on a dark background. No overlay or dimming. |
 | **JSON** | `File → Export as JSON…` | ++alt+j++ | `schematic.json` | The netlist slice for the current scope: `{"creator": …, "modules": {"<name>": …}}`, pretty-printed. |
 
-Use **PNG** for a bug report, chat message or slide (frame the view first — only what is inside the canvas is in the image), **SVG** for documentation where someone will zoom into the full scope, and **JSON** to hand the scope to another tool. If you need the whole netlist, run Yosys yourself with `write_json`.
+Use **PNG** for a bug report, chat message or slide (frame the view first, only what is inside the canvas is in the image), **SVG** for documentation where someone will zoom into the full scope, and **JSON** to hand the scope to another tool. If you need the whole netlist, run Yosys yourself with `write_json`.
 
 !!! tip "Keymaps and themes travel as files too"
 

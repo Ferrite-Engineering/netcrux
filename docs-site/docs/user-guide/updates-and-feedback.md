@@ -24,7 +24,7 @@ The banner does not render in the web viewer.
 
 ## Reporting issues {#reporting-issues}
 
-The fastest way to get something fixed is the built-in issue reporter — `Help → Submit Issue…`, the command palette, or the **Submit Issue…** button in the About box (++f1++).
+The fastest way to get something fixed is the built-in issue reporter: `Help → Submit Issue…`, the command palette, or the **Submit Issue…** button in the About box (++f1++).
 
 1. **Give the issue a short summary** in **Issue Summary**.
 
@@ -33,7 +33,7 @@ The fastest way to get something fixed is the built-in issue reporter — `Help 
     | Category | What it attaches |
     | --- | --- |
     | **App & Environment** *(always included)* | App name, version and build number, build SHA, platform, OS, architecture, screen DPI, locale, Flutter and Dart SDK versions. |
-    | **Session State** | Open-tab and pane **counts**; whether Yosys was detected (`available` / `unavailable` / `not probed` — never its path); source-file count for the active tab; source **language names**; elaboration state (`no design` / `not run` / `in progress` / `succeeded` / `failed`); module, cell and net **counts**; whether the schematic is laid out; whether something is selected; whether a trace overlay is active; and which analysis panes are open, from a fixed vocabulary. |
+    | **Session State** | Open-tab and pane **counts**; whether Yosys was detected (`available` / `unavailable` / `not probed`: never its path); source-file count for the active tab; source **language names**; elaboration state (`no design` / `not run` / `in progress` / `succeeded` / `failed`); module, cell and net **counts**; whether the schematic is laid out; whether something is selected; whether a trace overlay is active; and which analysis panes are open, from a fixed vocabulary. |
     | **Diagnostics** | The last 100 warning-or-higher log entries plus the last 20 entries at any level, captured this session. |
     | **Screenshot** | A PNG of the app window, saved to your temp directory and revealed in your file manager so you can drag it in. Desktop only. |
     | **Pro State** <span class="tier tier-pro">Pro</span> | Offered only when a Pro analysis surface holds a result on the active tab: which surfaces are active, and design counts. |
@@ -46,7 +46,7 @@ Every field is a count, a fixed enumeration value, or a language or format name.
 
 - source-file paths or the project path;
 - module, instance or net names from your RTL;
-- Yosys stderr — deliberately excluded, because it quotes source paths verbatim and would leak your filesystem layout into a public issue tracker;
+- Yosys stderr: excluded, because it quotes source paths verbatim and would leak your filesystem layout into a public issue tracker;
 - file contents of any kind.
 
 Everything except **App & Environment** is a toggle, and nothing leaves your machine until you press **Submit**.
@@ -55,10 +55,10 @@ Everything except **App & Environment** is a toggle, and nothing leaves your mac
 
 ## Usage statistics {#usage-statistics}
 
-NetCrux can send anonymous usage statistics — feature and error counters, app and OS version, form factor, language and license tier — to help decide what to build and fix next. An error it did not handle is counted by its kind alone (for example, a state error in the widgets library), never with its message or stack trace. It never sends file names, net names, design data, or anything that identifies you.
+NetCrux can send anonymous usage statistics (feature and error counters, app and OS version, form factor, language and license tier) to help decide what to build and fix next. An error it did not handle is counted by its kind alone (for example, a state error in the widgets library), never with its message or stack trace. It never sends file names, net names, design data, or anything that identifies you.
 
 - **Usage statistics are on by default**, and the first launch asks you with a **Help make NetCrux better** screen whose **Send anonymous usage statistics** switch you can turn off before you continue. In the EEA, the United Kingdom, Switzerland and South Korea the switch starts **off**, and nothing is sent unless you turn it on. NetCrux places you there from your language settings, and from 1.1 from the device's region setting as well; the web edition goes by the browser's languages and time zone.
-- **You can change your answer at any time** in `Settings → Privacy → Send anonymous usage statistics`. The same category shows your random **Installation ID** — the only identifier attached to what is collected, and not linked to you; send it to [privacy@ferriteengineering.com](mailto:privacy@ferriteengineering.com) if you want this installation's data deleted. The ID appears only after usage statistics have been turned on; until then the row says there is no installation ID. From 1.1, turning usage statistics off removes the ID, and turning them on again creates a new one, so copy it first if you want that installation's data deleted. The same category also links to the telemetry documentation.
+- **You can change your answer at any time** in `Settings → Privacy → Send anonymous usage statistics`. The same category shows your random **Installation ID**: the only identifier attached to what is collected, and not linked to you; send it to [privacy@ferriteengineering.com](mailto:privacy@ferriteengineering.com) if you want this installation's data deleted. The ID appears only after usage statistics have been turned on; until then the row says there is no installation ID. From 1.1, turning usage statistics off removes the ID, and turning them on again creates a new one, so copy it first if you want that installation's data deleted. The same category also links to the telemetry documentation.
 - From 1.1, if the previous session of the desktop app did not end normally, the next launch sends one event saying so. It carries nothing beyond the standard fields and cannot tell a crash from a forced quit, running out of memory or a power cut. To notice this, NetCrux keeps an empty marker file in its own folder while it runs, and only while usage statistics are on.
 - An organization can switch collection off for a whole fleet with its [signed policy file](https://edacrux.app/policy-reference); that also suppresses the first-launch question.
 

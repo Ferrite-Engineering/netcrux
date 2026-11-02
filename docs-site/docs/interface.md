@@ -1,6 +1,6 @@
 # The interface
 
-NetCrux is an IDE-style multi-pane application: a hierarchy tree on the left, the schematic canvas in the center, the inspector on the right, and diagnostics across the bottom. This page names every surface exactly as the app does, so the rest of the guide can refer to them precisely.
+NetCrux is an IDE-style multi-pane application: a hierarchy tree on the left, the schematic canvas in the center, the inspector on the right, and diagnostics across the bottom. This page names every surface exactly as the app does, so the rest of the guide can refer to them by the same names.
 
 ## Menu bar & toolbar {#menu-toolbar}
 
@@ -15,15 +15,15 @@ The canvas is the center of the app and renders the elaborated netlist for the c
 - **Cells** are drawn as symbols. AND, OR, NOT, multiplexer, flip-flop and latch primitives get recognizable gate symbols; submodule instances and every other cell type are labeled rectangles. From NetCrux 1.2, standard cells from the project's [cell libraries](files-and-projects.md#cell-symbols) are drawn as gate symbols too, read from each cell's Liberty function: buffers, inverters, AND, NAND, OR, NOR, XOR and XNOR gates, two-input multiplexers, flip-flops and latches. A cell name too long for its symbol keeps its end and loses its start behind an ellipsis, the same as in the hierarchy tree. From NetCrux 1.2, two kinds of cell are left out of the drawing because no wire reaches them: memory-initialisation cells (`$meminit`, `$meminit_v2`), which record a memory's initial contents, and any cell whose every pin is tied to a constant. **Search** still finds them, and selecting one there shows it in the inspector.
 - **Wires** route between ports; the enclosing module's own ports sit on the boundary.
 - **Pins** keep to their faces: a cell's inputs are always on its left edge and its outputs on its right, even on a feedback loop or a pin with no wire. Every port the cell's module or primitive declares is drawn, so a port the netlist leaves unconnected shows as a bare pin rather than going missing. See [Pin stubs](#pin-stubs).
-- **Hierarchical instances** represent submodules — double-click one to push into it.
+- **Hierarchical instances** represent submodules: double-click one to push into it.
 - A **three-band level-of-detail** system simplifies the drawing as you zoom out, so a large module stays legible. See [Navigating the schematic](navigating.md#lod).
-- The **breadcrumb bar** above the canvas shows your scope path — for example `top › cpu › alu` — and each crumb is clickable to jump straight to that level.
+- The **breadcrumb bar** above the canvas shows your scope path, for example `top › cpu › alu`, and each crumb is clickable to jump straight to that level.
 
 **Pan** by dragging empty canvas, with the middle mouse button, with the scroll wheel or a two-finger trackpad scroll, or with the arrow keys; **zoom** with ++cmd++ / ++ctrl++ + scroll wheel or a pinch. Vertical and horizontal scrollbars flank the canvas, so off-screen cells are always reachable without a gesture. Selecting a cell, port or net highlights it and surfaces its details in the inspector. Right-click an element for its context menu: **Copy Path**, **Trace Fan-in**, **Trace Fan-out**, **Find in Hierarchy** and **Open in Inspector** (called **Properties** from NetCrux 1.2, where it also moves the keyboard focus into the inspector), plus the Pro entries described elsewhere in this guide. From NetCrux 1.2 the menu also has **Cone View**, which lays out just the element's neighbourhood (see [Cone view](tracing.md#cone-view)). Each Pro entry carries the same **PRO** badge as the menu bar and the command palette, so you can tell it apart before you choose it.
 
 ### Pin stubs {#pin-stubs}
 
-A pin with no wire is marked by what it is tied to, so a dangling input stands out from a deliberate constant:
+A pin with no wire is marked by what it is tied to, so a dangling input stands out from a constant tie:
 
 | Pin | Drawn as |
 |---|---|
@@ -61,7 +61,7 @@ The bottom **Diagnostics** panel lists the warnings and errors Yosys reported wh
 
 ## Search & command palette {#finding-actions}
 
-The **Search Design** dialog (++cmd+f++ / ++ctrl+f++) searches instance, cell and net names in every scope of the design, in **Substring**, **Glob** or **Regex** mode; choosing a result jumps to it on the canvas. The **command palette** (++cmd+shift+p++ / ++ctrl+shift+p++) is a fuzzy-filtered list of the actions available right now, each with its keyboard shortcut — every command on the menu bar is reachable from here without the mouse.
+The **Search Design** dialog (++cmd+f++ / ++ctrl+f++) searches instance, cell and net names in every scope of the design, in **Substring**, **Glob** or **Regex** mode; choosing a result jumps to it on the canvas. The **command palette** (++cmd+shift+p++ / ++ctrl+shift+p++) is a fuzzy-filtered list of the actions available right now, each with its keyboard shortcut: every command on the menu bar is reachable from here without the mouse.
 
 ## Dialogs belong to their tab {#tab-dialogs}
 
@@ -77,17 +77,17 @@ NetCrux is a **multi-tab workspace**: every design you open gets its own tab wit
 
 ## Status bar, Settings & About {#status-settings}
 
-The **status bar** along the bottom of each tab shows the first source file, the top module and the design's total cell count — the "what am I looking at" context — plus **Yosys not found** when the engine is missing and a busy indicator while elaboration runs.
+The **status bar** along the bottom of each tab shows the first source file, the top module and the design's total cell count, the "what am I looking at" context, plus **Yosys not found** when the engine is missing and a busy indicator while elaboration runs.
 
 **Settings** (++cmd+comma++ / ++ctrl+comma++) is organized into:
 
-- **General** — **Auto-reload on source change** (**Prompt me** / **Reload automatically** / **Don't reload**; from NetCrux 1.2 **Prompt** / **Auto** / **Off**), **Restore tabs on launch**, **Automatically check for updates**, and, in release builds, **Enable diagnostics surfaces**.
-- **Appearance** — the **Language** picker (English, 中文, 日本語, 한국어), color presets, per-token color overrides and theme packs. See [Appearance & themes](appearance-and-themes.md).
-- **Privacy** — **Send anonymous usage statistics**. See [Updates, issues & privacy](user-guide/updates-and-feedback.md#usage-statistics).
+- **General**: **Auto-reload on source change** (**Prompt me** / **Reload automatically** / **Don't reload**; from NetCrux 1.2 **Prompt** / **Auto** / **Off**), **Restore tabs on launch**, **Automatically check for updates**, and, in release builds, **Enable diagnostics surfaces**.
+- **Appearance**: the **Language** picker (English, 中文, 日本語, 한국어), color presets, per-token color overrides and theme packs. See [Appearance & themes](appearance-and-themes.md).
+- **Privacy**: **Send anonymous usage statistics**. See [Updates, issues & privacy](user-guide/updates-and-feedback.md#usage-statistics).
 - **Engines**: the Yosys binary path, from NetCrux 1.2 **Native gate-level reader (beta)**, which reads a gate-level Verilog netlist directly instead of through Yosys (see [Gate-level netlists](files-and-projects.md#native-reader)), the **Yosys time limit** (**Automatic**, **Extended** or **No limit**; see [The Yosys time limit](getting-started.md#yosys-time-limit)), and **Largest scope laid out automatically**, the number of cells above which a scope waits for **Lay out anyway** instead of laying out when it opens (see [The layout engine](getting-started.md#layout-engine)).
-- **Editors** — **Editor command (open source)**, the command NetCrux runs when a cross-probe peer asks it to open a source location.
-- **CXP Cross-Probe** — the cross-probe server. See [Cross-probe & the suite](integrations.md#cxp-settings).
-- **Keyboard Shortcuts** — view, edit, reset, import and export key bindings. See [Keyboard & mouse reference](keyboard-mouse.md#customizing).
+- **Editors**: **Editor command (open source)**, the command NetCrux runs when a cross-probe peer asks it to open a source location.
+- **CXP Cross-Probe**: the cross-probe server. See [Cross-probe & the suite](integrations.md#cxp-settings).
+- **Keyboard Shortcuts**: view, edit, reset, import and export key bindings. See [Keyboard & mouse reference](keyboard-mouse.md#customizing).
 
 The downloaded app adds **License** and **Collaboration**. From NetCrux 1.1, `Settings → Collaboration` is open to everyone, because a guest joining somebody else's session needs a display name and, where their organization runs its own relay, the relay address; hosting is gated where hosting happens, at **Share Session…**.
 

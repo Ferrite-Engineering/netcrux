@@ -14,7 +14,7 @@ Custom symbols live in the **Custom Cell Symbols** manager, opened with `Tools �
 
 2. **Edit the SVG content.**
 
-    The first tab, **SVG Content**, holds the drawing with a live **Preview** beside it — edit the markup and watch the symbol update. To start from a drawing on disk, click **Load from file…** above the editor and pick an `.svg` file: it runs through the [sanitizer](#sanitizer), replaces the content (after asking, if you have edited it), and keeps the module type the editor already has.
+    The first tab, **SVG Content**, holds the drawing with a live **Preview** beside it: edit the markup and watch the symbol update. To start from a drawing on disk, click **Load from file…** above the editor and pick an `.svg` file: it runs through the [sanitizer](#sanitizer), replaces the content (after asking, if you have edited it), and keeps the module type the editor already has.
 
 3. **Place the port anchors.**
 
@@ -30,13 +30,13 @@ Custom symbols live in the **Custom Cell Symbols** manager, opened with `Tools �
 
 ### Every SVG is sanitized {#sanitizer}
 
-On import and save, NetCrux runs the SVG through a **sanitizer** that strips `<script>` and `<foreignObject>` elements, `<use>` and `<image>` elements that reference external `http://`, `https://` or `file://` resources, every `on*` event attribute, and `javascript:` URLs, and tells you what it removed. A symbol is artwork, never executable — so a shared symbol library cannot carry active content. Inline `data:` images are kept.
+On import and save, NetCrux runs the SVG through a **sanitizer** that strips `<script>` and `<foreignObject>` elements, `<use>` and `<image>` elements that reference external `http://`, `https://` or `file://` resources, every `on*` event attribute, and `javascript:` URLs, and tells you what it removed. A symbol is artwork, never executable, so a shared symbol library cannot carry active content. Inline `data:` images are kept.
 
 ## Project vs. user scope, and shadowing {#scope}
 
-A symbol has a **scope**. Project symbols live in a `.netcrux-symbols/` directory beside the `.netcrux-project` file and travel with it; user symbols live in your personal library (under NetCrux's application-support folder) and follow you across projects. The project scope is available only when the active tab was opened from a `.netcrux-project` — otherwise symbols are saved to the user library.
+A symbol has a **scope**. Project symbols live in a `.netcrux-symbols/` directory beside the `.netcrux-project` file and travel with it; user symbols live in your personal library (under NetCrux's application-support folder) and follow you across projects. The project scope is available only when the active tab was opened from a `.netcrux-project`: otherwise symbols are saved to the user library.
 
-When both a project and your user library define a symbol for the same module type, the **project symbol wins** — it shadows the user one, so a project can pin its own look without disturbing your defaults. An organization can also distribute symbol packs; see [Org-wide symbol libraries](administration.md#symbols).
+When both a project and your user library define a symbol for the same module type, the **project symbol wins**: it shadows the user one, so a project can pin its own look without disturbing your defaults. An organization can also distribute symbol packs; see [Org-wide symbol libraries](administration.md#symbols).
 
 ## How a symbol is sized, labelled and pinned {#sizing}
 

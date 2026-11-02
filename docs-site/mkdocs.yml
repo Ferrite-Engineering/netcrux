@@ -1,6 +1,6 @@
 site_name: NetCrux Documentation
 site_url: https://docs.netcrux.app/
-site_description: The complete NetCrux user guide — installation, the interface, elaborating RTL, navigating the schematic, tracing signals, structural analysis, custom symbols, and cross-probe.
+site_description: The complete NetCrux user guide covering installation, the interface, elaborating RTL, navigating the schematic, tracing signals, structural analysis, custom symbols, and cross-probe.
 copyright: Copyright &copy; 2026 Ferrite Engineering LLC
 use_directory_urls: false
 docs_dir: docs
