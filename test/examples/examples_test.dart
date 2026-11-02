@@ -9,6 +9,7 @@ import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/project/netcrux_project_path_resolver.dart';
+import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 import 'package:path/path.dart' as p;
 
 /// Guards for the shipped `examples/` projects.
@@ -52,6 +53,30 @@ void main() {
           .map((f) => p.basename(p.dirname(f.path)))
           .toSet();
       expect(found, containsAll(<String>['adder4', 'cdc-capture']));
+    });
+
+    test('ships a pre-built Yosys JSON netlist that opens without Yosys', () {
+      // The toolchain-free entry point: File > Open Netlist JSON… reads this
+      // file with the real reader and runs no subprocess.
+      final json = File(
+        p.join(examplesRoot.path, 'cdc-capture', 'cdc-capture.json'),
+      );
+      expect(json.existsSync(), isTrue);
+      final model = const StreamingYosysJsonReader().parse(
+        json.readAsStringSync(),
+      );
+      final module = model.modules['cdc_capture'];
+      expect(module, isNotNull);
+      expect(module!.cells.length, 18);
+      expect(
+        module.cells.values.where((c) => c.type == r'$adff'),
+        hasLength(7),
+      );
+      expect(
+        json.readAsStringSync(),
+        isNot(contains(Directory.current.path)),
+        reason: 'the example must not carry an absolute checkout path',
+      );
     });
 
     for (final file in discover()) {

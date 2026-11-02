@@ -1,0 +1,626 @@
+{
+  "creator": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)",
+  "modules": {
+    "cdc_capture": {
+      "attributes": {
+        "dynports": "00000000000000000000000000000001",
+        "top": "00000000000000000000000000000001",
+        "src": "test/fixtures/verilog/cdc_capture.v:19.1-84.10"
+      },
+      "parameter_default_values": {
+        "STRIDE": "00000000000000000000000000000100",
+        "WIDTH": "00000000000000000000000000001000"
+      },
+      "ports": {
+        "clk_a": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "rst_a_n": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "clk_b": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "rst_b_n": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "captured_b": {
+          "direction": "output",
+          "bits": [ 6, 7, 8, 9, 10, 11, 12, 13 ]
+        },
+        "captured_valid_b": {
+          "direction": "output",
+          "bits": [ 14 ]
+        }
+      },
+      "cells": {
+        "$add$test/fixtures/verilog/cdc_capture.v:47$4": {
+          "hide_name": 1,
+          "type": "$add",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000001000",
+            "B_SIGNED": "00000000000000000000000000000000",
+            "B_WIDTH": "00000000000000000000000000000001",
+            "Y_WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:47.25-47.40"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 15, 16, 17, 18, 19, 20, 21, 22 ],
+            "B": [ "1" ],
+            "Y": [ 23, 24, 25, 26, 27, 28, 29, 30 ]
+          }
+        },
+        "$add$test/fixtures/verilog/cdc_capture.v:49$5": {
+          "hide_name": 1,
+          "type": "$add",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000001000",
+            "B_SIGNED": "00000000000000000000000000000000",
+            "B_WIDTH": "00000000000000000000000000001000",
+            "Y_WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:49.25-49.35"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 31, 32, 33, 34, 35, 36, 37, 38 ],
+            "B": [ "1", "0", "0", "0", "0", "0", "0", "0" ],
+            "Y": [ 39, 40, 41, 42, 43, 44, 45, 46 ]
+          }
+        },
+        "$and$test/fixtures/verilog/cdc_capture.v:69$9": {
+          "hide_name": 1,
+          "type": "$and",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000000001",
+            "B_SIGNED": "00000000000000000000000000000000",
+            "B_WIDTH": "00000000000000000000000000000001",
+            "Y_WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:69.33-69.49"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 47 ],
+            "B": [ 48 ],
+            "Y": [ 49 ]
+          }
+        },
+        "$and$test/fixtures/verilog/cdc_capture.v:70$11": {
+          "hide_name": 1,
+          "type": "$and",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000000001",
+            "B_SIGNED": "00000000000000000000000000000000",
+            "B_WIDTH": "00000000000000000000000000000001",
+            "Y_WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:70.17-70.33"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 47 ],
+            "B": [ 50 ],
+            "Y": [ 51 ]
+          }
+        },
+        "$eq$test/fixtures/verilog/cdc_capture.v:44$3": {
+          "hide_name": 1,
+          "type": "$eq",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000001000",
+            "B_SIGNED": "00000000000000000000000000000000",
+            "B_WIDTH": "00000000000000000000000000001000",
+            "Y_WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:44.22-44.41"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 31, 32, 33, 34, 35, 36, 37, 38 ],
+            "B": [ "1", "1", "0", "0", "0", "0", "0", "0" ],
+            "Y": [ 52 ]
+          }
+        },
+        "$not$test/fixtures/verilog/cdc_capture.v:69$8": {
+          "hide_name": 1,
+          "type": "$not",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000000001",
+            "Y_WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:69.42-69.49"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 53 ],
+            "Y": [ 48 ]
+          }
+        },
+        "$not$test/fixtures/verilog/cdc_capture.v:70$10": {
+          "hide_name": 1,
+          "type": "$not",
+          "parameters": {
+            "A_SIGNED": "00000000000000000000000000000000",
+            "A_WIDTH": "00000000000000000000000000000001",
+            "Y_WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:70.26-70.33"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 53 ],
+            "Y": [ 50 ]
+          }
+        },
+        "$procdff$29": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "00000000",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 5 ],
+            "CLK": [ 4 ],
+            "D": [ 54, 55, 56, 57, 58, 59, 60, 61 ],
+            "Q": [ 6, 7, 8, 9, 10, 11, 12, 13 ]
+          }
+        },
+        "$procdff$34": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "0",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 5 ],
+            "CLK": [ 4 ],
+            "D": [ 49 ],
+            "Q": [ 14 ]
+          }
+        },
+        "$procdff$39": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "0",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 5 ],
+            "CLK": [ 4 ],
+            "D": [ 62 ],
+            "Q": [ 47 ]
+          }
+        },
+        "$procdff$44": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "0",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 5 ],
+            "CLK": [ 4 ],
+            "D": [ 47 ],
+            "Q": [ 53 ]
+          }
+        },
+        "$procdff$49": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "00000000",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 3 ],
+            "CLK": [ 2 ],
+            "D": [ 63, 64, 65, 66, 67, 68, 69, 70 ],
+            "Q": [ 15, 16, 17, 18, 19, 20, 21, 22 ]
+          }
+        },
+        "$procdff$54": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "00000000",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 3 ],
+            "CLK": [ 2 ],
+            "D": [ 71, 72, 73, 74, 75, 76, 77, 78 ],
+            "Q": [ 31, 32, 33, 34, 35, 36, 37, 38 ]
+          }
+        },
+        "$procdff$59": {
+          "hide_name": 1,
+          "type": "$adff",
+          "parameters": {
+            "ARST_POLARITY": "00000000000000000000000000000000",
+            "ARST_VALUE": "0",
+            "CLK_POLARITY": "1",
+            "WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "ARST": "input",
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "ARST": [ 3 ],
+            "CLK": [ 2 ],
+            "D": [ 79 ],
+            "Q": [ 62 ]
+          }
+        },
+        "$procmux$14": {
+          "hide_name": 1,
+          "type": "$mux",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:70.17-70.33|test/fixtures/verilog/cdc_capture.v:70.13-71.42"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "S": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 6, 7, 8, 9, 10, 11, 12, 13 ],
+            "B": [ 15, 16, 17, 18, 19, 20, 21, 22 ],
+            "S": [ 51 ],
+            "Y": [ 54, 55, 56, 57, 58, 59, 60, 61 ]
+          }
+        },
+        "$procmux$17": {
+          "hide_name": 1,
+          "type": "$mux",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "full_case": "00000000000000000000000000000001",
+            "src": "test/fixtures/verilog/cdc_capture.v:44.22-44.41|test/fixtures/verilog/cdc_capture.v:44.18-51.12"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "S": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ "0" ],
+            "B": [ "1" ],
+            "S": [ 52 ],
+            "Y": [ 79 ]
+          }
+        },
+        "$procmux$20": {
+          "hide_name": 1,
+          "type": "$mux",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "full_case": "00000000000000000000000000000001",
+            "src": "test/fixtures/verilog/cdc_capture.v:44.22-44.41|test/fixtures/verilog/cdc_capture.v:44.18-51.12"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "S": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 39, 40, 41, 42, 43, 44, 45, 46 ],
+            "B": [ "0", "0", "0", "0", "0", "0", "0", "0" ],
+            "S": [ 52 ],
+            "Y": [ 71, 72, 73, 74, 75, 76, 77, 78 ]
+          }
+        },
+        "$procmux$23": {
+          "hide_name": 1,
+          "type": "$mux",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+            "full_case": "00000000000000000000000000000001",
+            "src": "test/fixtures/verilog/cdc_capture.v:44.22-44.41|test/fixtures/verilog/cdc_capture.v:44.18-51.12"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "S": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 15, 16, 17, 18, 19, 20, 21, 22 ],
+            "B": [ 23, 24, 25, 26, 27, 28, 29, 30 ],
+            "S": [ 52 ],
+            "Y": [ 63, 64, 65, 66, 67, 68, 69, 70 ]
+          }
+        }
+      },
+      "netnames": {
+        "$0\\captured_b[7:0]": {
+          "hide_name": 1,
+          "bits": [ 54, 55, 56, 57, 58, 59, 60, 61 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:60.5-73.8"
+          }
+        },
+        "$0\\captured_valid_b[0:0]": {
+          "hide_name": 1,
+          "bits": [ 49 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:60.5-73.8"
+          }
+        },
+        "$0\\div[7:0]": {
+          "hide_name": 1,
+          "bits": [ 71, 72, 73, 74, 75, 76, 77, 78 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:39.5-52.8"
+          }
+        },
+        "$0\\req_a[0:0]": {
+          "hide_name": 1,
+          "bits": [ 79 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:39.5-52.8"
+          }
+        },
+        "$0\\sample_a[7:0]": {
+          "hide_name": 1,
+          "bits": [ 63, 64, 65, 66, 67, 68, 69, 70 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:39.5-52.8"
+          }
+        },
+        "$add$test/fixtures/verilog/cdc_capture.v:47$4_Y": {
+          "hide_name": 1,
+          "bits": [ 23, 24, 25, 26, 27, 28, 29, 30 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:47.25-47.40"
+          }
+        },
+        "$add$test/fixtures/verilog/cdc_capture.v:49$5_Y": {
+          "hide_name": 1,
+          "bits": [ 39, 40, 41, 42, 43, 44, 45, 46 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:49.25-49.35"
+          }
+        },
+        "$and$test/fixtures/verilog/cdc_capture.v:70$11_Y": {
+          "hide_name": 1,
+          "bits": [ 51 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:70.17-70.33"
+          }
+        },
+        "$eq$test/fixtures/verilog/cdc_capture.v:44$3_Y": {
+          "hide_name": 1,
+          "bits": [ 52 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:44.22-44.41"
+          }
+        },
+        "$not$test/fixtures/verilog/cdc_capture.v:69$8_Y": {
+          "hide_name": 1,
+          "bits": [ 48 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:69.42-69.49"
+          }
+        },
+        "$not$test/fixtures/verilog/cdc_capture.v:70$10_Y": {
+          "hide_name": 1,
+          "bits": [ 50 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:70.26-70.33"
+          }
+        },
+        "captured_b": {
+          "hide_name": 0,
+          "bits": [ 6, 7, 8, 9, 10, 11, 12, 13 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:27.29-27.39"
+          }
+        },
+        "captured_valid_b": {
+          "hide_name": 0,
+          "bits": [ 14 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:28.29-28.45"
+          }
+        },
+        "clk_a": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:23.29-23.34"
+          }
+        },
+        "clk_b": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:25.29-25.34"
+          }
+        },
+        "div": {
+          "hide_name": 0,
+          "bits": [ 31, 32, 33, 34, 35, 36, 37, 38 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:36.21-36.24"
+          }
+        },
+        "req_a": {
+          "hide_name": 0,
+          "bits": [ 62 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:37.21-37.26"
+          }
+        },
+        "req_b0": {
+          "hide_name": 0,
+          "bits": [ 47 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:58.9-58.15"
+          }
+        },
+        "req_b1": {
+          "hide_name": 0,
+          "bits": [ 53 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:58.17-58.23"
+          }
+        },
+        "rst_a_n": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:24.29-24.36"
+          }
+        },
+        "rst_b_n": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:26.29-26.36"
+          }
+        },
+        "sample_a": {
+          "hide_name": 0,
+          "bits": [ 15, 16, 17, 18, 19, 20, 21, 22 ],
+          "attributes": {
+            "src": "test/fixtures/verilog/cdc_capture.v:35.21-35.29"
+          }
+        }
+      }
+    }
+  }
+}

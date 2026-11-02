@@ -13,22 +13,41 @@ any checkout with no editing.
 |---|---|---|
 | [`adder4/`](adder4/adder4.netcrux-project) | The smallest thing NetCrux draws: five ports, two `$add` cells. Use it to confirm your Yosys install works before reaching for a real design. | `yosys` on `PATH` |
 | [`cdc-capture/`](cdc-capture/cdc-capture.netcrux-project) | A two-clock-domain capture path — 18 cells, 7 `$adff` flops, muxes and an adder. Enough structure to exercise the hierarchy tree, the inspector, design search, and one-step fanin/fanout tracing. | `yosys` on `PATH` |
+| [`cdc-capture/cdc-capture.json`](cdc-capture/cdc-capture.json) | The same `cdc-capture` design as a pre-built Yosys `write_json` netlist. Open it with **File → Open Netlist JSON…** (also on the toolbar, and the start screen's button in the web viewer). | Nothing |
 
-## Both examples need Yosys — there is no toolchain-free option
+## Without Yosys: open the pre-built netlist
 
-NetCrux draws a schematic of an *elaborated netlist*, and on desktop the
-only thing that produces one is a live Yosys subprocess. There is no
-committed pre-elaborated artifact you can open instead: the
-`.netcrux-project` schema has no netlist field, and the elaboration cache
-that would otherwise let a design open twice for one Yosys run is
-in-memory only, so it starts empty on every launch.
+Viewing a netlist does not need Yosys; elaborating RTL does. **File → Open
+Netlist JSON…** reads a Yosys `write_json` file directly and runs no
+subprocess, and it is the only way to load a design in the browser-based
+viewer. If you have not installed a synthesis tool, start with
+[`cdc-capture/cdc-capture.json`](cdc-capture/cdc-capture.json): it opens to
+the same schematic as the `cdc-capture` project, with the hierarchy tree,
+design search, the inspector and fan-in/fan-out tracing all working.
 
-This is the one place NetCrux differs from its sibling tools —
-[SimCrux's examples](https://github.com/Ferrite-Engineering/simcrux) replay
-committed logs and LintCrux ships a captured SARIF report, so both have an
-entry point that needs nothing installed. NetCrux has no equivalent yet.
+The `.netcrux-project` files are different: they name RTL sources, so
+opening one asks Yosys to elaborate them, and the project schema has no
+netlist field.
 
-Without Yosys the examples do not look broken — they open a tab and report
+The JSON was written by Yosys 0.70+post (git sha1
+`0c11ea098be065e585a90a06e7b7da49936cf231`) with the same script NetCrux runs
+for the `cdc-capture` project. To regenerate it, run this from the
+repository root:
+
+```bash
+yosys -q -p "read_verilog test/fixtures/verilog/cdc_capture.v; hierarchy -check -top cdc_capture; proc; opt_clean; write_json examples/cdc-capture/cdc-capture.json"
+```
+
+Regenerating with a different Yosys version can change the file's `creator`
+line and the order or naming of some cells; the design is the same.
+
+## Both projects need Yosys
+
+Opening either `.netcrux-project` runs a live Yosys subprocess. The
+elaboration cache that would otherwise let a design open twice for one Yosys
+run is in-memory only, so it starts empty on every launch.
+
+Without Yosys the projects do not look broken — they open a tab and report
 the reason on the canvas:
 
 > **Elaboration failed**
@@ -68,7 +87,7 @@ netcrux examples/cdc-capture/cdc-capture.netcrux-project
 
 ## What to click, once the schematic is up
 
-Both examples land on the top module with the schematic fitted to the
+All of these land on the top module with the schematic fitted to the
 window. From there:
 
 - The **Hierarchy** dock (left edge) lists the modules and instances.
