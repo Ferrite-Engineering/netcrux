@@ -1,12 +1,12 @@
 # Use in VS Code
 
-The **NetCrux extension** draws a Yosys netlist as a schematic inside VS Code, and lets you ask "what drives this signal?" from the editor, with the cursor already on the identifier, and answers it in a running NetCrux schematic.
+The **NetCrux extension** draws a Yosys netlist as a schematic inside VS Code (from the extension release that comes with NetCrux 1.2), and lets you ask "what drives this signal?" from the editor, with the cursor already on the identifier, and answers it in a running NetCrux schematic.
 
 It installs from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=ferrite-engineering.netcrux) and from [Open VSX](https://open-vsx.org/extension/ferrite-engineering/netcrux), which is where Cursor, Windsurf, VSCodium and Theia install from. To install all four EDACrux extensions at once, install the [EDACrux Suite](https://marketplace.visualstudio.com/items?itemName=ferrite-engineering.edacrux) pack.
 
 ## Schematic preview { #preview }
 
-The preview opens a Yosys JSON netlist, the file `write_json` produces, as a schematic next to your RTL. It is the same viewer as the [web viewer](web-mode.md), running inside VS Code, so nothing is uploaded and it works offline.
+From the extension release that comes with NetCrux 1.2, the preview opens a Yosys JSON netlist, the file `write_json` produces, as a schematic next to your RTL. It is the same viewer as the [web viewer](web-mode.md), running inside VS Code, so nothing is uploaded and it works offline.
 
 To open one:
 
@@ -27,7 +27,7 @@ The preview follows your VS Code theme, and when a synthesis run rewrites the ne
 
 ### Large netlists { #large }
 
-The preview reads the whole netlist into the editor's memory, so it stops at a size limit, **32 MB** by default. Above it the preview does not load the file; it offers **Open in NetCrux** instead, because the desktop app reads a netlist from disk and has no size limit. The limit is the `netcrux.preview.maxFileSizeMB` setting, which you can raise up to 256 MB.
+The preview reads the whole netlist into the editor's memory, so it stops at a size limit, **100 MB** by default. Above it the preview does not load the file; it offers **Open in NetCrux** instead, because the desktop app reads a netlist from disk and has no size limit. The limit is the `netcrux.preview.maxFileSizeMB` setting, which you can raise up to 256 MB.
 
 ### Open in NetCrux { #open-in-netcrux }
 

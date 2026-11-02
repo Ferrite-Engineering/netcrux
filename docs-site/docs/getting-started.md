@@ -82,7 +82,7 @@ The Hierarchy, Search, the Inspector and cone views all work on a scope that is 
 | macOS | `brew install yosys`, or OSS CAD Suite |
 | Windows | `winget install YosysHQ.Yosys`, or OSS CAD Suite |
 
-A gate-level Verilog netlist does not need Yosys: from NetCrux 1.2 the [native gate-level reader](files-and-projects.md#native-reader) reads it directly. Everything else needs it. Without Yosys, elaboration fails with *"Yosys could not be found or run. Install Yosys, or set its path in Settings → Engines."* and the status bar shows **Yosys not found**.
+A Yosys JSON netlist your flow already wrote does not need Yosys: [`File → Open Netlist JSON…`](files-and-projects.md#json) reads it as it is. Nor, from NetCrux 1.2, does a gate-level Verilog netlist: the [native gate-level reader](files-and-projects.md#native-reader) reads it directly. Everything else needs it. Without Yosys, elaboration fails with *"Yosys could not be found or run. Install Yosys, or set its path in Settings → Engines."* and the status bar shows **Yosys not found**.
 
 ### Pointing NetCrux at a specific Yosys {#yosys-path}
 
@@ -122,7 +122,7 @@ With nothing open, the canvas shows the welcome screen: **Welcome to NetCrux**, 
 
     Yosys elaborates, NetCrux lays out the top module with ELK, and the schematic appears on the canvas. The hierarchy tree on the left mirrors it and the status bar shows the first source file, the top module and the design's cell count. From here, double-click an instance to push in, or select a net and press ++bracket-left++ / ++bracket-right++ to trace it, then ++z++ to frame the trace. To find a cell by name, type it in the hierarchy tree's filter.
 
-To try NetCrux before pointing it at your own RTL, open one of the projects under `examples/` in the `netcrux` repository with `File → Open Project…`.
+To try NetCrux before pointing it at your own RTL, open one of the projects under `examples/` in the `netcrux` repository with `File → Open Project…`. To try it with no Yosys installed, open `examples/cdc-capture/cdc-capture.json`, the same `cdc-capture` design as a pre-built netlist, with `File → Open Netlist JSON…`.
 
 Supported inputs:
 
@@ -130,6 +130,8 @@ Supported inputs:
 |---|---|
 | Verilog (IEEE 1364-2005), SystemVerilog (IEEE 1800) | Elaborated by Yosys `read_verilog`, or `read_slang` where the built-in reader stops. See [which SystemVerilog it reads](#systemverilog-subset). |
 | VHDL (IEEE 1076) | Lowered to Verilog by `ghdl --synth`, then read by Yosys. |
+| Gate-level Verilog netlist (`.v`, and from NetCrux 1.2 `.v.gz`) | From NetCrux 1.2, read directly by the [native gate-level reader](files-and-projects.md#native-reader), with no Yosys run. |
+| Yosys JSON netlist (`.json`) | Opened with `File → Open Netlist JSON…`, no Yosys run. From NetCrux 1.2 a netlist exported by ROHD too. See [Sources, projects & sessions](files-and-projects.md#json). |
 | `.netcrux-project` | A JSON project file: source list, top module, include directories and defines. |
 | `<design>.crux-project` | The suite design manifest. See [Sources, projects & sessions](files-and-projects.md#crux-project). |
 | `.f` filelist | A Vivado-style filelist. Import with `File → Import Vivado Filelist…` (++cmd+i++ / ++ctrl+i++). |

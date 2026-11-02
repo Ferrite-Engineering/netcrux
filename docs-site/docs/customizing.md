@@ -1,6 +1,6 @@
 # Custom cell symbols <span class="tier tier-pro">Pro</span>
 
-NetCrux draws AND, OR, NOT, multiplexer, flip-flop and latch primitives as recognizable gate symbols out of the box, and everything else as a labeled rectangle. From NetCrux 1.2 it also draws standard cells from your [cell libraries](files-and-projects.md#cell-symbols) as gate symbols, read from their Liberty functions, and a custom symbol for a cell type takes precedence over that drawing. With Pro you can give your own modules a custom symbol too — so a hand-built arbiter or a vendor primitive renders as a meaningful shape instead of a generic box, everywhere it appears.
+NetCrux draws AND, OR, NOT, multiplexer, flip-flop and latch primitives as recognizable gate symbols out of the box, and everything else as a labeled rectangle. From NetCrux 1.2 it also draws standard cells from your [cell libraries](files-and-projects.md#cell-symbols) as gate symbols, read from their Liberty functions, and a custom symbol for a cell type takes precedence over that drawing. With Pro you can give your own modules a custom symbol too, so a hand-built arbiter or a vendor primitive renders as a meaningful shape instead of a generic box, everywhere it appears.
 
 ## Open the Symbol Manager {#symbol-manager}
 

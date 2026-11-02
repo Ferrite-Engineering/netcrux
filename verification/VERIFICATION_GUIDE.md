@@ -197,6 +197,29 @@ The foundation is the pipeline spine everything else stands on: the `NetlistMode
   | The setting, the project keys, the filelist `-v`, the command-line flag, the statistics strip text | `[Coverage: UNIT/WIDGET]` (`app_settings_test.dart`, `netcrux_settings_codec_test.dart`, `settings_screen_categories_test.dart`, `netcrux_project_native_reader_test.dart`, `filelist_reader_test.dart`, `cli_arg_parser_yosys_path_test.dart`, `netcrux_stats_strip_reader_test.dart`) |
   | Equivalence at scale, fuzzing, and open time and memory at 1 M, 3 M and 5 M cells | `[Coverage: MANUAL]` (`tool/compare_netlist_readers.dart`, `tool/bench_netlist_parse.dart`) |
 
+### 3.3d Netlists from real flows: cell libraries, undeclared pins, ROHD, long Diagnostics (from 1.2)
+
+- **What it does.** What a post-route or generated netlist needs on the way in, each fixed from the large-design evaluation. A cell library that is missing or not valid Liberty is skipped with a Warning naming the file, the line of a syntax error and the reason, and the design elaborates with the others (before 1.2 it stopped the elaboration). A library named `.lib.gz` or `.liberty.gz` is read as it is, decompressed a block at a time, in the project, the filelist, the file pickers and the command line. A pin an instance connects but its cell's module does not declare (the power and ground pins `read_liberty -lib` leaves out) gets its direction from the wiring, in an elaborated design and in an opened JSON netlist alike, and Diagnostics lists them as `CELL.PIN`. A module yosys-slang finds undefined is named in the error view, with no black-box action, because yosys-slang cannot draw one. ROHD's extended Yosys JSON opens with its Dart source locations as the standard `src` (so the Pro Source pane opens the Dart line), a net's structure or array type in the Inspector as **ROHD type**, and `Combinational` and `Sequential` cells not reported as undefined modules. Numeric cell parameters read as numbers, not Yosys bit strings. The Diagnostics list keeps a fixed row height, so tens of thousands of rows scroll without freezing.
+- **Setup.** `test/fixtures/liberty/cells.lib` and `cells.lib.gz`; `test/fixtures/prebuilt/supply_pins/` (a `read_liberty -lib` flow's JSON with supply pins); `test/fixtures/netlist/rohd/generated/` (real ROHD and ROHD-HCL output, generator and `PROVENANCE.md` beside it); a design that instantiates a missing module and needs yosys-slang.
+- **Steps and expected behavior.**
+  1. Add `cells.lib.gz` with `File → Cell Libraries (Liberty)…` and apply. Expected: the cells elaborate as with the plain `cells.lib`.
+  2. Add a text file renamed `broken.lib` beside a good library and apply. Expected: a Warning in Diagnostics names `broken.lib` with the reason; the design elaborates; the cells of the skipped library count as missing modules.
+  3. **Open Netlist JSON…** on `test/fixtures/prebuilt/supply_pins/top.json`. Expected: the supply nets are not driven by every cell; Diagnostics lists the inferred pins as `CELL.PIN`.
+  4. **Open Netlist JSON…** on `test/fixtures/netlist/rohd/generated/demo_top.json`. Expected: it opens with no Yosys run; select a port with a structure type and the Inspector shows **ROHD type**; in Pro, **Show Source for this Element** on an instance opens the Dart file at the line that created it.
+  5. Open a design with tens of thousands of Yosys warnings. Expected: the Diagnostics drawer opens and scrolls without a stall.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | An unreadable or missing library is skipped with a Warning and the design elaborates | `[Coverage: UNIT]` (`test/features/project/providers/loaded_netlist_liberty_skip_test.dart`, `test/services/liberty/liberty_stub_service_test.dart`) |
+  | `.lib.gz` in the parser, the project, the filelist and the cache key | `[Coverage: UNIT]` (`test/services/liberty/liberty_parser_test.dart`, `test/domain/models/project/netcrux_project_liberty_test.dart`, `test/services/filelist/filelist_reader_test.dart`) |
+  | Undeclared pins take their direction from the wiring, elaborated and opened | `[Coverage: UNIT]` (`test/services/yosys/black_box_port_inference_test.dart`, `test/features/project/providers/loaded_netlist_undeclared_pin_test.dart`, `test/features/project/providers/loaded_netlist_prebuilt_undeclared_pin_test.dart`, `test/services/yosys/prebuilt_netlist_loader_test.dart`) |
+  | The yosys-slang missing module is named and no black-box action is offered | `[Coverage: UNIT/WIDGET]` (`test/features/project/providers/loaded_netlist_provider_test.dart`, `test/features/workspace/widgets/schematic_error_view_test.dart`) |
+  | ROHD source traces, types and procedural cells, in both readers and on the web | `[Coverage: UNIT]` (`test/services/yosys/rohd_netlist_extensions_test.dart`, `test/services/yosys/rohd_netlist_extensions_web_test.dart`) + `[Coverage: WIDGET]` (`test/features/inspector/widgets/inspector_panel_test.dart`) |
+  | Parameter values as numbers | `[Coverage: UNIT]` (`test/features/inspector/services/parameter_value_text_test.dart`) |
+  | The Diagnostics list at tens of thousands of rows | `[Coverage: WIDGET]` (`test/features/diagnostics/tab_diagnostics_drawer_scale_test.dart`) |
+  | Steps 1 to 5 on the desktop build | `[Coverage: MANUAL]` |
+
 ### 3.4 Theme system — Material 3 light/dark on the muted-amber seed
 
 - **What it does.** `NetcruxTheme.dark()` / `NetcruxTheme.light()` build Material 3 `ThemeData` from the documented brand seed (`NetcruxColors.brandSeed = 0xFFD4A017`); `lib/core/theme/`. (The color-theme presets/overrides/packs surface lives in Settings → Appearance via `crux_theme`; see the suite-wide Color Theming section, §8.)
@@ -566,8 +589,10 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   3. Select the `req_a` net, then **Navigate → Show Fan-in** (`[`). Expected: the overlay dims everything that is not a driver; **Navigate → Clear Selection / Overlay** (`Esc`) restores.
   4. **Search → Search…** (`Cmd/Ctrl+F`), query `req`. Expected: matches for the request pulse and the flops sampling it.
   5. From a terminal in an unrelated directory: `netcrux /abs/path/examples/adder4/adder4.netcrux-project`. Expected: opens as a **project** tab, not as an HDL source. (Before the extension fix, `p.extension` returned `.netcrux-project`, missed the `.netcrux` equality test, and routed the JSON to Yosys as if it were Verilog.)
-- **Edge cases.** With Yosys absent the examples must **degrade, not look broken**: the tab still opens and the canvas shows "Elaboration failed" over "Yosys was not found on your PATH. Install Yosys, or set a custom path in Settings.", with the persistent `Yosys not found` status-bar segment. An example that names a source nobody committed, or a `topModule` no source declares, must fail the guard suite rather than reach a user.
-- **Known limitation — no toolchain-free example.** Unlike SimCrux (replayed logs) and LintCrux (a captured SARIF report), NetCrux has no entry point that works with nothing installed: the `.netcrux-project` schema has no netlist field, the elaboration cache is in-memory only, and every desktop route to a `NetlistModel` passes through a live Yosys subprocess. A mixed-language (VHDL) example is likewise **not** shippable today — `vhdlTopUnit` is derived from `topModule`, so GHDL is asked to elaborate the Verilog top as a VHDL entity and fails before Yosys runs; the guard suite asserts no shipped example contains VHDL so this cannot be reintroduced by accident.
+  6. With `yosys` off `PATH`, **File → Open Netlist JSON…** and pick `examples/cdc-capture/cdc-capture.json`. Expected: the same schematic as step 2, with the hierarchy, the inspector, search and one-step tracing working, and no "Yosys not found" error.
+- **Edge cases.** With Yosys absent the project examples must **degrade, not look broken**: the tab still opens and the canvas shows "Elaboration failed" over "Yosys was not found on your PATH. Install Yosys, or set a custom path in Settings.", with the persistent `Yosys not found` status-bar segment. An example that names a source nobody committed, or a `topModule` no source declares, must fail the guard suite rather than reach a user.
+- **The toolchain-free example.** `examples/cdc-capture/cdc-capture.json` is the `cdc-capture` design as a pre-built Yosys `write_json` netlist (18 cells, 7 `$adff`; the command that wrote it is in `examples/README.md`). **File → Open Netlist JSON…** opens it with nothing installed, on the desktop and in the web viewer, so it is the one example that needs no Yosys. Step 6 checks it.
+- **Known limitation — VHDL.** A mixed-language (VHDL) example is **not** shippable today — `vhdlTopUnit` is derived from `topModule`, so GHDL is asked to elaborate the Verilog top as a VHDL entity and fails before Yosys runs; the guard suite asserts no shipped example contains VHDL so this cannot be reintroduced by accident.
 - **Automation Assessment.**
 
   | Test | Coverage |
@@ -577,7 +602,8 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | The real `LoadedNetlist.buildRequest` names every source in the right language, and no example ships VHDL | `[Coverage: UNIT]` (same file) |
   | Anchoring: relative → project-dir, absolute untouched, `..` collapsed, language-override keys rewritten in step, elaboration knobs preserved, idempotent | `[Coverage: UNIT]` (`test/services/project/netcrux_project_path_resolver_test.dart`) |
   | A positional `.netcrux-project` CLI arg routes to `openProject` | `[Coverage: UNIT]` (`test/core/cli/cli_arg_parser_test.dart`) |
-  | Real elaboration of both examples through a real Yosys, from a non-repo working directory | `[Coverage: MANUAL]` — steps 1–5 |
+  | The pre-built `cdc-capture.json` parses with the real reader into the 18-cell design | `[Coverage: UNIT]` (`test/examples/examples_test.dart`) |
+  | Real elaboration of both examples through a real Yosys, from a non-repo working directory, and the JSON example with no Yosys | `[Coverage: MANUAL]` — steps 1–6 |
   | Yosys-absent degradation wording | `[Coverage: MANUAL]` — edge cases |
 
 ## 4.2 Seeded-design journey — load → navigate hierarchy → select → inspect
