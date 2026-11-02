@@ -1,0 +1,437 @@
+{
+  "creator": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)",
+  "modules": {
+    "adder4": {
+      "attributes": {
+        "top": "00000000000000000000000000000001",
+        "src": "../../verilog/adder4.v:4.1-12.10"
+      },
+      "ports": {
+        "a": {
+          "direction": "input",
+          "bits": [ 2, 3, 4, 5 ]
+        },
+        "b": {
+          "direction": "input",
+          "bits": [ 6, 7, 8, 9 ]
+        },
+        "cin": {
+          "direction": "input",
+          "bits": [ 10 ]
+        },
+        "sum": {
+          "direction": "output",
+          "bits": [ 11, 12, 13, 14 ]
+        },
+        "cout": {
+          "direction": "output",
+          "bits": [ 15 ]
+        }
+      },
+      "cells": {
+        "_10_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__maj3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 3 ],
+            "B": [ 7 ],
+            "C": [ 16 ],
+            "X": [ 17 ]
+          }
+        },
+        "_11_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 4 ],
+            "B": [ 8 ],
+            "Y": [ 18 ]
+          }
+        },
+        "_12_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__maj3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 4 ],
+            "B": [ 8 ],
+            "C": [ 17 ],
+            "X": [ 19 ]
+          }
+        },
+        "_13_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 5 ],
+            "B": [ 9 ],
+            "Y": [ 20 ]
+          }
+        },
+        "_14_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__maj3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 5 ],
+            "B": [ 9 ],
+            "C": [ 19 ],
+            "X": [ 15 ]
+          }
+        },
+        "_15_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 16 ],
+            "B": [ 21 ],
+            "Y": [ 12 ]
+          }
+        },
+        "_16_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 10 ],
+            "B": [ 22 ],
+            "Y": [ 11 ]
+          }
+        },
+        "_17_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 19 ],
+            "B": [ 20 ],
+            "Y": [ 14 ]
+          }
+        },
+        "_18_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 17 ],
+            "B": [ 18 ],
+            "Y": [ 13 ]
+          }
+        },
+        "_7_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 2 ],
+            "B": [ 6 ],
+            "Y": [ 22 ]
+          }
+        },
+        "_8_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__maj3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 10 ],
+            "B": [ 2 ],
+            "C": [ 6 ],
+            "X": [ 16 ]
+          }
+        },
+        "_9_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 3 ],
+            "B": [ 7 ],
+            "Y": [ 21 ]
+          }
+        }
+      },
+      "netnames": {
+        "_0_": {
+          "hide_name": 0,
+          "bits": [ 16 ],
+          "attributes": {
+          }
+        },
+        "_1_": {
+          "hide_name": 0,
+          "bits": [ 21 ],
+          "attributes": {
+          }
+        },
+        "_2_": {
+          "hide_name": 0,
+          "bits": [ 17 ],
+          "attributes": {
+          }
+        },
+        "_3_": {
+          "hide_name": 0,
+          "bits": [ 18 ],
+          "attributes": {
+          }
+        },
+        "_4_": {
+          "hide_name": 0,
+          "bits": [ 19 ],
+          "attributes": {
+          }
+        },
+        "_5_": {
+          "hide_name": 0,
+          "bits": [ 20 ],
+          "attributes": {
+          }
+        },
+        "_6_": {
+          "hide_name": 0,
+          "bits": [ 22 ],
+          "attributes": {
+          }
+        },
+        "a": {
+          "hide_name": 0,
+          "bits": [ 2, 3, 4, 5 ],
+          "attributes": {
+            "src": "../../verilog/adder4.v:5.23-5.24"
+          }
+        },
+        "b": {
+          "hide_name": 0,
+          "bits": [ 6, 7, 8, 9 ],
+          "attributes": {
+            "src": "../../verilog/adder4.v:6.23-6.24"
+          }
+        },
+        "cin": {
+          "hide_name": 0,
+          "bits": [ 10 ],
+          "attributes": {
+            "src": "../../verilog/adder4.v:7.23-7.26"
+          }
+        },
+        "cout": {
+          "hide_name": 0,
+          "bits": [ 15 ],
+          "attributes": {
+            "src": "../../verilog/adder4.v:9.23-9.27"
+          }
+        },
+        "sum": {
+          "hide_name": 0,
+          "bits": [ 11, 12, 13, 14 ],
+          "attributes": {
+            "src": "../../verilog/adder4.v:8.23-8.26"
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__maj3_1": {
+      "attributes": {
+        "area": "10.009600000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "X": {
+          "direction": "output",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0027450000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0025380000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0030520000"
+          }
+        },
+        "X": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__xnor2_1": {
+      "attributes": {
+        "area": "8.758400000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0045080000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0045620000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    }
+  }
+}

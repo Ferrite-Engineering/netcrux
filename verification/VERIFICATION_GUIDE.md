@@ -973,13 +973,16 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   3. Export SVG. Expected: the same symbols and wedge as the canvas.
   4. In Pro, give the NAND type a custom symbol. Expected: the custom symbol, laid out in its shape, with no library wedge or face placement.
   5. Switch the layout engine to elkjs (`NETCRUX_LAYOUT_ENGINE`) and reopen. Expected: the same faces.
-- **Edge cases.** A source module named like a library cell is drawn as that module. A `pg_pin` without `pg_type` is placed by name (`VDD`, `VCC`, `VPWR`, `VPB` top; `VSS`, `GND`, `VGND`, `VNB` bottom) or left where its direction puts it. A library cache written before 1.2 is read again once (the cache format moved to 2).
+- **Edge cases.** A source module named like a library cell is drawn as that module. A `pg_pin` without `pg_type` is placed by name, compared without regard to case (`VDD`, `VCC` and names starting with them, `VPWR`, `VPB` top; `VSS`, `GND` and names starting with them, `VGND`, `VNB` bottom) or left where its direction puts it. A cell with a `three_state` output keeps the box, even when its function reads every input. A latch has no wedge, and a `clock : true` pin on a gate draws none. A tie cell, a cell with a bus or a bidirectional signal pin, and a cell with two storage groups keep the box. A library cache written before 1.2 is read again once (the cache format moved to 3). `test/fixtures/liberty/edge_cases.lib` holds one cell per case.
+- **Fixture corpus.** `test/fixtures/liberty/pdk/` holds the typical corner of sky130_fd_sc_hd, gf180mcu_fd_sc_mcu7t5v0, IHP sg13g2_stdcell and ASAP7 (timing tables trimmed), each with `PROVENANCE.md`, its upstream licence and an `.expected_symbols.json` written by `liberty_oracle.py`, an independent Liberty reader and expression evaluator; `REVIEW.md` there records each cell whose name and function disagree. `test/fixtures/gate_level/sky130_fd_sc_hd/` holds `cdc_capture` and `adder4` synthesized to sky130 HD by Yosys, as Verilog and JSON.
 - **Automation Assessment.**
 
   | Test | Coverage |
   |---|---|
   | Expression grammar, precedence and the gate classifier, from hand-written truth tables | `[Coverage: UNIT]` (`test/services/liberty/liberty_function_test.dart`) |
-  | Data-sheet parsing, the cache round trip, the symbol of each sky130-style cell, supply faces, clock pins, shadowing by a source module | `[Coverage: UNIT]` (`test/services/liberty/liberty_cell_index_test.dart`) |
+  | Data-sheet parsing, the cache round trip, the symbol of each sky130-style cell, supply faces, clock pins, shadowing by a source module, tri-state outputs | `[Coverage: UNIT]` (`test/services/liberty/liberty_cell_index_test.dart`) |
+  | Every cell of four PDK libraries against the independent oracle (sky130 HD: 184 of 428 cells drawn as gates), and every edge case against its hand-written expectation | `[Coverage: UNIT]` (`test/services/liberty/liberty_symbol_corpus_test.dart`) |
+  | Two designs synthesized to sky130 HD, read natively and from Yosys's JSON: the oracle's symbol for every instance, the same signal-pin faces in the ELK input and in both engines, supply pins on top and bottom in the native read | `[Coverage: INTEGRATION_TEST]` (`test/integration/liberty_gate_level_corpus_test.dart`; the native-engine case needs `libelk_ffi`, the elkjs case runs on macOS) + the same netlists against the Yosys route in `test/integration/native_vs_yosys_test.dart` |
   | Graph kinds and ports, ELK faces and node height, identity without libraries, both engines' placement, the SVG wedge at the clock pin | `[Coverage: UNIT]` (`test/services/liberty/liberty_drawing_test.dart`; the native-engine cases need `libelk_ffi`, the elkjs case runs on macOS) |
   | Canvas wedge at the clock pin, the fixed wedge for Yosys flip-flops, none under a custom symbol | `[Coverage: WIDGET]` (`test/features/viewer/rendering/schematic_clock_wedge_test.dart`) |
   | New symbol shapes drawn from the shared pieces, canvas and SVG alike | `[Coverage: UNIT]` (`test/features/viewer/symbols/symbol_painters_test.dart`, `test/services/export/svg_exporter_test.dart`); PNG goldens for buffer, NAND, NOR, XOR and XNOR are not yet recorded on the CI renderer |
@@ -1002,6 +1005,7 @@ NetCrux's adoption of the cross-suite `crux_workspace` package replaces the sing
   | Test | Coverage |
   |---|---|
   | Sums, instance multiplication, partial, bookkeeping cells, shadowing, self-instantiation, memoisation | `[Coverage: UNIT]` (`test/services/liberty/module_area_rollup_test.dart`) |
+  | The data sheet of one cell of each kind and the module area of two designs synthesized to sky130 HD, against the oracle's areas | `[Coverage: INTEGRATION_TEST]` (`test/integration/liberty_gate_level_corpus_test.dart`) |
   | Inspector sections and module area in five locales | `[Coverage: WIDGET]` (`test/features/inspector/widgets/inspector_library_section_test.dart`) |
   | Hierarchy rows show and announce the area, none without libraries | `[Coverage: WIDGET]` (`test/features/hierarchy/widgets/hierarchy_area_test.dart`) |
   | The providers read the project's libraries after the design loads | `[Coverage: UNIT]` (`test/features/project/providers/liberty_cell_providers_test.dart`) |

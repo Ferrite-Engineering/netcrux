@@ -1,0 +1,2617 @@
+{
+  "creator": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)",
+  "modules": {
+    "cdc_capture": {
+      "attributes": {
+        "dynports": "00000000000000000000000000000001",
+        "top": "00000000000000000000000000000001",
+        "src": "../../verilog/cdc_capture.v:19.1-84.10"
+      },
+      "parameter_default_values": {
+        "STRIDE": "00000000000000000000000000000100",
+        "WIDTH": "00000000000000000000000000001000"
+      },
+      "ports": {
+        "clk_a": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "rst_a_n": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "clk_b": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "rst_b_n": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "captured_b": {
+          "direction": "output",
+          "bits": [ 6, 7, 8, 9, 10, 11, 12, 13 ]
+        },
+        "captured_valid_b": {
+          "direction": "output",
+          "bits": [ 14 ]
+        }
+      },
+      "cells": {
+        "_100_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 15 ],
+            "Q": [ 16 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_101_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 17 ],
+            "Q": [ 13 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_102_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 18 ],
+            "Q": [ 14 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_103_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 19 ],
+            "Q": [ 20 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_104_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 21 ],
+            "Q": [ 22 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_35_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__clkinv_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 23 ],
+            "Y": [ 24 ]
+          }
+        },
+        "_36_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand2b_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A_N": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A_N": [ 25 ],
+            "B": [ 16 ],
+            "Y": [ 26 ]
+          }
+        },
+        "_37_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__clkinv_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 26 ],
+            "Y": [ 18 ]
+          }
+        },
+        "_38_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 27 ],
+            "A1": [ 13 ],
+            "S": [ 26 ],
+            "X": [ 17 ]
+          }
+        },
+        "_39_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nor4_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "D": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 28 ],
+            "B": [ 29 ],
+            "C": [ 20 ],
+            "D": [ 30 ],
+            "Y": [ 31 ]
+          }
+        },
+        "_40_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nor4bb_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C_N": "input",
+            "D_N": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 22 ],
+            "B": [ 32 ],
+            "C_N": [ 33 ],
+            "D_N": [ 23 ],
+            "Y": [ 34 ]
+          }
+        },
+        "_41_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__and2_0",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 31 ],
+            "B": [ 34 ],
+            "X": [ 35 ]
+          }
+        },
+        "_42_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__and4_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "D": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 36 ],
+            "B": [ 37 ],
+            "C": [ 31 ],
+            "D": [ 34 ],
+            "X": [ 38 ]
+          }
+        },
+        "_43_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__and3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 39 ],
+            "B": [ 40 ],
+            "C": [ 38 ],
+            "X": [ 41 ]
+          }
+        },
+        "_44_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 42 ],
+            "B": [ 41 ],
+            "Y": [ 43 ]
+          }
+        },
+        "_45_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 44 ],
+            "B": [ 42 ],
+            "C": [ 41 ],
+            "Y": [ 45 ]
+          }
+        },
+        "_46_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand4_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "D": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 44 ],
+            "B": [ 46 ],
+            "C": [ 42 ],
+            "D": [ 41 ],
+            "Y": [ 47 ]
+          }
+        },
+        "_47_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 27 ],
+            "B": [ 47 ],
+            "Y": [ 48 ]
+          }
+        },
+        "_48_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 36 ],
+            "B": [ 35 ],
+            "X": [ 49 ]
+          }
+        },
+        "_49_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__a21oi_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A1": "input",
+            "A2": "input",
+            "B1": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A1": [ 36 ],
+            "A2": [ 35 ],
+            "B1": [ 37 ],
+            "Y": [ 50 ]
+          }
+        },
+        "_50_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 38 ],
+            "B": [ 50 ],
+            "Y": [ 51 ]
+          }
+        },
+        "_51_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 39 ],
+            "B": [ 38 ],
+            "X": [ 52 ]
+          }
+        },
+        "_52_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__a21oi_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A1": "input",
+            "A2": "input",
+            "B1": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A1": [ 39 ],
+            "A2": [ 38 ],
+            "B1": [ 40 ],
+            "Y": [ 53 ]
+          }
+        },
+        "_53_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 41 ],
+            "B": [ 53 ],
+            "Y": [ 54 ]
+          }
+        },
+        "_54_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 42 ],
+            "B": [ 41 ],
+            "X": [ 55 ]
+          }
+        },
+        "_55_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 44 ],
+            "B": [ 43 ],
+            "Y": [ 56 ]
+          }
+        },
+        "_56_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 46 ],
+            "B": [ 45 ],
+            "Y": [ 57 ]
+          }
+        },
+        "_57_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 36 ],
+            "A1": [ 6 ],
+            "S": [ 26 ],
+            "X": [ 58 ]
+          }
+        },
+        "_58_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 37 ],
+            "A1": [ 7 ],
+            "S": [ 26 ],
+            "X": [ 59 ]
+          }
+        },
+        "_59_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 39 ],
+            "A1": [ 8 ],
+            "S": [ 26 ],
+            "X": [ 60 ]
+          }
+        },
+        "_60_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 40 ],
+            "A1": [ 9 ],
+            "S": [ 26 ],
+            "X": [ 61 ]
+          }
+        },
+        "_61_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 42 ],
+            "A1": [ 10 ],
+            "S": [ 26 ],
+            "X": [ 62 ]
+          }
+        },
+        "_62_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 44 ],
+            "A1": [ 11 ],
+            "S": [ 26 ],
+            "X": [ 63 ]
+          }
+        },
+        "_63_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__mux2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A0": "input",
+            "A1": "input",
+            "S": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A0": [ 46 ],
+            "A1": [ 12 ],
+            "S": [ 26 ],
+            "X": [ 64 ]
+          }
+        },
+        "_64_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__and3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 23 ],
+            "B": [ 20 ],
+            "C": [ 33 ],
+            "X": [ 65 ]
+          }
+        },
+        "_65_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 29 ],
+            "B": [ 65 ],
+            "Y": [ 66 ]
+          }
+        },
+        "_66_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__and3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 28 ],
+            "B": [ 29 ],
+            "C": [ 65 ],
+            "X": [ 67 ]
+          }
+        },
+        "_67_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 32 ],
+            "B": [ 67 ],
+            "Y": [ 68 ]
+          }
+        },
+        "_68_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 22 ],
+            "B": [ 32 ],
+            "C": [ 67 ],
+            "Y": [ 69 ]
+          }
+        },
+        "_69_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 22 ],
+            "B": [ 68 ],
+            "Y": [ 21 ]
+          }
+        },
+        "_70_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 32 ],
+            "B": [ 67 ],
+            "X": [ 70 ]
+          }
+        },
+        "_71_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 28 ],
+            "B": [ 66 ],
+            "Y": [ 71 ]
+          }
+        },
+        "_72_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 29 ],
+            "B": [ 65 ],
+            "X": [ 72 ]
+          }
+        },
+        "_73_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__a21oi_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A1": "input",
+            "A2": "input",
+            "B1": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A1": [ 23 ],
+            "A2": [ 33 ],
+            "B1": [ 20 ],
+            "Y": [ 73 ]
+          }
+        },
+        "_74_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nor3_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "C": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 35 ],
+            "B": [ 65 ],
+            "C": [ 73 ],
+            "Y": [ 19 ]
+          }
+        },
+        "_75_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 23 ],
+            "B": [ 33 ],
+            "X": [ 74 ]
+          }
+        },
+        "_76_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__xnor2_1",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 30 ],
+            "B": [ 69 ],
+            "Y": [ 75 ]
+          }
+        },
+        "_77_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 64 ],
+            "Q": [ 12 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_78_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 63 ],
+            "Q": [ 11 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_79_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 62 ],
+            "Q": [ 10 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_80_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 61 ],
+            "Q": [ 9 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_81_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 60 ],
+            "Q": [ 8 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_82_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 59 ],
+            "Q": [ 7 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_83_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 58 ],
+            "Q": [ 6 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_84_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 70 ],
+            "Q": [ 32 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_85_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 57 ],
+            "Q": [ 46 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_86_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 56 ],
+            "Q": [ 44 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_87_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 49 ],
+            "Q": [ 36 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_88_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 24 ],
+            "Q": [ 23 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_89_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 55 ],
+            "Q": [ 42 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_90_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 54 ],
+            "Q": [ 40 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_91_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 72 ],
+            "Q": [ 29 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_92_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 52 ],
+            "Q": [ 39 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_93_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 71 ],
+            "Q": [ 28 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_94_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 74 ],
+            "Q": [ 33 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_95_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 35 ],
+            "Q": [ 15 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_96_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 51 ],
+            "Q": [ 37 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_97_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 4 ],
+            "D": [ 16 ],
+            "Q": [ 25 ],
+            "RESET_B": [ 5 ]
+          }
+        },
+        "_98_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 48 ],
+            "Q": [ 27 ],
+            "RESET_B": [ 3 ]
+          }
+        },
+        "_99_": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__dfrtp_1",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output",
+            "RESET_B": "input"
+          },
+          "connections": {
+            "CLK": [ 2 ],
+            "D": [ 75 ],
+            "Q": [ 30 ],
+            "RESET_B": [ 3 ]
+          }
+        }
+      },
+      "netnames": {
+        "_0_": {
+          "hide_name": 0,
+          "bits": [ 51 ],
+          "attributes": {
+          }
+        },
+        "_10_": {
+          "hide_name": 0,
+          "bits": [ 58 ],
+          "attributes": {
+          }
+        },
+        "_11_": {
+          "hide_name": 0,
+          "bits": [ 26 ],
+          "attributes": {
+          }
+        },
+        "_12_": {
+          "hide_name": 0,
+          "bits": [ 31 ],
+          "attributes": {
+          }
+        },
+        "_13_": {
+          "hide_name": 0,
+          "bits": [ 34 ],
+          "attributes": {
+          }
+        },
+        "_14_": {
+          "hide_name": 0,
+          "bits": [ 38 ],
+          "attributes": {
+          }
+        },
+        "_15_": {
+          "hide_name": 0,
+          "bits": [ 41 ],
+          "attributes": {
+          }
+        },
+        "_16_": {
+          "hide_name": 0,
+          "bits": [ 43 ],
+          "attributes": {
+          }
+        },
+        "_17_": {
+          "hide_name": 0,
+          "bits": [ 45 ],
+          "attributes": {
+          }
+        },
+        "_18_": {
+          "hide_name": 0,
+          "bits": [ 47 ],
+          "attributes": {
+          }
+        },
+        "_19_": {
+          "hide_name": 0,
+          "bits": [ 50 ],
+          "attributes": {
+          }
+        },
+        "_1_": {
+          "hide_name": 0,
+          "bits": [ 49 ],
+          "attributes": {
+          }
+        },
+        "_20_": {
+          "hide_name": 0,
+          "bits": [ 53 ],
+          "attributes": {
+          }
+        },
+        "_21_": {
+          "hide_name": 0,
+          "bits": [ 65 ],
+          "attributes": {
+          }
+        },
+        "_22_": {
+          "hide_name": 0,
+          "bits": [ 66 ],
+          "attributes": {
+          }
+        },
+        "_23_": {
+          "hide_name": 0,
+          "bits": [ 67 ],
+          "attributes": {
+          }
+        },
+        "_24_": {
+          "hide_name": 0,
+          "bits": [ 68 ],
+          "attributes": {
+          }
+        },
+        "_25_": {
+          "hide_name": 0,
+          "bits": [ 69 ],
+          "attributes": {
+          }
+        },
+        "_26_": {
+          "hide_name": 0,
+          "bits": [ 73 ],
+          "attributes": {
+          }
+        },
+        "_27_": {
+          "hide_name": 0,
+          "bits": [ 57 ],
+          "attributes": {
+          }
+        },
+        "_28_": {
+          "hide_name": 0,
+          "bits": [ 56 ],
+          "attributes": {
+          }
+        },
+        "_29_": {
+          "hide_name": 0,
+          "bits": [ 55 ],
+          "attributes": {
+          }
+        },
+        "_2_": {
+          "hide_name": 0,
+          "bits": [ 48 ],
+          "attributes": {
+          }
+        },
+        "_30_": {
+          "hide_name": 0,
+          "bits": [ 35 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          }
+        },
+        "_31_": {
+          "hide_name": 0,
+          "bits": [ 24, 74, 19, 72, 71, 70, 21, 75 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:39.5-52.8"
+          }
+        },
+        "_32_": {
+          "hide_name": 0,
+          "bits": [ 54 ],
+          "attributes": {
+          }
+        },
+        "_33_": {
+          "hide_name": 0,
+          "bits": [ 18 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:60.5-73.8"
+          }
+        },
+        "_34_": {
+          "hide_name": 0,
+          "bits": [ 52 ],
+          "attributes": {
+          }
+        },
+        "_3_": {
+          "hide_name": 0,
+          "bits": [ 64 ],
+          "attributes": {
+          }
+        },
+        "_4_": {
+          "hide_name": 0,
+          "bits": [ 17 ],
+          "attributes": {
+          }
+        },
+        "_5_": {
+          "hide_name": 0,
+          "bits": [ 63 ],
+          "attributes": {
+          }
+        },
+        "_6_": {
+          "hide_name": 0,
+          "bits": [ 62 ],
+          "attributes": {
+          }
+        },
+        "_7_": {
+          "hide_name": 0,
+          "bits": [ 61 ],
+          "attributes": {
+          }
+        },
+        "_8_": {
+          "hide_name": 0,
+          "bits": [ 60 ],
+          "attributes": {
+          }
+        },
+        "_9_": {
+          "hide_name": 0,
+          "bits": [ 59 ],
+          "attributes": {
+          }
+        },
+        "captured_b": {
+          "hide_name": 0,
+          "bits": [ 6, 7, 8, 9, 10, 11, 12, 13 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:27.29-27.39"
+          }
+        },
+        "captured_valid_b": {
+          "hide_name": 0,
+          "bits": [ 14 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:28.29-28.45"
+          }
+        },
+        "clk_a": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:23.29-23.34"
+          }
+        },
+        "clk_b": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:25.29-25.34"
+          }
+        },
+        "div": {
+          "hide_name": 0,
+          "bits": [ 23, 33, 20, 29, 28, 32, 22, 30 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:36.21-36.24"
+          }
+        },
+        "req_a": {
+          "hide_name": 0,
+          "bits": [ 15 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:37.21-37.26"
+          }
+        },
+        "req_b0": {
+          "hide_name": 0,
+          "bits": [ 16 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:58.9-58.15"
+          }
+        },
+        "req_b1": {
+          "hide_name": 0,
+          "bits": [ 25 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:58.17-58.23"
+          }
+        },
+        "rst_a_n": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:24.29-24.36"
+          }
+        },
+        "rst_b_n": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:26.29-26.36"
+          }
+        },
+        "sample_a": {
+          "hide_name": 0,
+          "bits": [ 36, 37, 39, 40, 42, 44, 46, 27 ],
+          "attributes": {
+            "src": "../../verilog/cdc_capture.v:35.21-35.29"
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__a21oi_1": {
+      "attributes": {
+        "area": "5.0048000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A1": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "A2": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "B1": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A1": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023520000"
+          }
+        },
+        "A2": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023210000"
+          }
+        },
+        "B1": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0023230000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__and2_0": {
+      "attributes": {
+        "area": "6.2560000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "X": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0016000000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0016360000"
+          }
+        },
+        "X": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__and3_1": {
+      "attributes": {
+        "area": "6.2560000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "X": {
+          "direction": "output",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0014760000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0015200000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0015560000"
+          }
+        },
+        "X": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__and4_1": {
+      "attributes": {
+        "area": "8.758400000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "X": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0015340000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0015500000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0015410000"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "capacitance": "0.0015660000"
+          }
+        },
+        "X": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__clkinv_1": {
+      "attributes": {
+        "area": "3.7536000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0030770000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__dfrtp_1": {
+      "attributes": {
+        "area": "25.024000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "CLK": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "RESET_B": {
+          "direction": "input",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "CLK": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0017880000"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0019770000"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        },
+        "RESET_B": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "capacitance": "0.0035960000"
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__mux2_1": {
+      "attributes": {
+        "area": "11.260800000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A1": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "S": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "X": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "A0": {
+          "direction": "input",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A0": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "capacitance": "0.0015580000"
+          }
+        },
+        "A1": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0018840000"
+          }
+        },
+        "S": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0034020000"
+          }
+        },
+        "X": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nand2_1": {
+      "attributes": {
+        "area": "3.7536000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023150000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023240000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nand2b_1": {
+      "attributes": {
+        "area": "6.2560000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "B": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 3 ]
+        },
+        "A_N": {
+          "direction": "input",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A_N": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0013950000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023990000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nand3_1": {
+      "attributes": {
+        "area": "5.0048000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023010000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023950000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0023550000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nand4_1": {
+      "attributes": {
+        "area": "6.2560000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023120000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023910000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0023490000"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "capacitance": "0.0022960000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nor2_1": {
+      "attributes": {
+        "area": "3.7536000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023730000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023530000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nor3_1": {
+      "attributes": {
+        "area": "5.0048000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0024410000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023800000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0023250000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nor4_1": {
+      "attributes": {
+        "area": "6.2560000000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "C": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023370000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023450000"
+          }
+        },
+        "C": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "capacitance": "0.0024120000"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "capacitance": "0.0023470000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__nor4bb_1": {
+      "attributes": {
+        "area": "10.009600000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "C_N": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "D_N": {
+          "direction": "input",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0023290000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0023560000"
+          }
+        },
+        "C_N": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "capacitance": "0.0015020000"
+          }
+        },
+        "D_N": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "capacitance": "0.0013900000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__xnor2_1": {
+      "attributes": {
+        "area": "8.758400000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "Y": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0045080000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0045620000"
+          }
+        },
+        "Y": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    },
+    "sky130_fd_sc_hd__xor2_1": {
+      "attributes": {
+        "area": "8.758400000",
+        "blackbox": "00000000000000000000000000000001"
+      },
+      "ports": {
+        "A": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "B": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "X": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "capacitance": "0.0043770000"
+          }
+        },
+        "B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "capacitance": "0.0043390000"
+          }
+        },
+        "X": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    }
+  }
+}

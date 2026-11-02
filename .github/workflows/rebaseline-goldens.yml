@@ -1,0 +1,100 @@
+name: Rebaseline goldens (Linux golden host)
+
+# ─── Why this exists ──────────────────────────────────────────────────────────
+# Goldens are compared on the CI renderer: the Linux leg of the Test job runs
+# on every push, and the tolerant comparator in test/flutter_test_config.dart
+# absorbs the small font differences of the weekly macOS and Windows legs.
+# A golden recorded on a developer's machine is a different host, so it is
+# never committed. This workflow records goldens on the same runner image as
+# the Test job and uploads the PNGs it wrote; download the artifact and
+# commit them. It mirrors WaveCrux's rebaseline-goldens workflow, on Linux.
+#
+# A new golden is recorded by dispatching this workflow on a branch that has
+# the test, before the test reaches main, so main never has a test without
+# its image.
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'test files to rebaseline, separated by spaces'
+        required: true
+        default: 'test/features/viewer/symbols/symbol_painters_test.dart'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  rebaseline:
+    name: Rebaseline / ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch head, 2026-09-03
+
+      # Render goldens that lay a scope out with the native engine need it;
+      # requireElkFfiLibrary fails under CI=true without it.
+      - name: Build the layout engine (Rust)
+        working-directory: native/elk_ffi
+        run: cargo build --release
+
+      - name: Install Flutter (pinned)
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Riverpod codegen
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate l10n
+        run: flutter gen-l10n
+
+      - name: Regenerate goldens
+        env:
+          PATHS: ${{ github.event.inputs.paths }}
+        run: |
+          set -euo pipefail
+          read -r -a files <<< "$PATHS"
+          flutter test "${files[@]}" --update-goldens
+
+      # Stage only the PNGs this run wrote or changed, new files included.
+      # A glob over every golden would also collect the committed ones the
+      # run never touched.
+      - name: Stage what actually moved
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rebaselined"
+          changed=$(git status --porcelain --untracked-files=all -- '*.png' | cut -c4-)
+          if [ -z "$changed" ]; then
+            echo "No golden moved: the baselines already match this host."
+            exit 0
+          fi
+          echo "$changed" | while read -r f; do
+            mkdir -p "$RUNNER_TEMP/rebaselined/$(dirname "$f")"
+            cp "$f" "$RUNNER_TEMP/rebaselined/$f"
+          done
+          echo "staged:"
+          (cd "$RUNNER_TEMP/rebaselined" && find . -name '*.png' | sort)
+
+      - name: Upload regenerated goldens
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rebaselined-goldens
+          path: ${{ runner.temp }}/rebaselined
+          # Not `error`: a run that finds nothing to change is a valid result.
+          if-no-files-found: warn
+          retention-days: 7

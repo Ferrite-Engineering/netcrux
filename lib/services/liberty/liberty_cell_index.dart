@@ -111,8 +111,8 @@ class LibertyCellIndex {
 /// an output `function` that is one of the [LibertyGate]s over exactly its
 /// inputs. A flip-flop or latch symbol needs a single `ff` or `latch` group
 /// and outputs whose functions read only its state. Anything else, a
-/// compound gate, a multi-output cell such as an adder, or a function that
-/// does not parse, keeps the box.
+/// compound gate, a multi-output cell such as an adder, a cell with a
+/// tri-state output, or a function that does not parse, keeps the box.
 LibertyCellSymbol? libertyCellSymbolFor(LibertyCell cell) {
   final power = <String>{};
   final ground = <String>{};
@@ -160,6 +160,9 @@ CellKind _kindOf(LibertyCell cell) {
   if (outputs.isEmpty || inputs.isEmpty || cell.hasOtherStorage) {
     return CellKind.generic;
   }
+  // An output that can float is not the gate its function describes, even
+  // when the enable is one of the function's inputs.
+  if (outputs.any(cell.threeStatePins.contains)) return CellKind.generic;
   final storage = cell.storage;
   if (storage != null) {
     final state = storage.stateNames.toSet();

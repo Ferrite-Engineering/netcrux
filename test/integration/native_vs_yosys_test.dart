@@ -161,6 +161,24 @@ void main() {
         yosys: yosys!,
       );
     }, skip: skip);
+
+    // Synthesized by Yosys to a real standard-cell library; see
+    // PROVENANCE.md in that directory.
+    for (final design in const <String>['cdc_capture', 'adder4']) {
+      test('$design synthesized to sky130_fd_sc_hd', () {
+        _expectEquivalent(
+          sources: ['test/fixtures/gate_level/sky130_fd_sc_hd/$design.v'],
+          libraries: [
+            LibertyParser.parseFile(
+              'test/fixtures/liberty/pdk/sky130_fd_sc_hd/'
+              'sky130_fd_sc_hd__tt_025C_1v80.lib.gz',
+            ),
+          ],
+          top: design,
+          yosys: yosys!,
+        );
+      }, skip: skip);
+    }
   });
 
   group('RTL fixtures are left to Yosys', () {

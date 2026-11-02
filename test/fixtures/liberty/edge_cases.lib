@@ -1,0 +1,706 @@
+/*
+ * Edge cases for the gate symbols NetCrux draws from a Liberty library: one
+ * cell per case. The symbol each cell is drawn as is written by hand in
+ * edge_cases.expected_symbols.json, from docs-site/docs/files-and-projects.md
+ * (section "Standard cells as gate symbols"), never from NetCrux's output.
+ *
+ * Supply pins: unless a cell is about them, every cell has the four
+ * sky130-style pg_pins with a pg_type.
+ */
+library (netcrux_edge_cases) {
+  delay_model : table_lookup ;
+  time_unit : "1ns" ;
+
+  /* ---- function syntax ------------------------------------------------ */
+
+  cell (ec_not_prefix) {
+    area : 1.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A" ; }
+  }
+
+  cell (ec_not_postfix) {
+    area : 1.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "A'" ; }
+  }
+
+  cell (ec_and_star) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A*B" ; }
+  }
+
+  cell (ec_and_ampersand) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A & B" ; }
+  }
+
+  cell (ec_and_juxtaposed) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A B" ; }
+  }
+
+  cell (ec_and_parenthesised_juxtaposed) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (C) { direction : input ; }
+    pin (X) { direction : output ; function : "(A)(B)C" ; }
+  }
+
+  cell (ec_or_plus) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A+B" ; }
+  }
+
+  cell (ec_or_bar) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A | B" ; }
+  }
+
+  cell (ec_xor_caret) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A^B" ; }
+  }
+
+  cell (ec_xor3_caret) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (C) { direction : input ; }
+    pin (X) { direction : output ; function : "A^B^C" ; }
+  }
+
+  cell (ec_xnor_postfix_group) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "(A^B)'" ; }
+  }
+
+  cell (ec_xnor_sum_of_products) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "(A B)+(A' B')" ; }
+  }
+
+  cell (ec_nand_postfix_group) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "(A B)'" ; }
+  }
+
+  cell (ec_nand_de_morgan) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A+!B" ; }
+  }
+
+  cell (ec_nor_nested) {
+    area : 2.5 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (C) { direction : input ; }
+    pin (Y) { direction : output ; function : "!(((A|B))|C)" ; }
+  }
+
+  /* Prefix ! binds to the next operand only: !A !B is (!A)(!B), a NOR. */
+  cell (ec_nor_juxtaposed_inversions) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A !B" ; }
+  }
+
+  /* XOR binds before AND: (A^B)&(A^B) is A^B. Read the other way round,
+     A^(B&A)^B, it would be A+B. */
+  cell (ec_xor_binds_before_and) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A^B&A^B" ; }
+  }
+
+  /* AND binds before OR: A+B&!A is A+(B&!A), which is A+B. Read the other
+     way round, (A+B)&!A, it would be B&!A. */
+  cell (ec_and_binds_before_or) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A+B&!A" ; }
+  }
+
+  cell (ec_constant_one_and) {
+    area : 1.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (X) { direction : output ; function : "A&1" ; }
+  }
+
+  cell (ec_constant_zero_or_inverted) {
+    area : 1.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "(A+0)'" ; }
+  }
+
+  /* A function string continued over two lines with a backslash. */
+  cell (ec_string_continued) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ;
+      function : "!(A & \
+                   B)" ;
+    }
+  }
+
+  /* A function string that runs over a line break with no backslash. */
+  cell (ec_string_over_two_lines) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "A
+                                               | B" ; }
+  }
+
+  /* An unquoted function, and a semicolon left off. */
+  cell (ec_unquoted_function) {
+    area : 1.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input }
+    pin (Y) { direction : output ; function : !A }
+  }
+
+  /* Two pins declared in one group. */
+  cell (ec_pins_in_one_group) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A, B) { direction : input ; }
+    pin (Y) { direction : output ; function : "!(A B)" ; }
+  }
+
+  /* Pin names with characters an expression would otherwise split on are
+     quoted where they are declared and written as they are in the
+     function. */
+  cell (ec_quoted_pin_names) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin ("A[0]") { direction : input ; }
+    pin ("A[1]") { direction : input ; }
+    pin ("n.2$x") { direction : input ; }
+    pin (Y) { direction : output ; function : "!(A[0] & A[1] & n.2$x)" ; }
+  }
+
+  /* An internal node is not an input. */
+  cell (ec_internal_pin_ignored) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (N1) { direction : internal ; }
+    pin (Y) { direction : output ; function : "!(A&B)" ; }
+  }
+
+  cell (ec_function_names_unknown_pin) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "!(A&C)" ; }
+  }
+
+  cell (ec_function_unbalanced) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (Y) { direction : output ; function : "!(A&B" ; }
+  }
+
+  cell (ec_no_function) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; }
+  }
+
+  cell (ec_inout_signal_pin) {
+    area : 2.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (PAD) { direction : inout ; function : "A" ; }
+  }
+
+  cell (ec_bus_input) {
+    area : 4.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    type (bus2) { base_type : array ; data_type : bit ; bit_width : 2 ;
+                  bit_from : 1 ; bit_to : 0 ; downto : true ; }
+    bus (D) { bus_type : bus2 ; direction : input ; }
+    pin (Y) { direction : output ; function : "!(D[0]&D[1])" ; }
+  }
+
+  /* No area attribute. */
+  cell (ec_no_area) {
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (X) { direction : output ; function : "A" ; }
+  }
+
+  /* ---- multiplexers and compound gates ------------------------------- */
+
+  cell (ec_mux2) {
+    area : 5.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A0) { direction : input ; }
+    pin (A1) { direction : input ; }
+    pin (S) { direction : input ; }
+    pin (X) { direction : output ; function : "(A0&!S) | (A1&S)" ; }
+  }
+
+  /* The select pin declared first and the data terms in the other order. */
+  cell (ec_mux2_select_first) {
+    area : 5.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (S) { direction : input ; }
+    pin (I1) { direction : input ; }
+    pin (I0) { direction : input ; }
+    pin (Z) { direction : output ; function : "(S I1)+(S' I0)" ; }
+  }
+
+  cell (ec_mux2_inverted) {
+    area : 5.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A0) { direction : input ; }
+    pin (A1) { direction : input ; }
+    pin (S) { direction : input ; }
+    pin (Y) { direction : output ; function : "!((A0&!S) | (A1&S))" ; }
+  }
+
+  cell (ec_aoi21) {
+    area : 4.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A1) { direction : input ; }
+    pin (A2) { direction : input ; }
+    pin (B1) { direction : input ; }
+    pin (Y) { direction : output ; function : "!((A1&A2) | B1)" ; }
+  }
+
+  cell (ec_oai21) {
+    area : 4.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A1) { direction : input ; }
+    pin (A2) { direction : input ; }
+    pin (B1) { direction : input ; }
+    pin (Y) { direction : output ; function : "!((A1|A2) & B1)" ; }
+  }
+
+  cell (ec_and2_inverted_input) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A_N) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (X) { direction : output ; function : "!A_N&B" ; }
+  }
+
+  cell (ec_and6) {
+    area : 7.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (C) { direction : input ; }
+    pin (D) { direction : input ; }
+    pin (E) { direction : input ; }
+    pin (F) { direction : input ; }
+    pin (X) { direction : output ; function : "A&B&C&D&E&F" ; }
+  }
+
+  cell (ec_and7) {
+    area : 8.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (C) { direction : input ; }
+    pin (D) { direction : input ; }
+    pin (E) { direction : input ; }
+    pin (F) { direction : input ; }
+    pin (G) { direction : input ; }
+    pin (X) { direction : output ; function : "A&B&C&D&E&F&G" ; }
+  }
+
+  /* ---- several outputs, no inputs, tri-state ------------------------- */
+
+  cell (ec_half_adder) {
+    area : 6.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (COUT) { direction : output ; function : "A&B" ; }
+    pin (SUM) { direction : output ; function : "A^B" ; }
+  }
+
+  cell (ec_full_adder) {
+    area : 9.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (B) { direction : input ; }
+    pin (CIN) { direction : input ; }
+    pin (COUT) { direction : output ; function : "(A&B) | (A&CIN) | (B&CIN)" ; }
+    pin (SUM) { direction : output ; function : "A^B^CIN" ; }
+  }
+
+  cell (ec_tie_high) {
+    area : 1.5 ;
+    pg_pin (VDD) { }
+    pg_pin (VSS) { }
+    pin (HI) { direction : output ; function : "1" ; }
+  }
+
+  cell (ec_tie_low) {
+    area : 1.5 ;
+    pg_pin (VDD) { }
+    pg_pin (VSS) { }
+    pin (LO) { direction : output ; function : "0" ; }
+  }
+
+  /* The usual tri-state buffer: the enable is not in the function. */
+  cell (ec_tristate_buffer) {
+    area : 4.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (TE_B) { direction : input ; }
+    pin (Z) { direction : output ; function : "A" ; three_state : "TE_B" ; }
+  }
+
+  /* A tri-state output whose function reads every input: still a box. */
+  cell (ec_tristate_function_of_all_inputs) {
+    area : 4.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (EN) { direction : input ; }
+    pin (Z) { direction : output ; function : "A&EN" ; three_state : "!EN" ; }
+  }
+
+  /* ---- flip-flops and latches ----------------------------------------- */
+
+  cell (ec_dff_rising) {
+    area : 20.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQ_N) { clocked_on : "CLK" ; next_state : "D" ; }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+  }
+
+  /* No clock attribute: the wedge comes from clocked_on alone. */
+  cell (ec_dff_falling) {
+    area : 20.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQ_N) { clocked_on : "!CLK_N" ; next_state : "D" ; }
+    pin (CLK_N) { direction : input ; }
+    pin (D) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+  }
+
+  cell (ec_dff_clear_preset) {
+    area : 26.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQ_N) {
+      clocked_on : "CLK" ;
+      next_state : "D" ;
+      clear : "!RESET_B" ;
+      preset : "!SET_B" ;
+      clear_preset_var1 : L ;
+      clear_preset_var2 : H ;
+    }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D) { direction : input ; }
+    pin (RESET_B) { direction : input ; }
+    pin (SET_B) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+    pin (Q_N) { direction : output ; function : "IQ_N" ; }
+  }
+
+  cell (ec_dff_enable) {
+    area : 24.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQ_N) { clocked_on : "CLK" ; next_state : "(D&DE) | (IQ&!DE)" ; }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D) { direction : input ; }
+    pin (DE) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+  }
+
+  /* Only the complement of the state reaches a pin. */
+  cell (ec_dff_inverted_output) {
+    area : 20.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQN) { clocked_on : "CLK" ; next_state : "D" ; }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D) { direction : input ; }
+    pin (QN) { direction : output ; function : "IQN" ; }
+  }
+
+  /* A pin marked clock that clocked_on does not read gets a wedge too. */
+  cell (ec_dff_clock_attribute_not_in_clocked_on) {
+    area : 22.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQ_N) { clocked_on : "CK" ; next_state : "D" ; }
+    pin (CK) { direction : input ; }
+    pin (D) { direction : input ; }
+    pin (SCK) { direction : input ; clock : true ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+  }
+
+  cell (ec_dff_output_reads_input) {
+    area : 22.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ, IQ_N) { clocked_on : "CLK" ; next_state : "D" ; }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D) { direction : input ; }
+    pin (EN) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ&EN" ; }
+  }
+
+  cell (ec_two_ff_groups) {
+    area : 40.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff (IQ0, IQ0_N) { clocked_on : "CLK" ; next_state : "D0" ; }
+    ff (IQ1, IQ1_N) { clocked_on : "CLK" ; next_state : "D1" ; }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D0) { direction : input ; }
+    pin (D1) { direction : input ; }
+    pin (Q0) { direction : output ; function : "IQ0" ; }
+    pin (Q1) { direction : output ; function : "IQ1" ; }
+  }
+
+  cell (ec_ff_bank) {
+    area : 40.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    ff_bank (IQ, IQ_N, 2) { clocked_on : "CLK" ; next_state : "D" ; }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (D0) { direction : input ; }
+    pin (D1) { direction : input ; }
+    pin (Q0) { direction : output ; function : "IQ" ; }
+    pin (Q1) { direction : output ; function : "IQ" ; }
+  }
+
+  /* A latch with an active-low enable whose pin is marked clock: still a
+     latch, and a latch has no clock wedge. */
+  cell (ec_latch_active_low) {
+    area : 15.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    latch (IQ, IQ_N) { enable : "!GATE_N" ; data_in : "D" ; }
+    pin (D) { direction : input ; }
+    pin (GATE_N) { direction : input ; clock : true ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+  }
+
+  cell (ec_latch_active_high) {
+    area : 15.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    latch (IQ, IQ_N) { enable : "G" ; data_in : "D" ; }
+    pin (D) { direction : input ; }
+    pin (G) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ" ; }
+  }
+
+  cell (ec_latch_bank) {
+    area : 30.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    latch_bank (IQ, IQ_N, 2) { enable : "G" ; data_in : "D" ; }
+    pin (D0) { direction : input ; }
+    pin (D1) { direction : input ; }
+    pin (G) { direction : input ; }
+    pin (Q0) { direction : output ; function : "IQ" ; }
+    pin (Q1) { direction : output ; function : "IQ" ; }
+  }
+
+  cell (ec_statetable) {
+    area : 18.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    statetable ("CLK GATE", "M0") {
+      table : "L L : - : L, \
+               L H : - : H, \
+               H - : - : N" ;
+    }
+    pin (CLK) { direction : input ; clock : true ; }
+    pin (GATE) { direction : input ; }
+    pin (M0) { direction : internal ; internal_node : M0 ; }
+    pin (GCLK) { direction : output ; state_function : "(CLK*M0)" ; }
+  }
+
+  /* ---- power and ground pins ------------------------------------------ */
+
+  /* Every pg_type: the type decides, whatever the name. */
+  cell (ec_pg_types) {
+    area : 2.0 ;
+    pg_pin (KAPWR) { pg_type : backup_power ; }
+    pg_pin (LVPWR) { pg_type : internal_power ; }
+    pg_pin (VPB) { pg_type : nwell ; }
+    pg_pin (DNW) { pg_type : deepnwell ; }
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pg_pin (KAGND) { pg_type : backup_ground ; }
+    pg_pin (VSSI) { pg_type : internal_ground ; }
+    pg_pin (VNB) { pg_type : pwell ; }
+    pg_pin (DPW) { pg_type : deeppwell ; }
+    pg_pin (VDDX) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A" ; }
+  }
+
+  cell (ec_pg_names_sky130) {
+    area : 2.0 ;
+    pg_pin (VPWR) { }
+    pg_pin (VGND) { }
+    pg_pin (VPB) { }
+    pg_pin (VNB) { }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A" ; }
+  }
+
+  cell (ec_pg_names_vdd_vss) {
+    area : 2.0 ;
+    pg_pin (VDD) { }
+    pg_pin (VSS) { }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A" ; }
+  }
+
+  /* Names compare without regard to case; VDD, VCC, VSS and GND may start a
+     longer name. A pg_pin no rule places keeps no face of its own. */
+  cell (ec_pg_names_lower_case_and_prefixed) {
+    area : 2.0 ;
+    pg_pin (vdd) { }
+    pg_pin (gnd) { }
+    pg_pin (VCCA) { }
+    pg_pin (VSSIO) { }
+    pg_pin (VBIAS) { }
+    pin (A) { direction : input ; }
+    pin (Y) { direction : output ; function : "!A" ; }
+  }
+
+  /* A box with supply pins still places them. */
+  cell (ec_box_with_supplies) {
+    area : 4.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A1) { direction : input ; }
+    pin (A2) { direction : input ; }
+    pin (B1) { direction : input ; }
+    pin (X) { direction : output ; function : "(A1&A2) | B1" ; }
+  }
+
+  /* A box with no supply pins at all. */
+  cell (ec_box_without_supplies) {
+    area : 4.0 ;
+    pin (A1) { direction : input ; }
+    pin (A2) { direction : input ; }
+    pin (B1) { direction : input ; }
+    pin (X) { direction : output ; function : "(A1&A2) | B1" ; }
+  }
+
+  /* A clock flag on a gate's input draws no wedge: only flip-flops have
+     them. */
+  cell (ec_clock_buffer_marked_clock) {
+    area : 3.0 ;
+    pg_pin (VPWR) { pg_type : primary_power ; }
+    pg_pin (VGND) { pg_type : primary_ground ; }
+    pin (A) { direction : input ; clock : true ; }
+    pin (X) { direction : output ; function : "A" ; }
+  }
+}

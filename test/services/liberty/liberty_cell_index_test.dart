@@ -258,6 +258,49 @@ library (l) {
       expect(libertyCellSymbolFor(cell('t__dlxtp_1'))!.clockPins, isEmpty);
     });
 
+    test('a tri-state output keeps the box, even when its function reads '
+        'every input', () {
+      final lib = LibertyParser.parseString('''
+library (l) {
+  cell (EBUF) {
+    pin (A) { direction : input ; }
+    pin (TE_B) { direction : input ; }
+    pin (Z) { direction : output ; function : "A" ; three_state : "TE_B" ; }
+  }
+  cell (TBUF_AND) {
+    pin (A) { direction : input ; }
+    pin (EN) { direction : input ; }
+    pin (Z) { direction : output ; function : "A&EN" ; three_state : "!EN" ; }
+  }
+  cell (TFF) {
+    ff (IQ, IQN) { clocked_on : CK ; next_state : D ; }
+    pin (CK) { direction : input ; clock : true ; }
+    pin (D) { direction : input ; }
+    pin (OE) { direction : input ; }
+    pin (Q) { direction : output ; function : "IQ" ; three_state : "!OE" ; }
+  }
+  cell (AND2) {
+    pin (A) { direction : input ; }
+    pin (EN) { direction : input ; }
+    pin (Z) { direction : output ; function : "A&EN" ; }
+  }
+}
+''');
+      LibertyCell named(String name) =>
+          lib.cells.firstWhere((c) => c.name == name);
+      expect(named('TBUF_AND').threeStatePins, <String>['Z']);
+      expect(named('AND2').threeStatePins, isEmpty);
+      for (final name in const <String>['EBUF', 'TBUF_AND', 'TFF']) {
+        expect(libertyCellSymbolFor(named(name)), isNull, reason: name);
+      }
+      expect(libertyCellSymbolFor(named('AND2'))!.kind, CellKind.andGate);
+      final again = LibertyLibrary.fromJson(lib.toJson());
+      expect(
+        again.cells.firstWhere((c) => c.name == 'TBUF_AND').threeStatePins,
+        <String>['Z'],
+      );
+    });
+
     test('supply pins without a pg_type are placed by their usual names', () {
       final lib = LibertyParser.parseString('''
 library (l) {

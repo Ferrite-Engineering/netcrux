@@ -42,6 +42,8 @@ void main() {
           !entity.path.endsWith('.expected_error.json') &&
           // Goldens of the parsed model, not Yosys documents.
           !entity.path.contains('expected_netlist') &&
+          // The Liberty oracle's expectations, not Yosys documents.
+          !entity.path.endsWith('.expected_symbols.json') &&
           entity.lengthSync() < 3 * 1024 * 1024)
         entity.path: entity.readAsStringSync(),
   };

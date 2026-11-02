@@ -1,0 +1,38 @@
+# Synthesizes two RTL fixtures of this repository to sky130_fd_sc_hd standard
+# cells, typical corner. Run from this directory:
+#
+#   yosys -q -s run.ys
+#
+# Each design is read with the library's cells as black boxes, the way a
+# project with the library elaborates it, so every cell instance in the JSON
+# carries its port directions. The JSON keeps the design's module and the
+# black boxes of the cells it uses, not the library's other cells.
+# `rename -enumerate` gives the Verilog and the JSON the same instance and
+# net names.
+
+# cdc_capture: flip-flops with asynchronous reset, an incrementer, a compare.
+read_liberty -lib ../../liberty/pdk/sky130_fd_sc_hd/sky130_fd_sc_hd__tt_025C_1v80.lib.gz
+read_verilog ../../verilog/cdc_capture.v
+synth -top cdc_capture -flatten
+dfflibmap -liberty ../../liberty/pdk/sky130_fd_sc_hd/sky130_fd_sc_hd__tt_025C_1v80.lib.gz
+abc -liberty ../../liberty/pdk/sky130_fd_sc_hd/sky130_fd_sc_hd__tt_025C_1v80.lib.gz
+opt_clean -purge
+hierarchy -top cdc_capture
+rename -enumerate
+write_verilog -noattr cdc_capture.v
+delete =A:blackbox =cdc_capture %s %d
+write_json cdc_capture.json
+
+design -reset
+
+# adder4: a four-bit adder with carry in and out, combinational only.
+read_liberty -lib ../../liberty/pdk/sky130_fd_sc_hd/sky130_fd_sc_hd__tt_025C_1v80.lib.gz
+read_verilog ../../verilog/adder4.v
+synth -top adder4 -flatten
+abc -liberty ../../liberty/pdk/sky130_fd_sc_hd/sky130_fd_sc_hd__tt_025C_1v80.lib.gz
+opt_clean -purge
+hierarchy -top adder4
+rename -enumerate
+write_verilog -noattr adder4.v
+delete =A:blackbox =adder4 %s %d
+write_json adder4.json

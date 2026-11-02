@@ -25,7 +25,8 @@ import 'package:netcrux/services/liberty/liberty_library.dart';
 ///
 /// - `pin(A)` and `pin(A, B)` with `direction : input | output | inout`;
 ///   `internal` pins are left out, and a pin with no direction is `inout`.
-///   A pin's `function` and `clock : true` are kept.
+///   A pin's `function`, `clock : true` and whether it has a `three_state`
+///   condition are kept.
 /// - `pg_pin(VDD)` as an `inout` port, so RTL that wires power and ground
 ///   still connects, with its `pg_type`.
 /// - The cell's `area`, and its `ff` or `latch` group with the expressions
@@ -181,6 +182,9 @@ class LibertyParser {
               if (pin.clock && !cell.clocks.contains(name)) {
                 cell.clocks.add(name);
               }
+              if (pin.threeState && !cell.threeStates.contains(name)) {
+                cell.threeStates.add(name);
+              }
             }
           case 'pg_pin':
             final pgType = _pgPin();
@@ -229,11 +233,13 @@ class LibertyParser {
     return cell;
   }
 
-  /// Reads a `pin` body: its `direction`, `function` and `clock`.
+  /// Reads a `pin` body: its `direction`, `function`, `clock` and whether
+  /// it has a `three_state` condition.
   _Pin _pin(String what) {
     String? direction;
     String? function;
     var clock = false;
+    var threeState = false;
     _body(
       what,
       (group) => _lexer.skipGroupBody(group.name, group.line),
@@ -245,10 +251,17 @@ class LibertyParser {
             function = value.trim();
           case 'clock':
             clock = value.toLowerCase() == 'true';
+          case 'three_state':
+            threeState = value.trim().isNotEmpty;
         }
       },
     );
-    return _Pin(direction, function: function, clock: clock);
+    return _Pin(
+      direction,
+      function: function,
+      clock: clock,
+      threeState: threeState,
+    );
   }
 
   /// Reads a `pg_pin` body and returns its `pg_type`, or `null`.
@@ -530,6 +543,10 @@ class LibertyParser {
         for (final pin in raw.clocks)
           if (names.contains(pin)) pin,
       ],
+      threeStatePins: <String>[
+        for (final pin in raw.threeStates)
+          if (names.contains(pin)) pin,
+      ],
       pgPins: raw.pgPins,
       storage: raw.storageGroups == 1 ? raw.storage : null,
       hasOtherStorage: raw.storageGroups > 1,
@@ -614,10 +631,16 @@ final class _Complex extends _Statement {
 }
 
 class _Pin {
-  _Pin(this.direction, {this.function, this.clock = false});
+  _Pin(
+    this.direction, {
+    this.function,
+    this.clock = false,
+    this.threeState = false,
+  });
   final String? direction;
   final String? function;
   final bool clock;
+  final bool threeState;
 }
 
 class _Bus {
@@ -667,6 +690,7 @@ class _RawCell {
   final Map<String, _BusType> types = <String, _BusType>{};
   final Map<String, String> functions = <String, String>{};
   final List<String> clocks = <String>[];
+  final List<String> threeStates = <String>[];
   final Map<String, String?> pgPins = <String, String?>{};
   double? area;
   LibertyStorage? storage;

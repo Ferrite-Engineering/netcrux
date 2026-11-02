@@ -81,7 +81,7 @@ class LibertyStubService {
 
   /// Bumped when the parser or writer changes what it produces, so stale
   /// cache entries are never read.
-  static const int formatVersion = 2;
+  static const int formatVersion = 3;
 
   Future<Directory>? _dir;
 

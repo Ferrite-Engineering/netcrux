@@ -12,6 +12,9 @@ import 'package:path/path.dart' as p;
 /// proprietary captures are blocked. Mirrors WaveCrux's
 /// `captured_fixture_licenses_test`. Passes vacuously when no captured
 /// tier exists, so a new captured core cannot ship with a forbidden license.
+/// The third-party standard-cell libraries under `test/fixtures/liberty/pdk/`
+/// are held to the same allow-list and must also carry the upstream
+/// `LICENSE` text.
 void main() {
   const allowedLicenses = <String>{
     'MIT',
@@ -90,5 +93,42 @@ void main() {
           'captured fixtures with a forbidden license:\n'
           '${violations.join('\n')}',
     );
+  });
+
+  // Third-party cell libraries: each directory under the PDK root is one
+  // upstream library, committed with its provenance and its licence text.
+  test('every PDK cell library carries a PROVENANCE.md with an allowed '
+      'license and the upstream LICENSE', () {
+    const pdkRoot = 'test/fixtures/liberty/pdk';
+    final root = Directory(pdkRoot);
+    expect(root.existsSync(), isTrue, reason: '$pdkRoot is missing');
+    // A local `__pycache__` from running the oracle is not a library.
+    final libraries = root
+        .listSync()
+        .whereType<Directory>()
+        .where((d) => !p.basename(d.path).startsWith(RegExp('[._]')))
+        .toList();
+    expect(libraries, isNotEmpty);
+    final violations = <String>[];
+    for (final library in libraries) {
+      final name = p.relative(library.path);
+      final provenance = File(p.join(library.path, 'PROVENANCE.md'));
+      if (!provenance.existsSync()) {
+        violations.add('$name: no PROVENANCE.md');
+        continue;
+      }
+      if (!File(p.join(library.path, 'LICENSE')).existsSync()) {
+        violations.add('$name: no LICENSE');
+      }
+      final matches = spdx.allMatches(provenance.readAsStringSync());
+      if (matches.isEmpty) violations.add('$name: no SPDX license found');
+      for (final match in matches) {
+        final license = match.group(1)!.trim();
+        if (!allowedLicenses.contains(license)) {
+          violations.add('$name: SPDX `$license` not in allow-list');
+        }
+      }
+    }
+    expect(violations, isEmpty, reason: violations.join('\n'));
   });
 }

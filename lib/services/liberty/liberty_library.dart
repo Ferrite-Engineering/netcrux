@@ -161,8 +161,8 @@ class LibertyStorage {
 
 /// One `cell` group: its name and its ports in declaration order, and the
 /// parts of its data sheet a schematic shows: the function of each output
-/// pin, which pins are clocks, the type of each power and ground pin, its
-/// storage group and its area.
+/// pin, which pins are clocks and which are tri-state, the type of each
+/// power and ground pin, its storage group and its area.
 @immutable
 class LibertyCell {
   /// Creates a cell.
@@ -172,12 +172,14 @@ class LibertyCell {
     this.area,
     Map<String, String> functions = const <String, String>{},
     List<String> clockPins = const <String>[],
+    List<String> threeStatePins = const <String>[],
     Map<String, String?> pgPins = const <String, String?>{},
     this.storage,
     this.hasOtherStorage = false,
   }) : ports = List<LibertyPort>.unmodifiable(ports),
        functions = Map<String, String>.unmodifiable(functions),
        clockPins = List<String>.unmodifiable(clockPins),
+       threeStatePins = List<String>.unmodifiable(threeStatePins),
        pgPins = Map<String, String?>.unmodifiable(pgPins);
 
   /// Decodes a cell written by [toJson].
@@ -200,6 +202,11 @@ class LibertyCell {
       clockPins: <String>[
         for (final pin
             in (json['clocks'] as List<Object?>?) ?? const <Object?>[])
+          pin! as String,
+      ],
+      threeStatePins: <String>[
+        for (final pin
+            in (json['three_state'] as List<Object?>?) ?? const <Object?>[])
           pin! as String,
       ],
       pgPins: <String, String?>{
@@ -232,6 +239,10 @@ class LibertyCell {
   /// The pins marked `clock : true`, in declaration order.
   final List<String> clockPins;
 
+  /// The pins with a `three_state` attribute, which can drive high
+  /// impedance, in declaration order.
+  final List<String> threeStatePins;
+
   /// Every `pg_pin` by name, with its `pg_type` (`primary_power`,
   /// `primary_ground`, `nwell`, ...) or `null` when it declares none.
   final Map<String, String?> pgPins;
@@ -250,6 +261,7 @@ class LibertyCell {
     if (area != null) 'area': area,
     if (functions.isNotEmpty) 'functions': functions,
     if (clockPins.isNotEmpty) 'clocks': clockPins,
+    if (threeStatePins.isNotEmpty) 'three_state': threeStatePins,
     if (pgPins.isNotEmpty) 'pg': pgPins,
     if (storage != null) 'storage': storage!.toJson(),
     if (hasOtherStorage) 'other_storage': true,
