@@ -86,8 +86,11 @@ class _PaneRenderStatsButtonState extends ConsumerState<PaneRenderStatsButton> {
   /// that association in a split layout.
   void _show(BuildContext context) {
     final box = context.findRenderObject() as RenderBox?;
+    // The dialog below goes onto the root navigator, so the card is placed
+    // against the root overlay: a file tab's own overlay starts lower.
     final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox?;
+        Overlay.of(context, rootOverlay: true).context.findRenderObject()
+            as RenderBox?;
     if (box == null || overlay == null) return;
 
     // The route is pushed onto a Navigator that lives ABOVE the pane's

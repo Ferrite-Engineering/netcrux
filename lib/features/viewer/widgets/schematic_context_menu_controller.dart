@@ -84,13 +84,17 @@ class SchematicContextMenuController {
   }) async {
     if (target.isNone) return null;
     final l10n = L10N.of(context);
+    // The menu is shown on the root navigator, so its position is worked out
+    // against the root overlay. Each file tab has a navigator of its own whose
+    // overlay starts below the toolbar and tab bar, and a position taken
+    // against that one would put the menu that far below the pointer.
     final overlay =
-        Overlay.of(context).context.findRenderObject()! as RenderBox;
-    final position = RelativeRect.fromLTRB(
-      globalPosition.dx,
-      globalPosition.dy,
-      overlay.size.width - globalPosition.dx,
-      overlay.size.height - globalPosition.dy,
+        Overlay.of(context, rootOverlay: true).context.findRenderObject()!
+            as RenderBox;
+    final local = overlay.globalToLocal(globalPosition);
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(local, local),
+      Offset.zero & overlay.size,
     );
     // Gather the extension entries: the cross-probe and annotation builders
     // in open core, plus whatever the Pro overlay's `proOverrides` registers.
@@ -153,6 +157,7 @@ class SchematicContextMenuController {
       context: context,
       position: position,
       items: items,
+      useRootNavigator: true,
     );
     if (value == null) return null;
     if (value is SchematicContextMenuAction) {
