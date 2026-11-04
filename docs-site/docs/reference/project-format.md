@@ -45,6 +45,7 @@ Only `version` is required. Every other field may be left out and takes the defa
 - An absolute path is used as written, so a project can point at shared IP or a library outside its own tree.
 - Environment variables such as `$PROJ_ROOT` are not expanded. A script that generates a project should write the paths out in full. A [Vivado-style filelist](../files-and-projects.md#filelist) does expand them, if you would rather keep them.
 - `File → Save Project As…` writes paths relative to the project file when they share a root with it.
+- From NetCrux 1.2, relative paths are always written with `/`, on Windows too, so one project file opens on Windows, macOS and Linux. On macOS and Linux a `\` in a relative path is read as a separator, which lets a project saved on Windows by an earlier version open there. An absolute Windows path (`C:\...`) is not translated, and stays unresolvable on another system.
 
 ## Extra Yosys commands {#extra-yosys-commands}
 

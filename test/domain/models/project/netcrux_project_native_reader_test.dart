@@ -115,10 +115,8 @@ void main() {
           c.normalize(c.join(dir, '..', 'shared', 'io.v')),
         ]);
         final back = relativizeProjectPaths(resolved, dir, pathContext: c);
-        expect(back.cellModelFiles, [
-          c.join('models', 'cells.v'),
-          c.join('..', 'shared', 'io.v'),
-        ]);
+        // Written with `/` whichever style produced it.
+        expect(back.cellModelFiles, ['models/cells.v', '../shared/io.v']);
       });
     }
   });

@@ -143,7 +143,8 @@ void main() {
           style.dir,
           pathContext: c,
         );
-        expect(relative.libertyFiles.first, c.join('..', 'pdk', 'cells.lib'));
+        // Written with `/` whichever style produced it.
+        expect(relative.libertyFiles.first, '../pdk/cells.lib');
       });
     }
   });

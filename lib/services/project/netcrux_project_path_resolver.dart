@@ -47,11 +47,14 @@ NetcruxProject resolveProjectPaths(
   p.Context? pathContext,
 }) {
   final context = pathContext ?? p.context;
-  String resolve(String path) => context.normalize(
-    context.absolute(
-      context.isAbsolute(path) ? path : context.join(projectDir, path),
-    ),
-  );
+  String resolve(String path) {
+    final entry = _readableEntry(context, path);
+    return context.normalize(
+      context.absolute(
+        context.isAbsolute(entry) ? entry : context.join(projectDir, entry),
+      ),
+    );
+  }
 
   final sourceFiles = <String>[for (final f in project.sourceFiles) resolve(f)];
   final includePaths = <String>[
@@ -82,7 +85,14 @@ NetcruxProject resolveProjectPaths(
 /// written relative to it (`..` segments included, as a filelist would), so
 /// the file travels between checkouts and machines; a path on another root,
 /// a second Windows drive, stays absolute, since no relative path reaches
-/// it. A path already relative is kept as written.
+/// it. A path already relative is kept as written, apart from its
+/// separators.
+///
+/// Relative entries are always written with `/`, whatever the host: a
+/// project committed from Windows must find its sources on macOS and
+/// Linux, where `\` is an ordinary file-name character, while Windows
+/// reads `/` without trouble. Absolute entries are left in the host's own
+/// spelling.
 ///
 /// [NetcruxProject.sourceFileLanguages] is keyed by the same strings as
 /// [NetcruxProject.sourceFiles], so its keys are rewritten in step, as the
@@ -95,7 +105,7 @@ NetcruxProject relativizeProjectPaths(
   final context = pathContext ?? p.context;
   final dir = context.normalize(context.absolute(projectDir));
   String relativize(String path) {
-    if (!context.isAbsolute(path)) return path;
+    if (!context.isAbsolute(path)) return _portableRelative(path);
     final normalized = context.normalize(path);
     if (!context.equals(
       context.rootPrefix(normalized),
@@ -103,7 +113,7 @@ NetcruxProject relativizeProjectPaths(
     )) {
       return normalized;
     }
-    return context.relative(normalized, from: dir);
+    return _portableRelative(context.relative(normalized, from: dir));
   }
 
   final sourceFiles = <String>[
@@ -130,4 +140,28 @@ NetcruxProject relativizeProjectPaths(
     libertyFiles: libertyFiles,
     cellModelFiles: cellModelFiles,
   );
+}
+
+/// [path] with every `\` turned into `/`: the one spelling of a relative
+/// project entry that every host reads. Used for relative entries only; an
+/// absolute Windows path keeps the separators it was given.
+String _portableRelative(String path) =>
+    _windowsAbsolute.hasMatch(path) ? path : path.replaceAll(r'\', '/');
+
+/// Whether [path] names a location on a Windows volume: a drive letter
+/// (`C:\`, `C:/`) or a UNC share (`\\host\share`).
+final RegExp _windowsAbsolute = RegExp(r'^(?:[A-Za-z]:[\\/]|\\\\)');
+
+/// [path] as [context] should read it from a project file.
+///
+/// A project saved on Windows by an earlier build spells its relative
+/// entries with `\`. Windows reads those natively; on a POSIX host a
+/// backslash is a file-name character, so the entry is read with `/`
+/// instead, which is what its author meant. An absolute POSIX path is left
+/// alone, and so is a Windows-absolute entry (`C:\...`, UNC): it cannot
+/// resolve on this host and keeps the not-found handling it always had.
+String _readableEntry(p.Context context, String path) {
+  if (context.style == p.Style.windows) return path;
+  if (context.isAbsolute(path) || _windowsAbsolute.hasMatch(path)) return path;
+  return path.replaceAll(r'\', '/');
 }
