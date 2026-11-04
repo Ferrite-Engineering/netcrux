@@ -110,19 +110,42 @@ void main() {
       expect(project.libertyFiles, isEmpty);
     });
 
-    test('paths are anchored and made relative like sources', () {
-      final project = NetcruxProject.create(
-        sourceFiles: const <String>['rtl/top.v'],
-        libertyFiles: const <String>['../pdk/cells.lib', '/abs/other.lib'],
-      );
-      final resolved = resolveProjectPaths(project, '/work/proj');
-      expect(resolved.libertyFiles, <String>[
-        p.normalize('/work/pdk/cells.lib'),
-        p.normalize('/abs/other.lib'),
-      ]);
-      final relative = relativizeProjectPaths(resolved, '/work/proj');
-      expect(relative.libertyFiles.first, p.join('..', 'pdk', 'cells.lib'));
-    });
+    // Spelled with a rooted path of the style under test, not a POSIX path
+    // handed to the host's context: `/work/proj` is drive-relative on
+    // Windows, and anchoring it there adds the drive. Each style is run from
+    // every host.
+    final styles = <String, ({p.Context context, String dir, String abs})>{
+      'posix': (context: p.posix, dir: '/work/proj', abs: '/abs/other.lib'),
+      'windows': (
+        context: p.windows,
+        dir: r'C:\work\proj',
+        abs: r'C:\abs\other.lib',
+      ),
+    };
+    for (final MapEntry(key: name, value: style) in styles.entries) {
+      test('paths are anchored and made relative like sources ($name)', () {
+        final c = style.context;
+        final project = NetcruxProject.create(
+          sourceFiles: const <String>['rtl/top.v'],
+          libertyFiles: <String>['../pdk/cells.lib', style.abs],
+        );
+        final resolved = resolveProjectPaths(
+          project,
+          style.dir,
+          pathContext: c,
+        );
+        expect(resolved.libertyFiles, <String>[
+          c.normalize(c.join(style.dir, '..', 'pdk', 'cells.lib')),
+          c.normalize(style.abs),
+        ]);
+        final relative = relativizeProjectPaths(
+          resolved,
+          style.dir,
+          pathContext: c,
+        );
+        expect(relative.libertyFiles.first, c.join('..', 'pdk', 'cells.lib'));
+      });
+    }
   });
 
   group('filelist', () {

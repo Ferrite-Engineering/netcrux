@@ -93,24 +93,34 @@ void main() {
   });
 
   group('path anchoring', () {
-    final dir = p.normalize(p.absolute(p.join('/tmp', 'designs', 'cpu')));
-
-    test(
-      'cell model files resolve against the project and relativize back',
-      () {
+    // A project directory of each style, rooted the way that style roots
+    // paths, so the check holds on every host and a POSIX spelling is never
+    // handed to the Windows context (where `/tmp` is drive-relative).
+    final styles = <String, ({p.Context context, String dir})>{
+      'posix': (context: p.posix, dir: '/tmp/designs/cpu'),
+      'windows': (context: p.windows, dir: r'C:\tmp\designs\cpu'),
+    };
+    for (final MapEntry(key: name, value: style) in styles.entries) {
+      test('cell model files resolve against the project and relativize back '
+          '($name)', () {
+        final c = style.context;
+        final dir = style.dir;
         final project = NetcruxProject.create(
           sourceFiles: const <String>['top.v'],
           cellModelFiles: const <String>['models/cells.v', '../shared/io.v'],
         );
-        final resolved = resolveProjectPaths(project, dir);
+        final resolved = resolveProjectPaths(project, dir, pathContext: c);
         expect(resolved.cellModelFiles, [
-          p.join(dir, 'models', 'cells.v'),
-          p.normalize(p.join(dir, '..', 'shared', 'io.v')),
+          c.join(dir, 'models', 'cells.v'),
+          c.normalize(c.join(dir, '..', 'shared', 'io.v')),
         ]);
-        final back = relativizeProjectPaths(resolved, dir);
-        expect(back.cellModelFiles, ['models/cells.v', '../shared/io.v']);
-      },
-    );
+        final back = relativizeProjectPaths(resolved, dir, pathContext: c);
+        expect(back.cellModelFiles, [
+          c.join('models', 'cells.v'),
+          c.join('..', 'shared', 'io.v'),
+        ]);
+      });
+    }
   });
 
   group('elaboration cache key', () {

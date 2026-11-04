@@ -524,6 +524,27 @@ endmodule
       expect(rows.single.severity, YosysDiagnosticSeverity.warning);
     });
 
+    test('a file on a Windows drive still yields its Warning row', () {
+      // The Diagnostics line is parsed back into a row. A drive letter's
+      // colon must not be taken for the one before the line number, or a
+      // Windows user opening a truncated netlist sees no Warning at all.
+      for (final path in <String>[r'C:\proj\n.v', 'd:/proj/n.v']) {
+        final outcome = NativeReadFallbackOutcome(
+          stop: NativeReaderStop.malformed,
+          message: 'unexpected end of file',
+          path: path,
+          line: 2,
+        );
+        final rows = const YosysDiagnosticParser().parse(
+          outcome.diagnosticLine,
+        );
+        expect(rows, hasLength(1), reason: outcome.diagnosticLine);
+        expect(rows.single.severity, YosysDiagnosticSeverity.warning);
+        expect(rows.single.filePath, path);
+        expect(rows.single.line, 2);
+      }
+    });
+
     test('a stray token before any module', () {
       expect(declined('hello').stop, NativeReaderStop.malformed);
     });

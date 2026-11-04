@@ -19,8 +19,13 @@ void main() {
   testWidgets('a relative command-line source opens as an absolute path', (
     tester,
   ) async {
+    // Under the working directory, not the system temp directory: on a
+    // Windows runner the two are on different drives (`C:` and `D:`), and no
+    // relative path reaches a file on another drive, so the path typed below
+    // would come back absolute and the test would not be testing a relative
+    // one.
     final dir = Directory(
-      Directory.systemTemp
+      Directory.current
           .createTempSync('netcrux_cli_relative_')
           .resolveSymbolicLinksSync(),
     );
@@ -40,9 +45,8 @@ void main() {
 
     final tab = h.root.read(netcruxWorkspaceProvider).value!.tabs.single;
     expect(tab.payload.sourceFiles, <String>[file.path]);
-    expect(
-      h.activeTab.read(currentProjectProvider).sourceFiles,
-      <String>[file.path],
-    );
+    expect(h.activeTab.read(currentProjectProvider).sourceFiles, <String>[
+      file.path,
+    ]);
   });
 }
