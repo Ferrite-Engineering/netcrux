@@ -89,18 +89,16 @@ void main() {
       await tester.pump();
       expect(find.textContaining('Saved to'), findsOneWidget);
 
-      // What the file holds is portable: relative where the root is shared.
+      // What the file holds is portable: relative where the root is shared,
+      // and spelled with `/` on every host.
       final written = await tester.runAsync(
         () => const NetcruxProjectFileReader().read(path),
       );
-      expect(written!.sourceFiles, <String>[
-        p.join('rtl', 'gpio.v'),
-        p.join('rtl', 'soc_top.sv'),
-      ]);
+      expect(written!.sourceFiles, <String>['rtl/gpio.v', 'rtl/soc_top.sv']);
       expect(written.includePaths, <String>['inc']);
       expect(written.defines, const <String, String>{'WIDTH': '32'});
       expect(written.sourceFileLanguages, <String, NetcruxSourceLanguage>{
-        p.join('rtl', 'soc_top.sv'): NetcruxSourceLanguage.systemVerilog,
+        'rtl/soc_top.sv': NetcruxSourceLanguage.systemVerilog,
       });
       // Anchored the way Open Project anchors it, it is the same design.
       expect(resolveProjectPaths(written, tempDir.path), design);
