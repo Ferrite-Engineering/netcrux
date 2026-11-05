@@ -1,7 +1,10 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
@@ -29,13 +32,34 @@ Future<LibertyCellIndex> libertyCellIndex(Ref ref) async {
   if (files.isEmpty) return LibertyCellIndex.empty;
   final service = ref.read(libertyStubServiceProvider);
   try {
-    final model = await ref.watch(loadedNetlistProvider.future);
+    final model = await _loadedDesign(ref);
     if (model == null) return LibertyCellIndex.empty;
     final loaded = await service.librariesFor(files);
     return LibertyCellIndex(loaded.libraries);
   } on Object {
     return LibertyCellIndex.empty;
   }
+}
+
+/// The tab's design once it has loaded, or `null` for a design that failed
+/// or has no sources. The caller is built again when the design reloads.
+///
+/// Waits on a future made here rather than on `loadedNetlistProvider.future`.
+/// A future that fails reaches only the listeners in the error zone it was
+/// made in, so a provider built in another zone (a frame callback registered
+/// elsewhere, a test body) never saw the failure its `try` was waiting for:
+/// it stayed loading, and the failure was reported as an uncaught error. This
+/// future completes with a value, never an error, so it settles in any zone.
+Future<NetlistModel?> _loadedDesign(Ref ref) {
+  // Watched, not awaited: it builds the caller again when the design starts
+  // loading again, as awaiting it did.
+  ref.watch(loadedNetlistProvider.future).ignore();
+  final settled = Completer<NetlistModel?>();
+  ref.listen(loadedNetlistProvider, (_, design) {
+    if (design.isLoading || settled.isCompleted) return;
+    settled.complete(design.hasError ? null : design.value);
+  }, fireImmediately: true);
+  return settled.future;
 }
 
 /// How the tab's design draws its cell-library cells (gate symbols, clock
@@ -45,7 +69,7 @@ Future<LibertyCellIndex> libertyCellIndex(Ref ref) async {
 @Riverpod(keepAlive: true)
 Future<LibertyCellSymbols> libertyCellSymbols(Ref ref) async {
   try {
-    final model = await ref.watch(loadedNetlistProvider.future);
+    final model = await _loadedDesign(ref);
     if (model == null) return LibertyCellSymbols.none;
     final index = await ref.watch(libertyCellIndexProvider.future);
     return index.symbolsFor(model);

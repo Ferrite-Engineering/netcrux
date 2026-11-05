@@ -6,6 +6,7 @@
 // area roll-up are derived from it, and the layout pass lays a gate-level
 // scope out once, with the library's drawing.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,6 +96,23 @@ final NetlistModel _model = NetlistModel.fromJson(<String, Object?>{
 class _FixedNetlist extends LoadedNetlist {
   @override
   Future<NetlistModel?> build() async => _model;
+}
+
+/// A design that fails to load, once [_FailingNetlist.release] completes.
+class _FailingNetlist extends LoadedNetlist {
+  _FailingNetlist(this.release);
+
+  final Future<void> release;
+
+  @override
+  Future<NetlistModel?> build() async {
+    ref.watch(currentProjectProvider);
+    await release;
+    throw const LoadedNetlistException(
+      'Yosys is not available',
+      kind: LoadedNetlistErrorKind.yosysUnavailable,
+    );
+  }
 }
 
 /// Lays every cell out in a row and remembers what it was asked.
@@ -211,4 +229,55 @@ void main() {
     expect(layout.calls, hasLength(1));
     expect(layout.calls.single['NAND2']!.supplyFace('VSS'), 'SOUTH');
   });
+  test(
+    'a design that fails while another zone waits on it leaves the '
+    'drawing and the index empty, and its failure stays in the design',
+    () async {
+      final release = Completer<void>();
+      final c = ProviderContainer(
+        overrides: <Override>[
+          loadedNetlistProvider.overrideWith(
+            () => _FailingNetlist(release.future),
+          ),
+          libertyStubServiceProvider.overrideWithValue(
+            LibertyStubService(
+              cacheBaseDirectory: () async => Directory(p.join(root.path, 'c')),
+            ),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+      c
+          .read(currentProjectProvider.notifier)
+          .setProject(
+            NetcruxProject.create(
+              sourceFiles: const <String>['top.v'],
+              libertyFiles: <String>[libPath],
+            ),
+          );
+      // The design starts loading in this zone, and the Inspector reads the
+      // libraries from another error zone, as a frame callback registered in
+      // another zone does. A failure awaited across that boundary used to be
+      // reported as uncaught and left both providers loading.
+      c.listen(loadedNetlistProvider, (_, _) {});
+      final escaped = <Object>[];
+      runZonedGuarded(() {
+        c
+          ..listen(libertyCellSymbolsProvider, (_, _) {})
+          ..listen(libertyCellIndexProvider, (_, _) {});
+      }, (error, _) => escaped.add(error));
+      release.complete();
+
+      expect(
+        await c.read(libertyCellSymbolsProvider.future),
+        LibertyCellSymbols.none,
+      );
+      expect((await c.read(libertyCellIndexProvider.future)).isEmpty, isTrue);
+      expect(
+        c.read(loadedNetlistProvider).error,
+        isA<LoadedNetlistException>(),
+      );
+      expect(escaped, isEmpty);
+    },
+  );
 }
