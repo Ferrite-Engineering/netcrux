@@ -13,6 +13,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:path/path.dart' as p;
 
 import '../helpers/app_driver.dart';
 
@@ -25,11 +26,14 @@ void main() {
     (tester) async {
       final dir = Directory.systemTemp.createTempSync('netcrux_cli_multi_');
       addTearDown(() => dir.deleteSync(recursive: true));
+      // Built with `package:path` as the app builds them: the launch
+      // handler opens each file under `p.normalize(p.absolute(path))`, so a
+      // `/` joined onto a Windows temp directory would never match.
       final paths = <String>[];
       for (final name in const ['a', 'b', 'c']) {
-        final f = File('${dir.path}/$name.v')
-          ..writeAsStringSync('module $name(); endmodule\n');
-        paths.add(f.path);
+        final path = p.normalize(p.absolute(p.join(dir.path, '$name.v')));
+        File(path).writeAsStringSync('module $name(); endmodule\n');
+        paths.add(path);
       }
 
       await bootNetcrux(tester, args: paths);

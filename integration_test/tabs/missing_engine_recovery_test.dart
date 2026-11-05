@@ -28,6 +28,13 @@
 // exercises the identical fatal-error rendering path a missing-file
 // failure (a Yosys non-zero exit, `LoadedNetlistErrorKind.nonZeroExit`)
 // would hit downstream of the same `loadedAsync.hasError` branches.
+//
+// The design is RTL (a `reg` written in an `always` block), which only
+// Yosys can read: the native gate-level reader declines it, so the pipeline
+// falls back to the missing engine. A structural netlist would be read natively without
+// Yosys and never reach the failure this test is about; that path is
+// covered by
+// `test/features/project/providers/loaded_netlist_native_reader_test.dart`.
 
 import 'dart:io';
 
@@ -47,10 +54,19 @@ import 'package:netcrux/features/workspace/widgets/schematic_error_view.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
+import 'package:path/path.dart' as p;
 
 import '../helpers/app_driver.dart';
 
 const _kUnavailableReason = 'missing-engine-recovery-test';
+
+/// Behavioural Verilog the native gate-level reader declines, so reading it
+/// needs Yosys.
+const _kRtlSource = '''
+module top (input clk, input d, output reg q);
+  always @(posedge clk) q <= d;
+endmodule
+''';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -64,8 +80,8 @@ void main() {
         'netcrux_missing_engine_',
       );
       addTearDown(() => dir.deleteSync(recursive: true));
-      final sourcePath = '${dir.path}/top.v';
-      File(sourcePath).writeAsStringSync('module top(); endmodule\n');
+      final sourcePath = p.join(dir.path, 'top.v');
+      File(sourcePath).writeAsStringSync(_kRtlSource);
 
       await bootNetcrux(
         tester,
