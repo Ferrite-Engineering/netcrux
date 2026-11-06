@@ -4,10 +4,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/domain/models/custom_cell_symbol/custom_cell_symbol.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/services/custom_cell_symbols/custom_cell_symbol_registry_provider.dart';
+import 'package:netcrux/services/custom_cell_symbols/symbol_supply_pins.dart';
 import 'package:netcrux/services/liberty/liberty_cell_index.dart';
 import 'package:netcrux/services/liberty/liberty_stub_service_provider.dart';
 import 'package:netcrux/services/liberty/module_area_rollup.dart';
@@ -66,13 +69,20 @@ Future<NetlistModel?> _loadedDesign(Ref ref) {
 /// wedges, supply pins on the top and bottom faces). Value-equal, so the
 /// layout re-runs only when a drawing changes. [LibertyCellSymbols.none]
 /// until the design and its libraries are read, or when either fails.
+///
+/// The supply pins a custom cell symbol names are added for the types whose
+/// libraries declare none ([withSymbolSupplyPins]), so the supply rule holds
+/// for them too. Open core has no custom symbols, so nothing is added there.
 @Riverpod(keepAlive: true)
 Future<LibertyCellSymbols> libertyCellSymbols(Ref ref) async {
+  final symbols =
+      ref.watch(customCellSymbolSnapshotProvider).value ??
+      const <String, CustomCellSymbol>{};
   try {
     final model = await _loadedDesign(ref);
     if (model == null) return LibertyCellSymbols.none;
     final index = await ref.watch(libertyCellIndexProvider.future);
-    return index.symbolsFor(model);
+    return withSymbolSupplyPins(index.symbolsFor(model), symbols);
   } on Object {
     return LibertyCellSymbols.none;
   }

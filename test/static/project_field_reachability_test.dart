@@ -50,6 +50,9 @@ const Map<String, String> _otherFields = <String, String>{
   // Picks the reader.
   'netlistReader':
       'lib/features/project/providers/loaded_netlist_provider.dart',
+  // Drawn from by NetCrux Pro only; the open core anchors each entry to the
+  // project folder so the overlay reads absolute paths.
+  'symbolLibraries': 'lib/services/project/netcrux_project_path_resolver.dart',
 };
 
 void main() {

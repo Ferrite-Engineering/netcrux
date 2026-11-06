@@ -92,7 +92,13 @@ Options:
                       design it cannot read still falls back to Yosys),
                       `yosys` always runs Yosys. Overrides Settings >
                       Engines and the project's netlistReader key.
-  --no-restore        Launch without restoring the previous session's tabs
+  --symbol-library <path>
+                      NetCrux Pro: read a Symlib symbol library, or every
+                      .sym and .symlib file in a folder, and draw the cells
+                      it names with its symbols. Repeat for more libraries;
+                      a later one wins over an earlier one. Ignored by the
+                      open-core build.
+  --no-restore       Launch without restoring the previous session's tabs
                       (nothing is deleted). Try this first if the app hangs
                       on startup.
   --reset             Clear all saved workspace/session state (workspace

@@ -496,7 +496,11 @@ const double symbolPinPitch = 10;
 /// at the place its anchor names.
 Map<String, Object?> _symbolCellNode(Cell cell, CellSymbolGeometry geometry) {
   final faces = symbolPortFaces(cell, geometry);
-  final size = symbolCellNodeSize(faces.values, geometry.aspect);
+  final size = symbolCellNodeSize(
+    faces.values,
+    geometry.aspect,
+    requestedHeight: geometry.requestedHeight,
+  );
   final centres = symbolPortCentres(cell, geometry, faces, size);
   const portSize = 4.0;
   const half = portSize / 2;
@@ -566,12 +570,16 @@ Map<String, String> symbolPortFaces(Cell cell, CellSymbolGeometry geometry) {
 /// built-in node keeps: the west and east faces need a height of
 /// `32 + 10 × pins` for the busier of the two, the north and south faces
 /// the same in width. The node is the smallest rectangle of the drawing's
-/// aspect that meets both, rounded to hundredths.
-@visibleForTesting
+/// aspect that meets both, rounded to hundredths, made taller (at the same
+/// aspect) when the symbol asks for a [requestedHeight] above that.
+///
+/// Public so a symbol's author (the Pro Symlib importer) can draw at the
+/// size the node will have.
 ({double width, double height}) symbolCellNodeSize(
   Iterable<String> faces,
-  double aspect,
-) {
+  double aspect, {
+  double? requestedHeight,
+}) {
   var west = 0;
   var east = 0;
   var north = 0;
@@ -590,7 +598,10 @@ Map<String, String> symbolPortFaces(Cell cell, CellSymbolGeometry geometry) {
   }
   final minHeight = 32 + symbolPinPitch * math.max(west, east);
   final minWidth = 32 + symbolPinPitch * math.max(north, south);
-  final height = math.max(minHeight, minWidth / aspect);
+  final height = math.max(
+    math.max(minHeight, minWidth / aspect),
+    requestedHeight ?? 0,
+  );
   return (width: _round2(height * aspect), height: _round2(height));
 }
 

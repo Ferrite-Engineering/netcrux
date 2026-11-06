@@ -2,7 +2,8 @@
 
 ```text
 netcrux [--workspace <file>] [--session <file>] [--yosys-path <path>]
-        [--netlist-reader <yosys|native>] [--no-restore] [--reset] [--reset-telemetry-consent] [--reset-eula]
+        [--netlist-reader <yosys|native>] [--symbol-library <path>]...
+        [--no-restore] [--reset] [--reset-telemetry-consent] [--reset-eula]
         [-h | --help]
         [<project.netcrux-project> | <session.netcrux> | <design.crux-project>
          | <design directory> | <netlist.json> | <source files...>]
@@ -18,13 +19,14 @@ NetCrux is a desktop application with a command-line front door. Every invocatio
 | `--session <path>` | Open a `.netcrux` session file in a new tab: its design is re-elaborated and its view state restored. |
 | `--yosys-path <path>` | Use this Yosys binary for this launch, overriding `Settings → Engines`. |
 | `--netlist-reader <reader>` | From NetCrux 1.2: choose how a gate-level Verilog netlist is read for this launch, with `yosys` or `native` for `<reader>`. `native` uses the [native gate-level reader](../files-and-projects.md#native-reader), and a file it cannot read still falls back to Yosys; `yosys` always runs Yosys. It overrides a project's `netlistReader` key and `Settings → Engines → Native gate-level reader (beta)`, so the same file can be opened both ways to compare. An unknown value is ignored with a message on stderr. |
+| `--symbol-library <path>` | Pro, from NetCrux 1.2: read a [Symlib symbol library](../symlib-import.md), or every `.sym` and `.symlib` file in a folder, and draw the cells it names with its symbols. Repeat the flag for more libraries; a later one wins over an earlier one. The open-core build accepts the flag and ignores it. |
 | `--no-restore` | Launch without restoring the previous tabs. Nothing is deleted; the next normal launch brings them back. Try this first if the app hangs on startup. |
 | `--reset` | Delete the saved workspace and per-tab session state, then launch empty. Settings, keymap and recent files are kept. |
 | `--reset-telemetry-consent` | Testing aid: forget this installation's usage-statistics answer so the first-launch choice appears again. Has a visible effect only on builds where usage statistics are live. |
 | `--reset-eula` | Testing aid: forget this installation's acceptance of the licence agreement so it is presented again on this launch. |
 | `-h`, `--help` | Print usage to stdout and exit with status 0; the app does not start. |
 
-`--workspace`, `--session`, `--yosys-path` and `--netlist-reader` accept both `--flag value` and `--flag=value`; they are the only flags that take a value. An unrecognized flag is ignored rather than rejected, and the argument after it is still read.
+`--workspace`, `--session`, `--yosys-path`, `--netlist-reader` and `--symbol-library` accept both `--flag value` and `--flag=value`; they are the only flags that take a value. An unrecognized flag is ignored rather than rejected, and the argument after it is still read.
 
 ## Positional arguments
 

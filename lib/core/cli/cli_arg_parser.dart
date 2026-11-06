@@ -178,11 +178,15 @@ class CliArgParser {
   }
 
   /// The flags that take a value (`--flag value` or `--flag=value`).
+  ///
+  /// `--symbol-library` is read by NetCrux Pro; it is listed here so its
+  /// value is never opened as a source file by a build that ignores it.
   static const _valueFlags = {
     '--workspace',
     '--session',
     '--yosys-path',
     '--netlist-reader',
+    '--symbol-library',
   };
 
   /// Strips flags from [args], leaving only positional file paths. A value

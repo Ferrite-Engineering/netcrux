@@ -112,4 +112,36 @@ void netlistReaderTests() {
       );
     });
   });
+
+  group('--symbol-library', () {
+    const parser = CliArgParser();
+
+    test('its value, in either form and repeated, is never opened', () {
+      // NetCrux Pro reads the flag; the open core strips it with its value
+      // so a library is not opened as a source file.
+      final intent = parser.parse(const <String>[
+        '--symbol-library',
+        'libs/cells.sym',
+        '--symbol-library=libs/more',
+        'top.v',
+      ]);
+      expect(
+        intent,
+        isA<OpenSourceFilesCliLaunch>().having((i) => i.paths, 'paths', [
+          'top.v',
+        ]),
+      );
+    });
+
+    test('a project after it still opens as a project', () {
+      expect(
+        parser.parse(const <String>[
+          '--symbol-library',
+          'libs',
+          'design.netcrux-project',
+        ]),
+        isA<OpenProjectCliLaunch>(),
+      );
+    });
+  });
 }

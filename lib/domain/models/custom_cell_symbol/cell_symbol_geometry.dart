@@ -1,6 +1,8 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:math' as math;
+
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/custom_cell_symbol.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/port_anchor.dart';
@@ -14,7 +16,11 @@ import 'package:netcrux/domain/models/custom_cell_symbol/port_anchor.dart';
 @immutable
 class CellSymbolGeometry {
   /// Creates a geometry. [aspect] is width over height.
-  const CellSymbolGeometry({required this.aspect, required this.anchors});
+  const CellSymbolGeometry({
+    required this.aspect,
+    required this.anchors,
+    this.requestedHeight,
+  });
 
   /// The geometry of [symbol]: the aspect of the artwork as the renderer
   /// draws it ([svgIntrinsicSize]), falling back to the symbol's declared
@@ -28,11 +34,29 @@ class CellSymbolGeometry {
     final width = intrinsic?.width ?? symbol.width;
     final height = intrinsic?.height ?? symbol.height;
     final raw = width > 0 && height > 0 ? width / height : 1.0;
+    final aspect = raw.clamp(minAspect, maxAspect);
+    // The size the symbol asks for, as a height at the drawing's aspect: the
+    // taller of its own width and height read at that aspect, so a request
+    // never squeezes the drawing.
+    final askedWidth = symbol.layoutWidth;
+    final askedHeight = symbol.layoutHeight;
+    double? requested;
+    if (askedWidth != null || askedHeight != null) {
+      requested = math.min(
+        maxRequestedHeight,
+        math.max(askedHeight ?? 0, (askedWidth ?? 0) / aspect),
+      );
+    }
     return CellSymbolGeometry(
-      aspect: raw.clamp(minAspect, maxAspect),
+      aspect: aspect,
       anchors: Map<String, PortAnchor>.unmodifiable(symbol.portAnchors),
+      requestedHeight: requested,
     );
   }
+
+  /// The tallest node a symbol may ask for, in layout units, so a symbol
+  /// drawn in very large units cannot make one cell dwarf the schematic.
+  static const double maxRequestedHeight = 2000;
 
   /// The narrowest node a symbol may ask for, as width over height.
   static const double minAspect = 0.2;
@@ -46,11 +70,18 @@ class CellSymbolGeometry {
   /// Port name to anchor, as the symbol declares them.
   final Map<String, PortAnchor> anchors;
 
+  /// The node height, in layout units, the symbol asks for at [aspect]
+  /// ([CustomCellSymbol.layoutWidth], [CustomCellSymbol.layoutHeight]), or
+  /// `null` when it asks for none. The layout takes the larger of this and
+  /// what the pins need.
+  final double? requestedHeight;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! CellSymbolGeometry) return false;
     if (other.aspect != aspect) return false;
+    if (other.requestedHeight != requestedHeight) return false;
     if (other.anchors.length != anchors.length) return false;
     for (final entry in anchors.entries) {
       if (other.anchors[entry.key] != entry.value) return false;
@@ -61,6 +92,7 @@ class CellSymbolGeometry {
   @override
   int get hashCode => Object.hash(
     aspect,
+    requestedHeight,
     Object.hashAllUnordered(
       anchors.entries.map((e) => Object.hash(e.key, e.value)),
     ),

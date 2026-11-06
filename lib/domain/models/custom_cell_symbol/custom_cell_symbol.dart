@@ -54,6 +54,10 @@ class CustomCellSymbol {
     required this.updatedAt,
     this.author,
     this.notes,
+    this.powerPins = const <String>{},
+    this.groundPins = const <String>{},
+    this.layoutWidth,
+    this.layoutHeight,
   });
 
   /// Round-trips a [CustomCellSymbol] from its JSON shape.
@@ -69,6 +73,11 @@ class CustomCellSymbol {
         }
       });
     }
+    Set<String> names(Object? raw) => raw is List
+        ? Set<String>.unmodifiable(raw.whereType<String>())
+        : const <String>{};
+    double? positive(Object? raw) =>
+        raw is num && raw > 0 ? raw.toDouble() : null;
     return CustomCellSymbol(
       id: (json['id'] as String?) ?? '',
       moduleType: (json['moduleType'] as String?) ?? '',
@@ -84,6 +93,10 @@ class CustomCellSymbol {
       updatedAt: (json['updatedAt'] as String?) ?? '',
       author: json['author'] as String?,
       notes: json['notes'] as String?,
+      powerPins: names(json['powerPins']),
+      groundPins: names(json['groundPins']),
+      layoutWidth: positive(json['layoutWidth']),
+      layoutHeight: positive(json['layoutHeight']),
     );
   }
 
@@ -131,6 +144,27 @@ class CustomCellSymbol {
   /// Optional free-form notes (purpose, intended usage, attribution).
   final String? notes;
 
+  /// Port names the symbol marks as power pins.
+  ///
+  /// Consulted only for a cell type whose cell library declares no power or
+  /// ground pin: such a type's pins named here are then treated as supply
+  /// pins, hidden while unconnected in a scope that wires no supply, as a
+  /// Liberty `pg_pin` is. A Liberty description always wins over this.
+  final Set<String> powerPins;
+
+  /// Port names the symbol marks as ground pins; see [powerPins].
+  final Set<String> groundPins;
+
+  /// The node width, in layout units, the symbol asks for, or `null` to
+  /// size the node by its pins alone. The layout never makes a node smaller
+  /// than its pins need, so this only ever enlarges it, keeping the
+  /// drawing's aspect.
+  final double? layoutWidth;
+
+  /// The node height, in layout units, the symbol asks for; see
+  /// [layoutWidth].
+  final double? layoutHeight;
+
   /// Returns a copy with the given fields overridden. Use
   /// [clearAuthor] / [clearNotes] to explicitly null out the
   /// optional fields (passing `null` to the named parameter
@@ -149,6 +183,10 @@ class CustomCellSymbol {
     String? notes,
     bool clearAuthor = false,
     bool clearNotes = false,
+    Set<String>? powerPins,
+    Set<String>? groundPins,
+    double? layoutWidth,
+    double? layoutHeight,
   }) {
     return CustomCellSymbol(
       id: id ?? this.id,
@@ -162,6 +200,10 @@ class CustomCellSymbol {
       updatedAt: updatedAt ?? this.updatedAt,
       author: clearAuthor ? null : (author ?? this.author),
       notes: clearNotes ? null : (notes ?? this.notes),
+      powerPins: powerPins ?? this.powerPins,
+      groundPins: groundPins ?? this.groundPins,
+      layoutWidth: layoutWidth ?? this.layoutWidth,
+      layoutHeight: layoutHeight ?? this.layoutHeight,
     );
   }
 
@@ -180,6 +222,10 @@ class CustomCellSymbol {
     'updatedAt': updatedAt,
     if (author != null) 'author': author,
     if (notes != null) 'notes': notes,
+    if (powerPins.isNotEmpty) 'powerPins': (powerPins.toList()..sort()),
+    if (groundPins.isNotEmpty) 'groundPins': (groundPins.toList()..sort()),
+    if (layoutWidth != null) 'layoutWidth': layoutWidth,
+    if (layoutHeight != null) 'layoutHeight': layoutHeight,
   };
 
   @override
@@ -196,6 +242,10 @@ class CustomCellSymbol {
     if (other.updatedAt != updatedAt) return false;
     if (other.author != author) return false;
     if (other.notes != notes) return false;
+    if (other.layoutWidth != layoutWidth) return false;
+    if (other.layoutHeight != layoutHeight) return false;
+    if (!_sameNames(other.powerPins, powerPins)) return false;
+    if (!_sameNames(other.groundPins, groundPins)) return false;
     if (other.portAnchors.length != portAnchors.length) return false;
     for (final entry in portAnchors.entries) {
       if (other.portAnchors[entry.key] != entry.value) return false;
@@ -218,7 +268,14 @@ class CustomCellSymbol {
     Object.hashAllUnordered(
       portAnchors.entries.map((e) => Object.hash(e.key, e.value)),
     ),
+    Object.hashAllUnordered(powerPins),
+    Object.hashAllUnordered(groundPins),
+    layoutWidth,
+    layoutHeight,
   );
+
+  static bool _sameNames(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.containsAll(b);
 
   @override
   String toString() =>

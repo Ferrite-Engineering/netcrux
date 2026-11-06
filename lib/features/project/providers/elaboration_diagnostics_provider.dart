@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:crux_yosys/crux_yosys.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/services/yosys/yosys_diagnostic_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -35,9 +36,24 @@ class ElaborationStderr extends _$ElaborationStderr {
   }
 }
 
+/// Lines a Pro feature adds to the tab's Diagnostics, ahead of the
+/// elaboration's own: each one a `Warning: message` line, or a
+/// `path:line: Warning: message` line that names where in a file the
+/// problem is, the forms the drawer parses.
+///
+/// The open-core build has none. The Pro overlay overrides this per tab, so
+/// it can describe the tab's own design (the symbol libraries it reads and
+/// how their symbols match the design's cells). A manual provider, so the
+/// overlay overrides it without the code generator.
+final overlayDiagnosticLinesProvider = Provider<List<String>>(
+  (ref) => const <String>[],
+  name: 'overlayDiagnosticLinesProvider',
+);
+
 /// Parsed [YosysDiagnostic] list for the current elaboration's
-/// stderr. Empty when there is no stderr or no parseable entry in
-/// it.
+/// stderr, after the lines [overlayDiagnosticLinesProvider] adds. Empty
+/// when there is no stderr and no added line, or no parseable entry in
+/// them.
 ///
 /// Watches [elaborationStderrProvider] so the drawer auto-refreshes
 /// as elaboration completes; the stderr parser itself
@@ -45,9 +61,11 @@ class ElaborationStderr extends _$ElaborationStderr {
 /// re-parses only happen when the text changes.
 @Riverpod(keepAlive: true)
 List<YosysDiagnostic> elaborationDiagnostics(Ref ref) {
+  final added = ref.watch(overlayDiagnosticLinesProvider);
   final stderr = ref.watch(elaborationStderrProvider);
-  if (stderr.isEmpty) return const <YosysDiagnostic>[];
-  return ref.watch(yosysErrorDiagnosticProvider(stderr));
+  final text = added.isEmpty ? stderr : '${added.join('\n')}\n$stderr';
+  if (text.isEmpty) return const <YosysDiagnostic>[];
+  return ref.watch(yosysErrorDiagnosticProvider(text));
 }
 
 /// Active filter for the diagnostics drawer's severity chips. The

@@ -49,6 +49,7 @@ The NetCrux download includes the Pro and Enterprise features; a build of the op
 - [Structural analysis](analysis.md): Netlist diff, CDC and reset-domain analysis, FSM detection, and the switching-activity heatmap.
 - [Inspector & RTL source](source-and-inspection.md): The inspector panel, the RTL source pane, and the elaboration diagnostics panel.
 - [Custom cell symbols](customizing.md): The symbol manager, the three-tab symbol editor, the SVG sanitizer, and project versus user scope.
+- [Symlib symbol libraries](symlib-import.md): From NetCrux 1.2, draw cells with the symbols of Symlib libraries named in the project, on the command line or in the Symbol Manager.
 - [Annotations](annotations.md): Pin titled notes to cells, nets and ports, jump back to them from one list, and save them with the session.
 - [Cross-probe & the suite](integrations.md): The CXP cross-probe protocol with WaveCrux, LintCrux and SimCrux, plus Enterprise services.
 - [Administration <span class="tier tier-enterprise">Enterprise</span>](administration.md), For the person deploying NetCrux across a fleet: org-wide symbol libraries from your own share, the security model behind collaborative sessions and its limits, the audit events NetCrux records, and managed installs.

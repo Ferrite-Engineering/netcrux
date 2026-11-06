@@ -36,7 +36,7 @@ On import and save, NetCrux runs the SVG through a **sanitizer** that strips `<s
 
 A symbol has a **scope**. Project symbols live in a `.netcrux-symbols/` directory beside the `.netcrux-project` file and travel with it; user symbols live in your personal library (under NetCrux's application-support folder) and follow you across projects. The project scope is available only when the active tab was opened from a `.netcrux-project`: otherwise symbols are saved to the user library.
 
-When both a project and your user library define a symbol for the same module type, the **project symbol wins**: it shadows the user one, so a project can pin its own look without disturbing your defaults. An organization can also distribute symbol packs; see [Org-wide symbol libraries](administration.md#symbols).
+When both a project and your user library define a symbol for the same module type, the **project symbol wins**: it shadows the user one, so a project can pin its own look without disturbing your defaults. An organization can also distribute symbol packs; see [Org-wide symbol libraries](administration.md#symbols). From NetCrux 1.2, symbols can also be read from symbol libraries in the Symlib text format, named in the project file, on the command line or from the Symbol Manager; a symbol you make or edit here wins over one of those. See [Symlib symbol libraries](symlib-import.md).
 
 ## How a symbol is sized, labelled and pinned {#sizing}
 

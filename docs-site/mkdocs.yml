@@ -76,6 +76,7 @@ nav:
       - Inspector & RTL source: source-and-inspection.md
   - Customize & integrate:
       - Custom cell symbols: customizing.md
+      - Symlib symbol libraries, from 1.2: symlib-import.md
       - Annotations: annotations.md
       - Collaborative sessions: collaboration.md
       - Cross-probe & the suite: integrations.md

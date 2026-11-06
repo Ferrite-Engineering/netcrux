@@ -219,6 +219,9 @@ class NetcruxProjectFileReader {
       netlistReader:
           NetlistReaderChoice.parse(json['netlistReader'] as String?) ??
           NetlistReaderChoice.auto,
+      // Optional: symbol libraries for the Pro custom symbols. Read so a
+      // project saved by this build keeps them.
+      symbolLibraries: _readStringList(json['symbolLibraries']),
     );
   }
 
@@ -359,6 +362,8 @@ class NetcruxProjectFileWriter {
       'cellModelFiles': List<String>.from(project.cellModelFiles),
     if (project.netlistReader != NetlistReaderChoice.auto)
       'netlistReader': project.netlistReader.name,
+    if (project.symbolLibraries.isNotEmpty)
+      'symbolLibraries': List<String>.from(project.symbolLibraries),
   };
 
   static String _languageToString(NetcruxSourceLanguage lang) {

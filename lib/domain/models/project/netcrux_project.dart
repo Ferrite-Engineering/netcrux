@@ -66,6 +66,7 @@ class NetcruxProject {
     this.blackBoxMissingModules = false,
     this.cellModelFiles = const <String>[],
     this.netlistReader = NetlistReaderChoice.auto,
+    this.symbolLibraries = const <String>[],
   });
 
   /// Convenience constructor — produces a v1 project with the
@@ -85,6 +86,7 @@ class NetcruxProject {
     bool blackBoxMissingModules = false,
     List<String> cellModelFiles = const <String>[],
     NetlistReaderChoice netlistReader = NetlistReaderChoice.auto,
+    List<String> symbolLibraries = const <String>[],
   }) {
     return NetcruxProject(
       version: kNetcruxProjectVersion,
@@ -101,6 +103,7 @@ class NetcruxProject {
       blackBoxMissingModules: blackBoxMissingModules,
       cellModelFiles: List<String>.unmodifiable(cellModelFiles),
       netlistReader: netlistReader,
+      symbolLibraries: List<String>.unmodifiable(symbolLibraries),
     );
   }
 
@@ -201,6 +204,13 @@ class NetcruxProject {
   /// The project's choice of reader; [NetlistReaderChoice.auto] follows the
   /// user's Settings → Engines switch.
   final NetlistReaderChoice netlistReader;
+
+  /// Symbol libraries in the Symlib text format: files, or directories whose
+  /// `.sym` and `.symlib` files are each read, in the order given (a later
+  /// library's symbol wins over an earlier one of the same name). They give
+  /// cell types custom schematic symbols in NetCrux Pro. The open-core build
+  /// reads the key and writes it back unchanged but draws nothing from it.
+  final List<String> symbolLibraries;
 
   /// Whether [path] names a Liberty cell library: a `.lib` or `.liberty`
   /// suffix, or either followed by `.gz` for a gzip-compressed one,
@@ -313,6 +323,7 @@ class NetcruxProject {
     bool? blackBoxMissingModules,
     List<String>? cellModelFiles,
     NetlistReaderChoice? netlistReader,
+    List<String>? symbolLibraries,
   }) {
     return NetcruxProject(
       version: version ?? this.version,
@@ -344,6 +355,9 @@ class NetcruxProject {
           ? this.cellModelFiles
           : List<String>.unmodifiable(cellModelFiles),
       netlistReader: netlistReader ?? this.netlistReader,
+      symbolLibraries: symbolLibraries == null
+          ? this.symbolLibraries
+          : List<String>.unmodifiable(symbolLibraries),
     );
   }
 
@@ -360,6 +374,7 @@ class NetcruxProject {
     if (!_listEquals(other.sourceFiles, sourceFiles)) return false;
     if (!_listEquals(other.includePaths, includePaths)) return false;
     if (!_listEquals(other.libertyFiles, libertyFiles)) return false;
+    if (!_listEquals(other.symbolLibraries, symbolLibraries)) return false;
     if (!_listEquals(other.extraYosysCommands, extraYosysCommands)) {
       return false;
     }
@@ -384,6 +399,7 @@ class NetcruxProject {
     Object.hashAll(sourceFiles),
     Object.hashAll(includePaths),
     Object.hashAll(libertyFiles),
+    Object.hashAll(symbolLibraries),
     Object.hashAll(extraYosysCommands),
     Object.hashAllUnordered(
       defines.entries.map((e) => Object.hash(e.key, e.value)),
