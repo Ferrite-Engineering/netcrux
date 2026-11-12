@@ -87,15 +87,27 @@ void main() {
     });
 
     test('ends Tools with diagnostics', () {
-      // Tab Diagnostics leads (matching WaveCrux), then the per-tab panel
-      // toggle, then the process-wide dialog — the same closing group
-      // WaveCrux, LintCrux and SimCrux carry.
+      // Tab Diagnostics leads (matching WaveCrux), then the process-wide
+      // dialog.
       expect(kMenuLayout[ActionCategory.tools]!.last, [
         NetcruxAction.openTabDiagnostics,
-        NetcruxAction.toggleDiagnosticsPanel,
         NetcruxAction.openAppDiagnostics,
       ]);
     });
+
+    test(
+      'offers Tab Diagnostics once: the panel toggle is not on the menu',
+      () {
+        expect(
+          descriptorFor(NetcruxAction.toggleDiagnosticsPanel).surfaces,
+          isNot(contains(NetcruxActionSurface.menu)),
+        );
+        expect(
+          cruxMenuLayoutActions(kMenuLayout),
+          isNot(contains(NetcruxAction.toggleDiagnosticsPanel)),
+        );
+      },
+    );
 
     test('declares no Edit menu — NetCrux has no editing actions', () {
       expect(kMenuLayout.containsKey(ActionCategory.edit), isFalse);

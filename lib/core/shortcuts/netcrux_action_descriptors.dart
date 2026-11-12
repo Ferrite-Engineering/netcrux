@@ -221,7 +221,6 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   // required for them.
   NetcruxAction.toggleHierarchyTree ||
   NetcruxAction.toggleInspector ||
-  NetcruxAction.toggleDiagnosticsPanel ||
   // Tab Diagnostics (WaveCrux's chord) reveals the bottom dock's
   // Diagnostics tab — per-tab state, so it needs a tab like the toggle.
   NetcruxAction.openTabDiagnostics ||
@@ -237,6 +236,15 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   NetcruxAction.toggleAnnotationCallouts ||
   NetcruxAction.configureActivityScheme => const NetcruxActionDescriptor(
     surfaces: _menuPalette,
+    isEnabled: _requiresTab,
+  ),
+
+  // ── Diagnostics panel toggle — palette only, needs a tab ────────────
+  // The menu already carries Tab Diagnostics (openTabDiagnostics), which
+  // reveals the same dock tab; a second menu row for it offers nothing new.
+  // The toggle stays on its keyboard shortcut and in the palette.
+  NetcruxAction.toggleDiagnosticsPanel => const NetcruxActionDescriptor(
+    surfaces: _paletteOnly,
     isEnabled: _requiresTab,
   ),
 
@@ -527,6 +535,8 @@ const Set<NetcruxActionSurface> _menuPalette = {
 };
 
 const Set<NetcruxActionSurface> _menuOnly = {NetcruxActionSurface.menu};
+
+const Set<NetcruxActionSurface> _paletteOnly = {NetcruxActionSurface.palette};
 
 // ── enablement predicates (top-level for const tear-off) ─────────────────────
 
