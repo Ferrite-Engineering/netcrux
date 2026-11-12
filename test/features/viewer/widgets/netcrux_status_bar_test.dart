@@ -272,6 +272,55 @@ void main() {
       });
     });
 
+    group('the region name', () {
+      // A screen reader announces the bar as a named region, in the app's
+      // language, like WaveCrux's.
+      const names = <String, String>{
+        'en': 'Status bar',
+        'ja': 'ステータスバー',
+        'ko': '상태 표시줄',
+        'zh': '状态栏',
+      };
+      for (final entry in names.entries) {
+        testWidgets('the bar is named "${entry.value}" in ${entry.key}', (
+          tester,
+        ) async {
+          final handle = tester.ensureSemantics();
+          _injectedNetlist = _twoCellModel();
+          await _pump(
+            tester,
+            sourceFiles: <String>['/d/soc.v'],
+            locale: Locale(entry.key),
+          );
+          expect(find.bySemanticsLabel(entry.value), findsOneWidget);
+          handle.dispose();
+        });
+      }
+
+      testWidgets('the idle bar carries the name too', (tester) async {
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              localizationsDelegates: [
+                L10N.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: L10N.supportedLocales,
+              home: Scaffold(
+                body: Builder(builder: NetcruxStatusBar.idle),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel('Status bar'), findsOneWidget);
+        handle.dispose();
+      });
+    });
+
     group('locale sweep', () {
       final locales = <Locale>[
         const Locale('en'),

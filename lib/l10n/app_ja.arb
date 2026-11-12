@@ -2346,6 +2346,7 @@
   "@schematicKeyboardNoElements": {
     "description": "Screen-reader announcement when the keyboard steps through the schematic canvas but the scope draws no cells or ports."
   },
+  "accessibilityStatusBarRegion": "ステータスバー",
   "accessibilityToolbarRegion": "ツールバー",
   "toolbarOverflowActions": "アクション",
   "toolbarToggleCrossProbe": "クロスプローブパネル",
