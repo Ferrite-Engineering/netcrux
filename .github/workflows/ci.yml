@@ -321,8 +321,8 @@ jobs:
         if: runner.os == 'Linux'
         env:
           TEST_REPORT: build/test-results.json
-          # Re-measured 2026-11-12 (AF-12, audit S07): run 42446765370, Linux,
-          # 4392 ran, 9 skipped; the floor is that less 0.5%, the ceiling the
+          # Re-measured 2026-11-12 from run 42446765370 (Linux, commit
+          # 3d95e905): 4392 ran, 9 skipped; the floor is that less 0.5%, the ceiling the
           # measured skips plus 2.
           MIN_TESTS: '4370'
           MAX_SKIPPED: '11'

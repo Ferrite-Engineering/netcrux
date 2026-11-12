@@ -49,8 +49,9 @@ jobs:
       #
       # Re-measured 88.1% on this runner 2026-10-27 (run 40545140022, commit
       # 627ece2a4990b51dcbbbdd617cdf2828db9c9a2e): floor 86.
-      # Re-set 2026-11-12 (AF-12, audit S07): the latest Linux coverage run
-      # measured 89.9%; the floor is that less 2 points.
+      # Re-set 2026-11-12: run 43148515921 (commit
+      # 3d95e905e62e1560e0c9c1b3ff3cd7834a42ae62) measured 89.9%; the floor
+      # is that less 2 points.
       MIN_COVERAGE: '87'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
