@@ -1186,11 +1186,11 @@
   "@workspaceSaveWorkspaceAsTitle": {
     "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
   },
-  "workspaceResetWorkspaceTitle": "重置工作区",
+  "workspaceResetWorkspaceTitle": "重置工作区？",
   "@workspaceResetWorkspaceTitle": {
     "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
   },
-  "workspaceResetWorkspaceConfirm": "关闭所有已打开的标签页并返回空画布状态？",
+  "workspaceResetWorkspaceConfirm": "所有打开的标签页将被关闭，自动保存的工作区将被替换为空工作区。此操作无法撤销。",
   "@workspaceResetWorkspaceConfirm": {
     "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
   },

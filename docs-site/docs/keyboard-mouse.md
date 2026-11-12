@@ -28,7 +28,7 @@ These are the default bindings that ship with NetCrux. Every one of them is rebi
 | ++cmd+2++ / ++ctrl+2++ | Toggle Inspector | View |
 | ++option+enter++ / ++alt+enter++ | Properties: the Inspector on the selection, with focus (from NetCrux 1.2) | View |
 | ++cmd+shift+x++ / ++ctrl+shift+x++ | Show Cross-Probe Panel | View |
-| ++cmd+shift+enter++ / ++ctrl+shift+enter++ | Cross-probe Selection (from NetCrux 1.2) | View |
+| ++cmd+shift+enter++ / ++ctrl+shift+enter++ | Cross-Probe Selection… (from NetCrux 1.2) | View |
 | ++cmd+backslash++ / ++ctrl+backslash++ | Split Pane Right | View |
 | ++ctrl+tab++ | Next Tab | View |
 | ++ctrl+shift+tab++ | Previous Tab | View |
