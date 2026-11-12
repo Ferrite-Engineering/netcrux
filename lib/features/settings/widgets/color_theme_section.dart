@@ -12,6 +12,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/core/help_urls.dart';
+import 'package:netcrux/core/theme/netcrux_theme_appearance_strings.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -99,7 +100,7 @@ class _ColorThemeSectionState extends ConsumerState<ColorThemeSection> {
       return const SizedBox(height: 24);
     }
     final theme = Theme.of(context);
-    const strings = ThemeAppearanceStringsEn();
+    final strings = NetCruxThemeAppearanceStrings(L10N.of(context));
     final categories = ThemeRegistry.instance.registeredCategories;
 
     // Composed from the individual `crux_theme` widgets rather than the
@@ -136,12 +137,15 @@ class _ColorThemeSectionState extends ConsumerState<ColorThemeSection> {
               ],
             ),
             const SizedBox(height: 8),
-            PresetPicker(presets: builtinPresets().values.toList()),
+            PresetPicker(
+              presets: builtinPresets().values.toList(),
+              strings: strings,
+            ),
             const SizedBox(height: 20),
             _SubsectionLabel(strings.tokenOverridesSectionHeading),
             const SizedBox(height: 8),
             for (final category in categories)
-              TokenCategorySection(category: category),
+              TokenCategorySection(category: category, strings: strings),
             const SizedBox(height: 20),
             _SubsectionLabel(strings.themePackBrowserSectionHeading),
             const SizedBox(height: 8),
@@ -151,6 +155,7 @@ class _ColorThemeSectionState extends ConsumerState<ColorThemeSection> {
                   widget.pickPackDocument ?? _defaultPickPackDocument,
               savePackDocument:
                   widget.savePackDocument ?? _defaultSavePackDocument,
+              strings: strings,
             ),
           ],
         ),
