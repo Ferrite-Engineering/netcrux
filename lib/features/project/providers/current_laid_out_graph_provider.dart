@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/interfaces/cone_of_influence_service.dart';
 import 'package:netcrux/domain/interfaces/transitive_cone_resolver.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
@@ -55,8 +56,13 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
       modelAsync.stackTrace ?? StackTrace.current,
     );
   }
-  final tree = ref.watch(hierarchyTreeProvider);
-  final node = tree.selected;
+  // The selected scope only. The tree's state also holds the filter text and
+  // which rows are expanded, and neither changes what is drawn: watching it
+  // whole laid the scope out again on every letter typed into the filter,
+  // and on a scope that takes longer than a frame the canvas was replaced by
+  // the progress view and remounted, taking focus from the filter field
+  // (netcrux#80).
+  final node = ref.watch(hierarchyTreeProvider.select((tree) => tree.selected));
   // No model loaded yet, or no scope selected — nothing to lay out.
   if (modelAsync.value == null || node == null) {
     return LaidOutGraph.empty;

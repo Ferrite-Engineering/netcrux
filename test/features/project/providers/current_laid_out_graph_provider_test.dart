@@ -110,16 +110,14 @@ ProviderContainer _container({NetlistModel? netlist}) {
   _injectedNetlist = netlist;
   return ProviderContainer(
     overrides: <Override>[
-      elkLayoutServiceProvider.overrideWith(
-        (ref) {
-          final service = ElkLayoutService(
-            hostFactory: _DeterministicHost.new,
-            assetLoader: (_) async => '// deterministic test host',
-          );
-          ref.onDispose(service.dispose);
-          return service;
-        },
-      ),
+      elkLayoutServiceProvider.overrideWith((ref) {
+        final service = ElkLayoutService(
+          hostFactory: _DeterministicHost.new,
+          assetLoader: (_) async => '// deterministic test host',
+        );
+        ref.onDispose(service.dispose);
+        return service;
+      }),
       // Replace LoadedNetlist with a stub that yields the supplied
       // model from build() directly. Without this, the default
       // notifier's async path would resolve to null and overwrite
@@ -286,16 +284,14 @@ void main() {
       // paint blank.
       final container = ProviderContainer(
         overrides: <Override>[
-          elkLayoutServiceProvider.overrideWith(
-            (ref) {
-              final service = ElkLayoutService(
-                hostFactory: _DeterministicHost.new,
-                assetLoader: (_) async => '// deterministic test host',
-              );
-              ref.onDispose(service.dispose);
-              return service;
-            },
-          ),
+          elkLayoutServiceProvider.overrideWith((ref) {
+            final service = ElkLayoutService(
+              hostFactory: _DeterministicHost.new,
+              assetLoader: (_) async => '// deterministic test host',
+            );
+            ref.onDispose(service.dispose);
+            return service;
+          }),
           loadedNetlistProvider.overrideWith(_ThrowingLoadedNetlist.new),
         ],
       );
@@ -403,10 +399,11 @@ void main() {
       container = build();
       container.read(coneViewProvider.notifier).show(request('u_inv_10'));
       final result = await laidOut();
-      expect(
-        result.graph.cells.map((c) => c.id).toSet(),
-        <String>{'u_inv_8', 'u_inv_9', 'u_inv_10'},
-      );
+      expect(result.graph.cells.map((c) => c.id).toSet(), <String>{
+        'u_inv_8',
+        'u_inv_9',
+        'u_inv_10',
+      });
       expect(result.graph.edges, hasLength(2));
       expect(service.lastOnly?.cellIds, <String>{
         'u_inv_8',
@@ -491,6 +488,77 @@ void main() {
       expect(result.graph.cells, hasLength(32));
       expect(result.cone, isNull);
       expect(service.lastOnly, isNull);
+    });
+  });
+
+  group('currentLaidOutGraphProvider and the hierarchy panel', () {
+    // A layout that outlasts a frame swaps the canvas for the progress view
+    // and mounts it again, and the remounted canvas takes keyboard focus. So
+    // typing in the Hierarchy filter, or expanding a row, must not lay the
+    // scope out again (netcrux#80).
+    late ProviderContainer container;
+    late _RecordingLayoutService service;
+    late List<AsyncValue<LaidOutGraph>> states;
+
+    setUp(() {
+      final model = _loadFixture('large_chain');
+      service = _RecordingLayoutService();
+      _injectedNetlist = model;
+      container = ProviderContainer(
+        overrides: <Override>[
+          elkLayoutServiceProvider.overrideWithValue(service),
+          loadedNetlistProvider.overrideWith(_StubLoadedNetlist.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.read(hierarchyTreeProvider.notifier).setModel(model);
+      states = <AsyncValue<LaidOutGraph>>[];
+      final sub = container.listen<AsyncValue<LaidOutGraph>>(
+        currentLaidOutGraphProvider,
+        (previous, next) => states.add(next),
+      );
+      addTearDown(sub.close);
+    });
+
+    test('typing in the filter lays nothing out again', () async {
+      await container.read(currentLaidOutGraphProvider.future);
+      expect(service.calls, 1);
+      states.clear();
+
+      final tree = container.read(hierarchyTreeProvider.notifier);
+      for (final text in <String>['u', 'u_', 'u_i', 'u_inv']) {
+        tree.setFilterText(text);
+        await container.read(currentLaidOutGraphProvider.future);
+      }
+
+      expect(container.read(hierarchyTreeProvider).filterText, 'u_inv');
+      expect(service.calls, 1);
+      expect(states, isEmpty, reason: 'no loading state, no new value');
+    });
+
+    test('expanding and collapsing a row lays nothing out again', () async {
+      await container.read(currentLaidOutGraphProvider.future);
+      states.clear();
+
+      final top = container.read(hierarchyTreeProvider).selected!;
+      container.read(hierarchyTreeProvider.notifier)
+        ..collapseScope(top)
+        ..expandScope(top);
+      await container.read(currentLaidOutGraphProvider.future);
+
+      expect(service.calls, 1);
+      expect(states, isEmpty);
+    });
+
+    test('selecting another scope still lays it out', () async {
+      await container.read(currentLaidOutGraphProvider.future);
+      container
+          .read(hierarchyTreeProvider.notifier)
+          .selectScope(
+            const HierarchyNode(path: <String>['u_x'], moduleName: 'm'),
+          );
+      await container.read(currentLaidOutGraphProvider.future);
+      expect(states.any((s) => s.isLoading), isTrue);
     });
   });
 }
