@@ -1200,11 +1200,11 @@
   "@workspaceSaveWorkspaceAsTitle": {
     "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
   },
-  "workspaceResetWorkspaceTitle": "Reset Workspace",
+  "workspaceResetWorkspaceTitle": "Reset workspace?",
   "@workspaceResetWorkspaceTitle": {
     "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
   },
-  "workspaceResetWorkspaceConfirm": "Close every open tab and return to the empty-canvas state?",
+  "workspaceResetWorkspaceConfirm": "All open tabs will be closed. The auto-saved workspace will be replaced with an empty workspace. This cannot be undone.",
   "@workspaceResetWorkspaceConfirm": {
     "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
   },
@@ -1216,7 +1216,7 @@
   "@actionShowCrossProbePanel": {
     "description": "Action label that opens the CXP cross-probe panel (View menu / command palette)."
   },
-  "actionCrossProbeSelection": "Cross-probe Selection…",
+  "actionCrossProbeSelection": "Cross-Probe Selection…",
   "@actionCrossProbeSelection": {
     "description": "Action label that sends the current selection to another suite product (View menu / command palette)."
   },

@@ -221,7 +221,7 @@ From NetCrux 1.2 every suite product sends a cross-probe the same way.
   `WaveCrux 2`, oldest first. The element you right-clicked is the one sent,
   not the current selection. With no peer running the entry reads
   **Cross-probe to (no peers running)** and is disabled.
-- **`View → Cross-probe Selection…`** (`Cmd/Ctrl+Shift+Enter`, or the command
+- **`View → Cross-Probe Selection…`** (`Cmd/Ctrl+Shift+Enter`, or the command
   palette) sends the current selection. With one product running it sends at
   once; with several it opens the same list at the selection. The shortcut is
   ignored while a text field has focus, and plain `Enter` still pushes into the

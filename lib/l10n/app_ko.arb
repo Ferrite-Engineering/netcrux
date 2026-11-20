@@ -1186,11 +1186,11 @@
   "@workspaceSaveWorkspaceAsTitle": {
     "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
   },
-  "workspaceResetWorkspaceTitle": "워크스페이스 재설정",
+  "workspaceResetWorkspaceTitle": "워크스페이스를 재설정하시겠습니까?",
   "@workspaceResetWorkspaceTitle": {
     "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
   },
-  "workspaceResetWorkspaceConfirm": "열려 있는 모든 탭을 닫고 빈 캔버스로 돌아가시겠습니까?",
+  "workspaceResetWorkspaceConfirm": "열려 있는 모든 탭이 닫히고 자동 저장된 워크스페이스가 빈 워크스페이스로 대체됩니다. 이 작업은 취소할 수 없습니다.",
   "@workspaceResetWorkspaceConfirm": {
     "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
   },

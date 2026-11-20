@@ -1186,11 +1186,11 @@
   "@workspaceSaveWorkspaceAsTitle": {
     "description": "Button / menu label for saving the active workspace as a named .netcrux-workspace file."
   },
-  "workspaceResetWorkspaceTitle": "ワークスペースをリセット",
+  "workspaceResetWorkspaceTitle": "ワークスペースをリセットしますか？",
   "@workspaceResetWorkspaceTitle": {
     "description": "Button / menu label for clearing every tab in the workspace and returning to the empty-canvas state."
   },
-  "workspaceResetWorkspaceConfirm": "開いているすべてのタブを閉じて空のキャンバスに戻りますか？",
+  "workspaceResetWorkspaceConfirm": "開いているすべてのタブが閉じられ、自動保存されたワークスペースは空のワークスペースに置き換えられます。この操作は元に戻せません。",
   "@workspaceResetWorkspaceConfirm": {
     "description": "Confirmation prompt shown before Reset Workspace empties the workspace."
   },
