@@ -1052,8 +1052,13 @@ class SchematicCanvasRenderObject extends RenderBox {
     if (anchoredPins.isEmpty) return;
     final width = position.bounds.width;
     final height = position.bounds.height;
+    // A line exactly as tall as the type. The theme's label style carries
+    // Material's 1.45 line height, which made each name's box 12.8 units
+    // tall against pins that may sit [symbolPinPitch] (10) apart, so the
+    // backing of every name overlapped the one above it (netcrux#81).
     final style = labelStyle.copyWith(
       fontSize: (labelStyle.fontSize ?? 11) * 0.8,
+      height: 1,
     );
     final backing = Paint()
       ..color = _theme.colorScheme.surface.withValues(alpha: 0.7)

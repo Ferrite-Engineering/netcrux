@@ -9,6 +9,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/core/theme/netcrux_theme.dart';
 import 'package:netcrux/domain/models/layout/bounding_box.dart';
 import 'package:netcrux/domain/models/layout/edge_route.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -18,6 +19,7 @@ import 'package:netcrux/domain/models/schematic/cell_kind.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/features/viewer/rendering/schematic_painter.dart';
+import 'package:netcrux/services/layout/elk_layout_service.dart';
 
 /// The symbol cell's node: 120 by 90 at (100, 100).
 const _uartRect = Rect.fromLTWH(100, 100, 120, 90);
@@ -111,11 +113,15 @@ LaidOutGraph _graph({
 
 /// Paints [graph] at [zoom] with no pan and returns where every paragraph
 /// (every piece of text) landed, in design units.
-List<Rect> _paragraphRects(LaidOutGraph graph, {double zoom = 1}) {
+List<Rect> _paragraphRects(
+  LaidOutGraph graph, {
+  double zoom = 1,
+  ThemeData? theme,
+}) {
   final renderObject = SchematicCanvasRenderObject(
     laidOut: graph,
     transform: ViewportTransform(zoom: zoom, offset: Offset.zero),
-    theme: ThemeData.light(),
+    theme: theme ?? ThemeData.light(),
     statsSink: const NoopRenderStatsSink(),
   )..layout(BoxConstraints.tight(const Size(1200, 800)));
   final context = TestRecordingPaintingContext(TestRecordingCanvas());
@@ -257,6 +263,22 @@ void main() {
       expect(irq.single.center.dx, closeTo(_uartRect.left + 60, 0.5));
       // we (y = 160) has no anchor and so no name.
       expect(pins.where((r) => (r.center.dy - 160).abs() < 4), isEmpty);
+    });
+
+    testWidgets('fit within the pin pitch, so names on adjacent pins never '
+        'overlap (netcrux#81)', (tester) async {
+      // The theme as the canvas receives it in the app: Theme.of localizes
+      // it, which gives the label style Material's 1.45 line height. A bare
+      // ThemeData has no line height and would hide the overlap.
+      final base = NetcruxTheme.dark();
+      final pins = _paragraphRects(
+        _graph(),
+        theme: ThemeData.localize(base, base.typography.englishLike),
+      ).where(_uartRect.overlaps).toList();
+      expect(pins, hasLength(3));
+      for (final r in pins) {
+        expect(r.height, lessThan(symbolPinPitch), reason: '$r');
+      }
     });
 
     testWidgets('a symbol that anchors no pin names none', (tester) async {
