@@ -190,6 +190,10 @@ class NetcruxBottomDock extends ConsumerWidget {
       ],
       activeId: ref.watch(bottomDockTabProvider),
       onSelect: (id) => ref.read(bottomDockTabProvider.notifier).select(id),
+      // A tab that appears here (a moved-in analysis, Cross-Probe or X-Trace
+      // being opened) is activated and the region un-collapsed, as in the
+      // right dock.
+      onAutoReveal: ref.read(bottomDockTabProvider.notifier).reveal,
       dockId: kDockRegionBottom,
       onTabMovedIn: (id, _) => _moveTab(ref, id, kDockRegionBottom),
       onCollapse: () => ref

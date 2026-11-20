@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/providers/panel_layout_provider.dart';
+import 'package:netcrux/features/viewer/providers/right_dock_provider.dart';
+import 'package:netcrux/features/viewer/providers/x_trace_panel_visible_provider.dart';
 import 'package:netcrux/features/workspace/widgets/netcrux_docks.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
@@ -55,6 +57,52 @@ void main() {
     await tester.pump();
     return container;
   }
+
+  testWidgets('a tab that appears in the bottom dock is auto-revealed', (
+    tester,
+  ) async {
+    // D37: the bottom dock passed no onAutoReveal, so an on-demand tab that
+    // arrived there stayed behind Diagnostics with the region collapsed.
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    late ProviderContainer container;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsServiceProvider.overrideWithValue(
+            SettingsService<AppSettings>(
+              const NetcruxSettingsCodec(),
+              prefsOverride: prefs,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: L10N.localizationsDelegates,
+          supportedLocales: L10N.supportedLocales,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) {
+                container = ProviderScope.containerOf(context);
+                return const NetcruxBottomDock();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await container.read(appSettingsProvider.future);
+    await tester.pump();
+    expect(container.read(bottomDockTabProvider), isNull);
+
+    container
+        .read(dockPlacementsProvider.notifier)
+        .move(kRightDockTabXTrace, kDockRegionBottom);
+    container.read(xTracePanelVisibleProvider.notifier).set(visible: true);
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(bottomDockTabProvider), kRightDockTabXTrace);
+  });
 
   testWidgets('a bar appearing or vanishing keeps the wrapped layout mounted', (
     tester,
