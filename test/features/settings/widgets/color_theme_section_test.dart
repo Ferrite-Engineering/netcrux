@@ -192,4 +192,37 @@ void main() {
       });
     }
   });
+
+  group('localized subsection headings', () {
+    for (final locale in L10N.supportedLocales) {
+      testWidgets('use the ${locale.toLanguageTag()} ARB values', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(900, 2000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await _pump(tester, resolver: () async => packDir, locale: locale);
+
+        final l10n = L10N.of(tester.element(find.byType(ColorThemeSection)));
+        expect(
+          find.text(l10n.appearancePresetSectionHeading),
+          findsOneWidget,
+          reason: 'locale $locale',
+        );
+        expect(
+          find.text(l10n.appearanceTokenOverridesSectionHeading),
+          findsOneWidget,
+        );
+        expect(
+          find.text(l10n.appearanceThemePackBrowserSectionHeading),
+          findsOneWidget,
+        );
+        if (locale.languageCode != 'en') {
+          const en = ThemeAppearanceStringsEn();
+          expect(find.text(en.presetSectionHeading), findsNothing);
+          expect(find.text(en.tokenOverridesSectionHeading), findsNothing);
+          expect(find.text(en.themePackBrowserSectionHeading), findsNothing);
+        }
+      });
+    }
+  });
 }
