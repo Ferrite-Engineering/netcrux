@@ -1256,7 +1256,6 @@
   "eduNoticeTooltip": "教育用ライセンス。非商用の教育、学習、研究にのみ使用できます。",
   "eduNoticeTooltipFor": "{email} の教育用ライセンス。非商用の教育、学習、研究にのみ使用できます。",
   "eduNoticeValidUntil": "{date} まで有効です。",
-  "eduNoticeExportMark": "{product} 教育版エディションで作成 · 非商用利用に限る",
   "menuItemTierSuffix": " ({tier})",
   "@menuItemTierSuffix": {
     "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",

@@ -184,7 +184,7 @@ class SchematicExportController {
   /// other tier. Read at export time: the licence can change while the app
   /// runs.
   String? _eduMark() =>
-      netcruxEduExportMark(container.read(licenseStatusProvider), l10n);
+      netcruxEduExportMark(container.read(licenseStatusProvider));
 
   Future<String?> _pickSavePath(String defaultName) async {
     final override = _pickSavePathOverride;

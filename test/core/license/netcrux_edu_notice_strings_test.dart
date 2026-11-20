@@ -9,6 +9,8 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 
 import '../../helpers/license_status_fixtures.dart';
 
+const String _mark = 'Made with NetCrux Educational · Non-commercial use only';
+
 void main() {
   group('NetCruxEduNoticeStrings', () {
     late L10N en;
@@ -17,10 +19,7 @@ void main() {
     test('English label and export mark', () {
       final strings = NetCruxEduNoticeStrings(en);
       expect(strings.statusLabel, 'Non-commercial use');
-      expect(
-        strings.exportMark('NetCrux'),
-        'Made with NetCrux Educational · Non-commercial use only',
-      );
+      expect(strings.exportMark('NetCrux'), _mark);
     });
 
     test('the tooltip names the holder and the expiry when known', () {
@@ -42,45 +41,47 @@ void main() {
     });
 
     for (final locale in L10N.supportedLocales) {
-      test('${locale.toLanguageTag()} carries the product name and the '
-          'address unchanged, and no em dash', () async {
+      test('${locale.toLanguageTag()} carries the address and the date '
+          'unchanged, and no em dash', () async {
         final strings = NetCruxEduNoticeStrings(
           await L10N.delegate.load(locale),
         );
-        final mark = strings.exportMark('NetCrux');
         final tooltip = strings.statusTooltip(
           email: 'a@b.edu',
           validUntil: '2027-09-30',
         );
-        expect(mark, contains('NetCrux'));
         expect(tooltip, contains('a@b.edu'));
         expect(tooltip, contains('2027-09-30'));
-        for (final s in [strings.statusLabel, mark, tooltip]) {
+        for (final s in [strings.statusLabel, tooltip]) {
           expect(s, isNot(contains('—')));
         }
       });
+
+      test(
+        '${locale.toLanguageTag()} keeps the export mark in English',
+        () async {
+          final strings = NetCruxEduNoticeStrings(
+            await L10N.delegate.load(locale),
+          );
+          expect(strings.exportMark('NetCrux'), _mark);
+        },
+      );
     }
   });
 
   group('netcruxEduExportMark', () {
-    late L10N en;
-    setUpAll(() async => en = await L10N.delegate.load(const Locale('en')));
-
     test('an educational licence marks the export with NetCrux', () {
-      expect(
-        netcruxEduExportMark(activeLicenseStatus(LicenseTier.edu), en),
-        'Made with NetCrux Educational · Non-commercial use only',
-      );
+      expect(netcruxEduExportMark(activeLicenseStatus(LicenseTier.edu)), _mark);
     });
 
     test('open core, Pro and Enterprise leave the export unmarked', () {
-      expect(netcruxEduExportMark(CruxLicenseStatus.openCore, en), isNull);
+      expect(netcruxEduExportMark(CruxLicenseStatus.openCore), isNull);
       expect(
-        netcruxEduExportMark(activeLicenseStatus(LicenseTier.pro), en),
+        netcruxEduExportMark(activeLicenseStatus(LicenseTier.pro)),
         isNull,
       );
       expect(
-        netcruxEduExportMark(activeLicenseStatus(LicenseTier.enterprise), en),
+        netcruxEduExportMark(activeLicenseStatus(LicenseTier.enterprise)),
         isNull,
       );
     });
@@ -89,7 +90,7 @@ void main() {
       const expired = CruxLicenseStatus(
         activation: CruxLicenseActivation.expired,
       );
-      expect(netcruxEduExportMark(expired, en), isNull);
+      expect(netcruxEduExportMark(expired), isNull);
     });
   });
 }

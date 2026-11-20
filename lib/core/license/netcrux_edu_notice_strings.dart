@@ -9,7 +9,8 @@ import 'package:netcrux/l10n/generated/app_localizations.dart';
 const String kNetcruxEduMarkProductName = 'NetCrux';
 
 /// NetCrux's localized [CruxEduNoticeStrings]: the educational licence's
-/// status-bar label and tooltip, and the mark stamped on visual exports.
+/// status-bar label and tooltip. The mark stamped on visual exports is the
+/// English one in every locale (see [netcruxEduExportMark]).
 ///
 /// Lives in open core beside the status bar and the exporters that use it.
 /// Open core never runs on an educational licence, so here the strings are
@@ -34,20 +35,22 @@ class NetCruxEduNoticeStrings extends CruxEduNoticeStrings {
         : '$holder ${_l10n.eduNoticeValidUntil(validUntil)}';
   }
 
+  /// English in every locale, like [netcruxEduExportMark]: the mark is
+  /// written into a file that travels, not shown in this user's interface.
   @override
   String exportMark(String productName) =>
-      _l10n.eduNoticeExportMark(productName);
+      const CruxEduNoticeStringsEn().exportMark(productName);
 }
 
-/// The mark to stamp on a NetCrux visual export (PNG, SVG) made under
-/// [status], or `null` for every tier but Educational.
+/// The mark to stamp on a NetCrux visual export (PNG, SVG, review-minutes
+/// Markdown) made under [status], or `null` for every tier but Educational.
+///
+/// Always English, whatever the interface language: an exported file is read
+/// by whoever it is sent to, and the suite's exports and reports state the
+/// licence in one language.
 ///
 /// Never applied to data a tool reads back: the netlist JSON slice, session
 /// and project files, colour themes and shortcut maps stay byte-identical
 /// under every licence.
-String? netcruxEduExportMark(CruxLicenseStatus status, L10N l10n) =>
-    cruxEduExportMark(
-      status,
-      kNetcruxEduMarkProductName,
-      strings: NetCruxEduNoticeStrings(l10n),
-    );
+String? netcruxEduExportMark(CruxLicenseStatus status) =>
+    cruxEduExportMark(status, kNetcruxEduMarkProductName);

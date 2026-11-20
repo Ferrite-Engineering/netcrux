@@ -16,7 +16,7 @@ In the downloaded app, the license lives in `Settings → License`: paste a lice
 An educational license is for non-commercial teaching, learning and research, and NetCrux says so in two places while it runs on one:
 
 - **The status bar.** The right end of the status bar shows the EDU badge, *Non-commercial use* and the address the license was issued to. Hover it for the terms and the date the license is valid until; click it to open `Settings → License`.
-- **Exported pictures.** A schematic exported with `File → Export as PNG…` or `File → Export as SVG…` carries one small line in its bottom-right corner: *Made with NetCrux Educational · Non-commercial use only*. Review minutes copied as Markdown end with the same line.
+- **Exported pictures.** A schematic exported with `File → Export as PNG…` or `File → Export as SVG…` carries one small line in its bottom-right corner: *Made with NetCrux Educational · Non-commercial use only*. Review minutes copied as Markdown end with the same line. The line is in English whatever language NetCrux is set to, because the file is read by whoever you send it to.
 
 Data is never marked. The JSON netlist export, review minutes copied as CSV, sessions, projects, workspaces, keymaps and color themes are written exactly as they are under any other license, so every tool that reads them back keeps working. Open Core, Pro and Enterprise show neither the status-bar notice nor the mark.
 

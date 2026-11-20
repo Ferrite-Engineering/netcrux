@@ -1256,7 +1256,6 @@
   "eduNoticeTooltip": "教育版许可。仅限非商业教学、学习和研究使用。",
   "eduNoticeTooltipFor": "{email} 的教育版许可。仅限非商业教学、学习和研究使用。",
   "eduNoticeValidUntil": "有效期至 {date}。",
-  "eduNoticeExportMark": "使用 {product} 教育版制作 · 仅限非商业用途",
   "menuItemTierSuffix": " ({tier})",
   "@menuItemTierSuffix": {
     "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",

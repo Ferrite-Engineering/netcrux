@@ -1340,16 +1340,6 @@
       }
     }
   },
-  "eduNoticeExportMark": "Made with {product} Educational · Non-commercial use only",
-  "@eduNoticeExportMark": {
-    "description": "Line stamped in the bottom-right corner of PNG and SVG schematic exports made under an educational license. {product} is the product name and is not translated.",
-    "placeholders": {
-      "product": {
-        "type": "String",
-        "example": "NetCrux"
-      }
-    }
-  },
   "menuItemTierSuffix": " ({tier})",
   "@menuItemTierSuffix": {
     "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",

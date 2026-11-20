@@ -43,6 +43,7 @@ Future<SchematicExportController> _controller(
   SaveLocationPicker? pickSavePath,
   List<Override> overrides = const [],
   ProviderContainer? reuseContainer,
+  Locale? locale,
 }) async {
   final container =
       reuseContainer ??
@@ -55,6 +56,7 @@ Future<SchematicExportController> _controller(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: L10N.localizationsDelegates,
         supportedLocales: L10N.supportedLocales,
         home: Scaffold(
@@ -362,6 +364,35 @@ void main() {
         }
       });
     }
+
+    testWidgets('the mark stays English under a Japanese interface', (
+      tester,
+    ) async {
+      final dir = Directory.systemTemp.createTempSync('nc_export_svg_ja_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final container = ProviderContainer(
+        overrides: [
+          ...netcruxTelemetryTestOverrides(),
+          currentLaidOutGraphProvider.overrideWith((ref) async => _laidOut()),
+          licenseStatusProvider.overrideWithValue(_licences['edu']!),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(currentLaidOutGraphProvider.future);
+      final controller = await _controller(
+        tester,
+        reuseContainer: container,
+        pickSavePath: (name) async => '${dir.path}/$name',
+        locale: const Locale('ja'),
+      );
+      expect(controller.l10n.localeName, 'ja');
+
+      await tester.runAsync(controller.exportSvg);
+      await tester.pump();
+
+      final svg = File('${dir.path}/schematic.svg').readAsStringSync();
+      expect(svg, contains('>$_mark</text>'));
+    });
 
     testWidgets('the JSON netlist slice is byte-identical under an '
         'educational licence', (tester) async {

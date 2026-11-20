@@ -1256,7 +1256,6 @@
   "eduNoticeTooltip": "교육용 라이선스입니다. 비상업적 교육, 학습 및 연구 목적으로만 사용할 수 있습니다.",
   "eduNoticeTooltipFor": "{email}의 교육용 라이선스입니다. 비상업적 교육, 학습 및 연구 목적으로만 사용할 수 있습니다.",
   "eduNoticeValidUntil": "{date}까지 유효합니다.",
-  "eduNoticeExportMark": "{product} 교육용 에디션으로 제작 · 비상업적 용도로만 사용",
   "menuItemTierSuffix": " ({tier})",
   "@menuItemTierSuffix": {
     "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",
