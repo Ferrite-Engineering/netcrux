@@ -321,10 +321,10 @@ jobs:
         if: runner.os == 'Linux'
         env:
           TEST_REPORT: build/test-results.json
-          # Re-measured 2026-11-12 from run 42446765370 (Linux, commit
-          # 3d95e905): 4392 ran, 9 skipped; the floor is that less 0.5%, the ceiling the
+          # Re-measured 2026-11-20 from run 44829699282 (Linux, commit
+          # 7781248): 4468 ran, 9 skipped; the floor is that less 0.5%, the ceiling the
           # measured skips plus 2.
-          MIN_TESTS: '4370'
+          MIN_TESTS: '4445'
           MAX_SKIPPED: '11'
         run: |
           python3 - "$TEST_REPORT" <<'PY'
