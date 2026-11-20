@@ -83,6 +83,28 @@ class SvgExporter {
   /// `labelSmall`).
   static const double labelFontSize = 11;
 
+  /// Inset of the educational-licence mark from the bottom-right corner.
+  static const double eduMarkMargin = 6;
+
+  /// The educational-licence mark: right-aligned on [right], its baseline's
+  /// descent on [bottom], over a stroke of the background colour.
+  static void _writeEduMark(
+    StringBuffer buffer,
+    String mark, {
+    required double right,
+    required double bottom,
+    required SvgExportPalette palette,
+  }) {
+    buffer.writeln(
+      '  <text class="edu-mark" x="${_n(right)}" y="${_n(bottom)}" '
+      'font-family="sans-serif" font-size="${_n(labelFontSize)}" '
+      'fill="${palette.label}" stroke="${palette.background}" '
+      'stroke-width="3" paint-order="stroke" opacity="0.85" '
+      'text-anchor="end" dominant-baseline="text-after-edge">'
+      '${_escape(mark)}</text>',
+    );
+  }
+
   /// Serializes [graph] into a self-contained SVG document.
   ///
   /// With a [frame] (layout coordinates) the document shows that part of the
@@ -93,11 +115,17 @@ class SvgExporter {
   /// [customSymbols] gives the artwork of cells with a custom symbol; every
   /// other cell draws the built-in symbol for its kind. [palette] colours the
   /// drawing.
+  ///
+  /// [eduMark], when given, is written as the document's last element: one
+  /// small `<text class="edu-mark">` in the bottom-right corner, outlined in
+  /// the background colour so it reads over a wire. The export controller
+  /// passes the educational licence's mark and `null` for every other tier.
   String toSvg(
     LaidOutGraph graph, {
     BoundingBox? frame,
     CellSymbolSvgSource customSymbols = noCellSymbolSvg,
     SvgExportPalette palette = SvgExportPalette.dark,
+    String? eduMark,
   }) {
     final bounds = graph.layout.bounds;
     final x = frame?.x ?? 0;
@@ -223,6 +251,16 @@ class SvgExporter {
     // Labels of custom-symbol cells, outside the drawing and over the wires.
     for (final (cell, pos) in outsideLabels) {
       _writeOutsideLabel(buffer, graph, cell, pos, palette);
+    }
+
+    if (eduMark != null) {
+      _writeEduMark(
+        buffer,
+        eduMark,
+        right: x + width - eduMarkMargin,
+        bottom: y + height - eduMarkMargin,
+        palette: palette,
+      );
     }
 
     buffer.writeln('</svg>');

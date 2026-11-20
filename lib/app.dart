@@ -1,7 +1,6 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
-import 'dart:async' show unawaited;
 import 'dart:io' show stderr, stdout;
 
 import 'package:crux_a11y/crux_a11y.dart' show CruxRoutedContent;
@@ -56,8 +55,8 @@ import 'package:netcrux/features/eula/netcrux_eula_overrides.dart';
 import 'package:netcrux/features/issue_reporter/netcrux_issue_reporter_overrides.dart';
 import 'package:netcrux/features/menu_bar/widgets/desktop_menu_bar.dart';
 import 'package:netcrux/features/remote/netcrux_cxp_overrides.dart';
+import 'package:netcrux/features/settings/open_license_settings.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
-import 'package:netcrux/features/settings/screens/settings_screen.dart';
 import 'package:netcrux/features/telemetry/netcrux_editor_host_overrides.dart';
 import 'package:netcrux/features/telemetry/netcrux_telemetry_overrides.dart';
 import 'package:netcrux/features/update/netcrux_update_overrides.dart';
@@ -646,12 +645,7 @@ class NetcruxApp extends ConsumerWidget {
   static void _openLicenseSettings() {
     final context = rootNavigatorKey.currentContext;
     if (context == null) return;
-    unawaited(
-      SettingsScreen.openAdaptive(
-        context,
-        initialCategoryId: kCruxLicenseCategoryId,
-      ),
-    );
+    openLicenseSettings(context);
   }
 
   /// Routes a menu selection to the active screen's action handler.

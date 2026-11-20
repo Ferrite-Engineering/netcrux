@@ -8,11 +8,13 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:crux_ide_layout/crux_ide_layout.dart';
+import 'package:crux_license/crux_license.dart';
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/core/license/netcrux_edu_notice_strings.dart';
 import 'package:netcrux/domain/enums/netcrux_export_kind.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
@@ -20,6 +22,7 @@ import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart'
 import 'package:netcrux/features/viewer/services/svg_export_palette_from_theme.dart';
 import 'package:netcrux/features/viewer/symbols/cell_symbol_svg_source_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/export/raster_edu_mark.dart';
 import 'package:netcrux/services/export/svg_exporter.dart';
 
 /// Resolves the destination path for an export whose suggested file name
@@ -36,6 +39,11 @@ typedef SaveLocationPicker = Future<String?> Function(String defaultName);
 /// All three flows pop the OS save-file dialog and surface success /
 /// failure as a toast so the user has a clear signal that the
 /// export landed (or didn't).
+///
+/// Under an educational licence the two pictures, PNG and SVG, carry the
+/// licence's non-commercial mark in their bottom-right corner
+/// ([netcruxEduExportMark]). The JSON slice is data a tool reads back and
+/// is never marked.
 ///
 /// Reads through a [ProviderContainer] rather than a [WidgetRef] so
 /// callers from outside the tab widget tree (the workspace-screen
@@ -94,8 +102,15 @@ class SchematicExportController {
     final path = await _pickSavePath('schematic.png');
     if (path == null) return;
     try {
-      final image = await boundary.toImage(pixelRatio: 2);
+      const pixelRatio = 2.0;
+      final captured = await boundary.toImage(pixelRatio: pixelRatio);
+      final mark = _eduMark();
+      final image = mark == null
+          ? captured
+          : await stampEduExportMark(captured, mark, pixelRatio: pixelRatio);
+      if (!identical(image, captured)) captured.dispose();
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
       if (byteData == null) {
         _fail('image encode failed');
         return;
@@ -126,6 +141,7 @@ class SchematicExportController {
         laidOut,
         customSymbols: container.read(cellSymbolSvgSourceProvider),
         palette: palette,
+        eduMark: _eduMark(),
       );
       await File(path).writeAsString(svg);
       _success(NetcruxExportKind.svg, path);
@@ -163,6 +179,12 @@ class SchematicExportController {
       _fail(e.toString());
     }
   }
+
+  /// The educational-licence mark for a picture export, or `null` for every
+  /// other tier. Read at export time: the licence can change while the app
+  /// runs.
+  String? _eduMark() =>
+      netcruxEduExportMark(container.read(licenseStatusProvider), l10n);
 
   Future<String?> _pickSavePath(String defaultName) async {
     final override = _pickSavePathOverride;

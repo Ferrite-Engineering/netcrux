@@ -285,6 +285,8 @@ NetCrux exports the **current scope** in three formats. Each opens a save dialog
 | **SVG** | `File → Export as SVG…` | ++alt+e++ | `schematic.svg` | Vector geometry for the whole current scope (cells as labeled boxes, boundary ports and wires) on a dark background. No overlay or dimming. |
 | **JSON** | `File → Export as JSON…` | ++alt+j++ | `schematic.json` | The netlist slice for the current scope: `{"creator": …, "modules": {"<name>": …}}`, pretty-printed. |
 
+Under an [educational license](licensing.md#education), PNG and SVG exports carry a small non-commercial mark in their bottom-right corner. JSON exports are never marked.
+
 Use **PNG** for a bug report, chat message or slide (frame the view first, only what is inside the canvas is in the image), **SVG** for documentation where someone will zoom into the full scope, and **JSON** to hand the scope to another tool. If you need the whole netlist, run Yosys yourself with `write_json`.
 
 !!! tip "Keymaps and themes travel as files too"

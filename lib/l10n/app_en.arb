@@ -1312,6 +1312,44 @@
   "@tierBadgeEduSemantic": {
     "description": "Accessibility / screen reader label expanding the abbreviated EDU edition badge."
   },
+  "eduNoticeStatusLabel": "Non-commercial use",
+  "@eduNoticeStatusLabel": {
+    "description": "Status-bar text beside the EDU chip when NetCrux runs on an educational license. The holder's email address follows it after a middle dot."
+  },
+  "eduNoticeTooltip": "Educational license. For non-commercial teaching, learning and research only.",
+  "@eduNoticeTooltip": {
+    "description": "Tooltip and screen-reader label of the educational-license status-bar chip, when the license records no email address."
+  },
+  "eduNoticeTooltipFor": "Educational license for {email}. For non-commercial teaching, learning and research only.",
+  "@eduNoticeTooltipFor": {
+    "description": "Tooltip and screen-reader label of the educational-license status-bar chip, naming the license holder.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "student@university.edu"
+      }
+    }
+  },
+  "eduNoticeValidUntil": "Valid until {date}.",
+  "@eduNoticeValidUntil": {
+    "description": "Sentence appended to the educational-license chip tooltip with the license expiry date (yyyy-MM-dd).",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "2027-09-30"
+      }
+    }
+  },
+  "eduNoticeExportMark": "Made with {product} Educational · Non-commercial use only",
+  "@eduNoticeExportMark": {
+    "description": "Line stamped in the bottom-right corner of PNG and SVG schematic exports made under an educational license. {product} is the product name and is not translated.",
+    "placeholders": {
+      "product": {
+        "type": "String",
+        "example": "NetCrux"
+      }
+    }
+  },
   "menuItemTierSuffix": " ({tier})",
   "@menuItemTierSuffix": {
     "description": "Parenthetical license-tier suffix appended to a native menu-bar item's label for a Pro/Enterprise action (the platform menu bar can only render string labels, not badge widgets). The {tier} placeholder is the abbreviated tier badge text (e.g. PRO / ENT).",

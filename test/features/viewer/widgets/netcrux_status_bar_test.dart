@@ -1,12 +1,16 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_license/crux_license.dart';
+import 'package:crux_settings/crux_settings.dart';
+import 'package:crux_settings_ui/crux_settings_ui.dart';
 import 'package:crux_status_bar/crux_status_bar.dart';
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:netcrux/domain/models/app_settings.dart';
 import 'package:netcrux/domain/models/netlist/bit_ref.dart';
 import 'package:netcrux/domain/models/netlist/cell.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
@@ -16,10 +20,15 @@ import 'package:netcrux/domain/models/netlist/port.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/features/viewer/widgets/netcrux_status_bar.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../helpers/license_status_fixtures.dart';
 
 // Injected by each test before building the container; the stub reads it.
 NetlistModel? _injectedNetlist;
@@ -96,10 +105,12 @@ Future<ProviderContainer> _pump(
   bool yosysAvailable = true,
   bool browser = false,
   Locale? locale,
+  CruxLicenseStatus? license,
 }) async {
   final container = ProviderContainer(
     overrides: [
       if (browser) hdlElaborationSupportedProvider.overrideWithValue(false),
+      if (license != null) licenseStatusProvider.overrideWithValue(license),
       loadedNetlistProvider.overrideWith(_StubLoadedNetlist.new),
       // The bar now reports a missing engine, so it reads the availability
       // probe — which shells out to `yosys --version` unless stubbed. Real
@@ -269,6 +280,122 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.byType(CruxStatusBar), findsOneWidget);
         expect(find.text('No design loaded'), findsOneWidget);
+      });
+    });
+
+    group('the educational-licence chip', () {
+      const label = 'Non-commercial use · $kFixtureEduEmail';
+
+      testWidgets('shows the EDU chip and the holder under an educational '
+          'licence', (tester) async {
+        _injectedNetlist = _twoCellModel();
+        await _pump(
+          tester,
+          sourceFiles: <String>['/d/soc.v'],
+          license: activeLicenseStatus(LicenseTier.edu),
+        );
+        expect(find.byType(CruxEduStatusChip), findsOneWidget);
+        expect(find.byType(EditionBadge), findsOneWidget);
+        expect(find.text(label), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(CruxStatusBar),
+            matching: find.text(label),
+          ),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('is absent at open core', (tester) async {
+        _injectedNetlist = _twoCellModel();
+        await _pump(tester, sourceFiles: <String>['/d/soc.v']);
+        expect(find.byType(EditionBadge), findsNothing);
+        expect(find.textContaining('Non-commercial'), findsNothing);
+      });
+
+      for (final tier in [LicenseTier.pro, LicenseTier.enterprise]) {
+        testWidgets('is absent under ${tier.name}', (tester) async {
+          _injectedNetlist = _twoCellModel();
+          await _pump(
+            tester,
+            sourceFiles: <String>['/d/soc.v'],
+            license: activeLicenseStatus(tier),
+          );
+          expect(find.byType(EditionBadge), findsNothing);
+          expect(find.textContaining('Non-commercial'), findsNothing);
+        });
+      }
+
+      testWidgets('is translated', (tester) async {
+        await _pump(
+          tester,
+          locale: const Locale('ja'),
+          license: activeLicenseStatus(LicenseTier.edu),
+        );
+        expect(find.text('非商用利用 · $kFixtureEduEmail'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      Future<void> pumpIdle(
+        WidgetTester tester,
+        CruxLicenseStatus license,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(1200, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        final prefs = await SharedPreferences.getInstance();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              licenseStatusProvider.overrideWithValue(license),
+              settingsServiceProvider.overrideWithValue(
+                SettingsService<AppSettings>(
+                  const NetcruxSettingsCodec(),
+                  prefsOverride: prefs,
+                ),
+              ),
+            ],
+            child: const MaterialApp(
+              localizationsDelegates: L10N.localizationsDelegates,
+              supportedLocales: L10N.supportedLocales,
+              home: Scaffold(
+                body: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Builder(builder: NetcruxStatusBar.idle),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('rides on the idle bar too', (tester) async {
+        await pumpIdle(tester, activeLicenseStatus(LicenseTier.edu));
+        expect(find.text('No design loaded'), findsOneWidget);
+        expect(find.text(label), findsOneWidget);
+      });
+
+      testWidgets('is absent from the idle bar under Pro', (tester) async {
+        await pumpIdle(tester, activeLicenseStatus(LicenseTier.pro));
+        expect(find.textContaining('Non-commercial'), findsNothing);
+      });
+
+      testWidgets('a click opens Settings at License', (tester) async {
+        await pumpIdle(tester, activeLicenseStatus(LicenseTier.edu));
+        await tester.tap(find.text(label));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          tester
+              .widget<CruxSettingsInitialCategory>(
+                find.byType(CruxSettingsInitialCategory),
+              )
+              .id,
+          kCruxLicenseCategoryId,
+        );
+        expect(tester.takeException(), isNull);
       });
     });
 

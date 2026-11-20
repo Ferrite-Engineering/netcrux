@@ -11,4 +11,13 @@ What is specific to NetCrux:
 
 In the downloaded app, the license lives in `Settings → License`: paste a license key or the contents of a license file, or request an educational license. That panel is where a Pro, Enterprise or Education key goes; Open Core stays free and never asks for one.
 
+## Educational licenses {#education}
+
+An educational license is for non-commercial teaching, learning and research, and NetCrux says so in two places while it runs on one:
+
+- **The status bar.** The right end of the status bar shows the EDU badge, *Non-commercial use* and the address the license was issued to. Hover it for the terms and the date the license is valid until; click it to open `Settings → License`.
+- **Exported pictures.** A schematic exported with `File → Export as PNG…` or `File → Export as SVG…` carries one small line in its bottom-right corner: *Made with NetCrux Educational · Non-commercial use only*. Review minutes copied as Markdown end with the same line.
+
+Data is never marked. The JSON netlist export, review minutes copied as CSV, sessions, projects, workspaces, keymaps and color themes are written exactly as they are under any other license, so every tool that reads them back keeps working. Open Core, Pro and Enterprise show neither the status-bar notice nor the mark.
+
 Pro commands appear in the Open Core app's menus and command palette too, marked with a Pro badge. Open Core does not contain their implementation, so choosing one there shows a message that it requires NetCrux Pro. The web viewer, which is Open Core only, does not list them.

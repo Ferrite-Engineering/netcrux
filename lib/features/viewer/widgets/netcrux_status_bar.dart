@@ -1,13 +1,17 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_license/crux_license.dart';
 import 'package:crux_status_bar/crux_status_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netcrux/core/license/netcrux_edu_notice_strings.dart';
+import 'package:netcrux/core/license/netcrux_license_badge_strings.dart';
 import 'package:netcrux/core/providers/status_bar_trailing_widgets_provider.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/features/settings/open_license_settings.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
 import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
@@ -25,9 +29,10 @@ import 'package:netcrux/services/yosys/yosys_availability_provider.dart';
 /// [currentProjectProvider] / [loadedNetlistProvider] directly and the
 /// zero-tabs empty canvas stays chrome-free.
 ///
-/// Beyond that identity it carries two things the suite grammar puts here: a
-/// zero-suppressed "Yosys not found" segment, and an elaboration busy
-/// indicator in the trailing slot ahead of the Pro extension seam.
+/// Beyond that identity it carries what the suite grammar puts here: a
+/// zero-suppressed "Yosys not found" segment, and in the trailing slot an
+/// elaboration busy indicator, the Pro extension seam, and the
+/// educational-licence chip ([eduChip]).
 ///
 /// Live performance metrics (layout time + sparkline, FPS, memory) are
 /// intentionally **not** here — they live in the collapsible
@@ -89,14 +94,47 @@ class NetcruxStatusBar extends ConsumerWidget {
         // the suite grammar: present only when there is something wrong.
         if (yosysMissing) CruxStatusSegment(l10n.statusBarYosysUnavailable),
       ],
-      // Suite grammar: progress first, then the Pro extension slot.
+      // Suite grammar: progress first, then the Pro extension slot, then the
+      // licence notice. NetCrux has no bottom panel, so no chevron follows.
       trailing: [
         if (netlistAsync.isLoading)
           CruxStatusBusyIndicator(
             semanticsLabel: l10n.statusBarBusyElaborating,
           ),
         ...ref.watch(statusBarTrailingWidgetsProvider),
+        eduChip(context),
       ],
+    );
+  }
+
+  /// The educational-licence chip: the EDU badge, `Non-commercial use` and
+  /// the holder's address, opening Settings > License on a click.
+  ///
+  /// Mounted unconditionally: it renders nothing unless
+  /// `licenseStatusProvider` resolves to the Educational tier, which only the
+  /// Pro overlay's licence service publishes. That provider lives in the root
+  /// container, so the idle bar can carry the chip without a per-tab read.
+  ///
+  /// The chip's own inset from the right edge, matching the segment strip's
+  /// on the left, is added only while it shows, so an idle slot stays
+  /// weightless.
+  static Widget eduChip(BuildContext context) {
+    final l10n = L10N.of(context);
+    return Consumer(
+      builder: (context, ref, _) {
+        if (!cruxIsEduLicense(ref.watch(licenseStatusProvider))) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsetsDirectional.only(start: 8, end: 8),
+          child: CruxEduStatusChip(
+            onTap: () => openLicenseSettings(context),
+            strings: NetCruxEduNoticeStrings(l10n),
+            badgeStrings: NetCruxLicenseBadgeStrings(l10n),
+            textStyle: CruxStatusBar.resolveTextStyle(context),
+          ),
+        );
+      },
     );
   }
 
@@ -120,10 +158,16 @@ class NetcruxStatusBar extends ConsumerWidget {
   /// mounts there: WaveCrux states the edition on its welcome screen, and a
   /// NetCrux start screen that did not would be a suite divergence with no
   /// platform reason behind it.
+  ///
+  /// The educational-licence chip rides along for the same reason: a holder
+  /// sees the notice from launch, not only once a design is open.
   static Widget idle(BuildContext context) => Consumer(
     builder: (context, ref, _) => CruxStatusBar(
       segments: [CruxStatusSegment(L10N.of(context).statusBarNoDesign)],
-      trailing: ref.watch(statusBarTrailingWidgetsProvider),
+      trailing: [
+        ...ref.watch(statusBarTrailingWidgetsProvider),
+        eduChip(context),
+      ],
     ),
   );
 }

@@ -3,7 +3,9 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
+import 'package:crux_license/crux_license.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -27,6 +29,7 @@ import 'package:netcrux/features/viewer/services/svg_export_palette_from_theme.d
 import 'package:netcrux/features/viewer/symbols/cell_symbol_svg_source_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
+import '../../../helpers/license_status_fixtures.dart';
 import '../../../helpers/telemetry_test_overrides.dart';
 
 /// Pumps a Scaffold, optionally hosting a widget under [canvasKey], and
@@ -282,6 +285,118 @@ void main() {
     });
   });
 
+  group('the educational-licence mark', () {
+    for (final MapEntry(key: name, value: licence) in _licences.entries) {
+      final marks = name == 'edu';
+
+      testWidgets('PNG under $name ${marks ? 'carries' : 'has no'} mark', (
+        tester,
+      ) async {
+        final dir = Directory.systemTemp.createTempSync('nc_export_png_edu_');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final key = GlobalKey();
+        final controller = await _controller(
+          tester,
+          canvasKey: key,
+          keyedChild: RepaintBoundary(
+            key: key,
+            child: Container(
+              width: 300,
+              height: 60,
+              color: const Color(0xFFFF0000),
+            ),
+          ),
+          pickSavePath: (name) async => '${dir.path}/$name',
+          overrides: [licenseStatusProvider.overrideWithValue(licence)],
+        );
+
+        await tester.runAsync(controller.exportPng);
+        await tester.pump();
+
+        final path = '${dir.path}/schematic.png';
+        // Captured at 2x: 600 x 120. The plate sits 12 px in from the
+        // bottom-right corner; this pixel is inside it.
+        final corner = await tester.runAsync(
+          () => _pngPixel(path, 600 - 24, 120 - 16),
+        );
+        final origin = await tester.runAsync(() => _pngPixel(path, 2, 2));
+        expect(origin, <int>[255, 0, 0, 255]);
+        if (marks) {
+          expect(corner, isNot(<int>[255, 0, 0, 255]));
+        } else {
+          expect(corner, <int>[255, 0, 0, 255]);
+        }
+        expect(find.textContaining(path), findsOneWidget);
+      });
+
+      testWidgets('SVG under $name ${marks ? 'carries' : 'has no'} mark', (
+        tester,
+      ) async {
+        final dir = Directory.systemTemp.createTempSync('nc_export_svg_edu_');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final container = ProviderContainer(
+          overrides: [
+            ...netcruxTelemetryTestOverrides(),
+            currentLaidOutGraphProvider.overrideWith((ref) async => _laidOut()),
+            licenseStatusProvider.overrideWithValue(licence),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(currentLaidOutGraphProvider.future);
+        final controller = await _controller(
+          tester,
+          reuseContainer: container,
+          pickSavePath: (name) async => '${dir.path}/$name',
+        );
+
+        await tester.runAsync(controller.exportSvg);
+        await tester.pump();
+
+        final svg = File('${dir.path}/schematic.svg').readAsStringSync();
+        if (marks) {
+          expect(svg, contains('class="edu-mark"'));
+          expect(svg, contains('>$_mark</text>'));
+        } else {
+          expect(svg, isNot(contains('edu-mark')));
+          expect(svg, isNot(contains('Non-commercial')));
+        }
+      });
+    }
+
+    testWidgets('the JSON netlist slice is byte-identical under an '
+        'educational licence', (tester) async {
+      Future<String> exportUnder(CruxLicenseStatus licence) async {
+        final dir = Directory.systemTemp.createTempSync('nc_export_json_edu_');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final container = ProviderContainer(
+          overrides: [
+            ...netcruxTelemetryTestOverrides(),
+            loadedNetlistProvider.overrideWith(() => _StaticNetlist(_model())),
+            licenseStatusProvider.overrideWithValue(licence),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(loadedNetlistProvider.future);
+        container.read(hierarchyTreeProvider.notifier).setModel(_model());
+        final controller = await _controller(
+          tester,
+          reuseContainer: container,
+          pickSavePath: (name) async => '${dir.path}/$name',
+        );
+        await tester.runAsync(controller.exportJson);
+        await tester.pump();
+        return File('${dir.path}/schematic.json').readAsStringSync();
+      }
+
+      final edu = await exportUnder(_licences['edu']!);
+      final openCore = await exportUnder(CruxLicenseStatus.openCore);
+      expect(edu, isNotEmpty);
+      expect(edu, openCore);
+      expect(edu, isNot(contains('Non-commercial')));
+      expect(edu, isNot(contains('Educational')));
+    });
+  });
+
   group('exportPng', () {
     testWidgets('writes a PNG from the repaint boundary', (tester) async {
       final dir = Directory.systemTemp.createTempSync('nc_export_png_');
@@ -306,6 +421,28 @@ void main() {
       expect(find.textContaining(file.path), findsOneWidget);
     });
   });
+}
+
+/// The three licence states the mark distinguishes: only the first marks.
+final Map<String, CruxLicenseStatus> _licences = <String, CruxLicenseStatus>{
+  'edu': activeLicenseStatus(LicenseTier.edu),
+  'pro': activeLicenseStatus(LicenseTier.pro),
+  'open core': CruxLicenseStatus.openCore,
+};
+
+const String _mark = 'Made with NetCrux Educational · Non-commercial use only';
+
+/// The RGBA of pixel ([x], [y]) of the PNG at [path].
+Future<List<int>> _pngPixel(String path, int x, int y) async {
+  final codec = await ui.instantiateImageCodec(File(path).readAsBytesSync());
+  final frame = await codec.getNextFrame();
+  final image = frame.image;
+  final rgba = (await image.toByteData())!;
+  final offset = (y * image.width + x) * 4;
+  final pixel = [for (var i = 0; i < 4; i++) rgba.getUint8(offset + i)];
+  image.dispose();
+  codec.dispose();
+  return pixel;
 }
 
 LaidOutGraph _laidOut() => const LaidOutGraph(

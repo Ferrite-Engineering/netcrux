@@ -218,6 +218,47 @@ void main() {
     });
   });
 
+  group('the educational-licence mark', () {
+    const mark = 'Made with NetCrux Educational · Non-commercial use only';
+
+    test('is the last element, bottom-right, when given', () {
+      final svg = exporter.toSvg(_graph(), eduMark: mark);
+      expect(
+        svg,
+        contains(
+          '<text class="edu-mark" x="194.00" y="114.00" '
+          'font-family="sans-serif" font-size="11.00" ',
+        ),
+      );
+      expect(svg, contains('text-anchor="end"'));
+      expect(svg.trimRight(), endsWith('$mark</text>\n</svg>'));
+    });
+
+    test('follows a frame into its bottom-right corner', () {
+      final svg = exporter.toSvg(
+        _graph(),
+        frame: const BoundingBox(x: -24, y: 10, width: 120, height: 60),
+        eduMark: mark,
+      );
+      expect(svg, contains('class="edu-mark" x="90.00" y="64.00"'));
+    });
+
+    test('is escaped', () {
+      final svg = exporter.toSvg(_graph(), eduMark: 'a<b>&c');
+      expect(svg, contains('>a&lt;b&gt;&amp;c</text>'));
+    });
+
+    test('is absent without one, and the document is otherwise unchanged', () {
+      final plain = exporter.toSvg(_graph());
+      final marked = exporter.toSvg(_graph(), eduMark: mark);
+      expect(plain, isNot(contains('edu-mark')));
+      expect(
+        marked.split('\n').where((l) => !l.contains('edu-mark')).join('\n'),
+        plain,
+      );
+    });
+  });
+
   group('built-in symbols', () {
     final svg = exporter.toSvg(_everyKind());
 
