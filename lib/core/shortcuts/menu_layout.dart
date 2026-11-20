@@ -193,13 +193,10 @@ const CruxMenuLayout<NetcruxAction> kMenuLayout = {
     ],
     [NetcruxAction.runActivityAnalysis, NetcruxAction.configureActivityScheme],
     // Tools ends with the diagnostics group in every product: the per-tab
-    // surface (reveal + toggle), then the process-wide dialog — Tab
-    // Diagnostics leads, matching WaveCrux's menu placement.
-    [
-      NetcruxAction.openTabDiagnostics,
-      NetcruxAction.toggleDiagnosticsPanel,
-      NetcruxAction.openAppDiagnostics,
-    ],
+    // surface, then the process-wide dialog — Tab Diagnostics leads,
+    // matching WaveCrux's menu placement. The panel toggle is not in the
+    // menu: it would be a second "Tab Diagnostics" row.
+    [NetcruxAction.openTabDiagnostics, NetcruxAction.openAppDiagnostics],
   ],
 
   // ── Help ──────────────────────────────────────────────────────────────────
