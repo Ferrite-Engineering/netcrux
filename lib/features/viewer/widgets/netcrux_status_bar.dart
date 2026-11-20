@@ -82,6 +82,7 @@ class NetcruxStatusBar extends ConsumerWidget {
     // typography, surface, and border so NetCrux's bottom bar matches WaveCrux
     // (the canonical). NetCrux contributes only its own slots.
     return CruxStatusBar(
+      semanticsLabel: l10n.accessibilityStatusBarRegion,
       segments: [
         if (labels.isEmpty)
           CruxStatusSegment(l10n.statusBarNoDesign)
@@ -163,6 +164,7 @@ class NetcruxStatusBar extends ConsumerWidget {
   /// sees the notice from launch, not only once a design is open.
   static Widget idle(BuildContext context) => Consumer(
     builder: (context, ref, _) => CruxStatusBar(
+      semanticsLabel: L10N.of(context).accessibilityStatusBarRegion,
       segments: [CruxStatusSegment(L10N.of(context).statusBarNoDesign)],
       trailing: [
         ...ref.watch(statusBarTrailingWidgetsProvider),
