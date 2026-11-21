@@ -87,7 +87,7 @@ ROHD writes source paths relative to the package root you gave it, and the netli
 
 A ROHD design that you synthesize ends as a gate-level netlist, and those get large. NetCrux 1.2 is built for that.
 
-1. **Gate-level Verilog.** Generate SystemVerilog from ROHD, synthesize it with your flow, and open the structural Verilog the flow writes (`.v` or `.v.gz`). NetCrux reads it with the [native gate-level reader](files-and-projects.md#native-reader) instead of running Yosys on it. The reader is a beta feature in 1.2 and is on by default for the files it can read. If a file has anything the reader does not handle, NetCrux falls back to Yosys and says why in Diagnostics. To compare the two routes on one file:
+1. **Gate-level Verilog.** Generate SystemVerilog from ROHD, synthesize it with your flow, and open the structural Verilog the flow writes (`.v` or `.v.gz`). NetCrux reads it with the [native gate-level reader](files-and-projects.md#native-reader) instead of running Yosys on it. The reader is new in NetCrux 1.2 and is on by default for the files it can read. If a file has anything the reader does not handle, NetCrux falls back to Yosys and says why in Diagnostics. To compare the two routes on one file:
 
     ```bash
     netcrux --netlist-reader=native route/top.v.gz

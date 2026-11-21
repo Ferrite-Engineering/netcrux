@@ -2805,7 +2805,7 @@
   "settingsElaborationTimeLimitAutomatic": "자동",
   "settingsElaborationTimeLimitExtended": "연장",
   "settingsElaborationTimeLimitNone": "제한 없음",
-  "settingsNativeReaderLabel": "네이티브 게이트 수준 리더(베타)",
+  "settingsNativeReaderLabel": "네이티브 게이트 수준 리더",
   "settingsNativeReaderDescription": "Yosys를 실행하지 않고 구조적 Verilog 넷리스트를 직접 읽습니다. 리더가 정확하게 처리할 수 없는 파일은 Yosys가 대신 읽으며, 이유는 진단에 표시됩니다.",
   "statsElaborationReadingNative": "읽는 중(네이티브)",
   "statsElaborationIdleNative": "유휴(네이티브)",

@@ -2805,7 +2805,7 @@
   "settingsElaborationTimeLimitAutomatic": "自動",
   "settingsElaborationTimeLimitExtended": "延長",
   "settingsElaborationTimeLimitNone": "制限なし",
-  "settingsNativeReaderLabel": "ネイティブゲートレベルリーダー（ベータ）",
+  "settingsNativeReaderLabel": "ネイティブゲートレベルリーダー",
   "settingsNativeReaderDescription": "Yosys を実行せずに、構造化 Verilog ネットリストを直接読み込みます。読み込めないファイルは Yosys が読み込み、理由は診断に表示されます。",
   "statsElaborationReadingNative": "読み込み中（ネイティブ）",
   "statsElaborationIdleNative": "アイドル（ネイティブ）",

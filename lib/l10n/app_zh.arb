@@ -2805,7 +2805,7 @@
   "settingsElaborationTimeLimitAutomatic": "自动",
   "settingsElaborationTimeLimitExtended": "延长",
   "settingsElaborationTimeLimitNone": "不限制",
-  "settingsNativeReaderLabel": "原生门级读取器（测试版）",
+  "settingsNativeReaderLabel": "原生门级读取器",
   "settingsNativeReaderDescription": "无需运行 Yosys，直接读取结构化 Verilog 网表。读取器无法忠实处理的文件改由 Yosys 读取，诊断中会说明原因。",
   "statsElaborationReadingNative": "读取中（原生）",
   "statsElaborationIdleNative": "空闲（原生）",

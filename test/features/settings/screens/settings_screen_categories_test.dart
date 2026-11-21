@@ -242,7 +242,7 @@ void main() {
     final l10n = await l10nFor(const Locale('en'));
 
     await _openCategory(tester, l10n.settingsEnginesSection);
-    expect(l10n.settingsNativeReaderLabel, contains('(beta)'));
+    expect(l10n.settingsNativeReaderLabel, isNot(contains('beta')));
     expect(find.text(l10n.settingsNativeReaderLabel), findsWidgets);
     const key = Key('settingsNativeGateLevelReaderSwitch');
     expect(tester.widget<CruxFormRow>(find.byKey(key)).value, isTrue);
@@ -330,12 +330,7 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     // With no bundled binary directory configured, the executable is the
     // plain PATH lookup, as Auto-detect gives.
-    expect(
-      container.read(
-        effectiveYosysExecutableProvider,
-      ),
-      isNull,
-    );
+    expect(container.read(effectiveYosysExecutableProvider), isNull);
     expect(tester.takeException(), isNull);
   });
 

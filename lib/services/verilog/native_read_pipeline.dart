@@ -86,7 +86,7 @@ String nativeReadInfoLine(NativeReadStats stats) {
   final seconds = (stats.readMilliseconds / 1000).toStringAsFixed(1);
   final modules = stats.modules == 1 ? 'module' : 'modules';
   final cells = stats.cells == 1 ? 'cell' : 'cells';
-  return 'Info: Netlist read by the native gate-level reader (beta): '
+  return 'Info: Netlist read by the native gate-level reader: '
       '${stats.modules} $modules, ${stats.cells} $cells, top module '
       '${stats.topModule}, $seconds s. Yosys was not run.';
 }

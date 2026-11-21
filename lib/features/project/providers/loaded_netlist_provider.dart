@@ -319,9 +319,7 @@ class LoadedNetlist extends _$LoadedNetlist {
         if (native.model == null) run.set(null);
         return native;
       }
-      run.set(
-        const NetlistReaderRun(NetlistReaderKind.yosys, fellBack: true),
-      );
+      run.set(const NetlistReaderRun(NetlistReaderKind.yosys, fellBack: true));
     } else {
       run.set(const NetlistReaderRun(NetlistReaderKind.yosys));
       _readerNotes = <String>[yosysReadInfoLine(skipped)];
@@ -694,10 +692,7 @@ class LoadedNetlist extends _$LoadedNetlist {
 ///
 /// Throws [LoadedNetlistException]. Returns `null` for a project with no
 /// sources.
-Future<NetlistModel?> loadDesignNetlist(
-  Ref ref,
-  NetcruxProject project,
-) async {
+Future<NetlistModel?> loadDesignNetlist(Ref ref, NetcruxProject project) async {
   if (project.sourceFiles.isEmpty) return null;
   if (project.isPrebuiltNetlist || !ref.read(hdlElaborationSupportedProvider)) {
     return (await _readPrebuiltNetlist(ref, project))?.model;
@@ -735,7 +730,7 @@ Future<NetlistModel?> loadDesignNetlist(
   }
 }
 
-/// Settings → Engines → Native gate-level reader (beta), as saved.
+/// Settings → Engines → Native gate-level reader, as saved.
 ///
 /// Read without waiting when the settings are loaded, which they are long
 /// before a design opens. While they still load the pipeline waits a moment

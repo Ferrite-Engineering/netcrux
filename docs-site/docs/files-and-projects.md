@@ -103,13 +103,13 @@ A manifest from an earlier release is named just `.crux-project`, which file pic
 
 ## Gate-level netlists: the native reader {#native-reader}
 
-A gate-level netlist, the structural Verilog a synthesis or place-and-route flow writes, has nothing left to elaborate: it is modules, nets and instances of library cells. Running it through Yosys only to read the result back is slow and memory-hungry, so from NetCrux 1.2 (beta) NetCrux reads such a file itself and builds the netlist model directly, with no Yosys run and no JSON document in between. The file is read as a stream on a worker, a block at a time, never as one string, so its size is not limited, and closing the tab or opening something else stops the read. A `.v.gz` file is decompressed as it is read; `File → Open Source Files…` lists every `.gz` file for it, and only a name ending in `.v.gz` is read as a Verilog netlist. The `src` location of each instance and net is the line in the netlist file, so an editor opened on a location (`Settings → Editors`) needs the plain file: it cannot show a line of a `.v.gz`.
+A gate-level netlist, the structural Verilog a synthesis or place-and-route flow writes, has nothing left to elaborate: it is modules, nets and instances of library cells. Running it through Yosys only to read the result back is slow and memory-hungry, so from NetCrux 1.2 NetCrux reads such a file itself and builds the netlist model directly, with no Yosys run and no JSON document in between. The file is read as a stream on a worker, a block at a time, never as one string, so its size is not limited, and closing the tab or opening something else stops the read. A `.v.gz` file is decompressed as it is read; `File → Open Source Files…` lists every `.gz` file for it, and only a name ending in `.v.gz` is read as a Verilog netlist. The `src` location of each instance and net is the line in the netlist file, so an editor opened on a location (`Settings → Editors`) needs the plain file: it cannot show a line of a `.v.gz`.
 
-The native gate-level reader is **on by default in the beta**, for the files it can read. Turn it off, or force either reader, in any of these ways, from the strongest to the weakest:
+The native gate-level reader is **on by default**, for the files it can read. Turn it off, or force either reader, in any of these ways, from the strongest to the weakest:
 
 1. `--netlist-reader=yosys` or `--netlist-reader=native` on the [command line](cli/usage.md), for that launch.
 2. `"netlistReader": "yosys"` or `"native"` in a [project file](reference/project-format.md). The default, `"auto"`, follows the setting.
-3. `Settings → Engines → Native gate-level reader (beta)`, saved for the user.
+3. `Settings → Engines → Native gate-level reader`, saved for the user.
 
 `native` means "try the native reader"; a file it cannot read is still read by Yosys, with the reason in Diagnostics. To compare the two routes on one file, open it twice, once with each flag.
 
@@ -131,7 +131,7 @@ The reader never guesses. For anything else it stops, Yosys reads the design ins
 The status strip's Elaboration figure and the first lines of Diagnostics say which reader ran:
 
 ```text
-Info: Netlist read by the native gate-level reader (beta): 91 modules, 100085 cells, top module top, 0.6 s. Yosys was not run.
+Info: Netlist read by the native gate-level reader: 91 modules, 100085 cells, top module top, 0.6 s. Yosys was not run.
 ```
 
 ```text

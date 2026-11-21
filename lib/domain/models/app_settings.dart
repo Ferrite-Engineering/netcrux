@@ -121,7 +121,7 @@ class AppSettings {
   final ElaborationTimeLimit elaborationTimeLimit;
 
   /// Whether a gate-level Verilog netlist is read by the native reader
-  /// instead of through Yosys. On by default in the beta; a design the reader
+  /// instead of through Yosys. On by default; a design the reader
   /// cannot handle faithfully is read by Yosys either way. A project's
   /// `netlistReader` key and the `--netlist-reader` command-line flag take
   /// precedence (see `NetlistReaderChoice.useNative`). Surfaced in Settings,

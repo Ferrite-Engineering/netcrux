@@ -3678,7 +3678,7 @@
   "@settingsElaborationTimeLimitNone": {
     "description": "Yosys time limit choice: Yosys runs until it finishes or the user cancels."
   },
-  "settingsNativeReaderLabel": "Native gate-level reader (beta)",
+  "settingsNativeReaderLabel": "Native gate-level reader",
   "@settingsNativeReaderLabel": {
     "description": "Settings > Engines row label for the switch that reads a structural (gate-level) Verilog netlist directly, without running Yosys. Marked beta."
   },

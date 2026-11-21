@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/features/settings/providers/app_settings_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
 
-/// Settings → Engines → Native gate-level reader (beta).
+/// Settings → Engines → Native gate-level reader.
 ///
 /// On, a structural Verilog netlist is read straight into the netlist model
 /// with no Yosys run; a design the reader cannot handle faithfully falls back
