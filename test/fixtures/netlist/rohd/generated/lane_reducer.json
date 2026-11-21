@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "files": [
     "generator/lib/designs.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/selection.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/swizzle.dart"
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/selection.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/concat.dart"
   ],
   "modules": {
     "LaneReducer": {
@@ -28,37 +28,37 @@
             "reversed": [
               "0:97:22"
             ],
-            "_const_0_add__swizzled_add__swizzled_add__swizzled": [
+            "_const_0_add__concatd_add__concatd_add__concatd": [
               "0:105:17"
             ],
-            "_swizzled": [
+            "_concatd": [
               "0:105:17"
             ],
-            "_const_0_add__swizzled_add__swizzled_add__swizzled_add__swizzled_carry": [
+            "_const_0_add__concatd_add__concatd_add__concatd_add__concatd_carry": [
               "0:105:17"
             ],
-            "_const_0_add__swizzled_add__swizzled": [
+            "_const_0_add__concatd_add__concatd": [
               "0:105:17"
             ],
-            "_in1__swizzled": [
+            "_in1__concatd": [
               "0:105:17"
             ],
-            "_const_0_add__swizzled_add__swizzled_add__swizzled_carry": [
+            "_const_0_add__concatd_add__concatd_add__concatd_carry": [
               "0:105:17"
             ],
-            "_const_0_add__swizzled": [
+            "_const_0_add__concatd": [
               "0:105:17"
             ],
-            "_swizzled_0": [
+            "_concatd_0": [
               "0:105:17"
             ],
-            "_const_0_add__swizzled_add__swizzled_carry": [
+            "_const_0_add__concatd_add__concatd_carry": [
               "0:105:17"
             ],
-            "_swizzled_1": [
+            "_concatd_1": [
               "0:105:17"
             ],
-            "_const_0_add__swizzled_carry": [
+            "_const_0_add__concatd_carry": [
               "0:105:17"
             ],
             "reversed[0]": [
@@ -121,20 +121,20 @@
             "add_2": [
               "0:105:17"
             ],
-            "swizzle": [
-              "2:28:34",
+            "concat": [
+              "2:35:34",
               "0:105:24"
             ],
-            "swizzle_0": [
-              "2:28:34",
+            "concat_0": [
+              "2:35:34",
               "0:105:24"
             ],
-            "swizzle_1": [
-              "2:28:34",
+            "concat_1": [
+              "2:35:34",
               "0:105:24"
             ],
-            "swizzle_2": [
-              "2:28:34",
+            "concat_2": [
+              "2:35:34",
               "0:105:24"
             ],
             "combinational": [
@@ -591,7 +591,7 @@
             ]
           }
         },
-        "swizzle": {
+        "concat": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -633,7 +633,7 @@
             ]
           }
         },
-        "swizzle_0": {
+        "concat_0": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -675,7 +675,7 @@
             ]
           }
         },
-        "swizzle_1": {
+        "concat_1": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -717,7 +717,7 @@
             ]
           }
         },
-        "swizzle_2": {
+        "concat_2": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -1357,7 +1357,7 @@
             "preserved_name": 1
           }
         },
-        "_const_0_add__swizzled_add__swizzled_add__swizzled": {
+        "_const_0_add__concatd_add__concatd_add__concatd": {
           "bits": [
             150,
             151,
@@ -1375,7 +1375,7 @@
           },
           "attributes": {}
         },
-        "_swizzled": {
+        "_concatd": {
           "bits": [
             160,
             161,
@@ -1393,7 +1393,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled_add__swizzled_add__swizzled_carry": {
+        "_const_0_add__concatd_add__concatd_add__concatd_add__concatd_carry": {
           "bits": [
             170
           ],
@@ -1402,7 +1402,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled": {
+        "_const_0_add__concatd_add__concatd": {
           "bits": [
             171,
             172,
@@ -1420,7 +1420,7 @@
           },
           "attributes": {}
         },
-        "_in1__swizzled": {
+        "_in1__concatd": {
           "bits": [
             181,
             182,
@@ -1438,7 +1438,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled_add__swizzled_carry": {
+        "_const_0_add__concatd_add__concatd_add__concatd_carry": {
           "bits": [
             191
           ],
@@ -1447,7 +1447,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled": {
+        "_const_0_add__concatd": {
           "bits": [
             192,
             193,
@@ -1465,7 +1465,7 @@
           },
           "attributes": {}
         },
-        "_swizzled_0": {
+        "_concatd_0": {
           "bits": [
             202,
             203,
@@ -1483,7 +1483,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled_carry": {
+        "_const_0_add__concatd_add__concatd_carry": {
           "bits": [
             212
           ],
@@ -1492,7 +1492,7 @@
           },
           "attributes": {}
         },
-        "_swizzled_1": {
+        "_concatd_1": {
           "bits": [
             223,
             224,
@@ -1510,7 +1510,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_carry": {
+        "_const_0_add__concatd_carry": {
           "bits": [
             233
           ],

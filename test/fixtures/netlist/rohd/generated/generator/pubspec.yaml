@@ -10,24 +10,12 @@ environment:
 
 dependencies:
   path: ^1.9.0
-  # The netlist extensions (NetlistService, format 0.1.0) are on ROHD main
-  # but not yet on pub.dev, so the generator is pinned to a commit.
-  rohd:
-    git:
-      url: https://github.com/intel/rohd.git
-      ref: 2d84f73abfb1ba95c64d218e9b13a12e8416249c
+  # Released ROHD, which carries the netlist extensions (NetlistService,
+  # format 0.1.0).
+  rohd: ^0.7.3
+  # ROHD-HCL has no tag after v0.3.2 that builds against released ROHD, so the
+  # generator is pinned to a commit of its main branch.
   rohd_hcl:
     git:
       url: https://github.com/intel/rohd-hcl.git
-      ref: 3a3fab368534a23462e6ad11b412bec289fa54c0
-
-dependency_overrides:
-  rohd:
-    git:
-      url: https://github.com/intel/rohd.git
-      ref: 2d84f73abfb1ba95c64d218e9b13a12e8416249c
-  rohd_hierarchy:
-    git:
-      url: https://github.com/intel/rohd.git
-      ref: 2d84f73abfb1ba95c64d218e9b13a12e8416249c
-      path: packages/rohd_hierarchy
+      ref: 767d395261668ba9f5cd3c127f7a027093ed2032

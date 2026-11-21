@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "files": [
     "generator/lib/designs.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/finite_state_machine.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/utilities/synth_logic.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/utilities/synth_module_definition.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/netlist/netlist_passes.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/netlist/netlist_synthesizer.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/netlist/netlist_service.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/synthesizers/utilities/synth_sub_module_instantiation.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/selection.dart",
-    "/pub-cache/git/rohd-2d84f73abfb1ba95c64d218e9b13a12e8416249c/lib/src/swizzle.dart"
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/finite_state_machine.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/synthesizers/utilities/synth_logic.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/synthesizers/utilities/synth_module_definition.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/synthesizers/netlist/netlist_passes.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/synthesizers/netlist/netlist_synthesizer.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/synthesizers/netlist/netlist_service.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/synthesizers/utilities/synth_sub_module_instantiation.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/selection.dart",
+    "/pub-cache/hosted/pub.dev/rohd-0.7.4/lib/src/concat.dart"
   ],
   "modules": {
     "PhaseController": {
@@ -48,45 +48,45 @@
               "0:184:24"
             ],
             "currentState": [
-              "1:93:7",
+              "1:90:7",
               "1:68:7",
-              "1:133:11",
-              "1:105:13",
+              "1:130:11",
+              "1:102:13",
               "0:128:21",
               "0:184:24"
             ],
             "nextState": [
-              "1:93:7",
+              "1:90:7",
               "1:80:7",
-              "1:142:39",
-              "1:146:34",
-              "1:152:16",
-              "1:105:13",
+              "1:139:39",
+              "1:143:34",
+              "1:149:16",
+              "1:102:13",
               "0:128:21",
               "0:184:24"
             ],
             "idle": [
-              "2:169:32",
-              "3:4373:21",
-              "3:756:5",
+              "2:190:32",
+              "3:4407:21",
+              "3:759:5",
               "4:50:48",
               "5:1102:35",
               "5:1137:21",
               "6:103:38"
             ],
             "load": [
-              "2:169:32",
-              "3:4373:21",
-              "3:756:5",
+              "2:190:32",
+              "3:4407:21",
+              "3:759:5",
               "4:50:48",
               "5:1102:35",
               "5:1137:21",
               "6:103:38"
             ],
             "run": [
-              "2:169:32",
-              "3:4373:21",
-              "3:756:5",
+              "2:190:32",
+              "3:4407:21",
+              "3:759:5",
               "4:50:48",
               "5:1102:35",
               "5:1137:21",
@@ -97,23 +97,23 @@
               "0:184:24"
             ],
             "1'h1": [
-              "1:139:29",
-              "1:152:16",
-              "1:105:13",
+              "1:136:29",
+              "1:149:16",
+              "1:102:13",
               "0:128:21",
               "0:184:24"
             ]
           },
           "instances": {
             "combinational": [
-              "1:130:5",
-              "1:105:13",
+              "1:127:5",
+              "1:102:13",
               "0:128:21",
               "0:184:24"
             ],
             "sequential": [
-              "1:170:16",
-              "1:105:13",
+              "1:167:16",
+              "1:102:13",
               "0:128:21",
               "0:184:24"
             ]
@@ -376,47 +376,47 @@
               "0:97:22",
               "0:182:21"
             ],
-            "_const_0_add__swizzled_add__swizzled_add__swizzled": [
+            "_const_0_add__concatd_add__concatd_add__concatd": [
               "0:105:17",
               "0:182:21"
             ],
-            "_swizzled": [
+            "_concatd": [
               "0:105:17",
               "0:182:21"
             ],
-            "_const_0_add__swizzled_add__swizzled_add__swizzled_add__swizzled_carry": [
+            "_const_0_add__concatd_add__concatd_add__concatd_add__concatd_carry": [
               "0:105:17",
               "0:182:21"
             ],
-            "_const_0_add__swizzled_add__swizzled": [
+            "_const_0_add__concatd_add__concatd": [
               "0:105:17",
               "0:182:21"
             ],
-            "_in1__swizzled": [
+            "_in1__concatd": [
               "0:105:17",
               "0:182:21"
             ],
-            "_const_0_add__swizzled_add__swizzled_add__swizzled_carry": [
+            "_const_0_add__concatd_add__concatd_add__concatd_carry": [
               "0:105:17",
               "0:182:21"
             ],
-            "_const_0_add__swizzled": [
+            "_const_0_add__concatd": [
               "0:105:17",
               "0:182:21"
             ],
-            "_swizzled_0": [
+            "_concatd_0": [
               "0:105:17",
               "0:182:21"
             ],
-            "_const_0_add__swizzled_add__swizzled_carry": [
+            "_const_0_add__concatd_add__concatd_carry": [
               "0:105:17",
               "0:182:21"
             ],
-            "_swizzled_1": [
+            "_concatd_1": [
               "0:105:17",
               "0:182:21"
             ],
-            "_const_0_add__swizzled_carry": [
+            "_const_0_add__concatd_carry": [
               "0:105:17",
               "0:182:21"
             ],
@@ -498,23 +498,23 @@
               "0:105:17",
               "0:182:21"
             ],
-            "swizzle": [
-              "9:28:34",
+            "concat": [
+              "9:35:34",
               "0:105:24",
               "0:182:21"
             ],
-            "swizzle_0": [
-              "9:28:34",
+            "concat_0": [
+              "9:35:34",
               "0:105:24",
               "0:182:21"
             ],
-            "swizzle_1": [
-              "9:28:34",
+            "concat_1": [
+              "9:35:34",
               "0:105:24",
               "0:182:21"
             ],
-            "swizzle_2": [
-              "9:28:34",
+            "concat_2": [
+              "9:35:34",
               "0:105:24",
               "0:182:21"
             ],
@@ -973,7 +973,7 @@
             ]
           }
         },
-        "swizzle": {
+        "concat": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -1015,7 +1015,7 @@
             ]
           }
         },
-        "swizzle_0": {
+        "concat_0": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -1057,7 +1057,7 @@
             ]
           }
         },
-        "swizzle_1": {
+        "concat_1": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -1099,7 +1099,7 @@
             ]
           }
         },
-        "swizzle_2": {
+        "concat_2": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -1739,7 +1739,7 @@
             "preserved_name": 1
           }
         },
-        "_const_0_add__swizzled_add__swizzled_add__swizzled": {
+        "_const_0_add__concatd_add__concatd_add__concatd": {
           "bits": [
             150,
             151,
@@ -1757,7 +1757,7 @@
           },
           "attributes": {}
         },
-        "_swizzled": {
+        "_concatd": {
           "bits": [
             160,
             161,
@@ -1775,7 +1775,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled_add__swizzled_add__swizzled_carry": {
+        "_const_0_add__concatd_add__concatd_add__concatd_add__concatd_carry": {
           "bits": [
             170
           ],
@@ -1784,7 +1784,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled": {
+        "_const_0_add__concatd_add__concatd": {
           "bits": [
             171,
             172,
@@ -1802,7 +1802,7 @@
           },
           "attributes": {}
         },
-        "_in1__swizzled": {
+        "_in1__concatd": {
           "bits": [
             181,
             182,
@@ -1820,7 +1820,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled_add__swizzled_carry": {
+        "_const_0_add__concatd_add__concatd_add__concatd_carry": {
           "bits": [
             191
           ],
@@ -1829,7 +1829,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled": {
+        "_const_0_add__concatd": {
           "bits": [
             192,
             193,
@@ -1847,7 +1847,7 @@
           },
           "attributes": {}
         },
-        "_swizzled_0": {
+        "_concatd_0": {
           "bits": [
             202,
             203,
@@ -1865,7 +1865,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_add__swizzled_carry": {
+        "_const_0_add__concatd_add__concatd_carry": {
           "bits": [
             212
           ],
@@ -1874,7 +1874,7 @@
           },
           "attributes": {}
         },
-        "_swizzled_1": {
+        "_concatd_1": {
           "bits": [
             223,
             224,
@@ -1892,7 +1892,7 @@
           },
           "attributes": {}
         },
-        "_const_0_add__swizzled_carry": {
+        "_const_0_add__concatd_carry": {
           "bits": [
             233
           ],
@@ -2112,7 +2112,7 @@
               "0:171:22"
             ],
             "16'h1": [
-              "3:726:48",
+              "3:719:48",
               "4:50:48",
               "5:1102:35",
               "5:1137:21",
@@ -4135,19 +4135,19 @@
               "0:178:19"
             ],
             "beat": [
-              "9:45:34",
+              "9:44:34",
               "0:186:47"
             ],
             "relayed_tag": [
-              "9:45:34",
+              "9:44:34",
               "0:186:47"
             ],
             "relayed_beat_data": [
-              "9:45:34",
+              "9:44:34",
               "0:186:47"
             ],
             "relayed_beat_valid": [
-              "9:45:34",
+              "9:44:34",
               "0:186:47"
             ],
             "item": [
@@ -4193,12 +4193,12 @@
             ]
           },
           "instances": {
-            "swizzle": [
-              "9:45:34",
+            "concat": [
+              "9:44:34",
               "0:186:47"
             ],
-            "swizzle_0": [
-              "9:45:34",
+            "concat_0": [
+              "9:44:34",
               "0:186:47"
             ],
             "tagged_relay": [
@@ -4410,7 +4410,7 @@
         }
       },
       "cells": {
-        "swizzle": {
+        "concat": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -4474,7 +4474,7 @@
             ]
           }
         },
-        "swizzle_0": {
+        "concat_0": {
           "hide_name": 0,
           "type": "$concat",
           "parameters": {
@@ -5507,23 +5507,23 @@
               270
             ],
             "data": [
-              415,
-              416,
-              417,
-              418,
-              419,
-              420,
-              421,
-              422,
-              423,
-              424,
-              425,
-              426,
-              427,
-              428,
-              429,
-              430,
-              431
+              432,
+              433,
+              434,
+              435,
+              436,
+              437,
+              438,
+              439,
+              440,
+              441,
+              442,
+              443,
+              444,
+              445,
+              446,
+              447,
+              448
             ],
             "tag": [
               208,
@@ -5533,7 +5533,71 @@
             ]
           }
         },
-        "struct_unpack_1_sample_out": {
+        "struct_unpack_1_beat": {
+          "hide_name": 0,
+          "type": "$struct_unpack",
+          "parameters": {
+            "STRUCT_NAME": "beat",
+            "FIELD_COUNT": 2,
+            "FIELD_0_NAME": "data",
+            "FIELD_0_OFFSET": 0,
+            "FIELD_0_WIDTH": 16,
+            "FIELD_1_NAME": "valid",
+            "FIELD_1_OFFSET": 16,
+            "FIELD_1_WIDTH": 1
+          },
+          "attributes": {},
+          "is_synthetic": true,
+          "synthetic_origin": "structureUnpack",
+          "port_directions": {
+            "A": "input",
+            "data": "output",
+            "valid": "output"
+          },
+          "connections": {
+            "A": [
+              432,
+              433,
+              434,
+              435,
+              436,
+              437,
+              438,
+              439,
+              440,
+              441,
+              442,
+              443,
+              444,
+              445,
+              446,
+              447,
+              448
+            ],
+            "data": [
+              212,
+              213,
+              214,
+              215,
+              216,
+              217,
+              218,
+              219,
+              220,
+              221,
+              222,
+              223,
+              224,
+              225,
+              226,
+              227
+            ],
+            "valid": [
+              228
+            ]
+          }
+        },
+        "struct_unpack_2_sample_out": {
           "hide_name": 0,
           "type": "$struct_unpack",
           "parameters": {
@@ -5594,70 +5658,6 @@
             ],
             "valid": [
               126
-            ]
-          }
-        },
-        "struct_unpack_2_beat": {
-          "hide_name": 0,
-          "type": "$struct_unpack",
-          "parameters": {
-            "STRUCT_NAME": "beat",
-            "FIELD_COUNT": 2,
-            "FIELD_0_NAME": "data",
-            "FIELD_0_OFFSET": 0,
-            "FIELD_0_WIDTH": 16,
-            "FIELD_1_NAME": "valid",
-            "FIELD_1_OFFSET": 16,
-            "FIELD_1_WIDTH": 1
-          },
-          "attributes": {},
-          "is_synthetic": true,
-          "synthetic_origin": "structureUnpack",
-          "port_directions": {
-            "A": "input",
-            "data": "output",
-            "valid": "output"
-          },
-          "connections": {
-            "A": [
-              415,
-              416,
-              417,
-              418,
-              419,
-              420,
-              421,
-              422,
-              423,
-              424,
-              425,
-              426,
-              427,
-              428,
-              429,
-              430,
-              431
-            ],
-            "data": [
-              212,
-              213,
-              214,
-              215,
-              216,
-              217,
-              218,
-              219,
-              220,
-              221,
-              222,
-              223,
-              224,
-              225,
-              226,
-              227
-            ],
-            "valid": [
-              228
             ]
           }
         },
@@ -6581,23 +6581,23 @@
         },
         "relayed_beat": {
           "bits": [
-            415,
-            416,
-            417,
-            418,
-            419,
-            420,
-            421,
-            422,
-            423,
-            424,
-            425,
-            426,
-            427,
-            428,
-            429,
-            430,
-            431
+            432,
+            433,
+            434,
+            435,
+            436,
+            437,
+            438,
+            439,
+            440,
+            441,
+            442,
+            443,
+            444,
+            445,
+            446,
+            447,
+            448
           ],
           "logic_type": {
             "typeName": "Sample",
@@ -6606,29 +6606,29 @@
                 "name": "data",
                 "width": 16,
                 "bits": [
-                  415,
-                  416,
-                  417,
-                  418,
-                  419,
-                  420,
-                  421,
-                  422,
-                  423,
-                  424,
-                  425,
-                  426,
-                  427,
-                  428,
-                  429,
-                  430
+                  432,
+                  433,
+                  434,
+                  435,
+                  436,
+                  437,
+                  438,
+                  439,
+                  440,
+                  441,
+                  442,
+                  443,
+                  444,
+                  445,
+                  446,
+                  447
                 ]
               },
               {
                 "name": "valid",
                 "width": 1,
                 "bits": [
-                  431
+                  448
                 ]
               }
             ]

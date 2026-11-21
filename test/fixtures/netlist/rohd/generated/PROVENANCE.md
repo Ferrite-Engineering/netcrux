@@ -30,13 +30,24 @@ names, so a change to `designs.dart` means regenerating all four files.
 
 ## Provenance
 
-- **ROHD:** https://github.com/intel/rohd at commit
-  `2d84f73abfb1ba95c64d218e9b13a12e8416249c`, package version 0.6.11, netlist
-  format version `0.1.0`. That format is on ROHD's main branch and not yet in
-  the release on pub.dev, hence the pinned commit. The format is described in
-  `doc/netlist_json_format.md` of that repository.
+- **Regenerated:** 2026-11-20.
+- **ROHD:** the released package `rohd` 0.7.4 from pub.dev (the generator
+  asks for `^0.7.3`), netlist format version `0.1.0`, the same format as the
+  pre-release commit the fixtures were first made with. The format is
+  described in `doc/netlist_json_format.md` of https://github.com/intel/rohd.
 - **ROHD-HCL:** https://github.com/intel/rohd-hcl at commit
-  `3a3fab368534a23462e6ad11b412bec289fa54c0` (`hcl_fifo.json` only).
+  `767d395261668ba9f5cd3c127f7a027093ed2032` (package version 0.3.2, which
+  depends on `rohd ^0.7.3`; no tag after v0.3.2 builds against released ROHD).
+  It is used for `hcl_fifo.json` only.
+- **Changes against the previous fixtures (ROHD main at `2d84f73`, ROHD-HCL at
+  `3a3fab3`):** the `files` paths now point into the hosted pub cache; the
+  source-trace line numbers moved with the ROHD sources; ROHD renamed its
+  `Swizzle` to `Concat`, so the cells and nets named after it are now
+  `concat...` and `..._concatd` (their `$concat` type is unchanged); one
+  `$struct_unpack` cell in `demo_top.json` swapped places with another and
+  the net numbers after it shifted; `hcl_fifo.json` is larger because
+  ROHD-HCL's `Fifo` and `RegisterFile` changed between 3a3fab3 and 767d395.
+  The module names are the same.
 - **License:** both are BSD-3-Clause, Copyright (C) Intel Corporation. The
   netlists carry structure derived from ROHD's and ROHD-HCL's own source
   (the source-trace entries name their files), so the notice is reproduced
