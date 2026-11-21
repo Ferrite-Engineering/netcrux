@@ -15,6 +15,8 @@ NetCrux is a desktop application for Linux, macOS and Windows. It does not synth
 
 On a remote X session (VNC, X forwarding, ETX or NX) or a virtual machine without 3D support there is often no OpenGL. From NetCrux 1.1.1 the app checks for it at startup and, when there is none, draws with the software renderer and prints one line on stderr saying so; setting `FLUTTER_LINUX_RENDERER=opengl` keeps OpenGL. Before 1.1.1 the window stayed empty on such a display. NetCrux also needs the EGL and OpenGL ES libraries (`libEGL.so.1`, `libGLESv2.so.2`, from Mesa); the `.deb` and `.rpm` declare them from 1.1.1.
 
+From NetCrux 1.1.3 typing works over `ssh -X` from a client that keeps OpenSSH's default of untrusted X forwarding, as macOS does. Before 1.1.3 the first key press there ended the app, and `ssh -Y` avoided it. From NetCrux 1.2, Backspace, Escape, Return and Tab work in text fields over X forwarding from a Mac (XQuartz). Some Ctrl+letter shortcuts can still act as a different letter there.
+
 Such sessions often have no keyring service either. From NetCrux 1.1.1 a licence file or machine file still activates there: it is kept in a file only you can read, and the licence panel says where. A licence key needs a keyring, and the panel says so when there is none. A licence in your organization's policy file needs no keyring. See [Licensing](licensing.md).
 
 NetCrux is localized in English, Simplified Chinese, Japanese and Korean. The **Language** picker is in `Settings → Appearance`.
@@ -94,9 +96,7 @@ Three ways, in precedence order:
 
 These choose Yosys only. GHDL always resolves from `PATH`.
 
-!!! note "The Bundled option resolves nothing today"
-
-    `Settings → Engines` also offers **Bundled**. No Yosys or GHDL binary ships inside the NetCrux download, so this mode finds a binary only when the `NETCRUX_BUNDLED_BIN_DIR` environment variable points at a directory holding `<platform>/yosys` and `<platform>/ghdl` (`<platform>` is `linux-x86_64`, `macos-universal` or `windows-x86_64`), and otherwise falls back to the `PATH` lookup.
+No Yosys or GHDL binary ships inside the NetCrux download, so `Settings → Engines` offers only **Auto-detect** and **Custom**. From NetCrux 1.2 there is no Bundled choice. A setting saved as Bundled by an earlier version still loads, shows as Auto-detect, and finds Yosys through the `PATH` lookup unless the `NETCRUX_BUNDLED_BIN_DIR` environment variable points at a directory holding `<platform>/yosys` and `<platform>/ghdl` (`<platform>` is `linux-x86_64`, `macos-universal` or `windows-x86_64`).
 
 ### The Yosys time limit {#yosys-time-limit}
 
