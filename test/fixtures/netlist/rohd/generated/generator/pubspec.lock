@@ -220,38 +220,36 @@ packages:
   rohd:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "2d84f73abfb1ba95c64d218e9b13a12e8416249c"
-      resolved-ref: "2d84f73abfb1ba95c64d218e9b13a12e8416249c"
-      url: "https://github.com/intel/rohd.git"
-    source: git
-    version: "0.6.11"
+      name: rohd
+      sha256: b823b606f91cbeb5fb45d7e5685b801795e77f9009e9c7631e8cc23eb8d79896
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.4"
   rohd_hcl:
     dependency: "direct main"
     description:
       path: "."
-      ref: "3a3fab368534a23462e6ad11b412bec289fa54c0"
-      resolved-ref: "3a3fab368534a23462e6ad11b412bec289fa54c0"
+      ref: "767d395261668ba9f5cd3c127f7a027093ed2032"
+      resolved-ref: "767d395261668ba9f5cd3c127f7a027093ed2032"
       url: "https://github.com/intel/rohd-hcl.git"
     source: git
-    version: "0.3.0"
+    version: "0.3.2"
   rohd_hierarchy:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "packages/rohd_hierarchy"
-      ref: "2d84f73abfb1ba95c64d218e9b13a12e8416249c"
-      resolved-ref: "2d84f73abfb1ba95c64d218e9b13a12e8416249c"
-      url: "https://github.com/intel/rohd.git"
-    source: git
+      name: rohd_hierarchy
+      sha256: "99feb5c21857b8f957c04472d343e57d5aff9061be5941a94869210a2b73605f"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.1"
   rohd_vf:
     dependency: transitive
     description:
       name: rohd_vf
-      sha256: "4034618094c7b31914952f19465680ce9424c04e419c7a9150c716fc3b9b83e4"
+      sha256: "2fdcf77936fa7c9c65b748f12cd94e32ded83f100a41a9dd260f76ba3532f642"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.0"
+    version: "0.7.0"
   shelf:
     dependency: transitive
     description:
