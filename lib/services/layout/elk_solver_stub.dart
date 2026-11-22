@@ -14,3 +14,7 @@ ElkSolver createDefaultElkSolver(String elkSource, {LayoutSolverKind? solver}) {
     'elk_solver_io.dart.',
   );
 }
+
+/// Placeholder for platforms without `dart:io`: there is no worker isolate
+/// to interrupt (the web edition terminates its Web Worker instead).
+void interruptElkSolve(ElkInterruptHandle handle) {}

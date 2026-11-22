@@ -109,9 +109,10 @@ Future<LaidOutGraph> currentLaidOutGraph(Ref ref) async {
   // Leaving this scope (a new selection rebuilds the provider), entering or
   // leaving a cone view, or closing the tab abandons a solve still running
   // for it. The native engine stops at its next check and its worker stays
-  // warm; elkjs cannot be interrupted, so its worker is killed. Without this
-  // a slow scope kept a core busy after the user had moved on, and the next
-  // layout queued behind it. The progress view's Cancel takes the same path.
+  // warm; elkjs is interrupted inside its engine and its worker killed.
+  // Without this a slow scope kept a core busy after the user had moved on,
+  // and the next layout queued behind it. The progress view's Cancel takes
+  // the same path.
   ref.onDispose(service.cancelInFlightLayout);
 
   TraceOverlay? members;
