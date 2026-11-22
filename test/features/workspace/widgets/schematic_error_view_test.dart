@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/workspace/widgets/schematic_error_view.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 
 const _locales = <Locale>[
@@ -189,6 +190,43 @@ void main() {
         // The raw text lives in a collapsed Details expander, so the class
         // name is never visible in the envelope.
         expect(find.textContaining('Exception'), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+
+      // netcrux#83: a scope that elaborated and then failed to lay out read
+      // "Elaboration failed / Something went wrong while elaborating".
+      testWidgets('[$tag] a layout failure reads as a layout failure, not an '
+          'elaboration failure', (tester) async {
+        final l10n = await L10N.delegate.load(locale);
+        await _pump(
+          tester,
+          const LayoutException('elk rejected the layout input: bad port'),
+          locale: locale,
+        );
+        expect(find.text(l10n.schematicLayoutErrorTitle), findsOneWidget);
+        expect(find.text(l10n.schematicLayoutErrorGeneric), findsOneWidget);
+        expect(find.text(l10n.elaborationErrorTitle), findsNothing);
+        expect(find.text(l10n.elaborationErrorGeneric), findsNothing);
+        expect(find.textContaining('LayoutException'), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('[$tag] elkjs running out of stack has its own message', (
+        tester,
+      ) async {
+        final l10n = await L10N.delegate.load(locale);
+        await _pump(
+          tester,
+          const LayoutException(
+            'elkjs ran out of stack on this scope: InternalError: stack '
+            'overflow',
+            kind: LayoutFailureKind.outOfStack,
+          ),
+          locale: locale,
+        );
+        expect(find.text(l10n.schematicLayoutErrorTitle), findsOneWidget);
+        expect(find.text(l10n.schematicLayoutErrorOutOfStack), findsOneWidget);
+        expect(find.text(l10n.elaborationErrorTitle), findsNothing);
         expect(tester.takeException(), isNull);
       });
     }

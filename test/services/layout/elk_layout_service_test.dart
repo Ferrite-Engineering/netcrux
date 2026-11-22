@@ -768,6 +768,57 @@ void main() {
       const b = LayoutException('with cause', cause: 'inner');
       expect(b.toString(), allOf(contains('with cause'), contains('inner')));
     });
+
+    // netcrux#83: elkjs running out of stack is told apart from an input
+    // the engine rejects, so the canvas can say so and the service can
+    // retry on the native engine.
+    test('an engine running out of stack is classified as outOfStack', () {
+      for (final error in <String>[
+        'InternalError: stack overflow', // QuickJS
+        'RangeError: Maximum call stack size exceeded.', // JavaScriptCore, V8
+        'InternalError: too much recursion', // SpiderMonkey
+      ]) {
+        expect(
+          LayoutFailureKind.ofEngineError(error),
+          LayoutFailureKind.outOfStack,
+          reason: error,
+        );
+      }
+      for (final error in <String>[
+        'invalid layout input',
+        'TypeError: undefined is not an object',
+        'Referenced shape does not exist: n7',
+      ]) {
+        expect(
+          LayoutFailureKind.ofEngineError(error),
+          LayoutFailureKind.other,
+          reason: error,
+        );
+      }
+      expect(const LayoutException('x').kind, LayoutFailureKind.other);
+    });
+
+    test('an elkjs stack overflow surfaces as an outOfStack LayoutException '
+        'naming the engine text', () async {
+      final service = ElkLayoutService(
+        hostFactory: () =>
+            _ScriptedHost(errorMessage: 'InternalError: stack overflow'),
+        assetLoader: (key) async => '// fake elk bundle',
+      );
+      addTearDown(service.dispose);
+      await expectLater(
+        service.layout(NetlistModel.fromJson(_andJson).modules['and2']!),
+        throwsA(
+          isA<LayoutException>()
+              .having((e) => e.kind, 'kind', LayoutFailureKind.outOfStack)
+              .having(
+                (e) => e.message,
+                'message',
+                allOf(contains('ran out of stack'), contains('stack overflow')),
+              ),
+        ),
+      );
+    });
   });
 }
 

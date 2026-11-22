@@ -90,7 +90,11 @@ class JsElkSolver implements ElkSolver {
 /// the diagnostics panel.
 class LayoutException implements Exception {
   /// Creates a layout exception.
-  const LayoutException(this.message, {this.cause});
+  const LayoutException(
+    this.message, {
+    this.cause,
+    this.kind = LayoutFailureKind.other,
+  });
 
   /// One-line user-facing message.
   final String message;
@@ -99,10 +103,37 @@ class LayoutException implements Exception {
   /// parse error.
   final Object? cause;
 
+  /// What went wrong, as far as the canvas words it differently.
+  final LayoutFailureKind kind;
+
   @override
   String toString() => cause == null
       ? 'LayoutException: $message'
       : 'LayoutException: $message (cause: $cause)';
+}
+
+/// The kinds of layout failure the schematic canvas words differently.
+enum LayoutFailureKind {
+  /// Anything not singled out below; the engine's own text is the detail.
+  other,
+
+  /// elkjs ran out of stack: ELK's recursive graph walks went deeper than
+  /// the JavaScript engine's stack on the worker thread allows. The input is
+  /// fine and the native engine lays it out, so the service retries there
+  /// when it can.
+  outOfStack;
+
+  /// The kind for a JavaScript engine's error text: QuickJS says "stack
+  /// overflow", JavaScriptCore and V8 "Maximum call stack size exceeded",
+  /// SpiderMonkey "too much recursion".
+  static LayoutFailureKind ofEngineError(String error) {
+    final text = error.toLowerCase();
+    return text.contains('stack overflow') ||
+            text.contains('maximum call stack size exceeded') ||
+            text.contains('too much recursion')
+        ? outOfStack
+        : other;
+  }
 }
 
 /// Thrown by [ElkLayoutService.layout] when the solve was abandoned through
@@ -1267,7 +1298,13 @@ String runElkLayoutOnHost(ElkJsHost host, String inputJson) {
   }
   final error = host.evaluate('globalThis.__elk_error || ""');
   if (error.isNotEmpty) {
-    throw LayoutException('elkjs rejected the layout input: $error');
+    final kind = LayoutFailureKind.ofEngineError(error);
+    throw LayoutException(
+      kind == LayoutFailureKind.outOfStack
+          ? 'elkjs ran out of stack on this scope: $error'
+          : 'elkjs rejected the layout input: $error',
+      kind: kind,
+    );
   }
   final resultStr = host.evaluate('globalThis.__elk_result || ""');
   if (resultStr.isEmpty) {
@@ -1388,7 +1425,19 @@ class _ElkLayoutIsolate {
       final result = first! as Map<Object?, Object?>;
       if (result['cancelled'] == true) throw const LayoutCancelledException();
       if (result['ok'] != true) {
-        throw LayoutException('elk layout failed: ${result['error']}');
+        // An engine's LayoutException crosses with its kind and message;
+        // anything else arrives as text only.
+        final kind = result['kind'];
+        if (kind == null) {
+          throw LayoutException('elk layout failed: ${result['error']}');
+        }
+        throw LayoutException(
+          '${result['error']}',
+          kind: LayoutFailureKind.values.firstWhere(
+            (k) => k.name == kind,
+            orElse: () => LayoutFailureKind.other,
+          ),
+        );
       }
       return result['result']! as String;
     } finally {
@@ -1499,6 +1548,12 @@ Future<void> _elkIsolateEntry(SendPort handshake) async {
       }
     } on LayoutCancelledException {
       reply.send(<String, Object?>{'ok': false, 'cancelled': true});
+    } on LayoutException catch (e) {
+      reply.send(<String, Object?>{
+        'ok': false,
+        'error': e.message,
+        'kind': e.kind.name,
+      });
     } on Object catch (e) {
       reply.send(<String, Object?>{'ok': false, 'error': '$e'});
     }

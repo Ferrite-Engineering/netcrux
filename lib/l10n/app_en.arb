@@ -3539,6 +3539,18 @@
   "@schematicLayoutRetry": {
     "description": "Button under 'Layout stopped.' that starts the layout of the same scope again."
   },
+  "schematicLayoutErrorTitle": "Layout failed",
+  "@schematicLayoutErrorTitle": {
+    "description": "Title of the schematic error view when the design elaborated but laying out the selected scope failed. Replaces 'Elaboration failed' for that case."
+  },
+  "schematicLayoutErrorGeneric": "The design elaborated, but this scope could not be laid out. See the details below.",
+  "@schematicLayoutErrorGeneric": {
+    "description": "Schematic error-view body under 'Layout failed' for a layout failure with no more specific message; the layout engine's own text appears in the expandable details section."
+  },
+  "schematicLayoutErrorOutOfStack": "The elkjs layout engine ran out of stack space on this scope, and the native layout engine, which can lay it out, did not start. The design elaborated; a Cone View lays out part of the scope.",
+  "@schematicLayoutErrorOutOfStack": {
+    "description": "Schematic error-view body under 'Layout failed' when the elkjs engine (the fallback layout engine, a product name) recursed too deeply on a large scope and the native engine was not available to retry. Cone View is the feature that lays out the logic driving one cell."
+  },
   "annotationCalloutsShownAnnouncement": "Annotation callouts shown",
   "@annotationCalloutsShownAnnouncement": {
     "description": "Spoken when View > Show Annotation Callouts turns the callouts on: each annotation drawn beside its element on the schematic."
