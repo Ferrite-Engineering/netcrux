@@ -11,13 +11,26 @@ import 'package:netcrux/services/layout/native_elk_solver.dart';
 /// Desktop implementation of [createDefaultElkSolver]: the native engine
 /// unless `NETCRUX_LAYOUT_ENGINE` keeps elkjs or the native library cannot
 /// start, in which case elkjs runs on whatever JavaScript engine
-/// [createDefaultElkJsHost] picks. Announces the engine on stderr (the CLIs
-/// parse stdout). Selected by the conditional import in
+/// [createDefaultElkJsHost] picks. [solver] overrides the environment: the
+/// native engine, throwing when it cannot start (the service's retry of a
+/// scope elkjs ran out of stack on), or elkjs. Announces the engine on
+/// stderr (the CLIs parse stdout). Selected by the conditional import in
 /// `elk_layout_service.dart` whenever `dart.library.io` is available.
-ElkSolver createDefaultElkSolver(String elkSource) {
+ElkSolver createDefaultElkSolver(String elkSource, {LayoutSolverKind? solver}) {
+  if (solver == LayoutSolverKind.native) {
+    final native = NativeElkSolver.open();
+    stderr.writeln(
+      'netcrux: layout engine: ${native.engineDescription}, in place of '
+      'elkjs, which ran out of stack on a scope',
+    );
+    return native;
+  }
   final requested = Platform.environment[kLayoutEngineEnvVar];
   var note = '';
-  if (selectLayoutSolver(requested: requested) == LayoutSolverKind.native) {
+  if (solver == LayoutSolverKind.elkjs) {
+    note = ' (requested by the caller)';
+  } else if (selectLayoutSolver(requested: requested) ==
+      LayoutSolverKind.native) {
     try {
       final solver = NativeElkSolver.open();
       stderr.writeln('netcrux: layout engine: ${solver.engineDescription}');

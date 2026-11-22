@@ -820,6 +820,26 @@ void main() {
       );
     });
   });
+
+  group('elkjs bundle patch', () {
+    // The vendored elkjs walks hyperedge ports recursively; the runtime
+    // swaps in an explicit-stack walk (netcrux#83). Re-vendoring elkjs must
+    // not silently drop the patch: this fails until it is redone or removed.
+    test('the vendored bundle carries the recursive port walk the patch '
+        'replaces, and the patch replaces it', () {
+      final bundle = File('assets/elk/elk.bundled.js').readAsStringSync();
+      expect(elkSourceHasIterativePortWalk(bundle), isFalse);
+      final patched = patchElkSource(bundle);
+      expect(patched, isNot(bundle));
+      expect(elkSourceHasIterativePortWalk(patched), isTrue);
+      expect(patched.length - bundle.length, lessThan(64));
+    });
+
+    test('a bundle without the walk is left alone', () {
+      const other = 'function iac(a){return a}';
+      expect(patchElkSource(other), other);
+    });
+  });
 }
 
 /// A minimal elkjs result JSON the scripted host returns — a root with one

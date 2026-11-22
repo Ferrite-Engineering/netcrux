@@ -28,6 +28,7 @@ import 'package:netcrux/services/layout/elk_solver_stub.dart'
 // `kElkWebSolverAvailable` is false and the isolate path is used.
 import 'package:netcrux/services/layout/elk_web_solver_stub.dart'
     if (dart.library.js_interop) 'package:netcrux/services/layout/elk_web_solver_web.dart';
+import 'package:netcrux/services/layout/layout_engine_selection.dart';
 import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
 
 /// Narrow seam over [JavascriptRuntime] — exposing only what
@@ -787,6 +788,11 @@ class ElkLayoutService {
   /// [assetLoader] are the test seams: an in-process elkjs host, an
   /// in-process [ElkSolver] of any kind, and the asset loader, which default
   /// to the worker isolate's own engine choice and the Flutter `rootBundle`.
+  ///
+  /// [workerSolver] makes the worker isolate run that engine whatever
+  /// [kLayoutEngineEnvVar] says (tests); `null` leaves the choice to the
+  /// worker. With [fallBackToNative], a scope elkjs runs out of stack on is
+  /// laid out again by the native engine when it can start.
   ElkLayoutService({
     ElkJsHost Function()? hostFactory,
     ElkSolver Function()? solverFactory,
@@ -795,7 +801,16 @@ class ElkLayoutService {
     this.maxMemCacheEntries = 16,
     this.maxMemCacheBytes = 64 * 1024 * 1024,
     this.maxConeCacheEntries = 8,
-  }) : // The public params are `hostFactory` / `diskCache`; an initializing
+    LayoutSolverKind? workerSolver,
+    bool fallBackToNative = true,
+  }) : // Public named params, private fields: an initializing formal can't
+       // map one to the other.
+       // ignore: prefer_initializing_formals
+       _workerSolver = workerSolver,
+       // Same public-param/private-field mapping as `_workerSolver` above.
+       // ignore: prefer_initializing_formals
+       _fallBackToNative = fallBackToNative,
+       // The public params are `hostFactory` / `diskCache`; an initializing
        // formal can't map them to the private fields without leaking the
        // underscore into the API.
        // ignore: prefer_initializing_formals
@@ -893,6 +908,22 @@ class ElkLayoutService {
   ElkJsHost? _host;
   Future<void>? _initialization;
   _ElkLayoutIsolate? _isolate;
+
+  /// The engine the worker isolate is told to run; `null` for its own
+  /// choice.
+  final LayoutSolverKind? _workerSolver;
+
+  /// Whether an out-of-stack elkjs failure is retried on the native engine.
+  final bool _fallBackToNative;
+
+  /// Counts [cancelInFlightLayout] calls, so a native retry that was still
+  /// starting when the user cancelled does not lay out after all.
+  int _cancelGeneration = 0;
+
+  /// The engine the worker isolate announced, or `null` before one is
+  /// ready (and in-process, for the test seams).
+  @visibleForTesting
+  String? get workerEngine => _isolate?.engine;
 
   /// Lays out [module] using elkjs. Throws [LayoutException] on any
   /// failure in the pipeline.
@@ -996,6 +1027,7 @@ class ElkLayoutService {
   /// killed and the next call starts a fresh one. A no-op when nothing is in
   /// flight, so the warm worker survives ordinary navigation.
   void cancelInFlightLayout() {
+    _cancelGeneration++;
     if (kElkWebSolverAvailable) {
       cancelElkOnWeb();
     } else {
@@ -1052,10 +1084,51 @@ class ElkLayoutService {
         onProgress: onProgress,
       );
     }
-    return await (_isolate ??= _ElkLayoutIsolate(_loadElkSource)).layout(
-      inputJson,
-      onProgress: onProgress,
+    final isolate = _isolate ??= _ElkLayoutIsolate(
+      _loadElkSource,
+      solver: _workerSolver,
     );
+    final generation = _cancelGeneration;
+    try {
+      return await isolate.layout(inputJson, onProgress: onProgress);
+    } on LayoutException catch (e, stackTrace) {
+      if (e.kind != LayoutFailureKind.outOfStack ||
+          !_fallBackToNative ||
+          !isolate.runsElkjs) {
+        rethrow;
+      }
+      final native = await _startNativeWorker();
+      // No native engine (the reason elkjs is running at all, on a broken
+      // installation): the out-of-stack failure is the answer.
+      if (native == null) Error.throwWithStackTrace(e, stackTrace);
+      if (generation != _cancelGeneration || !identical(_isolate, isolate)) {
+        // Cancelled, or disposed, while the native worker was starting.
+        native.dispose();
+        throw const LayoutCancelledException();
+      }
+      // elkjs cannot lay this scope out; the native engine can, and lays
+      // out everything elkjs can as well (the parity gate holds them to the
+      // same coordinates), so the rest of the session stays on it.
+      isolate.dispose();
+      _isolate = native;
+      return await native.layout(inputJson, onProgress: onProgress);
+    }
+  }
+
+  /// A ready worker isolate on the native engine, or `null` when the native
+  /// library cannot start.
+  Future<_ElkLayoutIsolate?> _startNativeWorker() async {
+    final native = _ElkLayoutIsolate(
+      _loadElkSource,
+      solver: LayoutSolverKind.native,
+    );
+    try {
+      await native.ensureReady();
+      return native;
+    } on Object {
+      native.dispose();
+      return null;
+    }
   }
 
   /// Returns the cached layout for [key], promoting it to the LRU tail,
@@ -1179,6 +1252,49 @@ class ElkLayoutService {
   }
 }
 
+/// ELK Layered's `HyperedgeDummyMerger.dfs` as GWT compiled it into the
+/// vendored elkjs 0.9.3 bundle: it labels every port reachable from a port,
+/// through edges and through the ports of long-edge dummy nodes, with one
+/// hyperedge index, recursing once per port. On a scope like VexRiscv (1,463
+/// cells), whose long edges chain thousands of dummy ports, that recursion
+/// outgrew the stack of the layout worker's thread on both JavaScriptCore
+/// and QuickJS, and the layout failed with a stack overflow (netcrux#83).
+final String _elkjsRecursivePortWalk = <String>[
+  'function iac(a,b,c){var d,e,f;b.p=c;',
+  'for(f=Fl(Al(cD(WC(cJ,1),rve,20,0,[new T3b(b),new _3b(b)])));gs(f);)',
+  '{d=RD(hs(f),12);d.p==-1&&iac(a,d,c)}',
+  'if(b.i.k==(r3b(),o3b)){for(e=new Anb(b.i.j);e.a<e.c.c.length;)',
+  '{d=RD(ynb(e),12);d!=b&&d.p==-1&&iac(a,d,c)}}}',
+].join();
+
+/// The same walk on an explicit stack. A port is labelled when it is first
+/// reached instead of when it is first entered, which labels exactly the
+/// same ports with the same index: the walk sets nothing else, and its
+/// caller reads only the labels. The vendored elkrs port made the same
+/// change (`native/vendor/elkrs/VENDORED.md`, change 4).
+final String _elkjsIterativePortWalk = <String>[
+  'function iac(a,b,c){var d,e,f,s;b.p=c;s=[b];while(s.length>0){b=s.pop();',
+  'for(f=Fl(Al(cD(WC(cJ,1),rve,20,0,[new T3b(b),new _3b(b)])));gs(f);)',
+  '{d=RD(hs(f),12);if(d.p==-1){d.p=c;s.push(d)}}',
+  'if(b.i.k==(r3b(),o3b)){for(e=new Anb(b.i.j);e.a<e.c.c.length;)',
+  '{d=RD(ynb(e),12);if(d!=b&&d.p==-1){d.p=c;s.push(d)}}}}}',
+].join();
+
+/// Returns [elkSource] with the recursive port walk of the vendored elkjs
+/// bundle replaced by its explicit-stack form (see
+/// [_elkjsRecursivePortWalk]). A bundle without that exact text, such as a
+/// newer elkjs, is returned unchanged; `elk_layout_service_test.dart`
+/// fails if the vendored bundle stops containing it.
+String patchElkSource(String elkSource) =>
+    elkSource.replaceFirst(_elkjsRecursivePortWalk, _elkjsIterativePortWalk);
+
+/// Whether [elkSource] carries the explicit-stack port walk
+/// [patchElkSource] puts in, for the test that guards the patch.
+@visibleForTesting
+bool elkSourceHasIterativePortWalk(String elkSource) =>
+    elkSource.contains(_elkjsIterativePortWalk) &&
+    !elkSource.contains(_elkjsRecursivePortWalk);
+
 /// Boots the elkjs runtime on [host]: installs the GWT/browser shims, loads
 /// the [elkSource] UMD bundle, and constructs the singleton `ELK` instance.
 /// Throws [LayoutException] if the constructor fails. Top-level so it runs
@@ -1238,7 +1354,7 @@ void initElkRuntime(ElkJsHost host, String elkSource) {
         }
       })();
     ''')
-    ..evaluate(elkSource)
+    ..evaluate(patchElkSource(elkSource))
     // The UMD bundle attaches `ELK` to globalThis via `g.ELK = f()`. Wrap in
     // a try/catch that surfaces the constructor failure through
     // __elkInitError so callers see a real error instead of a silently-unset
@@ -1319,17 +1435,30 @@ String runElkLayoutOnHost(ElkJsHost host, String inputJson) {
 /// main isolate (via `rootBundle`) and handed to the worker once at init —
 /// the worker never touches `rootBundle` (which needs a root-isolate token).
 class _ElkLayoutIsolate {
-  _ElkLayoutIsolate(this._loadSource);
+  _ElkLayoutIsolate(this._loadSource, {this.solver});
 
   /// Loads the elk UMD bundle on the main isolate.
   final Future<String> Function() _loadSource;
+
+  /// The engine the worker must run, or `null` for its own choice (the
+  /// native engine unless [kLayoutEngineEnvVar] keeps elkjs).
+  final LayoutSolverKind? solver;
 
   Isolate? _isolate;
   SendPort? _commands;
   ReceivePort? _errors;
   Future<void>? _ready;
 
-  Future<void> _ensureReady() => _ready ??= _start();
+  /// The engine the running worker announced, or `null` before it is ready.
+  String? _engine;
+
+  Future<void> ensureReady() => _ready ??= _start();
+
+  /// Whether the ready worker runs elkjs.
+  bool get runsElkjs => _engine?.startsWith('elkjs') ?? false;
+
+  /// The engine the ready worker runs, as it describes itself.
+  String? get engine => _engine;
 
   Future<void> _start() async {
     final handshake = ReceivePort();
@@ -1357,6 +1486,7 @@ class _ElkLayoutIsolate {
     _commands!.send(<String, Object?>{
       'type': 'init',
       'source': source,
+      'solver': solver?.name,
       'reply': reply.sendPort,
     });
     final result = await reply.first as Map<Object?, Object?>;
@@ -1366,6 +1496,7 @@ class _ElkLayoutIsolate {
       throw LayoutException('elkjs isolate init failed: ${result['error']}');
     }
     _cooperative = result['cooperative'] == true;
+    _engine = result['engine'] as String?;
   }
 
   /// What [Future.any] yields when the solve was abandoned first.
@@ -1397,7 +1528,7 @@ class _ElkLayoutIsolate {
     String inputJson, {
     void Function(LayoutProgress progress)? onProgress,
   }) async {
-    await _ensureReady();
+    await ensureReady();
     final reply = ReceivePort();
     final progress = ReceivePort();
     final id = _nextId++;
@@ -1480,14 +1611,15 @@ class _ElkLayoutIsolate {
     _errors = null;
     _ready = null;
     _cooperative = false;
+    _engine = null;
   }
 }
 
 /// Entry point for the elk layout worker isolate. Owns one [ElkSolver],
-/// chosen by [createDefaultElkSolver] at `init`; services `init`, `layout`,
-/// `cancel` and `dispose` commands, replying on each message's port. The
-/// `init` reply carries the engine's description and whether it stops on
-/// request.
+/// chosen by [createDefaultElkSolver] at `init` (or the engine the `init`
+/// message's `solver` names); services `init`, `layout`, `cancel` and
+/// `dispose` commands, replying on each message's port. The `init` reply
+/// carries the engine's description and whether it stops on request.
 ///
 /// A native solve runs as a job on the engine's own thread, so this isolate
 /// stays free while it runs: it polls the job, forwards its progress to the
@@ -1508,8 +1640,12 @@ Future<void> _elkIsolateEntry(SendPort handshake) async {
     try {
       switch (command['type']) {
         case 'init':
+          final requested = command['solver'];
           final created = solver = createDefaultElkSolver(
             command['source']! as String,
+            solver: LayoutSolverKind.values
+                .where((k) => k.name == requested)
+                .firstOrNull,
           );
           reply.send(<String, Object?>{
             'ok': true,
