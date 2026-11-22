@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // netcrux#83: elkjs on the layout worker, on scopes deep enough to reach its
-// stack. Every test drives the real worker isolate with elkjs on the
-// JavaScript engine the platform picks (JavaScriptCore on macOS,
-// JavaScriptCore or QuickJS on Linux), because the failures it guards
-// against live in that thread's stack. Where flutter_js cannot load an
+// stack, and the Cancel that has to stop it. Every test drives the real
+// worker isolate with elkjs on the JavaScript engine the platform picks
+// (JavaScriptCore on macOS, JavaScriptCore or QuickJS on Linux), because
+// the failures it guards against live in that thread's stack and in the
+// engine call the worker is blocked in. Where flutter_js cannot load an
 // engine under `flutter test` (Windows), the tests skip.
 
 import 'dart:convert';
@@ -99,6 +100,65 @@ void main() {
       // 10,000 cells, and the chain's boundary ports.
       expect(layout.nodes.length, greaterThan(10000));
       expect(service.workerEngine, startsWith('native'));
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+
+  test(
+    'Cancel stops an elkjs solve: the worker exits within seconds, not when '
+    'the solve would have ended',
+    () async {
+      final service = ElkLayoutService(
+        assetLoader: _elkBundle,
+        workerSolver: LayoutSolverKind.elkjs,
+        fallBackToNative: false,
+      );
+      addTearDown(service.dispose);
+      // Warm the worker so the cancel lands in a solve, not the init.
+      try {
+        await service.layout(
+          _model(
+            'design_seed/generated/design_seed.netlist.json',
+          ).modules['top']!,
+        );
+      } on LayoutException catch (e) {
+        if (_skipWithoutEngine(e)) return;
+        rethrow;
+      }
+      // VexRiscv keeps elkjs busy for many seconds on either engine.
+      final pending = service.layout(_vexRiscv());
+      final deadline = DateTime.now().add(const Duration(seconds: 30));
+      while (!service.hasLayoutInFlight) {
+        if (DateTime.now().isAfter(deadline)) fail('never went in flight');
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      // Let the input reach the engine and the solve get going.
+      await Future<void>.delayed(const Duration(seconds: 1));
+      final cancelledAt = Stopwatch()..start();
+      service.cancelInFlightLayout();
+      await expectLater(pending, throwsA(isA<LayoutCancelledException>()));
+      final exit = service.cancelledWorkerExit;
+      expect(
+        exit,
+        isNotNull,
+        reason: 'the cancel did not stop an elkjs worker',
+      );
+      // Before the fix the worker ran the solve to its end (about 20 s on
+      // JavaScriptCore, longer on QuickJS) and only then exited.
+      await exit!.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => fail(
+          'the elkjs worker was still running '
+          '${cancelledAt.elapsed.inMilliseconds} ms after Cancel',
+        ),
+      );
+      // The next layout starts a fresh worker and succeeds.
+      final next = await service.layout(
+        _model(
+          'design_seed/generated/design_seed.netlist.json',
+        ).modules['top']!,
+      );
+      expect(next.nodes, isNotEmpty);
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );

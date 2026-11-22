@@ -1,8 +1,10 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:ffi';
 import 'dart:io';
 
+import 'package:flutter_js/quickjs/ffi.dart' show JSRuntime, jsSetMaxStackSize;
 import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/flutter_js_host_vm.dart';
 import 'package:netcrux/services/layout/layout_engine_selection.dart';
@@ -47,4 +49,23 @@ ElkSolver createDefaultElkSolver(String elkSource, {LayoutSolverKind? solver}) {
   initElkRuntime(host, elkSource);
   stderr.writeln('netcrux: layout engine: elkjs$note');
   return JsElkSolver(host);
+}
+
+/// Desktop implementation of [interruptElkSolve]: makes the elkjs solve
+/// another isolate is running stop at the engine's next check.
+///
+/// QuickJS: the runtime's stack budget drops to one byte, so the next
+/// JavaScript call throws "stack overflow" and the script unwinds within
+/// microseconds. The budget is two words in the runtime that only the
+/// engine's own stack checks read, and the runtime is never freed while its
+/// worker lives (a killed worker leaks it), so the write cannot land on
+/// freed memory. JavaScriptCore: sets the flag its watchdog callback reads
+/// on the engine's thread (see `flutter_js_host_vm.dart`).
+void interruptElkSolve(ElkInterruptHandle handle) {
+  switch (handle.kind) {
+    case ElkInterruptKind.quickJsStackLimit:
+      jsSetMaxStackSize(Pointer<JSRuntime>.fromAddress(handle.address), 1);
+    case ElkInterruptKind.terminationFlag:
+      Pointer<Int32>.fromAddress(handle.address).value = 1;
+  }
 }

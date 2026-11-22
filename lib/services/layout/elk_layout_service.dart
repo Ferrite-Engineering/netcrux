@@ -20,7 +20,8 @@ import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 // Conditional import: the desktop worker's solver factory picks the native
 // elkrs engine, or elkjs on a JavaScript engine when kept by environment or
-// when the native library cannot start. Web never reaches it.
+// when the native library cannot start; the same file interrupts an elkjs
+// solve from another isolate. Web never reaches it.
 import 'package:netcrux/services/layout/elk_solver_stub.dart'
     if (dart.library.io) 'package:netcrux/services/layout/elk_solver_io.dart';
 // Conditional import: on web the solve runs in the browser, the elkrs port
@@ -67,12 +68,71 @@ abstract class ElkSolver {
   void dispose();
 }
 
+/// How an elkjs solve is stopped from another isolate, see
+/// [ElkInterruptHandle].
+enum ElkInterruptKind {
+  /// The address is a QuickJS `JSRuntime`. Shrinking its stack budget to a
+  /// byte makes the next JavaScript call throw, so the solve unwinds at
+  /// once.
+  quickJsStackLimit,
+
+  /// The address is a 32-bit flag the JavaScriptCore watchdog reads on the
+  /// engine's own thread a few times a second; non-zero terminates the
+  /// script.
+  terminationFlag,
+}
+
+/// What lets the isolate that asked for an elkjs solve stop it.
+///
+/// An elkjs solve is one synchronous call into the JavaScript engine, so
+/// the worker isolate running it cannot read a message, and killing that
+/// isolate only takes effect once the call returns: until then the solve
+/// keeps a core busy. The handle names native state another isolate can
+/// write to end the call early ([interruptElkSolve]).
+@immutable
+class ElkInterruptHandle {
+  /// Creates a handle of [kind] over [address].
+  const ElkInterruptHandle(this.kind, this.address);
+
+  /// Rebuilds a handle from [toMessage]'s output, or `null` for none.
+  static ElkInterruptHandle? fromMessage(Object? message) {
+    if (message is! List<Object?> || message.length != 2) return null;
+    final [kind, address] = message;
+    if (kind is! int || address is! int) return null;
+    if (kind < 0 || kind >= ElkInterruptKind.values.length) return null;
+    return ElkInterruptHandle(ElkInterruptKind.values[kind], address);
+  }
+
+  /// What the native state is.
+  final ElkInterruptKind kind;
+
+  /// Where it is, as a raw address in this process.
+  final int address;
+
+  /// The handle as a message another isolate can receive.
+  List<Object?> toMessage() => <Object?>[kind.index, address];
+}
+
+/// An [ElkJsHost] whose engine another isolate can interrupt.
+abstract interface class InterruptibleElkJsHost implements ElkJsHost {
+  /// The handle for this host's engine, or `null` when the engine offers
+  /// none.
+  ElkInterruptHandle? get interruptHandle;
+}
+
 /// [ElkSolver] over an initialised [ElkJsHost]: the elkjs path.
 class JsElkSolver implements ElkSolver {
   /// Wraps [host], which must already have run [initElkRuntime].
   JsElkSolver(this._host);
 
   final ElkJsHost _host;
+
+  /// What stops a solve of this solver from another isolate, or `null`
+  /// when the host's engine cannot be interrupted.
+  ElkInterruptHandle? get interruptHandle {
+    final host = _host;
+    return host is InterruptibleElkJsHost ? host.interruptHandle : null;
+  }
 
   @override
   String get engineDescription => 'elkjs';
@@ -920,6 +980,17 @@ class ElkLayoutService {
   /// starting when the user cancelled does not lay out after all.
   int _cancelGeneration = 0;
 
+  /// The exit of the last elkjs worker a cancel killed; completes when that
+  /// worker has really stopped (see [_ElkLayoutIsolate.exited]).
+  Future<void>? _cancelledWorkerExit;
+
+  /// Completes when the elkjs worker the most recent cancel stopped has
+  /// exited, or `null` when no cancel has stopped one. A killed worker exits
+  /// only after the engine call it is in returns, so this is how a test
+  /// sees that Cancel stopped the solve and did not just stop waiting.
+  @visibleForTesting
+  Future<void>? get cancelledWorkerExit => _cancelledWorkerExit;
+
   /// The engine the worker isolate announced, or `null` before one is
   /// ready (and in-process, for the test seams).
   @visibleForTesting
@@ -1023,16 +1094,21 @@ class ElkLayoutService {
   /// a scope or view that does not need it. The abandoned [layout] call
   /// completes with a [LayoutCancelledException] at once. The native engine
   /// stops at its next check, within a pipeline step, and its worker stays
-  /// warm for the next layout; elkjs cannot be interrupted, so its worker is
-  /// killed and the next call starts a fresh one. A no-op when nothing is in
-  /// flight, so the warm worker survives ordinary navigation.
+  /// warm for the next layout; an elkjs solve is interrupted inside its
+  /// JavaScript engine and its worker killed, and the next call starts a
+  /// fresh one. A no-op when nothing is in flight, so the warm worker
+  /// survives ordinary navigation.
   void cancelInFlightLayout() {
     _cancelGeneration++;
     if (kElkWebSolverAvailable) {
       cancelElkOnWeb();
     } else {
       _inProcessJob?.cancel();
-      _isolate?.cancelInFlight();
+      final isolate = _isolate;
+      if (isolate != null && isolate.hasInFlight && isolate.runsElkjs) {
+        _cancelledWorkerExit = isolate.exited;
+      }
+      isolate?.cancelInFlight();
     }
   }
 
@@ -1449,10 +1525,22 @@ class _ElkLayoutIsolate {
   ReceivePort? _errors;
   Future<void>? _ready;
 
+  /// Completes when the current worker isolate has exited.
+  Future<void> _exited = Future<void>.value();
+
   /// The engine the running worker announced, or `null` before it is ready.
   String? _engine;
 
+  /// What stops the worker's elkjs solve from here, when its engine offers
+  /// it.
+  ElkInterruptHandle? _interrupt;
+
   Future<void> ensureReady() => _ready ??= _start();
+
+  /// Completes when the current worker isolate has really exited. A killed
+  /// worker exits only once the engine call it is in returns, so this is
+  /// what says a cancelled solve has stopped using the CPU.
+  Future<void> get exited => _exited;
 
   /// Whether the ready worker runs elkjs.
   bool get runsElkjs => _engine?.startsWith('elkjs') ?? false;
@@ -1469,6 +1557,8 @@ class _ElkLayoutIsolate {
     // error port — otherwise the default fatal handling tears the worker
     // down mid-flight and every pending `layout()` hangs forever.
     _errors = ReceivePort()..listen((_) {});
+    final exit = ReceivePort();
+    _exited = exit.first.then((_) => exit.close());
     try {
       _isolate = await Isolate.spawn(
         _elkIsolateEntry,
@@ -1476,8 +1566,12 @@ class _ElkLayoutIsolate {
         debugName: 'elk-layout',
         errorsAreFatal: false,
         onError: _errors!.sendPort,
+        onExit: exit.sendPort,
       );
       _commands = await handshake.first as SendPort;
+    } on Object {
+      exit.close();
+      rethrow;
     } finally {
       handshake.close();
     }
@@ -1497,6 +1591,7 @@ class _ElkLayoutIsolate {
     }
     _cooperative = result['cooperative'] == true;
     _engine = result['engine'] as String?;
+    _interrupt = ElkInterruptHandle.fromMessage(result['interrupt']);
   }
 
   /// What [Future.any] yields when the solve was abandoned first.
@@ -1584,12 +1679,16 @@ class _ElkLayoutIsolate {
   /// Abandons the solve in flight, if any: the pending [layout] call
   /// completes with a [LayoutCancelledException] at once. The native engine
   /// is told to stop, which it does within a pipeline step, and the worker
-  /// stays warm; elkjs cannot be interrupted, so its worker is killed. A
-  /// no-op when idle, so the warm worker is kept.
+  /// stays warm. elkjs cannot take a message mid-solve, so its engine is
+  /// interrupted from here where it offers a way ([interruptElkSolve]) and
+  /// its worker is killed; the kill lands when the interrupted engine call
+  /// returns. A no-op when idle, so the warm worker is kept.
   void cancelInFlight() {
     final cancel = _cancelInFlight;
     if (cancel == null) return;
     if (!_cooperative) {
+      final interrupt = _interrupt;
+      if (interrupt != null) interruptElkSolve(interrupt);
       dispose();
       return;
     }
@@ -1612,6 +1711,7 @@ class _ElkLayoutIsolate {
     _ready = null;
     _cooperative = false;
     _engine = null;
+    _interrupt = null;
   }
 }
 
@@ -1619,7 +1719,8 @@ class _ElkLayoutIsolate {
 /// chosen by [createDefaultElkSolver] at `init` (or the engine the `init`
 /// message's `solver` names); services `init`, `layout`, `cancel` and
 /// `dispose` commands, replying on each message's port. The `init` reply
-/// carries the engine's description and whether it stops on request.
+/// carries the engine's description, whether it stops on request, and, for
+/// elkjs, the handle that interrupts it from another isolate.
 ///
 /// A native solve runs as a job on the engine's own thread, so this isolate
 /// stays free while it runs: it polls the job, forwards its progress to the
@@ -1651,6 +1752,9 @@ Future<void> _elkIsolateEntry(SendPort handshake) async {
             'ok': true,
             'engine': created.engineDescription,
             'cooperative': created is ElkJobSolver,
+            'interrupt': created is JsElkSolver
+                ? created.interruptHandle?.toMessage()
+                : null,
           });
         case 'layout':
           final input = command['input']! as String;
