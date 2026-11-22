@@ -4,15 +4,19 @@
 import 'package:flutter/material.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/l10n/generated/app_localizations.dart';
+import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/yosys/sv_frontend_gap.dart';
 import 'package:netcrux/services/yosys/yosys_unavailable_reason_text.dart';
 
-/// Elaboration-failure view shown on the schematic canvas when the
-/// project failed to elaborate.
+/// Failure view shown on the schematic canvas when the project failed to
+/// elaborate, or elaborated and the selected scope failed to lay out.
 ///
-/// Wraps every error in a localized "Elaboration failed" envelope: known
-/// typed [LoadedNetlistException] shapes render a localized, actionable
-/// message; anything else gets a generic localized message. The raw
+/// A [LayoutException] reads "Layout failed", since elaboration succeeded
+/// (the hierarchy and the other views work), with a specific message for
+/// a [LayoutFailureKind.outOfStack] failure. Every other error is wrapped
+/// in a localized "Elaboration failed" envelope: known typed
+/// [LoadedNetlistException] shapes render a localized, actionable message;
+/// anything else gets a generic localized message. The raw
 /// detail (Yosys stderr, an unclassified error's text) is tucked into an
 /// expandable "Details" section so the envelope never leaks an exception
 /// class name to the user.
@@ -48,10 +52,26 @@ class SchematicErrorView extends StatelessWidget {
           LoadedNetlistErrorKind.missingModule &&
       !(error as LoadedNetlistException).readBySlang;
 
-  /// Resolves the error into a localized body and an optional raw detail
-  /// string for the expandable section.
-  (String body, String? detail) _resolve(L10N l10n) {
+  /// Resolves the error into a localized title, a localized body and an
+  /// optional raw detail string for the expandable section.
+  (String title, String body, String? detail) _resolve(L10N l10n) {
     final e = error;
+    if (e is LayoutException) {
+      return (
+        l10n.schematicLayoutErrorTitle,
+        switch (e.kind) {
+          LayoutFailureKind.outOfStack => l10n.schematicLayoutErrorOutOfStack,
+          LayoutFailureKind.other => l10n.schematicLayoutErrorGeneric,
+        },
+        e.message,
+      );
+    }
+    final (body, detail) = _resolveElaboration(l10n, e);
+    return (l10n.elaborationErrorTitle, body, detail);
+  }
+
+  /// The body and detail for an elaboration failure [e].
+  (String body, String? detail) _resolveElaboration(L10N l10n, Object e) {
     if (e is LoadedNetlistException) {
       switch (e.kind) {
         case LoadedNetlistErrorKind.yosysUnavailable:
@@ -103,7 +123,7 @@ class SchematicErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = L10N.of(context);
-    final (body, detail) = _resolve(l10n);
+    final (title, body, detail) = _resolve(l10n);
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -119,7 +139,7 @@ class SchematicErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                l10n.elaborationErrorTitle,
+                title,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: theme.colorScheme.error,
