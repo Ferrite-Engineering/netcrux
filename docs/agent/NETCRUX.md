@@ -31,6 +31,21 @@ netcrux connections design.crux-project top.u_core.alu_y --json
 A tool's text is byte for byte what the command writes, so a script and an
 agent read the same document.
 
+NetCrux Pro's binary, `netcrux_pro`, serves the same three tools and two
+more, `cone` and `trace_x`:
+
+```
+netcrux_pro mcp --root <project directory> [--license-file <path>]
+netcrux_pro cone build/top.json top.u_core.alu_y --direction fanin --json
+netcrux_pro trace-x build/top.json top.u_core.result --json
+```
+
+The two need a Pro licence, read on every call from `--license-file`, then
+the `NETCRUX_LICENSE_FILE` environment variable, then the `license` of the
+organisation's `.crux-policy.json`, and checked offline. Below Pro each
+answers `licence_error` and runs nothing; the three free tools answer at
+every tier.
+
 ## The design
 
 Every tool takes the same two inputs:
@@ -64,7 +79,7 @@ to find the full name of each cell, net, port or module you need. Names in
 (`top.u_core.alu_y`), as `search` returns them; a name written from just
 below the top (`u_core.alu_y`) is read the same way.
 
-## The three tools
+## The tools
 
 | Tool | Returns | Limits |
 |---|---|---|
@@ -78,7 +93,20 @@ as the whole net (`top.u.data`), a slice of one (`top.u.data[7:4]`, bits
 counted from 0 at the net's least significant bit), a constant (`1'b0`), or a
 concatenation of single bits, most significant first.
 
-The fan-in and fan-out cone to a depth and the X trace are NetCrux Pro's.
+NetCrux Pro adds two, which read the same design and the same names:
+
+| Tool | Returns | Limits |
+|---|---|---|
+| `cone` | The cells that drive a cell or net (`direction: "fanin"`, the default) or that it drives (`"fanout"`), each with its type, its `distance` in steps (1 for a cell wired to it) and its location, nearest first; and the module's ports where the walk stopped (`boundary`). Inside the module that holds it | `depth`: default 4, 0 for no limit; `limit`: default 200 cells, at most 2000 |
+| `trace_x` | One driver route back from a net to a structural source of X: the `steps` walked (each a bit, the cell the walk is at and its pin), why it stopped (`termination`: `found_origin`, `reached_boundary`, `max_depth` or `cycle`) and, for an origin, why that cell is one (`origin_reason`: an undriven or x-tied input, named by `origin_pin`, a register with no reset and no initial value, or a cell with no driven inputs) | `depth`: default 32, at most 2000 |
+
+A name with a bit select or slice (`top.u.data[3]`, `top.u.data[7:4]`) walks
+those bits only. `trace_x` follows one input per cell and walks one bit: the
+first bit of the net with a wire, unless a bit is named, and a note says
+which. It reads no waveform, so what it names is a candidate for where an X
+comes from, not a proven cause: say so when you report it, and check it
+against the simulation.
+
 Clock-domain crossings are LintCrux's to answer.
 
 ## Reading a document
@@ -91,7 +119,7 @@ order:
 | `schema_version` | `1` |
 | `tool` | `{"name": "netcrux", "version": ...}` |
 | `command` | The command or tool that ran |
-| `outcome` | `completed` when there is an answer; otherwise `usage_error`, `input_error` or `engine_error` |
+| `outcome` | `completed` when there is an answer; otherwise `usage_error`, `input_error`, `engine_error` or `licence_error` |
 | `engines` | `[{"name": "yosys", "version": ..., "path": ...}]` when Yosys ran; empty for a netlist read from disk |
 | `design` | `{"fingerprint": {"scheme": "netcrux-design-sha256/1", "value": ...}}`: the same value means the same design files, top and defines |
 | `body` | The answer, or `null` when there is none |
@@ -109,14 +137,15 @@ there is no answer.
 | `usage_error` | 64 | A bad or missing input, a path outside the root, a NetCrux project file |
 | `input_error` | 65 | No such file, a netlist that is not one, no such top module, no cell or net by that name |
 | `engine_error` | 3 | Yosys is missing, stopped with an error, or timed out |
+| `licence_error` | 77 | `cone` or `trace_x` below Pro (`licence.tier_required`), or a named licence file that cannot be read (`licence.unreadable`); the `fix` says where a licence is read from |
 
-**Truncated lists say so.** `search` carries `total`, `returned` and
-`truncated`; narrow the query or raise `limit` to see more. `info` and
+**Truncated lists say so.** `search` and `cone` carry `total`, `returned`
+and `truncated`; narrow the query or raise `limit` to see more. `info` and
 `connections` carry `truncated` when their limit cut the list.
 
-The schemas of every body are in this repository under `spec/mcp/schemas/`,
-with a golden document for every outcome each tool can produce under
-`spec/mcp/goldens/`.
+The schemas of the three free tools' bodies are in this repository under
+`spec/mcp/schemas/`, with a golden document for every outcome each can
+produce under `spec/mcp/goldens/`.
 
 ## Citing
 

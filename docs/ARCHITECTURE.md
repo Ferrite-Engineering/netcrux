@@ -191,6 +191,7 @@ A link `netcrux://open?file=<path>&cell=<name>` (or `&net=<name>`) opens a desig
 - **Confinement.** `crux_mcp`'s `Confinement` holds every `design` path inside `--root`; `checkNetDesignNamedFiles` holds every file a manifest or a filelist names, and passes the check to `FilelistReader.refuse`, so a nested `-f` outside the root is refused before it is opened.
 - **Citations.** Each cell, net and port carries an element location with its `src` line and, when the design is one linkable file and `findNetCruxLinkElement` places the element, its `netcrux://` link (§6.9); a design given as a filelist or a manifest carries none.
 - **Contract.** `spec/mcp/` holds the body schemas and a hand-written golden for every outcome of every tool, from `spec/fixtures/counter.json`; `test/headless/spec_goldens_test.dart` holds both doors to them and parses every link. `docs/agent/NETCRUX.md` is the instruction file.
+- **Another edition.** `NetCruxCli` takes another edition's commands, its `instructions` and its `--license-file` help, and serves these three unchanged beside its own; the Pro binary, `netcrux_pro`, adds `cone` and `trace-x` that way. `findNetElement` (the rule a command reads a cell or net name by) and `NetBitNames` (how a bit is named) are public so that every command reads names and names bits as `connections` does.
 
 ## 8. Coding Standards & Conventions
 
