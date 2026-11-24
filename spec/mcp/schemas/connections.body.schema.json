@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "netcrux connections: the body of its document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "path", "module", "location", "pins", "drivers", "loads", "truncated"],
+  "properties": {
+    "kind": {"enum": ["cell", "net"]},
+    "path": {"type": "string", "description": "Dot-separated, rooted at the top module."},
+    "module": {"type": "string", "description": "The module that holds it."},
+    "location": {"$ref": "#/$defs/element"},
+    "pins": {
+      "description": "A cell's pins, in the netlist's order; null for a net.",
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pin", "direction", "net"],
+            "properties": {
+              "pin": {"type": "string"},
+              "direction": {"enum": ["input", "output", "inout", null]},
+              "net": {"type": "string", "description": "The net on the pin, rooted at the top: a whole net, a slice of one (bits from 0 at its least significant bit), a constant such as 1'b0, or a concatenation of single bits, most significant first."}
+            }
+          }
+        }
+      ]
+    },
+    "drivers": {"description": "The pins that drive a net; null for a cell.", "anyOf": [{"type": "null"}, {"$ref": "#/$defs/pins"}]},
+    "loads": {"description": "The pins a net drives; null for a cell.", "anyOf": [{"type": "null"}, {"$ref": "#/$defs/pins"}]},
+    "truncated": {"type": "boolean", "description": "Whether pins past the 500th are left out."}
+  },
+  "$defs": {
+    "pins": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cell", "pin", "location"],
+        "properties": {
+          "cell": {"type": "string", "description": "The cell's path; for a port of the module, the module instance's own path."},
+          "pin": {"type": "string"},
+          "location": {"$ref": "#/$defs/element"}
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "line", "column"],
+      "properties": {
+        "file": {"type": "string", "description": "As the netlist's src attribute names it."},
+        "line": {"type": "integer", "minimum": 1},
+        "column": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "element": {
+      "anyOf": [{"$ref": "#/$defs/cell"}, {"$ref": "#/$defs/net"}]
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "cell", "module", "src", "link"],
+      "properties": {
+        "file": {"type": "string"},
+        "cell": {"type": "string"},
+        "module": {"type": "string"},
+        "src": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/source"}]},
+        "link": {"type": ["string", "null"], "pattern": "^netcrux://open\\?file=[^&]+&cell=[^&]+$"}
+      }
+    },
+    "net": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "net", "module", "src", "link"],
+      "properties": {
+        "file": {"type": "string"},
+        "net": {"type": "string"},
+        "module": {"type": "string"},
+        "src": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/source"}]},
+        "link": {"type": ["string", "null"], "pattern": "^netcrux://open\\?file=[^&]+&net=[^&]+$"}
+      }
+    }
+  }
+}

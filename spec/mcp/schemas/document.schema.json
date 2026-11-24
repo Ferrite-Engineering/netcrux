@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The document every netcrux --json command writes and every tool of netcrux mcp returns",
+  "description": "Eight members, always present, in this order. body is given per command by <command>.body.schema.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "tool", "command", "outcome", "engines", "design", "body", "diagnostics"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"const": "netcrux"},
+        "version": {"type": "string"}
+      }
+    },
+    "command": {"enum": ["info", "search", "connections", null]},
+    "outcome": {"enum": ["completed", "failed_gate", "usage_error", "input_error", "engine_error", "licence_error"]},
+    "engines": {
+      "type": "array",
+      "description": "Yosys when it elaborated the design; empty for a Yosys JSON netlist read from disk.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "path"],
+        "properties": {
+          "name": {"const": "yosys"},
+          "version": {"type": "string"},
+          "path": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "design": {
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fingerprint"],
+          "properties": {
+            "fingerprint": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["scheme", "value"],
+              "properties": {
+                "scheme": {"const": "netcrux-design-sha256/1"},
+                "value": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "body": {"type": ["object", "null"]},
+    "diagnostics": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}}
+  },
+  "$defs": {
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "code", "message", "fix", "location"],
+      "properties": {
+        "severity": {"enum": ["error", "warning", "note"]},
+        "code": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"},
+        "message": {"type": "string"},
+        "fix": {"type": ["string", "null"]},
+        "location": {"type": "null"}
+      }
+    }
+  }
+}

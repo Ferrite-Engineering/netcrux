@@ -7,7 +7,6 @@ import 'dart:io';
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_yosys/crux_yosys.dart';
 import 'package:meta/meta.dart';
-import 'package:netcrux/domain/enums/netcrux_source_language.dart';
 import 'package:netcrux/domain/enums/netlist_reader_choice.dart';
 import 'package:netcrux/domain/interfaces/elaboration_timeout_policy.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
@@ -26,6 +25,7 @@ import 'package:netcrux/services/web/web_json_loader.dart';
 import 'package:netcrux/services/yosys/black_box_port_inference.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_provider.dart';
 import 'package:netcrux/services/yosys/elaboration_cache_service.dart';
+import 'package:netcrux/services/yosys/elaboration_request.dart';
 import 'package:netcrux/services/yosys/isolate_netlist_parser.dart';
 import 'package:netcrux/services/yosys/netlist_reader_provider.dart';
 import 'package:netcrux/services/yosys/prebuilt_netlist_loader_provider.dart';
@@ -595,90 +595,21 @@ class LoadedNetlist extends _$LoadedNetlist {
   /// missing size never produces an unbounded budget.
   static Future<ElaborationSizeEstimate> _estimateSize(
     NetcruxProject project,
-  ) async {
-    var totalBytes = 0;
-    for (final path in project.sourceFiles) {
-      try {
-        // The async stat is intentional: this runs in build() on the UI
-        // isolate, and keeping it off-thread matters more than the small
-        // per-call overhead the lint warns about.
-        // ignore: avoid_slow_async_io
-        final stat = await File(path).stat();
-        // A missing path yields FileSystemEntityType.notFound with size -1;
-        // clamp so a vanished file counts as 0, not a negative.
-        if (stat.size > 0) totalBytes += stat.size;
-      } on FileSystemException {
-        // Unstattable source — count it as 0 bytes.
-      }
-    }
-    return ElaborationSizeEstimate(
-      sourceFileCount: project.sourceFiles.length,
-      totalSourceBytes: totalBytes,
-    );
-  }
+  ) => elaborationSizeOf(project);
 
   /// Translates a [NetcruxProject] into the [YosysRunRequest] the
-  /// runner expects. Map → list conversion follows the Verilator /
-  /// Yosys convention: empty-value defines emit `NAME` (no `=`);
-  /// non-empty defines emit `NAME=VALUE`. Per-file language is
-  /// resolved by [NetcruxProject.resolveLanguage].
+  /// runner expects: [elaborationRequestFor], the request the headless
+  /// command line sends too.
   @visibleForTesting
   static YosysRunRequest buildRequest(
     NetcruxProject project, {
     String? libertyStubPath,
   }) => _buildRequest(project, libertyStubPath: libertyStubPath);
 
-  /// [libertyStubPath], when given, is the generated black-box stub file
-  /// for the project's cell libraries. It is read first, as plain Verilog,
-  /// so a module the sources define under a cell's name replaces the stub
-  /// (Yosys replaces a black box with a later full definition).
   static YosysRunRequest _buildRequest(
     NetcruxProject project, {
     String? libertyStubPath,
-  }) {
-    return YosysRunRequest(
-      sources: <YosysSourceFile>[
-        if (libertyStubPath != null) YosysSourceFile(libertyStubPath),
-        for (final path in project.sourceFiles)
-          _sourceFileFor(path, project.resolveLanguage(path)),
-      ],
-      topModule: project.topModule.isEmpty ? null : project.topModule,
-      defines: <String>[
-        for (final entry in project.defines.entries)
-          if (entry.value.isEmpty) entry.key else '${entry.key}=${entry.value}',
-      ],
-      includePaths: project.includePaths,
-      // The lowering passes run first, so the user's own extra commands see
-      // the lowered design (a `flatten` or `opt_clean` of their own then
-      // works on gates and flip-flops, not on processes).
-      extraCommands: <String>[
-        if (project.lowerToStructural) ...kLowerToStructuralCommands,
-        ...project.extraYosysCommands,
-      ],
-      vhdlTopUnit: project.topModule.isEmpty ? null : project.topModule,
-      allowUndefinedModules: project.blackBoxMissingModules,
-    );
-  }
-
-  static YosysSourceFile _sourceFileFor(
-    String path,
-    NetcruxSourceLanguage lang,
-  ) {
-    switch (lang) {
-      case NetcruxSourceLanguage.verilog:
-        return YosysSourceFile(path);
-      case NetcruxSourceLanguage.systemVerilog:
-        return YosysSourceFile.systemVerilog(path);
-      case NetcruxSourceLanguage.vhdl:
-        return YosysSourceFile.vhdl(path);
-      case NetcruxSourceLanguage.auto:
-        // `auto` should be resolved upstream by `resolveLanguage`;
-        // reaching here means the inference returned `auto` which is
-        // not a valid runtime value. Treat as verilog (legacy
-        // behavior) for safety.
-        return YosysSourceFile(path);
-    }
-  }
+  }) => elaborationRequestFor(project, libertyStubPath: libertyStubPath);
 }
 
 /// Loads [project]'s netlist once, outside any tab's pipeline — for a design

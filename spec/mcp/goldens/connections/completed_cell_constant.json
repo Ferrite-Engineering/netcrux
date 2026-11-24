@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "connections",
+  "outcome": "completed",
+  "engines": [],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "9c357bbc1db5232344afdd61faef3f8e7cfee25c52e928c468fa13931db0e388"
+    }
+  },
+  "body": {
+    "kind": "cell",
+    "path": "top.u_inc.$add$inc.v:3$1",
+    "module": "inc",
+    "location": {
+      "file": "/spec/fixtures/counter.json",
+      "cell": "top.u_inc.$add$inc.v:3$1",
+      "module": "inc",
+      "src": {
+        "file": "inc.v",
+        "line": 3,
+        "column": 14
+      },
+      "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&cell=top.u_inc.%24add%24inc.v%3A3%241"
+    },
+    "pins": [
+      {
+        "pin": "A",
+        "direction": "input",
+        "net": "top.u_inc.a"
+      },
+      {
+        "pin": "B",
+        "direction": "input",
+        "net": "{1'b0, 1'b1}"
+      },
+      {
+        "pin": "Y",
+        "direction": "output",
+        "net": "top.u_inc.y"
+      }
+    ],
+    "drivers": null,
+    "loads": null,
+    "truncated": false
+  },
+  "diagnostics": []
+}

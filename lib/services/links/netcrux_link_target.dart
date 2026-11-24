@@ -5,7 +5,6 @@ import 'dart:io';
 
 import 'package:crux_cxp/crux_cxp.dart' show CxpPathContainment;
 import 'package:crux_io/crux_io.dart' show canonicalPathKey;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
@@ -111,7 +110,7 @@ const Set<String> _windowsDeviceNames = {
 ///
 /// [windows] defaults to the host; tests pin it.
 NetCruxLinkTargetResult vetNetCruxLinkTarget(String file, {bool? windows}) {
-  if (kIsWeb) {
+  if (_kIsWeb) {
     return const NetCruxLinkTargetRefused(
       NetCruxLinkTargetRefusal.unsupportedPlatform,
     );
@@ -154,6 +153,11 @@ NetCruxLinkTargetResult vetNetCruxLinkTarget(String file, {bool? windows}) {
   }
   return NetCruxLinkTargetAccepted(resolved);
 }
+
+/// Whether this is a browser build. Spelled out rather than taken from
+/// Flutter's `kIsWeb`, so the headless `netcrux` binary, which has no Flutter,
+/// can ask [isNetCruxLinkExtension] which files a link may name.
+const bool _kIsWeb = bool.fromEnvironment('dart.library.js_interop');
 
 /// Whether [path]'s extension is one a link may open, ignoring case.
 bool isNetCruxLinkExtension(String path) =>

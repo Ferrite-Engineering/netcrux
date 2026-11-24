@@ -1,0 +1,4 @@
+version: 1
+name: counter
+artifacts:
+  netlist: counter.json

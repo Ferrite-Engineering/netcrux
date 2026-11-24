@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "connections",
+  "outcome": "completed",
+  "engines": [],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "9c357bbc1db5232344afdd61faef3f8e7cfee25c52e928c468fa13931db0e388"
+    }
+  },
+  "body": {
+    "kind": "net",
+    "path": "top.spare",
+    "module": "top",
+    "location": {
+      "file": "/spec/fixtures/counter.json",
+      "net": "top.spare",
+      "module": "top",
+      "src": {
+        "file": "top.v",
+        "line": 7,
+        "column": 8
+      },
+      "link": null
+    },
+    "pins": null,
+    "drivers": [],
+    "loads": [],
+    "truncated": false
+  },
+  "diagnostics": []
+}

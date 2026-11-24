@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "search",
+  "outcome": "completed",
+  "engines": [],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "9c357bbc1db5232344afdd61faef3f8e7cfee25c52e928c468fa13931db0e388"
+    }
+  },
+  "body": {
+    "query": "a",
+    "total": 6,
+    "returned": 6,
+    "truncated": false,
+    "hits": [
+      {
+        "kind": "net",
+        "path": "top.a",
+        "module": "top",
+        "type": null,
+        "width": 2,
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "net": "top.a",
+          "module": "top",
+          "src": {
+            "file": "top.v",
+            "line": 3,
+            "column": 21
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&net=top.a"
+        }
+      },
+      {
+        "kind": "net",
+        "path": "top.spare",
+        "module": "top",
+        "type": null,
+        "width": 1,
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "net": "top.spare",
+          "module": "top",
+          "src": {
+            "file": "top.v",
+            "line": 7,
+            "column": 8
+          },
+          "link": null
+        }
+      },
+      {
+        "kind": "cell",
+        "path": "top.u_inc.$add$inc.v:3$1",
+        "module": "inc",
+        "type": "$add",
+        "width": null,
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "cell": "top.u_inc.$add$inc.v:3$1",
+          "module": "inc",
+          "src": {
+            "file": "inc.v",
+            "line": 3,
+            "column": 14
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&cell=top.u_inc.%24add%24inc.v%3A3%241"
+        }
+      },
+      {
+        "kind": "net",
+        "path": "top.u_inc.a",
+        "module": "inc",
+        "type": null,
+        "width": 2,
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "net": "top.u_inc.a",
+          "module": "inc",
+          "src": {
+            "file": "inc.v",
+            "line": 1,
+            "column": 24
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&net=top.u_inc.a"
+        }
+      },
+      {
+        "kind": "port",
+        "path": "top.a",
+        "module": "top",
+        "type": "input",
+        "width": 2,
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "net": "top.a",
+          "module": "top",
+          "src": {
+            "file": "top.v",
+            "line": 3,
+            "column": 21
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&net=top.a"
+        }
+      },
+      {
+        "kind": "port",
+        "path": "top.u_inc.a",
+        "module": "inc",
+        "type": "input",
+        "width": 2,
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "net": "top.u_inc.a",
+          "module": "inc",
+          "src": {
+            "file": "inc.v",
+            "line": 1,
+            "column": 24
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&net=top.u_inc.a"
+        }
+      }
+    ]
+  },
+  "diagnostics": []
+}

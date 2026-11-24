@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "connections",
+  "outcome": "completed",
+  "engines": [],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "9c357bbc1db5232344afdd61faef3f8e7cfee25c52e928c468fa13931db0e388"
+    }
+  },
+  "body": {
+    "kind": "net",
+    "path": "top.n",
+    "module": "top",
+    "location": {
+      "file": "/spec/fixtures/counter.json",
+      "net": "top.n",
+      "module": "top",
+      "src": {
+        "file": "top.v",
+        "line": 6,
+        "column": 13
+      },
+      "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&net=top.n"
+    },
+    "pins": null,
+    "drivers": [
+      {
+        "cell": "top.u_inc",
+        "pin": "y",
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "cell": "top.u_inc",
+          "module": "top",
+          "src": {
+            "file": "top.v",
+            "line": 8,
+            "column": 7
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&cell=top.u_inc"
+        }
+      }
+    ],
+    "loads": [
+      {
+        "cell": "top.q_reg",
+        "pin": "D",
+        "location": {
+          "file": "/spec/fixtures/counter.json",
+          "cell": "top.q_reg",
+          "module": "top",
+          "src": {
+            "file": "top.v",
+            "line": 10,
+            "column": 3
+          },
+          "link": "netcrux://open?file=%2Fspec%2Ffixtures%2Fcounter.json&cell=top.q_reg"
+        }
+      }
+    ],
+    "truncated": false
+  },
+  "diagnostics": []
+}

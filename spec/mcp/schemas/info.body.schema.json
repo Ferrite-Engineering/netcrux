@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "netcrux info: the body of its document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["top", "modules", "cells", "nets", "hierarchy", "truncated"],
+  "properties": {
+    "top": {"type": "string", "description": "The top module."},
+    "modules": {"type": "integer", "minimum": 0, "description": "Every module of the netlist, cell-library black boxes included."},
+    "cells": {"type": "integer", "minimum": 0, "description": "The cells of every module, each module counted once, not per instance."},
+    "nets": {"type": "integer", "minimum": 0, "description": "The named nets of every module, each module counted once."},
+    "hierarchy": {
+      "type": "array",
+      "maxItems": 200,
+      "description": "The instances, the top first, in pre-order; a module that instantiates itself is not entered.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "module", "cells"],
+        "properties": {
+          "path": {"type": "string", "description": "Dot-separated, rooted at the top module."},
+          "module": {"type": "string"},
+          "cells": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "truncated": {"type": "boolean", "description": "Whether instances past the 200th are left out."}
+  }
+}

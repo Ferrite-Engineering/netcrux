@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "connections",
+  "outcome": "usage_error",
+  "engines": [],
+  "design": null,
+  "body": null,
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "usage",
+      "message": "`name` is required for connections",
+      "fix": null,
+      "location": null
+    }
+  ]
+}

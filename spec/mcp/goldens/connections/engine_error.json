@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "connections",
+  "outcome": "engine_error",
+  "engines": [
+    {
+      "name": "yosys",
+      "version": "0.0+fake",
+      "path": "/fake/yosys"
+    }
+  ],
+  "design": null,
+  "body": null,
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "engine.failed",
+      "message": "Yosys stopped with exit code 1: top.v:3: ERROR: syntax error, unexpected ';'",
+      "fix": null,
+      "location": null
+    }
+  ]
+}

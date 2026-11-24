@@ -1,0 +1,6 @@
+tags:
+  reference-live:
+    description: >
+      Tests that speak to a compiled server binary named by
+      CRUX_MCP_SERVER_BIN (tool/build_cli.sh builds one). They declare no
+      test when it is unset, which is every CI run.

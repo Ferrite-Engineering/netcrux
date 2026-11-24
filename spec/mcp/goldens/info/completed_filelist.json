@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "info",
+  "outcome": "completed",
+  "engines": [
+    {
+      "name": "yosys",
+      "version": "0.0+fake",
+      "path": "/fake/yosys"
+    }
+  ],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "cea2fb355b10649ca6c7000f237dfad4e0492e05c528f874691c729d9ad9c65b"
+    }
+  },
+  "body": {
+    "top": "top",
+    "modules": 2,
+    "cells": 3,
+    "nets": 7,
+    "hierarchy": [
+      {
+        "path": "top",
+        "module": "top",
+        "cells": 2
+      },
+      {
+        "path": "top.u_inc",
+        "module": "inc",
+        "cells": 1
+      }
+    ],
+    "truncated": false
+  },
+  "diagnostics": []
+}

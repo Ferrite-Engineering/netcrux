@@ -18,6 +18,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// - `core/`     → core, l10n (SDK + localized labels only).
 /// - `shared/`   → shared, core, domain, l10n.
 /// - `plugins/`  → plugins, domain.
+/// - `headless/` → headless, domain, services: the `netcrux` command line,
+///                 which has no Flutter and so no feature.
 /// - `features/` → anything, EXCEPT another feature's `widgets/` or
 ///                 `screens/` — mounting another feature's UI is the
 ///                 workspace shell's job. (Providers/models/services of
@@ -96,6 +98,8 @@ void main() {
     'core': {'core', 'l10n'},
     'shared': {'shared', 'core', 'domain', 'l10n'},
     'plugins': {'plugins', 'domain'},
+    // The headless command line: no features, so no widget or provider tree.
+    'headless': {'headless', 'domain', 'services'},
     // features handled separately (lateral widget/screen rule).
   };
 

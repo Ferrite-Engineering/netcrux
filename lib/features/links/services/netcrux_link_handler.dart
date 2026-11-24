@@ -11,7 +11,6 @@ import 'package:meta/meta.dart';
 import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/project/netcrux_project.dart';
-import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/hierarchy/providers/hierarchy_tree_notifier.dart';
@@ -27,9 +26,8 @@ import 'package:netcrux/features/viewer/services/zoom_to_selection_controller.da
 import 'package:netcrux/features/workspace/providers/recent_lists.dart';
 import 'package:netcrux/features/workspace/services/restored_tab_project.dart';
 import 'package:netcrux/services/links/netcrux_link.dart';
+import 'package:netcrux/services/links/netcrux_link_placement.dart';
 import 'package:netcrux/services/links/netcrux_link_target.dart';
-import 'package:netcrux/services/remote/cxp/cxp_design_names.dart';
-import 'package:netcrux/services/schematic/netlist_element_lookup.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
 import 'package:path/path.dart' as p;
@@ -312,44 +310,15 @@ Future<NetCruxLinkOutcome> openNetCruxLink(
   if (!identical(tab.read(hierarchyTreeProvider).model, model)) {
     tree.setModel(model);
   }
-  final top = model.topModule?.name;
-  final candidates = <String>[
-    name,
-    if (top != null && !name.startsWith('$top.')) '$top.$name',
-  ];
-  for (final candidate in candidates) {
-    final scoped = scopeOfHierarchicalName(model, candidate);
-    final module = scoped?.scope.resolve(model);
-    if (scoped == null || module == null) continue;
-    final Selection? selection;
-    final String? revealCell;
-    switch (kind) {
-      case NetCruxLinkElementKind.cell:
-        if (!module.cells.containsKey(scoped.leaf) ||
-            !schematicDrawsCell(module, scoped.leaf)) {
-          continue;
-        }
-        selection = Selection.single(
-          SelectedElement.cell(cellId: scoped.leaf),
-        );
-        revealCell = scoped.leaf;
-      case NetCruxLinkElementKind.net:
-        final net = findNetNamed(module, scoped.leaf);
-        selection = net == null ? null : selectionForNet(module, net);
-        if (selection == null) continue;
-        revealCell = switch (selection.primary) {
-          SelectedElementCell(:final cellId) => cellId,
-          _ => net == null ? null : driverCellOf(module, net),
-        };
-    }
-    tree.selectScope(scoped.scope);
-    tab.read(selectedElementProvider.notifier).replace(selection);
-    if (revealCell != null) {
-      tab.read(revealRequestProvider.notifier).request(revealCell);
-    }
-    return (coneView: _showConeWhenTooLarge(tab, selection));
+  final placed = findNetCruxLinkElement(model, kind, name);
+  if (placed == null) return null;
+  tree.selectScope(placed.scope);
+  tab.read(selectedElementProvider.notifier).replace(placed.selection);
+  final revealCell = placed.revealCell;
+  if (revealCell != null) {
+    tab.read(revealRequestProvider.notifier).request(revealCell);
   }
-  return null;
+  return (coneView: _showConeWhenTooLarge(tab, placed.selection));
 }
 
 /// Opens a Cone View of [selection]'s primary element when the scope on the

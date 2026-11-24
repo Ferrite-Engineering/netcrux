@@ -8,6 +8,9 @@ environment:
   sdk: ^3.12.0
 
 dependencies:
+  # The headless `netcrux` command line (`bin/netcrux.dart`) parses its
+  # subcommands with it. Already resolved through build_runner; BSD-3-Clause.
+  args: ^2.7.0
   # The suite's accessibility primitives: the focus ring the annotation
   # callouts wear. Its screen-reader test harness (`crux_a11y_testing.dart`:
   # focus walk, transcript goldens, announcement recorder) is used by
@@ -125,6 +128,12 @@ dependencies:
   # the native macOS PlatformMenuBar or the in-window VS Code-style menu bar on
   # Windows/Linux, with shared separator grouping, platform-idiomatic
   # About/Settings/Quit placement, and the native key-equivalent guard.
+  # The suite's MCP server core, pure Dart: `netcrux mcp`'s stdio transport,
+  # its tool table, the `--json` document the three subcommands write, the
+  # `netcrux://` link builder and path confinement (lib/headless/). The link
+  # parser's round-trip tests parse every link it writes.
+  crux_mcp:
+    path: ./crux-shared/packages/crux_mcp
   crux_menu_bar:
     path: ./crux-shared/packages/crux_menu_bar
   # The shared elaborated-netlist model, lifted out of this repo so
@@ -300,10 +309,6 @@ dev_dependencies:
   # repository's sources and exemptions.
   crux_guards:
     path: ./crux-shared/packages/crux_guards
-  # The suite's `netcrux://` link builder: the link parser's round-trip tests
-  # parse every link it writes, so the two cannot drift apart.
-  crux_mcp:
-    path: ./crux-shared/packages/crux_mcp
   flutter_test:
     sdk: flutter
   # `MockClient` for the telemetry gating tests: the beta-inert guarantee is

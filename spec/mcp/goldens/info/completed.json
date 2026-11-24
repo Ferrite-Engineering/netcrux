@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "info",
+  "outcome": "completed",
+  "engines": [],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "9c357bbc1db5232344afdd61faef3f8e7cfee25c52e928c468fa13931db0e388"
+    }
+  },
+  "body": {
+    "top": "top",
+    "modules": 2,
+    "cells": 3,
+    "nets": 7,
+    "hierarchy": [
+      {
+        "path": "top",
+        "module": "top",
+        "cells": 2
+      },
+      {
+        "path": "top.u_inc",
+        "module": "inc",
+        "cells": 1
+      }
+    ],
+    "truncated": false
+  },
+  "diagnostics": []
+}

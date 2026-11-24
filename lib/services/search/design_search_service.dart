@@ -223,7 +223,14 @@ class DesignSearchService {
     return null;
   }
 
-  bool Function(String)? _matcherFor(String query, SearchMode mode) {
+  bool Function(String)? _matcherFor(String query, SearchMode mode) =>
+      matcherFor(query, mode);
+
+  /// The name test [search] applies for [query] under [mode]: a
+  /// case-insensitive substring, a whole-name glob, or a regular expression;
+  /// `null` for a regular expression that does not parse. Public so the
+  /// headless `netcrux search` matches ports and modules by the same rule.
+  static bool Function(String)? matcherFor(String query, SearchMode mode) {
     switch (mode) {
       case SearchMode.substring:
         final lower = query.toLowerCase();
@@ -242,7 +249,7 @@ class DesignSearchService {
     }
   }
 
-  RegExp _globToRegex(String glob) {
+  static RegExp _globToRegex(String glob) {
     final buffer = StringBuffer('^');
     for (final char in glob.split('')) {
       switch (char) {

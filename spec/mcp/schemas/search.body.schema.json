@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "netcrux search: the body of its document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query", "total", "returned", "truncated", "hits"],
+  "properties": {
+    "query": {"type": "string"},
+    "total": {"type": "integer", "minimum": 0},
+    "returned": {"type": "integer", "minimum": 0},
+    "truncated": {"type": "boolean"},
+    "hits": {
+      "type": "array",
+      "maxItems": 500,
+      "description": "Cells and nets scope by scope in pre-order, then ports, then modules.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path", "module", "type", "width", "location"],
+        "properties": {
+          "kind": {"enum": ["cell", "net", "port", "module"]},
+          "path": {"type": "string", "description": "Dot-separated, rooted at the top module; a module's own name for a module."},
+          "module": {"type": "string", "description": "The module that holds it; the module itself for a module."},
+          "type": {"type": ["string", "null"], "description": "A cell's type; a port's direction; null otherwise."},
+          "width": {"type": ["integer", "null"], "minimum": 0, "description": "A net's or a port's width in bits; null otherwise."},
+          "location": {
+            "description": "A netlist location; a module's is its source line, or its first instance when it has none, and null for a top module with neither.",
+            "anyOf": [{"type": "null"}, {"$ref": "#/$defs/element"}, {"$ref": "#/$defs/source"}]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "line", "column"],
+      "properties": {
+        "file": {"type": "string", "description": "As the netlist's src attribute names it."},
+        "line": {"type": "integer", "minimum": 1},
+        "column": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "element": {
+      "anyOf": [{"$ref": "#/$defs/cell"}, {"$ref": "#/$defs/net"}]
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "cell", "module", "src", "link"],
+      "properties": {
+        "file": {"type": "string"},
+        "cell": {"type": "string"},
+        "module": {"type": "string"},
+        "src": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/source"}]},
+        "link": {"type": ["string", "null"], "pattern": "^netcrux://open\\?file=[^&]+&cell=[^&]+$"}
+      }
+    },
+    "net": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "net", "module", "src", "link"],
+      "properties": {
+        "file": {"type": "string"},
+        "net": {"type": "string"},
+        "module": {"type": "string"},
+        "src": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/source"}]},
+        "link": {"type": ["string", "null"], "pattern": "^netcrux://open\\?file=[^&]+&net=[^&]+$"}
+      }
+    }
+  }
+}

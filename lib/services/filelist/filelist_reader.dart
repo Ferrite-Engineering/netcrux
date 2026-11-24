@@ -49,6 +49,23 @@ class FilelistNotFoundException implements Exception {
       '(referenced from $parentPath)';
 }
 
+/// Thrown when a filelist, the one asked for or one a `-f` line names, is
+/// refused by [FilelistReader.refuse] before it is opened.
+@immutable
+class FilelistRefusedException implements Exception {
+  /// Creates a refusal of [path], saying [message].
+  const FilelistRefusedException(this.path, this.message);
+
+  /// The filelist that was not opened.
+  final String path;
+
+  /// Why, in one sentence.
+  final String message;
+
+  @override
+  String toString() => 'FilelistRefusedException: $message';
+}
+
 /// Parsed contents of a Vivado-style `.f` filelist, kept as a
 /// neutral intermediate before [FilelistReader.toProject] materializes
 /// a [NetcruxProject].
@@ -122,11 +139,18 @@ class FilelistReader {
   /// to make environment-variable expansion deterministic.
   const FilelistReader({
     this.environmentOverride,
+    this.refuse,
   });
 
   /// Replacement for [Platform.environment]. When `null`, the real
   /// process environment is used.
   final Map<String, String>? environmentOverride;
+
+  /// Asked before any filelist is opened, the root and each nested `-f`:
+  /// null to open it, or why not, which ends the read with a
+  /// [FilelistRefusedException]. The headless server passes its path
+  /// confinement here, so a nested filelist outside the root is never read.
+  final String? Function(String path)? refuse;
 
   Map<String, String> get _env => environmentOverride ?? Platform.environment;
 
@@ -169,6 +193,8 @@ class FilelistReader {
     required List<String> stack,
   }) async {
     final resolved = _normalize(path);
+    final refusal = refuse?.call(resolved);
+    if (refusal != null) throw FilelistRefusedException(resolved, refusal);
     // The identity key only decides whether this filelist was entered
     // before; the stack, the file opened and every path read out of it keep
     // the spelling the user wrote.

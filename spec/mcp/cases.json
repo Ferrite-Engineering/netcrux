@@ -1,0 +1,28 @@
+{
+  "root": "spec/fixtures",
+  "golden_root": "/spec/fixtures",
+  "golden_version": "0.0.0",
+  "cases": [
+    {"golden": "info/completed.json", "tool": "info", "arguments": {"design": ["counter.json"]}},
+    {"golden": "info/completed_filelist.json", "tool": "info", "arguments": {"design": ["design.f"]}},
+    {"golden": "info/usage_error.json", "tool": "info", "door": "mcp", "arguments": {"design": ["../outside.json"]}},
+    {"golden": "info/input_error.json", "tool": "info", "arguments": {"design": ["missing.json"]}},
+    {"golden": "info/engine_error.json", "tool": "info", "yosys": "fails", "arguments": {"design": ["top.v", "inc.v"]}},
+
+    {"golden": "search/completed.json", "tool": "search", "arguments": {"design": ["counter.json"], "query": "a"}},
+    {"golden": "search/completed_truncated.json", "tool": "search", "arguments": {"design": ["counter.crux-project"], "query": "*", "glob": true, "limit": 2}},
+    {"golden": "search/completed_filelist.json", "tool": "search", "arguments": {"design": ["design.f"], "query": "q_reg", "kind": "cell"}},
+    {"golden": "search/usage_error.json", "tool": "search", "arguments": {"design": ["counter.json"], "query": "a", "limit": 501}},
+    {"golden": "search/usage_error_kind.json", "tool": "search", "arguments": {"design": ["counter.json"], "query": "a", "kind": "wire"}},
+    {"golden": "search/input_error.json", "tool": "search", "arguments": {"design": ["missing.json"], "query": "a"}},
+    {"golden": "search/engine_error.json", "tool": "search", "yosys": "missing", "arguments": {"design": ["top.v", "inc.v"], "query": "a"}},
+
+    {"golden": "connections/completed_cell.json", "tool": "connections", "arguments": {"design": ["counter.json"], "name": "u_inc"}},
+    {"golden": "connections/completed_cell_constant.json", "tool": "connections", "arguments": {"design": ["counter.json"], "name": "top.u_inc.$add$inc.v:3$1"}},
+    {"golden": "connections/completed_net.json", "tool": "connections", "arguments": {"design": ["counter.json"], "name": "top.n"}},
+    {"golden": "connections/completed_net_unlinked.json", "tool": "connections", "arguments": {"design": ["counter.json"], "name": "spare"}},
+    {"golden": "connections/usage_error.json", "tool": "connections", "door": "mcp", "arguments": {"design": ["counter.json"]}},
+    {"golden": "connections/input_error.json", "tool": "connections", "arguments": {"design": ["counter.json"], "name": "top.nope"}},
+    {"golden": "connections/engine_error.json", "tool": "connections", "yosys": "fails", "arguments": {"design": ["top.v", "inc.v"], "name": "top.n"}}
+  ]
+}

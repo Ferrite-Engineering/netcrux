@@ -48,6 +48,8 @@
 import 'dart:io';
 
 import 'package:crux_license/crux_license.dart';
+import 'package:crux_mcp/crux_mcp.dart'
+    show kMcpDurationBuckets, kMcpToolCallEvent, kMcpToolCallOutcomes;
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/core/license/netcrux_gated_feature.dart';
@@ -56,6 +58,7 @@ import 'package:netcrux/domain/enums/netcrux_design_source.dart';
 import 'package:netcrux/domain/enums/netcrux_export_kind.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
+import 'package:netcrux/headless/netcrux_cli.dart';
 import 'package:netcrux/services/search/design_search_service.dart';
 import 'package:netcrux/services/telemetry/netcrux_design_language_mix.dart';
 import 'package:netcrux/services/telemetry/netcrux_telemetry_vocabulary.dart';
@@ -115,6 +118,8 @@ const Set<String> _proOnlyEvents = <String>{
 const Set<String> _sharedEvents = <String>{
   'app.uncaught_error',
   'app.unclean_shutdown',
+  // `crux_mcp`'s `McpTelemetry`, once per tool call of `netcrux mcp`.
+  'mcp.tool_call',
 };
 
 void main() {
@@ -341,6 +346,21 @@ void main() {
       (e) => e.name == kTelemetryUncleanShutdownEvent,
     );
     expect(entry.propertyKeys, isEmpty);
+  });
+
+  test("mcp.tool_call carries crux_mcp's vocabulary and the served tools", () {
+    // Recorded by `crux_mcp`, not by a call site here, so the lists are the
+    // package's: a token the package records that the catalog lacks would
+    // be a value the catalog never declared.
+    final entry = catalog.firstWhere((e) => e.name == kMcpToolCallEvent);
+    expect(entry.propertyKeys.toSet(), <String>{'tool', 'outcome', 'duration'});
+    expect(entry.enumeratedValues['outcome']!.toSet(), kMcpToolCallOutcomes);
+    expect(entry.enumeratedValues['duration'], kMcpDurationBuckets);
+    final served = NetCruxCli(
+      telemetry: () => null,
+    ).commands.map((c) => c.tool.name);
+    expect(entry.enumeratedValues['tool'], containsAll(served));
+    expect(_sharedEvents, contains(kMcpToolCallEvent));
   });
 
   test('app.uncaught_error carries the shared counter vocabulary', () {

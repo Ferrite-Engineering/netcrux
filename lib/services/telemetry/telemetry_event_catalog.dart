@@ -1,8 +1,20 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:crux_mcp/crux_mcp.dart'
+    show kMcpDurationBuckets, kMcpToolCallEvent;
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:meta/meta.dart';
+
+/// The `tool` vocabulary of `mcp.tool_call`: every tool the open-core
+/// `netcrux mcp` and the Pro edition's server list.
+const List<String> kNetcruxMcpToolNames = <String>[
+  'info',
+  'search',
+  'connections',
+  'cone',
+  'trace_x',
+];
 
 /// One entry of the NetCrux event catalog: an event name and the closed
 /// vocabulary of each property it may carry.
@@ -212,6 +224,31 @@ kNetcruxEventCatalog = <TelemetryCatalogEvent>[
   // behind its own switch, so the entry is declared before the first row can
   // arrive.
   TelemetryCatalogEvent(kTelemetryUncleanShutdownEvent),
+
+  // `crux_mcp`'s `McpTelemetry` records this once per tool call of the
+  // headless `netcrux mcp` server, under the consent this desktop app
+  // recorded and never when `CI` is set; no call site in either repository
+  // spells it. Three properties and nothing else: never an argument, a path,
+  // a cell or a net name. `outcome` is the package's `kMcpToolCallOutcomes`
+  // and `duration` its `kMcpDurationBuckets` (the conformance test holds both
+  // to the package); `tool` is every tool either edition's server lists.
+  TelemetryCatalogEvent(
+    kMcpToolCallEvent,
+    enumeratedValues: <String, List<String>>{
+      'tool': kNetcruxMcpToolNames,
+      'outcome': <String>[
+        'completed',
+        'failed_gate',
+        'usage_error',
+        'input_error',
+        'engine_error',
+        'licence_error',
+        'unreadable',
+        'crashed',
+      ],
+      'duration': kMcpDurationBuckets,
+    },
+  ),
 
   // ── the commercial group ──────────────────────────────────────────────
   // Recorded from BOTH repositories, by two gate-denial sites covering

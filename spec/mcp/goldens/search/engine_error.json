@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "search",
+  "outcome": "engine_error",
+  "engines": [],
+  "design": null,
+  "body": null,
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "engine.missing",
+      "message": "Yosys is not available (not_on_path)",
+      "fix": "install Yosys and put it on PATH, or give the design as a Yosys JSON netlist",
+      "location": null
+    }
+  ]
+}

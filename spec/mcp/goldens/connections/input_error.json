@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "netcrux",
+    "version": "0.0.0"
+  },
+  "command": "connections",
+  "outcome": "input_error",
+  "engines": [],
+  "design": {
+    "fingerprint": {
+      "scheme": "netcrux-design-sha256/1",
+      "value": "9c357bbc1db5232344afdd61faef3f8e7cfee25c52e928c468fa13931db0e388"
+    }
+  },
+  "body": null,
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "name.not_found",
+      "message": "the design has no cell or net `top.nope`",
+      "fix": "find its full name with `netcrux search`",
+      "location": null
+    }
+  ]
+}

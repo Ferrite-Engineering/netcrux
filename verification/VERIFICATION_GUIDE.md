@@ -1242,6 +1242,28 @@ This section covers the project/session file formats, filelist import, VHDL (and
   | Registration in the bundle, the runner and the AppImage identity; every delivery route reaches the handler | `[Coverage: UNIT]` (`test/static/url_scheme_registration_test.dart`) |
   | The scheme registered by each installer on each operating system | `[Coverage: MANUAL]` — steps 1 to 7 on macOS, Windows and Linux. |
 
+### 5.10 The headless `netcrux` command line and `netcrux mcp` (from 2.0)
+
+- **What it does.** `netcrux info`, `search` and `connections` read a design (HDL sources and `.f` filelists elaborated by the Yosys on `PATH`, one Yosys JSON netlist, or one `.crux-project`) and write one JSON document each with `--json`; `netcrux mcp --root <dir>` serves the same three as MCP tools on stdio, every path held inside the root. `docs/ARCHITECTURE.md` §6.10 has the design; `docs/agent/NETCRUX.md` is what an agent reads.
+- **Setup.** Build the binary: `tool/build_cli.sh <out>` (the executable is `<out>/bundle/bin/netcrux`). Yosys on `PATH` for the source cases.
+- **Steps and expected behavior.**
+  1. `netcrux info spec/fixtures/counter.json --json`. Expected: `outcome` `completed`, top `top`, two modules, the instances `top` and `top.u_inc`; exit code 0.
+  2. `netcrux connections spec/fixtures/top.v spec/fixtures/inc.v top.n --json`. Expected: Yosys in `engines`; `top.u_inc` pin `y` drives the net and a flip-flop's `D` loads it; every location carries a `netcrux://` link to `top.v` and its `src` line.
+  3. Open one of those links with NetCrux installed (§5.9). Expected: the design opens with the net or cell selected.
+  4. `netcrux search spec/fixtures/design.f q --json`. Expected: every location names `design.f` and carries `link: null`.
+  5. `netcrux info spec/fixtures/missing.json --json`. Expected: `input_error`, exit code 65. With Yosys off `PATH`, step 2 gives `engine_error`, exit code 3.
+- **Automation Assessment.**
+
+  | Test | Coverage |
+  |---|---|
+  | Every tool's golden for each outcome, both doors byte for byte, the schemas, every link parsed and placed | `[Coverage: UNIT]` (`test/headless/spec_goldens_test.dart`) |
+  | No Yosys or netlist failure becomes an answer, with the permanent mutation proof | `[Coverage: UNIT]` (`test/headless/design_failure_test.dart`) |
+  | Definitions, budget, instructions, confinement of every path a design names | `[Coverage: UNIT]` (`test/headless/mcp_server_test.dart`) |
+  | Design kinds, the Yosys request, the top module, the fingerprint, the two designs held | `[Coverage: UNIT]` (`test/headless/net_design_test.dart`) |
+  | No Flutter and no model client in the binary's imports | `[Coverage: UNIT]` (`test/static/headless_cli_closure_test.dart`) |
+  | The built binary over stdio, and the suite's protocol transcripts | `[Coverage: MANUAL]`: `test/headless/cli_binary_live_test.dart` with `CRUX_MCP_SERVER_BIN` set; Linux and Windows builds are unverified until CI builds the binary. |
+  | Steps 2 and 3 with a real Yosys and an installed app | `[Coverage: MANUAL]` |
+
 ## 6. Cross-Probing & CXP Protocol
 
 NetCrux ships an open-core CXP peer cross-probe server: the shared lifecycle (`crux_cxp_ui`'s `CruxCxpRuntime`, wrapping `crux_cxp`'s `LocalCxpServer`) bound to NetCrux's own name resolver, accepted element kinds and containment (`kNetcruxCxpBinding`), with the manifest writer, the discovery watcher, the inbound `request_highlight` / `request_open_source` handlers (`NetcruxCxpRequestHandler`), the outbound `notify_selection` emitter, the cross-probe panel UI, the "Cross-probe to" menu entry, the Cross-probe Selection command and the Settings → CXP Cross-Probe section. Every cross-probe send is free in every edition. The Pro overlay's "Open in WaveCrux" buttons and audit line are verified in the overlay's own guide.
