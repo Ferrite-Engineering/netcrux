@@ -770,7 +770,7 @@ class ConnectionsCommand extends NetCommand {
     );
     if (failed != null) return failed;
     final model = design!.model;
-    final found = _find(model, name);
+    final found = findNetElement(model, name);
     if (found == null) {
       return McpDocument(
         tool: context.program,
@@ -788,11 +788,11 @@ class ConnectionsCommand extends NetCommand {
         ],
       );
     }
-    final (scope, leaf, isCell, ambiguous) = found;
+    final (:scope, :leaf, :isCell, :ambiguous) = found;
     final module = scope.resolve(model)!;
     final scopePath = scope.canonicalPath(model);
     final locations = NetLocations(design);
-    final bits = _BitNames(module, scopePath);
+    final bits = NetBitNames(module, scopePath);
     final diagnostics = <McpDiagnostic>[
       if (ambiguous)
         McpDiagnostic.warning(
@@ -930,31 +930,6 @@ class ConnectionsCommand extends NetCommand {
     );
   }
 
-  /// The scope and leaf [name] names, whether it is a cell, and whether a
-  /// net has the same name; null when the design has neither. The reading
-  /// rule is the link's ([findNetCruxLinkElement]): rooted at the top
-  /// first, then from just below it; never the last segment alone.
-  static (HierarchyNode, String, bool, bool)? _find(
-    NetlistModel model,
-    String name,
-  ) {
-    final top = model.topModule?.name;
-    final candidates = <String>[
-      name,
-      if (top != null && !name.startsWith('$top.')) '$top.$name',
-    ];
-    for (final candidate in candidates) {
-      final scoped = scopeOfHierarchicalName(model, candidate);
-      final module = scoped?.scope.resolve(model);
-      if (scoped == null || module == null) continue;
-      final isCell = module.cells.containsKey(scoped.leaf);
-      final net = findNetNamed(module, scoped.leaf);
-      if (isCell) return (scoped.scope, scoped.leaf, true, net != null);
-      if (net != null) return (scoped.scope, scoped.leaf, false, false);
-    }
-    return null;
-  }
-
   /// The direction of [pin] on a cell of [type]: the netlist's own, else
   /// the port of the module [type] names; null when neither says.
   static String? _direction(
@@ -985,13 +960,68 @@ class ConnectionsCommand extends NetCommand {
   }
 }
 
+/// A cell or a net of a design, found by [findNetElement]: the [scope] it
+/// lives in, its name there ([leaf]), whether it is a cell, and whether a
+/// net of the same name was passed over for the cell ([ambiguous]).
+typedef NetElementFound = ({
+  HierarchyNode scope,
+  String leaf,
+  bool isCell,
+  bool ambiguous,
+});
+
+/// The cell or net [name] names in [model], or null when the design has
+/// neither. The reading rule is the link's ([findNetCruxLinkElement]):
+/// rooted at the top first, then from just below it; never the last segment
+/// alone. A cell wins over a net of the same name. A net named with a
+/// numeric bit select or slice (`cnt_q[3]`) is found as the whole net
+/// ([findNetNamed]); [NetElementFound.leaf] keeps the select.
+///
+/// Every command that takes a cell or net name reads it here, so the
+/// commands agree on what a name names.
+NetElementFound? findNetElement(NetlistModel model, String name) {
+  final top = model.topModule?.name;
+  final candidates = <String>[
+    name,
+    if (top != null && !name.startsWith('$top.')) '$top.$name',
+  ];
+  for (final candidate in candidates) {
+    final scoped = scopeOfHierarchicalName(model, candidate);
+    final module = scoped?.scope.resolve(model);
+    if (scoped == null || module == null) continue;
+    final isCell = module.cells.containsKey(scoped.leaf);
+    final net = findNetNamed(module, scoped.leaf);
+    if (isCell) {
+      return (
+        scope: scoped.scope,
+        leaf: scoped.leaf,
+        isCell: true,
+        ambiguous: net != null,
+      );
+    }
+    if (net != null) {
+      return (
+        scope: scoped.scope,
+        leaf: scoped.leaf,
+        isCell: false,
+        ambiguous: false,
+      );
+    }
+  }
+  return null;
+}
+
 /// The text of a pin's bits: the hierarchical name of the net they make up
 /// (`top.u.data`), a slice of one (`top.u.data[7:4]`, `top.u.data[3]`,
 /// positions counted from 0 at the net's least significant bit), a constant
 /// (`1'b0`), or a concatenation of single bits, most significant first
 /// (`{top.u.a[1], 1'b0}`). A named net is preferred to one Yosys named.
-class _BitNames {
-  _BitNames(this.module, this.scope) {
+///
+/// Public so that every command naming a bit of [module] names it the same
+/// way.
+class NetBitNames {
+  /// The names of the bits of [module], whose hierarchical path is [scope].
+  NetBitNames(this.module, this.scope) {
     for (final internal in <bool>[false, true]) {
       for (final net in module.nets.values) {
         if ((net.hideName || net.name.startsWith(r'$')) != internal) continue;
@@ -1003,10 +1033,15 @@ class _BitNames {
     }
   }
 
+  /// The module whose bits are named.
   final Module module;
+
+  /// The module's hierarchical path, which every name starts with.
   final String scope;
+
   final Map<int, (String, int)> _of = <int, (String, int)>{};
 
+  /// The text of [bits], most significant last in the list.
   String text(List<BitRef> bits) {
     if (bits.isEmpty) return '';
     final named = <(String, int)?>[
