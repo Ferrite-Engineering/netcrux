@@ -12,6 +12,7 @@
     {"golden": "search/completed.json", "tool": "search", "arguments": {"design": ["counter.json"], "query": "a"}},
     {"golden": "search/completed_truncated.json", "tool": "search", "arguments": {"design": ["counter.crux-project"], "query": "*", "glob": true, "limit": 2}},
     {"golden": "search/completed_filelist.json", "tool": "search", "arguments": {"design": ["design.f"], "query": "q_reg", "kind": "cell"}},
+    {"golden": "search/completed_two_sources.json", "tool": "search", "arguments": {"design": ["top.v", "inc.v"], "query": "q_reg", "kind": "cell"}},
     {"golden": "search/usage_error.json", "tool": "search", "arguments": {"design": ["counter.json"], "query": "a", "limit": 501}},
     {"golden": "search/usage_error_kind.json", "tool": "search", "door": "mcp", "arguments": {"design": ["counter.json"], "query": "a", "kind": "wire"}},
     {"golden": "search/input_error.json", "tool": "search", "arguments": {"design": ["missing.json"], "query": "a"}},

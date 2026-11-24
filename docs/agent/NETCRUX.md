@@ -168,9 +168,11 @@ netlist records for it (for Amaranth, the Python line). Copy links from the
 answer; do not build them.
 
 `link` is `null` when NetCrux could not open it: the design was given as a
-filelist or a manifest (a link names one design file), the schematic does not
-draw the element (a net nothing is connected to), or the netlist marks no top
-module. The location still names the file and the element, and `src` the
+filelist, a manifest, or two or more source files, or as one source file with
+a `top` (a link opens one file alone, and that file alone may not elaborate),
+the schematic does not draw the element (a net nothing is connected to), or the
+netlist marks no top module. Give a Yosys JSON netlist or a single source file
+when you want links. The location still names the file and the element, and `src` the
 source line. A module found by `search` is located at its declaration, a
 source location with no link.
 

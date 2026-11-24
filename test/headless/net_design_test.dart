@@ -163,6 +163,40 @@ void main() {
         netCruxLink(source, kind: McpElementKind.cell, name: 'top.u_inc'),
       );
     });
+
+    test('two sources are cited by the first and carry no link, since that '
+        'file alone does not elaborate', () async {
+      final d = await doc(<String>[
+        'connections',
+        p.join(fixtures, 'top.v'),
+        p.join(fixtures, 'inc.v'),
+        'top.u_inc',
+      ], yosys: FakeElaborator.writing(netlist));
+      expect(d['outcome'], 'completed');
+      final location =
+          (d['body']! as Map<String, Object?>)['location']!
+              as Map<String, Object?>;
+      expect(location['file'], p.join(fixtures, 'top.v'));
+      expect(location['link'], isNull);
+    });
+
+    test('a single source given a top carries no link', () async {
+      final source = write(
+        'top.v',
+        File(p.join(fixtures, 'top.v')).readAsStringSync(),
+      );
+      final d = await doc(<String>[
+        'connections',
+        source,
+        'top.u_inc',
+        '--top',
+        'top',
+      ], yosys: FakeElaborator.writing(netlist));
+      final location =
+          (d['body']! as Map<String, Object?>)['location']!
+              as Map<String, Object?>;
+      expect(location['link'], isNull);
+    });
   });
 
   group('the top module', () {

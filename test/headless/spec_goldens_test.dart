@@ -183,6 +183,24 @@ void main() {
       });
     }
 
+    test('a design of sources that do not elaborate alone carries no link, '
+        'and one that does is the only source design that links', () {
+      var multiSource = 0;
+      for (final c in spec.cases) {
+        final design = (c.arguments['design']! as List<Object?>).cast<String>();
+        final sources = design.where(
+          (f) => const <String>['.v', '.sv', '.vhd'].any(f.endsWith),
+        );
+        final alone = design.length == 1 && sources.length == 1;
+        if (sources.isEmpty || alone) continue;
+        multiSource++;
+        for (final (at, l) in _linked(jsonDecode(spec.golden(c)), r'$')) {
+          expect(l['link'], isNull, reason: '${c.golden} $at');
+        }
+      }
+      expect(multiSource, greaterThanOrEqualTo(3));
+    });
+
     test('the goldens carry links, and locations without one', () async {
       final links = <String?>[
         for (final c in spec.cases)

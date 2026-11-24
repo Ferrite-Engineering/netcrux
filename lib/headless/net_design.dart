@@ -385,10 +385,17 @@ Future<NetDesignInput> _fromSources(
     throw _input('input.no_sources', 'the design names no source file');
   }
   final citation = firstFilelist ?? sources.first;
+  // A link opens its file alone in a new tab, where the app picks the top
+  // module itself. So only a design that one file elaborates by itself, with
+  // no top that could differ from that choice, earns a link.
+  final opensAlone =
+      firstFilelist == null &&
+      sources.length == 1 &&
+      (top == null || top.isEmpty);
   return NetDesignInput._(
     files: List<String>.unmodifiable(sources),
     citation: citation,
-    linked: firstFilelist == null && isNetCruxLinkExtension(citation),
+    linked: opensAlone && isNetCruxLinkExtension(citation),
     top: top,
     project: NetcruxProject.create(
       sourceFiles: sources,
