@@ -3029,5 +3029,89 @@
         "type": "String"
       }
     }
+  },
+  "linkConfirmTitle": "リンクから設計を開きますか？",
+  "@linkConfirmTitle": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmBody": "リンクが NetCrux に {fileName} を開くよう求めています。このファイルを NetCrux で開いたことはありません。リンクの送信元を信頼できる場合にのみ開いてください。",
+  "@linkConfirmBody": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkConfirmPathLabel": "フルパス",
+  "@linkConfirmPathLabel": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmOpen": "開く",
+  "@linkConfirmOpen": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmCancel": "キャンセル",
+  "@linkConfirmCancel": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedMalformed": "有効な NetCrux リンクではないため、NetCrux はリンクを開きませんでした。",
+  "@linkRefusedMalformed": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedPath": "ファイルがローカルのフルパスで指定されていないため、NetCrux はリンクを開きませんでした。",
+  "@linkRefusedPath": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedNotDesign": "{fileName} はリンクから開ける設計ファイルではないため、NetCrux はリンクを開きませんでした。",
+  "@linkRefusedNotDesign": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedNotFound": "{fileName} が見つからないため、NetCrux はリンクを開きませんでした。",
+  "@linkRefusedNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedLoadFailed": "NetCrux は {fileName} を読み込めませんでした。理由はタブに表示されています。",
+  "@linkRefusedLoadFailed": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkCellNotFound": "{fileName} を開きましたが、{cell} という名前のセルはありません。",
+  "@linkCellNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "linkNetNotFound": "{fileName} を開きましたが、{net} という名前のネットはありません。",
+  "@linkNetNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "net": {
+        "type": "String"
+      }
+    }
   }
 }

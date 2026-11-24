@@ -28,6 +28,23 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- netcrux://open?file=<path>&cell=<name> (or &net=<name>). AppDelegate
+	     forwards it to Dart unparsed; lib/services/links/ decides whether it
+	     names a design it may open, and asks before opening a file the user
+	     has not opened before. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.netcrux.link</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>netcrux</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

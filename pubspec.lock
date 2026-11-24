@@ -332,6 +332,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  crux_mcp:
+    dependency: "direct dev"
+    description:
+      path: "crux-shared/packages/crux_mcp"
+      relative: true
+    source: path
+    version: "0.1.0"
   crux_menu_bar:
     dependency: "direct main"
     description:
@@ -385,6 +392,13 @@ packages:
     dependency: transitive
     description:
       path: "crux-shared/packages/crux_signing"
+      relative: true
+    source: path
+    version: "0.1.0"
+  crux_single_instance:
+    dependency: "direct main"
+    description:
+      path: "crux-shared/packages/crux_single_instance"
       relative: true
     source: path
     version: "0.1.0"

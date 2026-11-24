@@ -20,12 +20,19 @@ export 'package:crux_linux_integration/crux_linux_integration.dart'
 /// [LinuxMimeType.declared] is a factory and the list it builds is `final`.
 /// `bootstrap` therefore takes a nullable identity and falls back to this one
 /// rather than naming it as a default argument.
+///
+/// [LinuxDesktopApp.urlSchemes] is `netcrux`, written out because `core/`
+/// may not import `services/`, where `kNetCruxLinkScheme` lives;
+/// `test/static/url_scheme_registration_test.dart` holds the two equal. Its
+/// [LinuxDesktopApp.appId] also names the single-instance rendezvous a launch
+/// carrying a link hands the link over on.
 final netcruxLinuxDesktopApp = LinuxDesktopApp(
   appId: 'com.ferriteengineering.netcrux',
   name: 'NetCrux',
   comment: 'Netlist schematic browser for Verilog, SystemVerilog, and VHDL',
   execName: 'netcrux',
   fileTypes: kNetcruxFileTypes,
+  urlSchemes: const ['netcrux'],
 );
 
 /// The files NetCrux opens, as a Linux desktop has to be told about them —

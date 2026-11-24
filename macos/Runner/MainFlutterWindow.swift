@@ -31,6 +31,10 @@ class MainFlutterWindow: NSWindow {
     // document that caused the launch.
     IncomingDocumentPlugin.shared.register(
       with: flutterViewController.engine.binaryMessenger)
+    // The same for `netcrux://` links: a link that launched the app waits in
+    // the plugin's buffer until Dart listens.
+    IncomingLinkPlugin.shared.register(
+      with: flutterViewController.engine.binaryMessenger)
 
     super.awakeFromNib()
   }

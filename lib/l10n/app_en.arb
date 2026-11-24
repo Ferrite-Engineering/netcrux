@@ -4049,5 +4049,89 @@
         "type": "String"
       }
     }
+  },
+  "linkConfirmTitle": "Open a design from a link?",
+  "@linkConfirmTitle": {
+    "description": "Title of the dialog shown before a netcrux:// link opens a file the user has not opened in NetCrux before."
+  },
+  "linkConfirmBody": "A link asks NetCrux to open {fileName}. You have not opened this file in NetCrux before. Open it only if you trust where the link came from.",
+  "@linkConfirmBody": {
+    "description": "Body of the netcrux:// link confirmation. fileName is the base name of the file the link names; the full path is shown below it.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkConfirmPathLabel": "Full path",
+  "@linkConfirmPathLabel": {
+    "description": "Label above the full path of the file in the netcrux:// link confirmation."
+  },
+  "linkConfirmOpen": "Open",
+  "@linkConfirmOpen": {
+    "description": "Button in the netcrux:// link confirmation that opens the file."
+  },
+  "linkConfirmCancel": "Cancel",
+  "@linkConfirmCancel": {
+    "description": "Button in the netcrux:// link confirmation that opens nothing. It has the focus when the dialog appears."
+  },
+  "linkRefusedMalformed": "NetCrux did not open the link because it is not a valid NetCrux link.",
+  "@linkRefusedMalformed": {
+    "description": "Error toast when a netcrux:// link does not have the accepted form (unknown key, repeated key, bad encoding, too long, more than one link)."
+  },
+  "linkRefusedPath": "NetCrux did not open the link because the file is not given as a full local path.",
+  "@linkRefusedPath": {
+    "description": "Error toast when a netcrux:// link names a relative, network or device path."
+  },
+  "linkRefusedNotDesign": "NetCrux did not open the link because {fileName} is not a design file a link can open.",
+  "@linkRefusedNotDesign": {
+    "description": "Error toast when a netcrux:// link names a file that is not a Verilog, SystemVerilog or VHDL source or a Yosys JSON netlist, as named or once symbolic links resolve.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedNotFound": "NetCrux did not open the link because {fileName} was not found.",
+  "@linkRefusedNotFound": {
+    "description": "Error toast when the file a netcrux:// link names does not exist or is not a regular file.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedLoadFailed": "NetCrux could not read {fileName}. The tab shows why.",
+  "@linkRefusedLoadFailed": {
+    "description": "Error toast when the file a netcrux:// link opened in a tab could not be elaborated or read.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkCellNotFound": "Opened {fileName}, but it has no cell named {cell}.",
+  "@linkCellNotFound": {
+    "description": "Info toast when a netcrux:// link opened its design but the cell it names is not in it.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "linkNetNotFound": "Opened {fileName}, but it has no net named {net}.",
+  "@linkNetNotFound": {
+    "description": "Info toast when a netcrux:// link opened its design but the net it names is not in it.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "net": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -3029,5 +3029,89 @@
         "type": "String"
       }
     }
+  },
+  "linkConfirmTitle": "링크에서 설계를 여시겠습니까?",
+  "@linkConfirmTitle": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmBody": "링크가 NetCrux에 {fileName} 파일을 열도록 요청합니다. 이 파일을 NetCrux에서 연 적이 없습니다. 링크의 출처를 신뢰하는 경우에만 여십시오.",
+  "@linkConfirmBody": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkConfirmPathLabel": "전체 경로",
+  "@linkConfirmPathLabel": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmOpen": "열기",
+  "@linkConfirmOpen": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmCancel": "취소",
+  "@linkConfirmCancel": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedMalformed": "유효한 NetCrux 링크가 아니므로 NetCrux가 링크를 열지 않았습니다.",
+  "@linkRefusedMalformed": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedPath": "파일이 전체 로컬 경로로 지정되지 않았으므로 NetCrux가 링크를 열지 않았습니다.",
+  "@linkRefusedPath": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedNotDesign": "{fileName} 파일은 링크로 열 수 있는 설계 파일이 아니므로 NetCrux가 링크를 열지 않았습니다.",
+  "@linkRefusedNotDesign": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedNotFound": "{fileName} 파일을 찾을 수 없으므로 NetCrux가 링크를 열지 않았습니다.",
+  "@linkRefusedNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedLoadFailed": "NetCrux가 {fileName} 파일을 읽을 수 없습니다. 이유는 탭에 표시됩니다.",
+  "@linkRefusedLoadFailed": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkCellNotFound": "{fileName} 파일을 열었지만 {cell} 셀이 없습니다.",
+  "@linkCellNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "linkNetNotFound": "{fileName} 파일을 열었지만 {net} 넷이 없습니다.",
+  "@linkNetNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "net": {
+        "type": "String"
+      }
+    }
   }
 }

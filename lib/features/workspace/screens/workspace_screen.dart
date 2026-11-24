@@ -21,6 +21,8 @@ import 'package:netcrux/domain/models/project/netcrux_project.dart';
 import 'package:netcrux/domain/models/session/netcrux_session.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/diagnostics/widgets/pane_render_stats_popover.dart';
+import 'package:netcrux/features/links/services/netcrux_link_handler.dart';
+import 'package:netcrux/features/links/widgets/open_link_confirm_dialog.dart';
 import 'package:netcrux/features/project/providers/current_project_provider.dart';
 import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/remote/widgets/cxp_inbound_handler_publisher.dart';
@@ -48,6 +50,8 @@ import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
 import 'package:netcrux/services/host_bridge/host_bridge_messages.dart';
 import 'package:netcrux/services/host_bridge/host_netlist_blob.dart';
 import 'package:netcrux/services/host_bridge/host_netlist_request_provider.dart';
+import 'package:netcrux/services/links/netcrux_link.dart';
+import 'package:netcrux/services/links/netcrux_link_providers.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
 import 'package:netcrux/services/session/session_controller.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
@@ -133,9 +137,22 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   /// design instead of adding another tab.
   bool _hostNetlistTabOpen = false;
 
+  /// `netcrux://` links that reach the running app: delivered by macOS, or
+  /// forwarded by a later launch on Windows and Linux.
+  StreamSubscription<String>? _incomingLinks;
+
+  /// Holds links until the launch intent has been applied, then opens them
+  /// one at a time. See [NetCruxLinkInbox].
+  late final NetCruxLinkInbox _linkInbox = NetCruxLinkInbox(_openLink);
+
   @override
   void initState() {
     super.initState();
+    // Listening now takes a link that launched the app (macOS holds it until
+    // asked); the inbox keeps every link until the launch intent and the
+    // workspace restore have been applied, so a link to an already-open
+    // design focuses its tab.
+    _listenForLinks();
     // A netlist the editor host sends after this point. Not fired
     // immediately: a provider is not modified while the tree builds, and one
     // sent before the screen existed is taken after the first frame.
@@ -154,6 +171,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   void dispose() {
     unawaited(_openedDocuments?.cancel());
+    unawaited(_incomingLinks?.cancel());
     super.dispose();
   }
 
@@ -165,6 +183,63 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     await _applyLaunchIntent(ref.read(cliLaunchIntentProvider));
     if (!mounted) return;
     _listenForOpenedDocuments();
+    if (ref.read(initialNetCruxLinksProvider).length > 1) {
+      _showLinkOutcome(
+        const NetCruxLinkOutcome.failed(
+          NetCruxLinkFailure.malformed,
+          parseRefusal: NetCruxLinkRefusal.tooManyLinks,
+        ),
+      );
+    }
+    _linkInbox.markReady();
+  }
+
+  /// Takes `netcrux://` links: the one this launch's command line carried,
+  /// and each that reaches the running app. A launch that carried more than
+  /// one is refused as a whole once the launch has been applied.
+  void _listenForLinks() {
+    _incomingLinks = ref
+        .read(incomingLinkServiceProvider)
+        .links
+        .listen(
+          _linkInbox.add,
+          onError: (Object _) {
+            // A channel error delivers no link; there is nothing to open.
+          },
+        );
+    final launchLinks = ref.read(initialNetCruxLinksProvider);
+    if (launchLinks.length == 1) _linkInbox.add(launchLinks.single);
+  }
+
+  /// Opens what a `netcrux://` link names, asking first when the file is not
+  /// one the user has opened before, and says what was not done.
+  Future<void> _openLink(String raw) async {
+    if (!mounted) return;
+    final outcome = await openNetCruxLink(
+      ProviderScope.containerOf(context, listen: false),
+      raw,
+      confirm: _confirmLink,
+    );
+    if (!mounted) return;
+    _showLinkOutcome(outcome);
+  }
+
+  /// The link confirmation. No screen means no answer, which opens nothing.
+  Future<bool> _confirmLink(String path) async {
+    if (!mounted) return false;
+    return await OpenLinkConfirmDialog.show(context, path);
+  }
+
+  /// Tells the user what a link did not do.
+  void _showLinkOutcome(NetCruxLinkOutcome outcome) {
+    if (!mounted) return;
+    final shown = netCruxLinkOutcomeMessage(L10N.of(context), outcome);
+    if (shown == null) return;
+    if (shown.error) {
+      showCruxErrorSnack(context, shown.message);
+    } else {
+      showCruxInfoSnack(context, shown.message);
+    }
   }
 
   /// Routes each document macOS opens from now on through the same flow as

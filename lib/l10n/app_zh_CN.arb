@@ -3029,5 +3029,89 @@
         "type": "String"
       }
     }
+  },
+  "linkConfirmTitle": "从链接打开设计？",
+  "@linkConfirmTitle": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmBody": "一个链接请求 NetCrux 打开 {fileName}。您之前没有在 NetCrux 中打开过此文件。仅当您信任链接的来源时才打开它。",
+  "@linkConfirmBody": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkConfirmPathLabel": "完整路径",
+  "@linkConfirmPathLabel": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmOpen": "打开",
+  "@linkConfirmOpen": {
+    "description": "See app_en.arb for description"
+  },
+  "linkConfirmCancel": "取消",
+  "@linkConfirmCancel": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedMalformed": "NetCrux 未打开该链接，因为它不是有效的 NetCrux 链接。",
+  "@linkRefusedMalformed": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedPath": "NetCrux 未打开该链接，因为文件没有以完整的本地路径给出。",
+  "@linkRefusedPath": {
+    "description": "See app_en.arb for description"
+  },
+  "linkRefusedNotDesign": "NetCrux 未打开该链接，因为 {fileName} 不是可以从链接打开的设计文件。",
+  "@linkRefusedNotDesign": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedNotFound": "NetCrux 未打开该链接，因为找不到 {fileName}。",
+  "@linkRefusedNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRefusedLoadFailed": "NetCrux 无法读取 {fileName}。标签页中显示了原因。",
+  "@linkRefusedLoadFailed": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "linkCellNotFound": "已打开 {fileName}，但其中没有名为 {cell} 的单元。",
+  "@linkCellNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "linkNetNotFound": "已打开 {fileName}，但其中没有名为 {net} 的线网。",
+  "@linkNetNotFound": {
+    "description": "See app_en.arb for description",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "net": {
+        "type": "String"
+      }
+    }
   }
 }

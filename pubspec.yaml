@@ -156,6 +156,10 @@ dependencies:
   # netcrux because they're L10N- / dispatch-coupled.
   crux_shortcut_action:
     path: ./crux-shared/packages/crux_shortcut_action
+  # One running instance per installation on Windows and Linux: a launch that
+  # carries a netcrux:// link hands it to the running app and exits.
+  crux_single_instance:
+    path: ./crux-shared/packages/crux_single_instance
   # Cross-suite bottom status bar. NetcruxStatusBar is a thin adapter
   # that feeds design-identity segments (file / top module / cell count) into
   # the shared CruxStatusBar chrome so the bottom bar matches WaveCrux.
@@ -296,6 +300,10 @@ dev_dependencies:
   # repository's sources and exemptions.
   crux_guards:
     path: ./crux-shared/packages/crux_guards
+  # The suite's `netcrux://` link builder: the link parser's round-trip tests
+  # parse every link it writes, so the two cannot drift apart.
+  crux_mcp:
+    path: ./crux-shared/packages/crux_mcp
   flutter_test:
     sdk: flutter
   # `MockClient` for the telemetry gating tests: the beta-inert guarantee is

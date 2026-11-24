@@ -11,19 +11,106 @@ class AppDelegate: FlutterAppDelegate {
     return true
   }
 
-  /// Finder double-click, "Open With", `open -a`, and drag-onto-the-Dock-icon.
+  /// Finder double-click, "Open With", `open -a`, drag-onto-the-Dock-icon,
+  /// and `netcrux://` links (the scheme `Info.plist` declares under
+  /// `CFBundleURLTypes`).
   ///
-  /// File URLs are ours; anything else (a custom scheme a plugin registered
-  /// for) goes to `super`. Splitting rather than always calling `super` keeps
-  /// this the single path for a document: the base class may also hand the
-  /// URL to the framework, and two routes opening one file is how a design
-  /// ends up in two tabs.
+  /// File URLs and `netcrux:` links are ours; anything else (a custom scheme
+  /// a plugin registered for) goes to `super`. Splitting rather than always
+  /// calling `super` keeps this the single path for a document: the base
+  /// class may also hand the URL to the framework, and two routes opening one
+  /// file is how a design ends up in two tabs.
   override func application(_ application: NSApplication, open urls: [URL]) {
     IncomingDocumentPlugin.shared.handle(urls: urls)
-    let others = urls.filter { !$0.isFileURL }
+    IncomingLinkPlugin.shared.handle(urls: urls)
+    let others = urls.filter { !$0.isFileURL && !IncomingLinkPlugin.isLink($0) }
     if !others.isEmpty {
       super.application(application, open: others)
     }
+  }
+}
+
+/// Delivers `netcrux://` links to Dart, exactly as the system handed them
+/// over.
+///
+/// Nothing here parses, decodes or trusts a link: it is forwarded as its
+/// string and the Dart side (`lib/services/links/`) refuses anything that is
+/// not a well-formed link to a design. A link that arrives before Dart is
+/// listening (the link that launched the app) waits in a small buffer and is
+/// delivered when Dart sends `listen`. The buffer keeps the newest few: a
+/// burst of links at launch cannot grow it without bound, and Dart handles
+/// one link at a time anyway.
+///
+/// One method channel in both directions, as for documents: Dart sends
+/// `listen` and `cancel`, and each link is delivered as an `openLink` call.
+final class IncomingLinkPlugin: NSObject {
+  static let shared = IncomingLinkPlugin()
+
+  /// The longest link forwarded. Dart refuses anything over an eighth of this
+  /// with a message; past this the string is dropped here.
+  private static let maxLength = 65536
+
+  /// How many links wait for Dart to listen.
+  private static let maxPending = 4
+
+  private var channel: FlutterMethodChannel?
+  private var pending: [String] = []
+  private var isListening = false
+
+  private override init() {}
+
+  /// Whether [url] uses the `netcrux` scheme, in any case.
+  static func isLink(_ url: URL) -> Bool {
+    return url.scheme?.lowercased() == "netcrux"
+  }
+
+  /// Call from `MainFlutterWindow.awakeFromNib()`, once the engine exists.
+  func register(with messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(
+      name: "com.netcrux/incoming_link",
+      binaryMessenger: messenger)
+    channel.setMethodCallHandler { [weak self] call, result in
+      guard let self = self else {
+        result(nil)
+        return
+      }
+      switch call.method {
+      case "listen":
+        self.isListening = true
+        let queued = self.pending
+        self.pending.removeAll()
+        result(nil)
+        for link in queued {
+          self.deliver(link)
+        }
+      case "cancel":
+        self.isListening = false
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    self.channel = channel
+  }
+
+  /// Forwards each `netcrux:` URL; every other URL is someone else's.
+  func handle(urls: [URL]) {
+    for url in urls where IncomingLinkPlugin.isLink(url) {
+      let link = url.absoluteString
+      guard !link.isEmpty, link.count <= IncomingLinkPlugin.maxLength else { continue }
+      if isListening {
+        deliver(link)
+      } else {
+        pending.append(link)
+        if pending.count > IncomingLinkPlugin.maxPending {
+          pending.removeFirst(pending.count - IncomingLinkPlugin.maxPending)
+        }
+      }
+    }
+  }
+
+  private func deliver(_ link: String) {
+    channel?.invokeMethod("openLink", arguments: link)
   }
 }
 

@@ -1,6 +1,7 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async' show unawaited;
 import 'dart:io' show stderr, stdout;
 
 import 'package:crux_a11y/crux_a11y.dart' show CruxRoutedContent;
@@ -19,6 +20,8 @@ import 'package:crux_license/crux_license.dart';
 import 'package:crux_linux_integration/crux_linux_integration.dart';
 import 'package:crux_settings_ui/crux_settings_ui.dart'
     show CruxPolicyLockScope, kCruxPolicyLockNoteEn;
+import 'package:crux_single_instance/crux_single_instance.dart'
+    show SingleInstance, SingleInstanceDelivered, SingleInstancePrimary;
 import 'package:crux_telemetry/crux_telemetry.dart';
 import 'package:crux_theme/crux_theme.dart';
 import 'package:crux_updates/crux_updates.dart';
@@ -70,6 +73,11 @@ import 'package:netcrux/services/cli/cli_args.dart';
 import 'package:netcrux/services/file_open/incoming_document_service.dart';
 import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
 import 'package:netcrux/services/host_bridge/host_bridge.dart';
+import 'package:netcrux/services/links/bring_window_forward.dart';
+import 'package:netcrux/services/links/incoming_link_service.dart';
+import 'package:netcrux/services/links/netcrux_link.dart';
+import 'package:netcrux/services/links/netcrux_link_providers.dart';
+import 'package:netcrux/services/links/single_instance_handoff.dart';
 import 'package:netcrux/services/logging/severe_log_stderr_sink.dart';
 import 'package:netcrux/services/remote/cxp/netcrux_cxp_binding.dart';
 import 'package:netcrux/services/workspace/netcrux_pane_overrides.dart';
@@ -146,6 +154,10 @@ void attachDiagnosticSinks({SevereLogStderrSink? stderrSink}) {
   if (!kIsWeb) (stderrSink ?? SevereLogStderrSink.instance).attach();
 }
 
+/// Releases the single-instance claim on an orderly quit; set by [bootstrap]
+/// when this process is the running instance.
+AppLifecycleListener? _singleInstanceExitListener;
+
 /// Forgets this installation's EULA acceptance when [args] carry
 /// `--reset-eula`, so the agreement is presented again on this launch.
 ///
@@ -195,6 +207,14 @@ Future<void> resetEulaIfRequested(
 /// §10 (Extension Points). When adding extension-point providers, follow the
 /// open-core-first rule: define the interface and a default implementation
 /// here in the open-core repo, then add the Pro override in the overlay.
+///
+/// A launch that carries a `netcrux://` link (Windows and Linux start the app
+/// with the link as its argument) is that link and nothing else: every other
+/// argument is dropped before anything reads the command line
+/// ([NetCruxLaunchArgs]). When another instance is running, the link is
+/// handed to it and this process exits ([claimSingleInstance]).
+/// [singleInstance] replaces the platform's claim and switches it on for any
+/// host; tests only.
 Future<void> bootstrap({
   List<String> args = const [],
   List<Override> extraOverrides = const [],
@@ -203,12 +223,19 @@ Future<void> bootstrap({
   @visibleForTesting void Function(int code) exitProcess = cruxExit,
   @visibleForTesting
   IncomingDocumentService incomingDocuments = const IncomingDocumentService(),
+  @visibleForTesting SingleInstance? singleInstance,
 }) async {
+  // A link carrying a quote can break out of the registered command's quoting
+  // on Windows and smuggle `--reset`, `--yosys-path` or a file in after it, so
+  // a launch with a link keeps the link alone.
+  final launch = NetCruxLaunchArgs.split(args);
+  final argv = launch.args;
+
   // `--help` / `-h` short-circuits before the platform binding so the
   // ergonomic `netcrux --help` prints usage on stdout and exits cleanly,
   // matching every other CLI tool an HDL engineer reaches for. Mirrors
   // WaveCrux's contract (wavecrux/lib/app.dart).
-  if (args.contains('--help') || args.contains('-h')) {
+  if (argv.contains('--help') || argv.contains('-h')) {
     // ignore: avoid_print, intentional CLI help output
     print(cliHelpText());
     // Returning is not enough: a desktop runner creates its window at launch
@@ -219,7 +246,40 @@ Future<void> bootstrap({
     return;
   }
 
+  // Windows and Linux start a new process for every link. When another
+  // instance is running, this launch hands its link over and ends before a
+  // window is shown; the running instance opens the link and comes forward.
+  // macOS delivers the link to the running application itself, and the
+  // browser has no scheme, so there the claim is skipped.
+  final claim = await claimSingleInstance(
+    desktopApp: linuxDesktopApp ?? netcruxLinuxDesktopApp,
+    launchLinks: launch.links,
+    singleInstance: singleInstance,
+  );
+  if (claim is SingleInstanceDelivered) {
+    exitProcess(0);
+    return;
+  }
+  if (claim is SingleInstancePrimary) {
+    // Each link a later launch forwards brings the window in front as it
+    // arrives, whenever the app first listens to the stream.
+    IncomingLinkService.attachForwardedLinks(
+      claim.links.map((link) {
+        unawaited(bringWindowForward());
+        return link;
+      }),
+    );
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
+  // The running instance gives up its claim on an orderly quit, so the next
+  // launch finds no socket, advert or lock left behind. This call is also
+  // what keeps the claim's lock held at all in a release build: see
+  // [releaseSingleInstanceOnExit] before removing it.
+  if (claim is SingleInstancePrimary) {
+    _singleInstanceExitListener?.dispose();
+    _singleInstanceExitListener = releaseSingleInstanceOnExit(claim);
+  }
   // Over X forwarding from XQuartz the engine reads Backspace, Escape, Return
   // and Tab as printable keys; this turns them back into the control keys.
   installLinuxKeyEventRepair();
@@ -235,14 +295,14 @@ Future<void> bootstrap({
   // Before the container is built, because `TelemetryConsentStore` starts
   // reading the persisted value the moment anything touches the telemetry
   // graph. The installation id is left alone — see `resetTelemetryConsent`.
-  if (args.contains('--reset-telemetry-consent')) {
+  if (argv.contains('--reset-telemetry-consent')) {
     await resetTelemetryConsent(const NetcruxTelemetryStorage());
   }
   // `--reset-eula` does the same for the licence agreement, which is gated
   // once per installation on `kCruxEulaVersion`. Before the container is
   // built for the same reason: the acceptance store reads the persisted
   // version the moment the gate first asks.
-  await resetEulaIfRequested(args);
+  await resetEulaIfRequested(argv);
   // Start capturing diagnostics before the first provider is constructed, so
   // an early-startup warning (a failed workspace restore, a Yosys probe
   // failure) is already captured by the time a user opens the issue reporter.
@@ -258,8 +318,8 @@ Future<void> bootstrap({
   // stripped before [CliArgParser] runs — its flag-stripping heuristic
   // would otherwise swallow the positional that follows a bare boolean
   // flag (`netcrux --reset top.v` must still open `top.v`).
-  final launchFlags = parseCliArgs(args);
-  final launchArgs = stripLaunchFlags(args);
+  final launchFlags = parseCliArgs(argv);
+  final launchArgs = stripLaunchFlags(argv);
   const parser = CliArgParser();
   // A document macOS launched the app to open (a Finder double-click) takes
   // the same route as that path on the command line, when the command line
@@ -328,6 +388,8 @@ Future<void> bootstrap({
       if (cxpLaunchSettings != null)
         cruxCxpLaunchSettingsProvider.overrideWithValue(cxpLaunchSettings),
       cliLaunchIntentProvider.overrideWithValue(launchIntent),
+      if (launch.links.isNotEmpty)
+        initialNetCruxLinksProvider.overrideWithValue(launch.links),
       cliYosysPathOverrideProvider.overrideWithValue(yosysOverride),
       cliNetlistReaderOverrideProvider.overrideWithValue(readerOverride),
       webLaunchParamsProvider.overrideWithValue(webLaunch),
