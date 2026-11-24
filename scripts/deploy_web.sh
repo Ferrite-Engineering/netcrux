@@ -17,11 +17,30 @@
 #     first deploy.
 #
 # Run from the repo root:
-#   ./scripts/deploy_web.sh
+#   ./scripts/deploy_web.sh            build and deploy
+#   ./scripts/deploy_web.sh --dry-run  print the build command and stop; builds
+#                                      and uploads nothing
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
+
+DRY_RUN=0
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=1
+fi
+
+# About-dialog build facts (commit, Flutter version, year). The architecture is
+# meaningless in a browser, so it is fixed to "web".
+export BUILD_ARCHITECTURE=web
+# shellcheck source=_build_info.sh
+source "$REPO_ROOT/scripts/_build_info.sh"
+
+if [[ "$DRY_RUN" == 1 ]]; then
+  echo "=== dry run: would run ==="
+  echo "flutter build web --release ${BUILD_INFO_DEFINES[*]}"
+  exit 0
+fi
 
 # Refuse a release whose version disagrees with the beta flag compiled from
 # the pinned crux-shared (a 1.x build with the beta still on ships every paid
@@ -43,7 +62,7 @@ echo "=== Layout engine (Rust to WebAssembly) ==="
 dart run tool/build_web_wasm.dart
 
 echo "=== flutter build web (release) ==="
-flutter build web --release
+flutter build web --release "${BUILD_INFO_DEFINES[@]}"
 test -f build/web/wasm/elk_wasm_bg.wasm
 
 echo "=== Deploy to Cloudflare (netcrux-app -> app.netcrux.app) ==="
