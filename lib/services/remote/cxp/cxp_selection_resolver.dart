@@ -22,6 +22,7 @@ class ResolvedCxpSelection {
     required this.element,
     required this.displayName,
     required this.scopePath,
+    this.time,
   });
 
   /// Canonical [ElementId] for the selected element.
@@ -34,6 +35,10 @@ class ResolvedCxpSelection {
   /// carried as `netcrux.scope_path` metadata so peers can navigate.
   final String scopePath;
 
+  /// The point in simulation time the selection carries, when it came with one
+  /// (CXP §9.3.3). Both forms below pass it on unchanged; null sends none.
+  final CxpTime? time;
+
   /// The `notify_selection` message this selection produces.
   ///
   /// [extraMetadata] is merged on top of the always-present
@@ -45,6 +50,7 @@ class ResolvedCxpSelection {
       NotifySelection(
         elements: <ElementId>[element],
         displayName: displayName,
+        time: time,
         metadata: <String, Object?>{
           'netcrux.scope_path': scopePath,
           ...?extraMetadata,
@@ -61,6 +67,7 @@ class ResolvedCxpSelection {
   ]) => CrossProbeSelection(
     candidates: <ElementId>[element],
     displayName: displayName,
+    time: time,
     metadata: <String, Object?>{
       'netcrux.scope_path': scopePath,
       ...?extraMetadata,
