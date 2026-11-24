@@ -170,6 +170,89 @@ Name them under `cellModelFiles` in a [project file](reference/project-format.md
 
 Any `.lib` or `.liberty` file selected with the sources becomes one of the tab's [cell libraries](#cell-libraries) rather than a source.
 
+## Opening a design from a link, from NetCrux 2.0 {#links}
+
+From NetCrux 2.0 the desktop app opens `netcrux://` links. A link names one design file on your machine and, if you like, a cell or a net in it, so a lint report, a CI log, a review comment or a chat message can take the reader straight to the element instead of describing where it is.
+
+```text
+netcrux://open?file=/home/me/uart/rtl/uart_tx.v&cell=top.u_tx.state_reg
+netcrux://open?file=/home/me/uart/rtl/uart_tx.v&net=top.u_tx.busy
+```
+
+| Key | Required | Meaning |
+|---|---|---|
+| `file` | Yes | The full local path of the design file. |
+| `cell` | No | The hierarchical name of a cell, with dots between levels. |
+| `net` | No | The hierarchical name of a net, with dots between levels. |
+
+A link names a cell or a net, never both.
+
+### Naming the element {#links-names}
+
+Write the name as NetCrux shows it in the Hierarchy panel, with dots between the instances. Either form works:
+
+- Rooted at the top module: `top.u_cpu.pc_reg`.
+- Written from just below the top: `u_cpu.pc_reg`.
+
+The last part is the cell or net itself and the parts before it are the instances that lead to it, so the name picks out one place. A name is never matched by its last part alone in some other scope: a link that names one place opens that place or nothing. A bit select on a net, such as `data[3]`, selects the whole net. A cell must be one the schematic draws, and a net is found as a net, never as a cell.
+
+### What a link does {#links-does}
+
+When a link arrives, NetCrux:
+
+- brings the design's tab to the front if the design is already open (a tab holds a file when it is one of the tab's sources or its project file, so a link to one source of a multi-file design focuses that design's tab), and otherwise opens it in a new tab;
+- shows the scope the name leads to, in the Hierarchy panel and on the canvas;
+- selects the cell or net and frames it, as **Zoom to Selection** does, once the schematic is laid out.
+
+A link to a name the design does not have still opens the design, and a message says there is no cell or net with that name.
+
+If the scope is over the [layout limit](getting-started.md#layout-engine) (`Settings → Engines`, "Largest scope laid out automatically"), NetCrux does not lay the whole scope out. It shows the element in a [Cone View](tracing.md#cone-view) instead, as it does for any selection in such a scope.
+
+### Which files a link opens {#links-files}
+
+A link opens these kinds of file, judged by the name and again after symbolic links are followed:
+
+- Verilog and SystemVerilog sources: `.v`, `.sv`, `.vh` and `.svh`.
+- VHDL sources: `.vhd` and `.vhdl`.
+- A Yosys JSON netlist: `.json`.
+
+A source is elaborated exactly as it is with `File → Open Source Files…`: NetCrux runs its own Yosys (or GHDL) invocation, and the link chooses no engine, argument or script.
+
+A link refuses everything else, because the file either runs extra commands or names further files that the confirmation would not show you: a `.netcrux-project`, a `.netcrux` session, a `.netcrux-workspace`, a `.crux-project` manifest, a `.f` filelist and a compressed `.v.gz` netlist. A file that is a symbolic link to one of those, such as `top.v` pointing at some other file, is refused as well. Nothing is opened in place of a refused file.
+
+### The first time a file is opened {#links-confirm}
+
+If you have not opened the file in NetCrux before (it is not in an open tab and not in the recent lists), NetCrux asks first. The dialog "Open a design from a link?" names the file and its **Full path**, with any symbolic links resolved, because that is the file that will open. **Cancel** has the focus, so pressing Enter or Space opens nothing.
+
+A design opened from a link is not added to the recent lists, so your answer is not remembered: the next link to the same file asks again unless its tab is still open, or you have since opened the file yourself.
+
+### When a link is refused {#links-refused}
+
+NetCrux opens nothing, and says why, when a link is not exactly in this form: another action than `open`, a key it does not know, the same key twice, both `cell` and `net`, a link or value that is too long, a path that is relative or on a network share, a file that is not there, or a file that is not one of the kinds above. A link never runs anything and never downloads anything. When a launch carries a link, NetCrux drops every other command-line argument, so a link cannot add options such as `--yosys-path`.
+
+### Writing a link {#links-writing}
+
+Percent-encode each value. A space in a path is `%20`, and any character outside plain ASCII is encoded as its UTF-8 bytes. A `+` is a plus sign, not a space, so `/work/c++/top.v` needs no encoding. Names such as `data[3]` or an escaped identifier are encoded the same way.
+
+```text
+netcrux://open?file=/home/me/my%20design/top.v&cell=u_cpu.pc_reg
+netcrux://open?file=C:/work/soc/netlist.json&net=top.u_cpu.u_alu.y
+```
+
+On Windows, write the path with forward slashes as above, or encode the backslashes as `%5C`. A script can build a link with Python's `urllib.parse.quote(path, safe="/:")`.
+
+To try one from a terminal, run `open 'netcrux://open?file=...'` on macOS, `xdg-open 'netcrux://open?file=...'` on Linux, or `start "" "netcrux://open?file=..."` in a Windows command prompt.
+
+### Where links work {#links-platforms}
+
+| Platform | Registered by | A link while NetCrux is running |
+|---|---|---|
+| macOS | The app bundle, once the app is installed | Opens in the running NetCrux. |
+| Windows | The installer (`.exe`) or the `.msi` package | Opens in the running NetCrux window, which comes to the front. |
+| Linux | The `.deb` and `.rpm` packages, and the AppImage the first time it runs | Opens in the running NetCrux window, which comes to the front. |
+
+The scheme is registered by installing NetCrux, so a copy started from a build folder does not open links. The web build does not handle links.
+
 ## Cell libraries {#cell-libraries}
 
 RTL that instantiates standard cells directly, such as an analog top level or hand-placed buffers, needs a definition for every cell, because NetCrux elaborates with `hierarchy -check`. The vendor's simulation models are the wrong place to get one: they are written for simulators and use constructs Yosys cannot read, such as UDPs and `specify` blocks. Leave them out of the source list and add the library's Liberty file instead.
