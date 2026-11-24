@@ -229,6 +229,24 @@ void main() {
     });
   });
 
+  test('search --kind outside the four is a usage_error', () async {
+    final (_, out, _) = await run(<String>[
+      'search',
+      netlist,
+      'a',
+      '--kind',
+      'wire',
+      '--json',
+    ]);
+    final doc = json(out);
+    expect(doc['outcome'], 'usage_error');
+    expect(
+      ((doc['diagnostics']! as List<Object?>).single!
+          as Map<String, Object?>)['message'],
+      '`--kind wire` is not cell, net, port or module',
+    );
+  });
+
   test('a NetCrux project file is refused for what it is', () async {
     final dir = Directory.systemTemp.createTempSync('netcrux_cli_');
     addTearDown(() => dir.deleteSync(recursive: true));

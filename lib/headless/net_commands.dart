@@ -469,7 +469,7 @@ class SearchCommand extends NetCommand {
         'kind',
         kind: McpFieldKind.text,
         flag: '--kind',
-        description: 'cell, net, port or module.',
+        values: kSearchKinds,
       ),
       McpField('glob', kind: McpFieldKind.boolean, flag: '--glob'),
       McpField(

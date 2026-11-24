@@ -19,10 +19,7 @@ import 'package:path/path.dart' as p;
 
 import 'support/fake_elaborator.dart';
 
-/// The definitions the suite's tool contracts give the three tools, as
-/// shipped: `search`'s `kind` names its four values in a description,
-/// because `crux_mcp`'s fields have no `enum`; the command refuses any other
-/// value.
+/// The definitions the suite's tool contracts give the three tools.
 const List<Map<String, Object?>> _contractDefinitions = <Map<String, Object?>>[
   <String, Object?>{
     'name': 'info',
@@ -61,7 +58,7 @@ const List<Map<String, Object?>> _contractDefinitions = <Map<String, Object?>>[
         'query': <String, Object?>{'type': 'string'},
         'kind': <String, Object?>{
           'type': 'string',
-          'description': 'cell, net, port or module.',
+          'enum': <String>['cell', 'net', 'port', 'module'],
         },
         'glob': <String, Object?>{'type': 'boolean'},
         'limit': <String, Object?>{
@@ -150,7 +147,7 @@ void main() {
       // Measured; the suite's definition budget records these sizes.
       expect(sizes, <String, int>{
         'info': 333,
-        'search': 552,
+        'search': 547,
         'connections': 480,
       });
       expect(kNetCruxMcpInstructions.length, 515);
@@ -220,6 +217,23 @@ void main() {
       expect(diagnostics.single['message'], message);
       expect(yosys.requests, isEmpty, reason: 'Yosys must not run');
     }
+
+    test('a search kind outside the enum, in the command line words', () async {
+      final yosys = FakeElaborator.failing();
+      final doc = await call(cli(yosys), fixtures, 'search', <String, Object?>{
+        'design': <String>['top.v'],
+        'query': 'a',
+        'kind': 'wire',
+      });
+      expect(doc['outcome'], 'usage_error');
+      final diagnostics = (doc['diagnostics']! as List<Object?>)
+          .cast<Map<String, Object?>>();
+      expect(
+        diagnostics.single['message'],
+        '`--kind wire` is not cell, net, port or module',
+      );
+      expect(yosys.requests, isEmpty, reason: 'Yosys must not run');
+    });
 
     test('a path outside the root', () async {
       await refused(<String, Object?>{
