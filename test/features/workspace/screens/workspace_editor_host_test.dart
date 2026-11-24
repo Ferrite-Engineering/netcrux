@@ -154,6 +154,150 @@ void main() {
     await WorkspaceAppHarness.unmount(tester);
   });
 
+  group('select', () {
+    // The frame a NetCrux link to a netlist in the editor's preview sends once
+    // the preview has loaded. Expected places are the fixture's own design
+    // (`top` holds `u_cpu`, a `cpu` holding the cell `pc_reg`, the net `alu_y`
+    // and `u_alu`), as the desktop link handler's tests read it.
+    Map<String, Object?> select(String element, String name, int id) =>
+        <String, Object?>{
+          'type': kHostBridgeFrameType,
+          'protocol': 1,
+          'kind': kHostBridgeSelectKind,
+          'element': element,
+          'name': name,
+          // A webview hands every number over as a double.
+          'id': id.toDouble(),
+        };
+
+    Map<String, Object?> lastResult(FakeHostBridgeTransport channel) =>
+        channel.posted.lastWhere(
+          (frame) => frame['kind'] == kHostBridgeSelectResultKind,
+        );
+
+    testWidgets('selects a cell or a net by the link name rules and says '
+        'so', (tester) async {
+      final channel = FakeHostBridgeTransport();
+      final h = await WorkspaceAppHarness.boot(
+        tester,
+        overrides: _hosted(channel),
+      );
+      h.root.read(editorHostBridgeProvider);
+      channel.receive(_open(_seed));
+      await WorkspaceAppHarness.settle(tester);
+
+      channel.receive(select('cell', 'top.u_cpu.pc_reg', 1));
+      await WorkspaceAppHarness.settle(tester);
+      final tab = h.activeTab;
+      expect(tab.read(hierarchyTreeProvider).selected?.path, <String>[
+        'u_cpu',
+      ]);
+      expect(
+        tab.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'pc_reg'),
+      );
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.selected, id: 1),
+      );
+
+      // Written from below the top, as a link may be.
+      channel.receive(select('net', 'u_cpu.alu_y', 2));
+      await WorkspaceAppHarness.settle(tester);
+      expect(
+        tab.read(selectedElementProvider).primary,
+        isNot(const SelectedElement.cell(cellId: 'pc_reg')),
+      );
+      expect(tab.read(selectedElementProvider).isNotEmpty, isTrue);
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.selected, id: 2),
+      );
+      expect(tester.takeException(), isNull);
+      await WorkspaceAppHarness.unmount(tester);
+    });
+
+    testWidgets('an unknown name, or a cell asked for as a net, is not found '
+        'and selects nothing', (tester) async {
+      final channel = FakeHostBridgeTransport();
+      final h = await WorkspaceAppHarness.boot(
+        tester,
+        overrides: _hosted(channel),
+      );
+      h.root.read(editorHostBridgeProvider);
+      channel.receive(_open(_seed));
+      await WorkspaceAppHarness.settle(tester);
+
+      channel.receive(select('cell', 'top.u_cpu.nope', 5));
+      await WorkspaceAppHarness.settle(tester);
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.notFound, id: 5),
+      );
+      expect(h.activeTab.read(selectedElementProvider).isEmpty, isTrue);
+
+      channel.receive(select('net', 'top.u_cpu.pc_reg', 6));
+      await WorkspaceAppHarness.settle(tester);
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.notFound, id: 6),
+      );
+
+      // A leaf alone is never matched in another scope.
+      channel.receive(select('cell', 'pc_reg', 7));
+      await WorkspaceAppHarness.settle(tester);
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.notFound, id: 7),
+      );
+      expect(h.activeTab.read(selectedElementProvider).isEmpty, isTrue);
+      expect(tester.takeException(), isNull);
+      await WorkspaceAppHarness.unmount(tester);
+    });
+
+    testWidgets('with no netlist open the answer is no_design', (tester) async {
+      final channel = FakeHostBridgeTransport();
+      final h = await WorkspaceAppHarness.boot(
+        tester,
+        overrides: _hosted(channel),
+      );
+      h.root.read(editorHostBridgeProvider);
+      channel.receive(select('cell', 'top.u_cpu.pc_reg', 8));
+      await WorkspaceAppHarness.settle(tester);
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.noDesign, id: 8),
+      );
+      expect(tester.takeException(), isNull);
+      await WorkspaceAppHarness.unmount(tester);
+    });
+
+    testWidgets('a select sent right behind its netlist waits for it', (
+      tester,
+    ) async {
+      final channel = FakeHostBridgeTransport();
+      final h = await WorkspaceAppHarness.boot(
+        tester,
+        overrides: _hosted(channel),
+      );
+      h.root.read(editorHostBridgeProvider);
+      channel
+        ..receive(_open(_seed))
+        ..receive(select('cell', 'top.dma_reg', 9));
+      await WorkspaceAppHarness.settle(tester);
+      expect(
+        h.activeTab.read(selectedElementProvider).primary,
+        const SelectedElement.cell(cellId: 'dma_reg'),
+      );
+      expect(
+        lastResult(channel),
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.selected, id: 9),
+      );
+      expect(tester.takeException(), isNull);
+      await WorkspaceAppHarness.unmount(tester);
+    });
+  });
+
   testWidgets('hosted, no license agreement is put in front of the viewer', (
     tester,
   ) async {

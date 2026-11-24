@@ -16,6 +16,8 @@ import 'package:netcrux/netcrux_color_theme_bootstrap.dart';
 import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
 import 'package:netcrux/services/host_bridge/host_bridge_messages.dart';
 import 'package:netcrux/services/host_bridge/host_netlist_request_provider.dart';
+import 'package:netcrux/services/host_bridge/host_select_request_provider.dart';
+import 'package:netcrux/services/links/netcrux_link.dart';
 import 'package:netcrux/services/settings/netcrux_settings_codec.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -109,6 +111,34 @@ void main() {
     expect(seen, <int>[1, 2]);
   });
 
+  test('queues a select for the workspace, once per frame', () async {
+    final (:container, :channel) = await _boot();
+    container.read(editorHostBridgeProvider);
+    final seen = <HostSelectRequest?>[];
+    container.listen(hostSelectRequestProvider, (_, next) => seen.add(next));
+    final frame = <String, Object?>{
+      'type': kHostBridgeFrameType,
+      'protocol': 1,
+      'kind': kHostBridgeSelectKind,
+      'element': 'net',
+      'name': 'top.u_cpu.u_alu.y',
+      'id': 3,
+    };
+    channel
+      ..receive(frame)
+      ..receive(frame);
+    await _settle();
+    expect(seen.map((r) => r?.sequence), <int>[1, 2]);
+    expect(
+      seen.last?.select,
+      const HostBridgeSelect(
+        element: NetCruxLinkElementKind.net,
+        name: 'top.u_cpu.u_alu.y',
+        id: 3,
+      ),
+    );
+  });
+
   test('ignores a frame it cannot read', () async {
     final (:container, :channel) = await _boot();
     container.read(editorHostBridgeProvider);
@@ -191,6 +221,17 @@ void main() {
           modules: 3,
           cells: 40,
         ),
+      );
+    });
+
+    test('reportSelection answers with the request id', () async {
+      final (:container, :channel) = await _boot();
+      container
+          .read(editorHostBridgeProvider)
+          .reportSelection(HostBridgeSelectOutcome.notFound, id: 9);
+      expect(
+        channel.posted.last,
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.notFound, id: 9),
       );
     });
 

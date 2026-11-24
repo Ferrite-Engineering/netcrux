@@ -3,6 +3,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/services/host_bridge/host_bridge_messages.dart';
+import 'package:netcrux/services/links/netcrux_link.dart';
 
 Map<String, Object?> _open({Map<String, Object?> extra = const {}}) =>
     <String, Object?>{
@@ -30,6 +31,84 @@ void main() {
       expect(kHostBridgeReadyKind, 'ready');
       expect(kHostBridgeOpenSourceKind, 'open_source');
       expect(kHostBridgeStatusKind, 'status');
+      expect(kHostBridgeSelectKind, 'select');
+      expect(kHostBridgeSelectResultKind, 'select_result');
+      expect(
+        HostBridgeSelectOutcome.values.map((o) => o.wire),
+        <String>['selected', 'not_found', 'no_design'],
+      );
+    });
+  });
+
+  group('select', () {
+    Map<String, Object?> select(Map<String, Object?> fields) =>
+        <String, Object?>{
+          'type': kHostBridgeFrameType,
+          'protocol': 1,
+          'kind': kHostBridgeSelectKind,
+          'element': 'cell',
+          'name': 'top.u_cpu.pc_reg',
+          ...fields,
+        };
+
+    test('reads a cell or a net, with the id a webview sends as a double', () {
+      expect(
+        parseHostBridgeFrame(select(const {'id': 7.0})),
+        const HostBridgeSelect(
+          element: NetCruxLinkElementKind.cell,
+          name: 'top.u_cpu.pc_reg',
+          id: 7,
+        ),
+      );
+      expect(
+        parseHostBridgeFrame(select(const {'element': 'net', 'name': 'y'})),
+        const HostBridgeSelect(element: NetCruxLinkElementKind.net, name: 'y'),
+      );
+    });
+
+    test('refuses an unknown element, a bad name or a bad id', () {
+      for (final fields in <Map<String, Object?>>[
+        {'element': 'signal'},
+        {'element': null},
+        {'name': ''},
+        {'name': 3},
+        {'name': 'a' * (kHostBridgeMaxSelectNameChars + 1)},
+        {'id': 1.5},
+        {'id': -1},
+        {'id': 'one'},
+        {'id': double.nan},
+        {'id': double.infinity},
+        {'id': kHostBridgeMaxSelectId + 1},
+      ]) {
+        expect(parseHostBridgeFrame(select(fields)), isNull, reason: '$fields');
+      }
+    });
+
+    test('select_result carries the id, the outcome and a cone view', () {
+      expect(
+        hostBridgeSelectResultFrame(
+          HostBridgeSelectOutcome.selected,
+          id: 4,
+          coneView: true,
+        ),
+        <String, Object?>{
+          'type': 'crux.netcrux',
+          'protocol': 1,
+          'kind': 'select_result',
+          'id': 4,
+          'outcome': 'selected',
+          'coneView': true,
+        },
+      );
+      expect(
+        hostBridgeSelectResultFrame(HostBridgeSelectOutcome.notFound),
+        <String, Object?>{
+          'type': 'crux.netcrux',
+          'protocol': 1,
+          'kind': 'select_result',
+          'outcome': 'not_found',
+        },
+      );
     });
   });
 

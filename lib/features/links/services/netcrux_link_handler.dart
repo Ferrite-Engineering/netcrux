@@ -299,7 +299,9 @@ Future<NetCruxLinkOutcome> openNetCruxLink(
 /// When the scope is over the layout limit, a Cone View of the element opens
 /// in place of the whole scope, as for any selection in a scope held back for
 /// its size; the result says so.
-@visibleForTesting
+///
+/// An editor host's `select` frame goes through here too, so a link opened
+/// in the editor's preview finds the same element the desktop app would.
 ({bool coneView})? placeNetCruxLinkElement(
   ProviderContainer tab,
   NetlistModel model,

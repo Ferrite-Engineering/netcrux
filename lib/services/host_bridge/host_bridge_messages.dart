@@ -20,6 +20,11 @@
 //   `#sig=` style hints the browser deep link carries.
 // - `theme_tokens {appearance, tokens}`: the editor's resolved colors, read by
 //   the page shim from the `--vscode-*` custom properties.
+// - `select {element, name, id?}`: select the cell or net [name] in the open
+//   netlist and frame it, as a `netcrux://` link does in the desktop app.
+//   [element] is `cell` or `net`; [name] is dot-separated, rooted at the top
+//   module or written from just below it (the link's name rules). Answered
+//   with `select_result`, carrying the same [id].
 //
 // ### App to host
 //
@@ -28,8 +33,15 @@
 //   editor.
 // - `status {phase, message?, modules?, cells?}`: progress of the document,
 //   for the extension's log.
+// - `select_result {id?, outcome, coneView?}`: what a `select` did:
+//   `selected`, `not_found` (the design has no such cell or net, or does not
+//   draw it) or `no_design` (no netlist is open, or it did not load).
+//   `coneView` is true when the element is shown in a Cone View because its
+//   scope is over the layout limit.
 
 import 'package:meta/meta.dart';
+import 'package:netcrux/services/links/netcrux_link.dart'
+    show NetCruxLinkElementKind, kNetCruxLinkMaxNameLength;
 
 /// The global the extension's page shim publishes, frozen, before
 /// `main.dart.js` runs: `{kind, protocol}`. Absent when nothing hosts this
@@ -86,6 +98,20 @@ const String kHostBridgeOpenSourceKind = 'open_source';
 
 /// App to host: progress of the document.
 const String kHostBridgeStatusKind = 'status';
+
+/// Host to app: select a cell or net in the open netlist.
+const String kHostBridgeSelectKind = 'select';
+
+/// App to host: what a `select` did.
+const String kHostBridgeSelectResultKind = 'select_result';
+
+/// The longest `select` name accepted: a link's own bound, since the frame
+/// carries what a link named.
+const int kHostBridgeMaxSelectNameChars = kNetCruxLinkMaxNameLength;
+
+/// The largest `select` id echoed back. Small enough to be exact as a
+/// JavaScript number.
+const int kHostBridgeMaxSelectId = 0x7FFFFFFF;
 
 /// The theme appearances the shim reports, mirroring VS Code's color theme
 /// kinds.
@@ -154,6 +180,32 @@ final class HostBridgeThemeTokens extends HostBridgeInbound {
   final Map<String, String> tokens;
 }
 
+/// Select the cell or net [name] in the open netlist.
+@immutable
+final class HostBridgeSelect extends HostBridgeInbound {
+  /// Creates the request.
+  const HostBridgeSelect({required this.element, required this.name, this.id});
+
+  /// Whether [name] is a cell or a net.
+  final NetCruxLinkElementKind element;
+
+  /// The dot-separated hierarchical name, as a `netcrux://` link carries it.
+  final String name;
+
+  /// The host's number for this request, echoed in the answer.
+  final int? id;
+
+  @override
+  bool operator ==(Object other) =>
+      other is HostBridgeSelect &&
+      other.element == element &&
+      other.name == name &&
+      other.id == id;
+
+  @override
+  int get hashCode => Object.hash(element, name, id);
+}
+
 /// Decodes [frame], or returns null when it is not a well-formed frame of a
 /// kind this build understands.
 HostBridgeInbound? parseHostBridgeFrame(Map<String, Object?> frame) {
@@ -163,8 +215,33 @@ HostBridgeInbound? parseHostBridgeFrame(Map<String, Object?> frame) {
   return switch (frame['kind']) {
     kHostBridgeOpenNetlistKind => _parseOpenNetlist(frame),
     kHostBridgeThemeTokensKind => _parseThemeTokens(frame),
+    kHostBridgeSelectKind => _parseSelect(frame),
     _ => null,
   };
+}
+
+HostBridgeSelect? _parseSelect(Map<String, Object?> frame) {
+  final element = switch (frame['element']) {
+    'cell' => NetCruxLinkElementKind.cell,
+    'net' => NetCruxLinkElementKind.net,
+    _ => null,
+  };
+  final name = frame['name'];
+  if (element == null) return null;
+  if (name is! String || name.isEmpty) return null;
+  if (name.length > kHostBridgeMaxSelectNameChars) return null;
+  final rawId = frame['id'];
+  int? id;
+  if (rawId != null) {
+    // A webview hands every number over as a double; only a whole one in
+    // range is an id.
+    if (rawId is! num || !rawId.isFinite || rawId != rawId.truncate()) {
+      return null;
+    }
+    if (rawId < 0 || rawId > kHostBridgeMaxSelectId) return null;
+    id = rawId.toInt();
+  }
+  return HostBridgeSelect(element: element, name: name, id: id);
 }
 
 HostBridgeOpenNetlist? _parseOpenNetlist(Map<String, Object?> frame) {
@@ -265,4 +342,32 @@ Map<String, Object?> hostBridgeStatusFrame(
   'message': ?message,
   'modules': ?modules,
   'cells': ?cells,
+});
+
+/// What a `select` did.
+enum HostBridgeSelectOutcome {
+  /// The element is selected and framed.
+  selected('selected'),
+
+  /// The design has no such cell or net, or does not draw it.
+  notFound('not_found'),
+
+  /// No netlist is open, or it did not load.
+  noDesign('no_design');
+
+  const HostBridgeSelectOutcome(this.wire);
+
+  /// The value of `outcome` on the wire.
+  final String wire;
+}
+
+/// The frame answering the `select` numbered [id].
+Map<String, Object?> hostBridgeSelectResultFrame(
+  HostBridgeSelectOutcome outcome, {
+  int? id,
+  bool coneView = false,
+}) => _frame(kHostBridgeSelectResultKind, <String, Object?>{
+  'id': ?id,
+  'outcome': outcome.wire,
+  if (coneView) 'coneView': true,
 });

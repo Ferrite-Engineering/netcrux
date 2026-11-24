@@ -20,6 +20,10 @@
 //   `NetcruxCruxColorThemeNotifier.applyEphemeral`, never `activate`: the
 //   editor's colors must win immediately and follow every live theme change,
 //   but must not overwrite the preset the user chose for the standalone app.
+// - `select` is queued on `hostSelectRequestProvider`. The workspace screen
+//   answers it once any netlist sent before it has opened, through
+//   [EditorHostBridge.reportSelection], so the host can tell the user when a
+//   link names a cell or net the design does not have.
 //
 // The bridge announces `ready` once its listener is installed. The extension
 // waits for it before sending the document, because a `postMessage` sent
@@ -33,6 +37,7 @@ import 'package:netcrux/domain/models/source_location.dart';
 import 'package:netcrux/services/host_bridge/host_bridge_messages.dart';
 import 'package:netcrux/services/host_bridge/host_bridge_transport.dart';
 import 'package:netcrux/services/host_bridge/host_netlist_request_provider.dart';
+import 'package:netcrux/services/host_bridge/host_select_request_provider.dart';
 import 'package:netcrux/services/host_bridge/host_theme_tokens_provider.dart';
 
 /// Drives this build from an editor extension host, and reports back to it.
@@ -68,7 +73,20 @@ class EditorHostBridge {
         _ref.read(hostNetlistRequestProvider.notifier).submit(open);
       case final HostBridgeThemeTokens theme:
         _ref.read(hostThemeTokensProvider.notifier).submit(theme);
+      case final HostBridgeSelect select:
+        _ref.read(hostSelectRequestProvider.notifier).submit(select);
     }
+  }
+
+  /// Tells the editor what the `select` numbered [id] did.
+  void reportSelection(
+    HostBridgeSelectOutcome outcome, {
+    int? id,
+    bool coneView = false,
+  }) {
+    _channel.post(
+      hostBridgeSelectResultFrame(outcome, id: id, coneView: coneView),
+    );
   }
 
   /// Asks the editor to show [location]. Dropped when the host cannot be

@@ -50,6 +50,7 @@ import 'package:netcrux/services/host_bridge/editor_host_providers.dart';
 import 'package:netcrux/services/host_bridge/host_bridge_messages.dart';
 import 'package:netcrux/services/host_bridge/host_netlist_blob.dart';
 import 'package:netcrux/services/host_bridge/host_netlist_request_provider.dart';
+import 'package:netcrux/services/host_bridge/host_select_request_provider.dart';
 import 'package:netcrux/services/links/netcrux_link.dart';
 import 'package:netcrux/services/links/netcrux_link_providers.dart';
 import 'package:netcrux/services/project/netcrux_project_file.dart';
@@ -162,9 +163,15 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     ) {
       if (next != null) _takeHostNetlistRequest();
     });
+    // A cell or net the editor host asks to select, answered in arrival order
+    // after the netlists sent before it.
+    ref.listenManual<HostSelectRequest?>(hostSelectRequestProvider, (_, next) {
+      if (next != null) _takeHostSelectRequest();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_handleAutoLaunch());
       _takeHostNetlistRequest();
+      _takeHostSelectRequest();
     });
   }
 
@@ -682,6 +689,59 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       scope: netlist.scope,
       signal: netlist.signal,
     ).applyTo(tab, model);
+  }
+
+  /// Takes the pending `select` the editor host sent, if any, and queues it
+  /// behind the netlists sent before it.
+  void _takeHostSelectRequest() {
+    final request = ref.read(hostSelectRequestProvider);
+    if (request == null) return;
+    ref.read(hostSelectRequestProvider.notifier).clear();
+    _hostNetlistQueue = _hostNetlistQueue.then((_) async {
+      if (mounted) await _selectHostElement(request.select);
+    });
+  }
+
+  /// Selects and frames the cell or net an editor host asked for, by the
+  /// rules a `netcrux://` link follows in the desktop app
+  /// ([placeNetCruxLinkElement]), and tells the host what happened. The host
+  /// sends this for a link to a netlist open in its preview; the answer is
+  /// what lets it say "no cell named ..." in the desktop app's words.
+  Future<void> _selectHostElement(HostBridgeSelect select) async {
+    final bridge = ref.read(editorHostBridgeProvider);
+    void answer(HostBridgeSelectOutcome outcome, {bool coneView = false}) =>
+        bridge.reportSelection(outcome, id: select.id, coneView: coneView);
+
+    final tab = _hostNetlistTabOpen
+        ? ref.activeTabContainerOrNull(context)
+        : null;
+    if (tab == null) {
+      answer(HostBridgeSelectOutcome.noDesign);
+      return;
+    }
+    NetlistModel? model;
+    try {
+      model = await tab.read(loadedNetlistProvider.future);
+    } on Object {
+      model = null;
+    }
+    if (!mounted) return;
+    if (model == null) {
+      answer(HostBridgeSelectOutcome.noDesign);
+      return;
+    }
+    final placed = placeNetCruxLinkElement(
+      tab,
+      model,
+      select.element,
+      select.name,
+    );
+    if (placed == null) {
+      answer(HostBridgeSelectOutcome.notFound);
+      return;
+    }
+    frameNetCruxLinkSelection(tab);
+    answer(HostBridgeSelectOutcome.selected, coneView: placed.coneView);
   }
 
   /// Opens the netlist a web viewer URL names (`?json=`), then applies its
