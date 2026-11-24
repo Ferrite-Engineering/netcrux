@@ -9,7 +9,7 @@ netcrux [--workspace <file>] [--session <file>] [--yosys-path <path>]
          | <design directory> | <netlist.json> | <source files...>]
 ```
 
-NetCrux is a desktop application with a command-line front door. Every invocation opens a window, except `--help`.
+NetCrux is a desktop application with a command-line front door. Every invocation opens a window, except `--help`. To query a design from a terminal or a script without a window, use the [headless command line](headless.md).
 
 ## Options
 

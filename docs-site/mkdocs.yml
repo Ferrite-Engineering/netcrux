@@ -65,6 +65,7 @@ nav:
       - Tiers & licensing: licensing.md
       - Updates, issues & privacy: user-guide/updates-and-feedback.md
       - Command-line usage: cli/usage.md
+      - Headless command line, from 2.0: cli/headless.md
       - Web viewer: web-mode.md
   - Working with schematics:
       - Sources, projects & sessions: files-and-projects.md
