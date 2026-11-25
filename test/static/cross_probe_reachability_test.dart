@@ -157,6 +157,35 @@ void main() {
     );
   });
 
+  test('every desktop runner answers the request-attention channel', () {
+    // `requestUserAttention` swallows a missing handler, so a runner that
+    // does not answer `crux_window_chrome/attention` leaves "Request
+    // attention on cross-probe" doing nothing in silence.
+    for (final runner in const <String>[
+      'macos/Runner/WindowAttentionPlugin.swift',
+      'windows/runner/flutter_window.cpp',
+      'linux/runner/my_application.cc',
+    ]) {
+      final source = File(runner).readAsStringSync();
+      expect(
+        source,
+        contains('"crux_window_chrome/attention"'),
+        reason: '$runner does not register the attention channel',
+      );
+      expect(source, contains('requestUserAttention'), reason: runner);
+    }
+    expect(
+      File('windows/runner/flutter_window.cpp').readAsStringSync(),
+      contains('FlashWindowEx'),
+      reason: 'the Windows runner must flash the taskbar button',
+    );
+    expect(
+      File('linux/runner/my_application.cc').readAsStringSync(),
+      contains('gtk_window_set_urgency_hint'),
+      reason: 'the Linux runner must set the window urgency hint',
+    );
+  });
+
   test('every open records itself in a Recent list', () {
     final screen =
         sources['lib/features/workspace/screens/workspace_screen.dart']!;
