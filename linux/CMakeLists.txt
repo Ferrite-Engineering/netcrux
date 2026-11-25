@@ -112,23 +112,6 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
-# flutter_js dlopens its QuickJS bridge at runtime from a prebuilt shared
-# library the package ships (linux/shared/libquickjs_c_bridge_plugin.so), and
-# the schematic layout engine (elkjs inside a QuickJS isolate) cannot start
-# without it. The plugin's own CMakeLists exports that path under its
-# pre-rename variable name (`flutter_qjs_bundled_libraries`), which the
-# generated bundling loop never reads, and its install() rule targets the
-# plugin's own build tree. So the library reached no Linux bundle, and the app
-# opened to "elkjs isolate init failed" on every layout. Bundle it by hand;
-# the Linux build script checks that it landed.
-set(QUICKJS_BRIDGE
-  "${FLUTTER_MANAGED_DIR}/ephemeral/.plugin_symlinks/flutter_js/linux/shared/libquickjs_c_bridge_plugin.so")
-if(NOT EXISTS "${QUICKJS_BRIDGE}")
-  message(FATAL_ERROR
-    "flutter_js no longer ships ${QUICKJS_BRIDGE}; the layout engine would fail at runtime")
-endif()
-list(APPEND PLUGIN_BUNDLED_LIBRARIES "${QUICKJS_BRIDGE}")
-
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build

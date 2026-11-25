@@ -260,12 +260,6 @@ dependencies:
   file_picker: 12.0.0-beta.7
   flutter:
     sdk: flutter
-  # In-process JavaScript runtime (QuickJS-backed). Hosts the elk.bundled.js
-  # bundle that drives the schematic layout pipeline; see
-  # lib/services/layout/elk_layout_service.dart and the vendored
-  # assets/elk/elk.bundled.js. Desktop-only by construction (matches
-  # netcrux's target platforms — see netcrux/CLAUDE.md §"Platform Targets").
-  flutter_js: ^0.8.7
   flutter_localizations:
     sdk: flutter
   # Markdown renderer for annotation bodies in the Annotations panel (BSD-3).
@@ -326,15 +320,12 @@ flutter:
   generate: true
   uses-material-design: true
   assets:
-    # Vendored elkjs bundle consumed by ElkLayoutService at runtime. Kept
-    # under assets/elk/ so it lives in the same place as any future layout-
-    # related assets (theme overlays, sample input graphs).
-    - assets/elk/elk.bundled.js
-    # EPL-2.0 license text for the elkjs bundle above. elkjs ships in every
-    # NetCrux build (desktop via flutter_js, web natively), and EPL-2.0
-    # §3.1(b) requires a copy of the Agreement to accompany the Program in
-    # object-code form. Bundling it as an asset makes the text travel with
-    # the binary, not just the source tree. See NOTICES §2.
+    # EPL-2.0 license text for the layout engine, elkrs (the Rust port of
+    # the Eclipse Layout Kernel, `native/vendor/elkrs`). It ships in every
+    # NetCrux build (desktop as `elk_ffi`, web as `elk_wasm_bg.wasm`), and
+    # EPL-2.0 §3.1(b) requires a copy of the Agreement to accompany the
+    # Program in object-code form. Bundling it as an asset makes the text
+    # travel with the binary, not just the source tree. See NOTICES §2.
     - assets/elk/LICENSE.epl-2.0.txt
     # Ferrite Engineering branding shown in the About box banner. Referenced
     # by aboutBrandingProvider (lib/core/app_info/about_providers.dart).

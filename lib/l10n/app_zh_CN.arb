@@ -2032,17 +2032,17 @@
   "@aboutDartVersion": {
     "description": "About box row label for the Dart SDK version."
   },
-  "aboutSectionElkjs": "elkjs",
-  "@aboutSectionElkjs": {
-    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  "aboutSectionElk": "Eclipse Layout Kernel",
+  "@aboutSectionElk": {
+    "description": "Section header for the Eclipse Layout Kernel open-source attribution in the About dialog. A product name: keep it in English."
   },
-  "aboutElkjsDescription": "NetCrux 使用 elkjs(Eclipse Layout Kernel 的 JavaScript 版本)进行原理图自动布局。elkjs 采用 EPL-2.0 许可证。",
-  "@aboutElkjsDescription": {
-    "description": "Description text for the elkjs attribution section in the About dialog."
+  "aboutElkDescription": "NetCrux 使用 elkrs(Eclipse Layout Kernel 的 Rust 移植版)进行原理图布局，在桌面端以原生方式构建，在浏览器中以 WebAssembly 构建。elkrs 采用 EPL-2.0 许可证。",
+  "@aboutElkDescription": {
+    "description": "Description text for the Eclipse Layout Kernel attribution section in the About dialog. elkrs and WebAssembly are names; keep them in English."
   },
-  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
-  "@aboutElkjsLicenseHeader": {
-    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  "aboutElkLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkLicenseHeader": {
+    "description": "Header label above the EPL-2.0 license text of the Eclipse Layout Kernel in the About dialog."
   },
   "aboutButtonVisitWebsite": "访问网站",
   "@aboutButtonVisitWebsite": {
@@ -2396,7 +2396,7 @@
   "statsStripCollapseTooltip": "隐藏实时统计",
   "statisticsStripTitle": "统计",
   "statsSegmentMemory": "内存",
-  "statsSegmentMemoryTooltip": "NetCrux 进程的常驻内存，包括 Yosys 子进程和 elkjs 运行时。",
+  "statsSegmentMemoryTooltip": "NetCrux 进程的常驻内存，包括 Yosys 子进程和布局引擎。",
   "statsSegmentFps": "帧率",
   "statsSegmentFpsTooltip": "最近 60 帧的每秒帧数。",
   "statsSegmentJank": "丢帧",
@@ -2748,7 +2748,7 @@
   "schematicLayoutRetry": "重新布局",
   "schematicLayoutErrorTitle": "布局失败",
   "schematicLayoutErrorGeneric": "设计已详尽展开，但无法布局此作用域。请查看下方详情。",
-  "schematicLayoutErrorOutOfStack": "elkjs 布局引擎在此作用域上耗尽了栈空间，而能够布局它的原生布局引擎未能启动。设计已详尽展开；锥视图可以布局作用域的一部分。",
+  "schematicLayoutErrorEngineUnavailable": "布局引擎未能加载：{file} 缺失或已损坏。设计已详尽展开，但在重新安装 NetCrux（或在浏览器中重新加载页面）之前，无法布局任何作用域。",
   "annotationCalloutsShownAnnouncement": "已显示注释标注框",
   "annotationCalloutsHiddenAnnouncement": "已隐藏注释标注框",
   "annotationCalloutSemantics": "注释 {number}：{heading}，位于{kind} {element}",

@@ -7,15 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Guards the license texts that MUST travel inside the shipped binary.
 ///
-/// NetCrux vendors elkjs (`assets/elk/elk.bundled.js`) under EPL-2.0, and
+/// NetCrux vendors elkrs (`native/vendor/elkrs`, the Rust port of the Eclipse
+/// Layout Kernel) under EPL-2.0 and compiles it into every build, and
 /// EPL-2.0 §3.1(b) requires a copy of the Agreement to accompany the Program
 /// when it is distributed in object-code form. Vendoring the engine is a
 /// deliberate act; shipping the Agreement alongside it is not optional.
 ///
 /// This exists because the obligation was already missed once. The EPL text
-/// and its `pubspec.yaml` asset entry landed in `9340319` (2026-07-23) — one
-/// day AFTER the 0.1.0 binary was built — so the published 0.1.0 shipped
-/// `elk.bundled.js` with an attribution notice but no copy of the Agreement.
+/// and its `pubspec.yaml` asset entry landed in `9340319` (2026-07-23), one
+/// day AFTER the 0.1.0 binary was built, so the published 0.1.0 shipped
+/// elkjs, the engine of the time, with an attribution notice but no copy of
+/// the Agreement.
 /// Nothing failed, because nothing checked. The gap was only found by
 /// unpacking the released `.app` by hand.
 ///
@@ -30,12 +32,12 @@ void main() {
   group('bundled third-party license texts', () {
     final licenseFile = File('${root.path}/assets/elk/LICENSE.epl-2.0.txt');
 
-    test('the elkjs EPL-2.0 text is present in the tree', () {
+    test('the EPL-2.0 text of the layout engine is present in the tree', () {
       expect(
         licenseFile.existsSync(),
         isTrue,
         reason:
-            'assets/elk/LICENSE.epl-2.0.txt must exist — elkjs ships in every '
+            'assets/elk/LICENSE.epl-2.0.txt must exist: elkrs ships in every '
             'NetCrux build and EPL-2.0 §3.1(b) requires the Agreement to '
             'accompany it',
       );
@@ -91,18 +93,19 @@ void main() {
         reason:
             'pubspec.yaml must list "- assets/elk/LICENSE.epl-2.0.txt" under '
             'flutter/assets. Without the declaration the file sits in the repo '
-            'but never reaches the app bundle — which is exactly how the '
-            'published 0.1.0 came to ship elkjs without the Agreement',
+            'but never reaches the app bundle, which is exactly how the '
+            'published 0.1.0 came to ship its layout engine without the '
+            'Agreement',
       );
     });
 
     test('the in-app license list points at the same asset', () {
-      // `kNetcruxVendoredLicenses` is what puts elkjs into LicenseRegistry,
+      // `kNetcruxVendoredLicenses` is what puts elkrs into LicenseRegistry,
       // and therefore into the Acknowledgments page. It reads the shipped
       // file rather than an inline copy, so the page and the redistributed
-      // text cannot disagree — but only if the path still matches. A
-      // renamed asset with a stale entry would silently drop elkjs from the
-      // list while every other assertion here still passed.
+      // text cannot disagree, but only if the path still matches. A renamed
+      // asset with a stale entry would silently drop elkrs from the list
+      // while every other assertion here still passed.
       final source = File(
         '${root.path}/lib/core/about/netcrux_vendored_licenses.dart',
       ).readAsStringSync();
@@ -111,7 +114,7 @@ void main() {
         contains("'assets/elk/LICENSE.epl-2.0.txt'"),
         reason:
             'kNetcruxVendoredLicenses must reference the same asset this '
-            'guard checks, or the Acknowledgments page silently omits elkjs',
+            'guard checks, or the Acknowledgments page silently omits elkrs',
       );
     });
 
@@ -127,18 +130,63 @@ void main() {
       );
     });
 
-    test('the engine it licenses is itself still bundled', () {
-      // If elk.bundled.js were ever dropped, the obligation would go away and
+    test('the engine it licenses is itself still vendored', () {
+      // If the elkrs port were ever dropped, the obligation would go away and
       // this whole group would be dead weight. Pin the pairing so the two move
       // together in either direction.
       expect(
-        File('${root.path}/assets/elk/elk.bundled.js').existsSync(),
+        File('${root.path}/native/vendor/elkrs/Cargo.toml').existsSync(),
         isTrue,
         reason:
-            'elk.bundled.js is the reason the EPL text must ship; if it is '
-            'genuinely gone, retire this guard deliberately rather than '
-            'letting it rot',
+            'the vendored elkrs crate is the reason the EPL text must ship; '
+            'if it is genuinely gone, retire this guard deliberately rather '
+            'than letting it rot',
       );
+    });
+  });
+
+  // netcrux#86: elkrs is the only layout engine. elkjs and the JavaScript
+  // runtime that hosted it on desktop (flutter_js, with its QuickJS
+  // binaries) must not come back into a desktop or web build by way of an
+  // asset, a dependency or a stale build rule.
+  group('no elkjs and no flutter_js', () {
+    test('the elkjs bundle is not in the tree', () {
+      expect(
+        File('${root.path}/assets/elk/elk.bundled.js').existsSync(),
+        isFalse,
+      );
+    });
+
+    test('pubspec.yaml declares neither flutter_js nor an elkjs asset', () {
+      final lines = File(
+        '${root.path}/pubspec.yaml',
+      ).readAsLinesSync().map((l) => l.trim()).where((l) => !l.startsWith('#'));
+      expect(lines.where((l) => l.startsWith('flutter_js:')), isEmpty);
+      expect(lines.where((l) => l.contains('elk.bundled.js')), isEmpty);
+    });
+
+    test('pubspec.lock resolves no flutter_js', () {
+      expect(
+        File('${root.path}/pubspec.lock').readAsStringSync(),
+        isNot(contains('flutter_js')),
+      );
+    });
+
+    test('no desktop plugin registrant or build rule names it', () {
+      for (final path in <String>[
+        'linux/CMakeLists.txt',
+        'linux/flutter/generated_plugins.cmake',
+        'windows/CMakeLists.txt',
+        'windows/flutter/generated_plugins.cmake',
+        'macos/Flutter/GeneratedPluginRegistrant.swift',
+        'macos/Podfile.lock',
+      ]) {
+        final file = File('${root.path}/$path');
+        if (!file.existsSync()) continue;
+        final text = file.readAsStringSync().toLowerCase();
+        expect(text, isNot(contains('flutter_js')), reason: path);
+        expect(text, isNot(contains('quickjs')), reason: path);
+      }
     });
   });
 }

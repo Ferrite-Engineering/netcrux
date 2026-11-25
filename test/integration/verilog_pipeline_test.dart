@@ -62,67 +62,37 @@ final _fixtures = <_Fixture>[
   ),
 ];
 
-/// Scripted [ElkJsHost] that pretends elkjs ran successfully and emits a
-/// deterministic row-of-boxes layout for whatever input the service
-/// stashed. Used by the parse-to-layout half of the integration test so
-/// it runs without spinning up QuickJS.
-class _DeterministicHost implements ElkJsHost {
-  Map<String, Object?>? _lastInput;
+/// Scripted [ElkSolver] that emits a deterministic row-of-boxes layout for
+/// whatever input the service hands it. Used by the parse-to-layout half of
+/// the integration test so it runs without an engine.
+class _DeterministicSolver implements ElkSolver {
+  @override
+  String get engineDescription => 'deterministic';
 
   @override
-  String evaluate(String code) {
-    if (code.contains('__elkInstance')) return '';
-    if (code.contains('"pending"')) return 'done';
-    if (code.contains('__elk_error')) return '';
-    if (code.contains('__elk_input = ')) {
-      // The line looks like `globalThis.__elk_input = {…};` — pull the
-      // JSON tail and remember it so __elk_result can fabricate a
-      // matching layout.
-      final eq = code.indexOf('= ');
-      if (eq != -1) {
-        final tail = code.substring(eq + 2).trimRight();
-        final json = tail.replaceAll(RegExp(r';\s*$'), '');
-        try {
-          final decoded = jsonDecode(json);
-          if (decoded is Map<String, Object?>) {
-            _lastInput = decoded;
-          }
-        } on FormatException {
-          _lastInput = null;
-        }
-      }
-      return '';
-    }
-    if (code.contains('__elk_result')) {
-      final input = _lastInput;
-      if (input == null) return '';
-      final children =
-          (input['children'] as List<Object?>?) ?? const <Object?>[];
-      final laidOutNodes = <Map<String, Object?>>[
-        for (var i = 0; i < children.length; i++)
-          <String, Object?>{
-            'id': (children[i]! as Map<String, Object?>)['id'],
-            'x': 50.0 + (i * 100),
-            'y': 50.0,
-            'width': 80.0,
-            'height': 32.0,
-          },
-      ];
-      return jsonEncode(<String, Object?>{
-        'id': 'root',
-        'x': 0.0,
-        'y': 0.0,
-        'width': 50.0 + (children.length * 100) + 50.0,
-        'height': 132.0,
-        'children': laidOutNodes,
-        'edges': <Map<String, Object?>>[],
-      });
-    }
-    return '';
+  String solve(String inputJson) {
+    final input = jsonDecode(inputJson) as Map<String, Object?>;
+    final children = (input['children'] as List<Object?>?) ?? const <Object?>[];
+    final laidOutNodes = <Map<String, Object?>>[
+      for (var i = 0; i < children.length; i++)
+        <String, Object?>{
+          'id': (children[i]! as Map<String, Object?>)['id'],
+          'x': 50.0 + (i * 100),
+          'y': 50.0,
+          'width': 80.0,
+          'height': 32.0,
+        },
+    ];
+    return jsonEncode(<String, Object?>{
+      'id': 'root',
+      'x': 0.0,
+      'y': 0.0,
+      'width': 50.0 + (children.length * 100) + 50.0,
+      'height': 132.0,
+      'children': laidOutNodes,
+      'edges': <Map<String, Object?>>[],
+    });
   }
-
-  @override
-  int executePendingJob() => 0;
 
   @override
   void dispose() {}
@@ -143,11 +113,10 @@ void main() {
         }
 
         final service = ElkLayoutService(
-          hostFactory: _DeterministicHost.new,
-          assetLoader: (_) async => '// deterministic test host',
+          solverFactory: _DeterministicSolver.new,
         );
         final layout = await service.layout(module);
-        // Deterministic host places one node per (cell + boundary port).
+        // Deterministic solver places one node per (cell + boundary port).
         final expectedNodeCount = module.cells.length + module.ports.length;
         expect(layout.nodes, hasLength(expectedNodeCount));
         expect(layout.bounds.width, greaterThan(0));
@@ -198,8 +167,7 @@ void main() {
         expect(module.ports.keys, containsAll(fixture.expectedPortNames));
 
         final service = ElkLayoutService(
-          hostFactory: _DeterministicHost.new,
-          assetLoader: (_) async => '// deterministic test host',
+          solverFactory: _DeterministicSolver.new,
         );
         final layout = await service.layout(module);
         expect(layout.nodes, isNotEmpty);

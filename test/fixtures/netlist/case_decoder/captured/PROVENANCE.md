@@ -10,7 +10,7 @@ put all 64 comparators in one layer: a column about eleven times as tall as
 the drawing was wide (531 x 5898 layout units). The selector bank
 (`lib/services/layout/selector_bank.dart`) lays them out as a grid instead;
 `test/services/layout/selector_bank_test.dart` holds it to that, and the
-layout parity gate keeps a stored elkjs reference of the scope
+layout parity gate keeps a stored ELK reference (elkjs output) of the scope
 (`test/fixtures/layout/case_decoder.case_decoder.elkjs.json.gz`).
 
 ## `case_decoder.v` (source)

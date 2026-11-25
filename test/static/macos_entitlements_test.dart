@@ -166,19 +166,16 @@ void main() {
 /// value. The tests above each guard one fact; this pins the whole file, so
 /// an entitlement nobody wrote a test for cannot ride along unnoticed.
 ///
-/// Release KEEPS `com.apple.security.cs.allow-jit`, unlike the other three
-/// products. Schematic layout runs ELK inside an in-process JavaScriptCore
-/// (`flutter_js` uses the system JavaScriptCore on macOS), and under the
-/// Hardened Runtime JavaScriptCore without this entitlement does not fail —
-/// it silently drops to its interpreter. Measured with the bundled
-/// `elk.bundled.js` on a 1,500-node layered layout, hardened-runtime signed
-/// both ways: 1.7 s with the entitlement, 17.4 s without. The Dart side of
-/// the release build is AOT and needs none of it; remove the key only
-/// together with moving layout off JavaScriptCore.
+/// Release declares no `com.apple.security.cs.allow-jit`, like the other
+/// three products. It kept the key until 2.0 only because schematic layout
+/// ran elkjs inside an in-process JavaScriptCore, which under the Hardened
+/// Runtime silently drops to its interpreter without it. Layout now runs
+/// natively (elkrs through `elk_ffi`, netcrux#86) and the Dart side of the
+/// release build is AOT, so nothing in Release needs JIT. DebugProfile keeps
+/// it for the Dart VM's JIT in debug builds.
 const _pinnedEntitlements = <String, Map<String, Object>>{
   'Release': {
     'com.apple.security.app-sandbox': false,
-    'com.apple.security.cs.allow-jit': true,
     'com.apple.security.network.server': true,
     'com.apple.security.files.user-selected.read-write': true,
   },

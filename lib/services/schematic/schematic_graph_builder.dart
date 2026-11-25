@@ -27,8 +27,7 @@ import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 /// instances — the schematic canvas paints whatever is at the current
 /// scope, and push-in / pop-out re-runs the builder against the new
 /// scope. No recursive descent keeps the per-scope graph small enough
-/// that elkjs can lay
-/// it out interactively.
+/// that the layout engine can lay it out interactively.
 class SchematicGraphBuilder {
   /// Creates a builder. Stateless — instances with the same [liberty] are
   /// interchangeable.

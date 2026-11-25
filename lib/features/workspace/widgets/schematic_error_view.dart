@@ -12,8 +12,10 @@ import 'package:netcrux/services/yosys/yosys_unavailable_reason_text.dart';
 /// elaborate, or elaborated and the selected scope failed to lay out.
 ///
 /// A [LayoutException] reads "Layout failed", since elaboration succeeded
-/// (the hierarchy and the other views work), with a specific message for
-/// a [LayoutFailureKind.outOfStack] failure. Every other error is wrapped
+/// (the hierarchy and the other views work), with a specific message naming
+/// the file for a [LayoutFailureKind.engineUnavailable] failure (the native
+/// library or the WebAssembly module did not load). Every other error is
+/// wrapped
 /// in a localized "Elaboration failed" envelope: known typed
 /// [LoadedNetlistException] shapes render a localized, actionable message;
 /// anything else gets a generic localized message. The raw
@@ -60,7 +62,10 @@ class SchematicErrorView extends StatelessWidget {
       return (
         l10n.schematicLayoutErrorTitle,
         switch (e.kind) {
-          LayoutFailureKind.outOfStack => l10n.schematicLayoutErrorOutOfStack,
+          LayoutFailureKind.engineUnavailable =>
+            l10n.schematicLayoutErrorEngineUnavailable(
+              e.engineFile ?? 'elk_ffi',
+            ),
           LayoutFailureKind.other => l10n.schematicLayoutErrorGeneric,
         },
         e.message,

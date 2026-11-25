@@ -4,7 +4,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/services/layout/elk_web_solver_stub.dart';
 
-/// Guards the off-web (VM / desktop) resolution of the elkjs solver
+/// Guards the off-web (VM / desktop) resolution of the browser solver
 /// backend. `elk_layout_service.dart` conditionally imports the browser
 /// solver on web and this stub everywhere else; `_solve` routes to the
 /// background isolate only because `kElkWebSolverAvailable` is a compile-time
@@ -18,7 +18,7 @@ void main() {
 
     test('solve entry point throws — it must never be reached off-web', () {
       expect(
-        () => solveElkOnWeb('{}', () async => ''),
+        () => solveElkOnWeb('{}'),
         throwsA(isA<UnsupportedError>()),
       );
     });

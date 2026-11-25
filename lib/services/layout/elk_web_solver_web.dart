@@ -12,12 +12,13 @@
 /// laid-out JSON; the wasm call is string in, string out, the same contract
 /// as `native/elk_ffi`, and produces the same bytes.
 ///
-/// When the module cannot load (the worker script or the `.wasm` is missing,
-/// or the browser refuses module workers or WebAssembly), the solver says so
-/// on the console once and falls back to the vendored elkjs, evaluated on the
-/// page and awaited through its own Promise, which is what the web viewer
-/// ran before. A load failure is the only fallback: an input the wasm engine
-/// rejects is a [LayoutException], as it is on desktop.
+/// It is the only browser engine. When the worker script or the module
+/// cannot load (a file missing from the deployment, or a browser that
+/// refuses module workers or WebAssembly), the solve fails with a
+/// [LayoutFailureKind.engineUnavailable] [LayoutException] whose
+/// [LayoutException.engineFile] names the file, and the next solve tries
+/// again with a fresh worker. An input the engine rejects is a plain
+/// [LayoutException], as it is on desktop.
 library;
 
 import 'dart:async';
@@ -36,18 +37,12 @@ const bool kElkWebSolverAvailable = true;
 /// copies `web/wasm/` into the bundle beside `index.html`.
 const String kElkWasmWorkerPath = 'wasm/elk_wasm_worker.js';
 
+/// The module the worker loads when it does not say which file failed.
+const String _kElkWasmModuleFile = 'elk_wasm_bg.wasm';
+
 /// How long the worker may take to load the module before the solver treats
-/// the load as failed and falls back to elkjs.
+/// the load as failed.
 const Duration kElkWasmLoadTimeout = Duration(seconds: 30);
-
-/// Which engine the browser solver is using.
-enum ElkWebEngine {
-  /// The elkrs port as WebAssembly in a Web Worker.
-  wasm,
-
-  /// The vendored elkjs on the page, after the wasm module failed to load.
-  elkjs,
-}
 
 // ── JS interop ──────────────────────────────────────────────────────────────
 
@@ -82,6 +77,7 @@ extension type _Reply._(JSObject _) implements JSObject {
   external int? get id;
   external String? get json;
   external String? get message;
+  external String? get file;
   external bool? get fatal;
   external String? get phase;
   external double? get fraction;
@@ -117,33 +113,6 @@ String _resolveWorkerUrl() {
 @JS('console.warn')
 external void _consoleWarn(JSString message);
 
-/// Indirect global `eval`, for the elkjs fallback. Called as
-/// `globalThis.eval(...)`, so the code runs in global scope: the elkjs UMD
-/// bundle self-assigns `window.ELK = f()`, which is all the fallback needs.
-@JS('eval')
-external JSAny? _globalEval(JSString code);
-
-/// The string-in / string-out helper [_elkjsBootstrap] installs.
-@JS('__netcruxElkLayout')
-external JSPromise<JSString> _elkjsLayout(JSString inputJson);
-
-/// Boots a singleton `ELK` and installs `__netcruxElkLayout`. A constructor
-/// failure is captured on `__netcruxElkInitError` so the Dart side can raise
-/// a [LayoutException] instead of a bare JS throw.
-const String _elkjsBootstrap = '''
-(function(){
-  globalThis.__netcruxElkInitError = null;
-  try {
-    var __elk = new ELK();
-    globalThis.__netcruxElkLayout = function(s){
-      return __elk.layout(JSON.parse(s)).then(function(r){ return JSON.stringify(r); });
-    };
-  } catch (e) {
-    globalThis.__netcruxElkInitError = String(e && e.message ? e.message : e);
-  }
-})();
-''';
-
 // ── State ───────────────────────────────────────────────────────────────────
 
 String _workerUrl = kElkWasmWorkerPath;
@@ -152,11 +121,8 @@ void Function(String message) _log = _warn;
 
 void _warn(String message) => _consoleWarn(message.toJS);
 
-/// The engine chosen by the first solve; null until then.
-Future<ElkWebEngine>? _engine;
-
 /// The live worker, or null when none is running (before the first solve,
-/// after a cancel or a trap). The next wasm solve starts one.
+/// after a cancel, a trap or a load failure). The next solve starts one.
 _Worker? _worker;
 Future<void>? _workerReady;
 
@@ -166,12 +132,6 @@ final Map<int, Completer<String>> _pending = <int, Completer<String>>{};
 /// The progress listeners of the solves in [_pending], by id.
 final Map<int, void Function(LayoutProgress progress)> _listeners =
     <int, void Function(LayoutProgress progress)>{};
-
-Future<void>? _elkjsInitialization;
-
-/// The engine the solver settled on, or null before the first solve.
-@visibleForTesting
-Future<ElkWebEngine>? get debugElkWebEngine => _engine;
 
 /// Points the solver at another worker script (a test serves it from its
 /// own directory), another load timeout, or another log sink. Resets the
@@ -188,13 +148,10 @@ void debugConfigureElkWebSolver({
   _log = log ?? _warn;
 }
 
-/// Drops the worker, the engine choice and the elkjs runtime, so the next
-/// solve starts from nothing.
+/// Drops the worker, so the next solve starts from nothing.
 @visibleForTesting
 void debugResetElkWebSolver() {
   _discardWorker(const LayoutException('layout engine reset'));
-  _engine = null;
-  _elkjsInitialization = null;
 }
 
 /// Whether a solve is running in the worker right now.
@@ -204,59 +161,71 @@ bool get elkWebLayoutInFlight => _pending.isNotEmpty;
 /// with a [LayoutException] and the worker is terminated, which stops the
 /// solve, since the engine cannot be interrupted from outside. The next solve
 /// starts a fresh worker. A no-op when nothing is in flight, so the warm
-/// worker survives ordinary navigation. The elkjs fallback runs on the page
-/// and is not tracked here; its solves run to completion, as they did before
-/// the wasm engine.
+/// worker survives ordinary navigation.
 void cancelElkOnWeb() {
   if (_pending.isEmpty) return;
   _discardWorker(const LayoutCancelledException());
 }
 
-/// Solves [inputJson] and returns the laid-out ELK JSON, passing the wasm
-/// engine's progress reports to [onProgress] as the worker posts them (elkjs
-/// reports none). Throws [LayoutCancelledException] when [cancelElkOnWeb]
-/// abandons it, and [LayoutException] when the engine rejects the input or
-/// nothing can start. There is no time limit: the user can stop the solve,
-/// and cancelling terminates the worker. [loadSource] reads the vendored
-/// elkjs, and is called only when the wasm module cannot load.
+/// Solves [inputJson] and returns the laid-out ELK JSON, passing the
+/// engine's progress reports to [onProgress] as the worker posts them.
+/// Throws [LayoutCancelledException] when [cancelElkOnWeb] abandons it,
+/// a [LayoutFailureKind.engineUnavailable] [LayoutException] naming the file
+/// when the worker script or the module cannot load, and a [LayoutException]
+/// when the engine rejects the input. There is no time limit: the user can
+/// stop the solve, and cancelling terminates the worker.
 Future<String> solveElkOnWeb(
-  String inputJson,
-  Future<String> Function() loadSource, {
+  String inputJson, {
   void Function(LayoutProgress progress)? onProgress,
 }) async {
-  final engine = await (_engine ??= _chooseEngine());
-  return switch (engine) {
-    ElkWebEngine.wasm => await _solveInWorker(inputJson, onProgress),
-    ElkWebEngine.elkjs => await _solveWithElkjs(inputJson, loadSource),
-  };
-}
-
-/// Starts the worker once. If the module loads, every solve uses it; if not,
-/// the reason is logged and every solve this session uses elkjs.
-Future<ElkWebEngine> _chooseEngine() async {
   try {
     await _ensureWorker();
-    return ElkWebEngine.wasm;
   } on LayoutException catch (e) {
-    _log(
-      'netcrux: layout engine: the WebAssembly engine did not load '
-      '(${e.message}); falling back to elkjs',
-    );
-    return ElkWebEngine.elkjs;
+    if (e.kind == LayoutFailureKind.engineUnavailable) {
+      _log(
+        'netcrux: layout engine: ${e.engineFile} did not load '
+        '(${e.message})',
+      );
+    }
+    rethrow;
   }
+  final id = _nextId++;
+  final completer = _pending[id] = Completer<String>();
+  if (onProgress != null) _listeners[id] = onProgress;
+  _worker!.postMessage(_Request(id: id, input: inputJson));
+  return await completer.future;
+}
+
+/// The failure for an engine file that did not load: [file] beside the
+/// worker script (`wasm/` in a deployed bundle) unless it is already a path
+/// or URL.
+LayoutException _unavailable(String file, String reason) {
+  final String named;
+  if (file.contains('/') || file.contains(':')) {
+    named = file;
+  } else {
+    final slash = _workerUrl.lastIndexOf('/');
+    named = slash < 0 ? file : '${_workerUrl.substring(0, slash + 1)}$file';
+  }
+  return LayoutException(
+    'the layout engine file $named did not load: $reason',
+    kind: LayoutFailureKind.engineUnavailable,
+    engineFile: named,
+  );
 }
 
 Future<void> _ensureWorker() => _workerReady ??= _startWorker();
 
 Future<void> _startWorker() {
   final ready = Completer<void>();
+  final url = _resolveWorkerUrl();
   final _Worker worker;
   try {
-    worker = _Worker(_resolveWorkerUrl().toJS, _WorkerOptions(type: 'module'));
+    worker = _Worker(url.toJS, _WorkerOptions(type: 'module'));
   } on Object catch (e) {
     _workerReady = null;
     return Future<void>.error(
-      LayoutException('could not start the layout worker: $e', cause: e),
+      _unavailable(_workerUrl, 'could not start the layout worker: $e'),
     );
   }
   _worker = worker;
@@ -269,17 +238,31 @@ Future<void> _startWorker() {
     event.preventDefault();
     if (!identical(_worker, worker)) return;
     final message = event.message;
-    final reason = message != null && message.isNotEmpty
-        ? message
-        : 'the worker script $_workerUrl failed to load';
-    final failure = LayoutException('layout worker error: $reason');
-    if (!ready.isCompleted) ready.completeError(failure);
+    final LayoutException failure;
+    if (ready.isCompleted) {
+      // A running worker's own error, not a load failure.
+      failure = LayoutException(
+        'layout worker error: ${message ?? 'unknown error'}',
+      );
+    } else {
+      // Before `ready`, an error event means the script itself did not load
+      // (a module worker raises a plain `Event` with no message for a
+      // missing file) or threw while loading.
+      failure = _unavailable(
+        _workerUrl,
+        message != null && message.isNotEmpty
+            ? message
+            : 'the worker script failed to load',
+      );
+      ready.completeError(failure);
+    }
     _discardWorker(failure);
   }).toJS;
   return ready.future.timeout(
     _loadTimeout,
     onTimeout: () {
-      final failure = LayoutException(
+      final failure = _unavailable(
+        _kElkWasmModuleFile,
         'the layout worker did not load within ${_loadTimeout.inSeconds} s',
       );
       if (identical(_worker, worker)) _discardWorker(failure);
@@ -293,8 +276,10 @@ void _onReply(_Reply reply, Completer<void> ready) {
     case 'ready':
       if (!ready.isCompleted) ready.complete();
     case 'load-error':
-      final failure = LayoutException(
-        'the WebAssembly module failed to load: ${reply.message}',
+      final file = reply.file;
+      final failure = _unavailable(
+        file == null || file.isEmpty ? _kElkWasmModuleFile : file,
+        reply.message ?? 'unknown error',
       );
       if (!ready.isCompleted) ready.completeError(failure);
       _discardWorker(failure);
@@ -344,58 +329,5 @@ void _discardWorker(LayoutException failure) {
   _listeners.clear();
   for (final completer in pending) {
     if (!completer.isCompleted) completer.completeError(failure);
-  }
-}
-
-Future<String> _solveInWorker(
-  String inputJson,
-  void Function(LayoutProgress progress)? onProgress,
-) async {
-  await _ensureWorker();
-  final id = _nextId++;
-  final completer = _pending[id] = Completer<String>();
-  if (onProgress != null) _listeners[id] = onProgress;
-  _worker!.postMessage(_Request(id: id, input: inputJson));
-  return await completer.future;
-}
-
-// ── elkjs fallback ──────────────────────────────────────────────────────────
-
-Future<String> _solveWithElkjs(
-  String inputJson,
-  Future<String> Function() loadSource,
-) async {
-  await (_elkjsInitialization ??= _initializeElkjs(loadSource));
-  try {
-    final result = (await _elkjsLayout(inputJson.toJS).toDart).toDart;
-    if (result.isEmpty) {
-      throw const LayoutException('elkjs returned an empty layout');
-    }
-    return result;
-  } on LayoutException {
-    rethrow;
-  } on Object catch (e) {
-    throw LayoutException('elkjs rejected the layout input: $e', cause: e);
-  }
-}
-
-Future<void> _initializeElkjs(Future<String> Function() loadSource) async {
-  try {
-    _globalEval((await loadSource()).toJS);
-    _globalEval(_elkjsBootstrap.toJS);
-    final err = _globalEval('globalThis.__netcruxElkInitError || ""'.toJS);
-    final errStr = (err as JSString?)?.toDart ?? '';
-    if (errStr.isNotEmpty) {
-      throw LayoutException('elkjs constructor threw: $errStr');
-    }
-  } on LayoutException {
-    _elkjsInitialization = null;
-    rethrow;
-  } on Object catch (e) {
-    _elkjsInitialization = null;
-    throw LayoutException(
-      'Failed to initialize the browser elkjs runtime',
-      cause: e,
-    );
   }
 }

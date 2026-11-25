@@ -19,9 +19,8 @@ import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 /// flat scope) built into a schematic graph by the real
 /// [SchematicGraphBuilder], then placed and routed deterministically.
 ///
-/// elkjs runs in a JS runtime that does not start under `flutter test`, so
-/// the geometry is synthetic, shaped like what the layout service produces:
-/// every cell a node with a port box per pin (inputs west, outputs east,
+/// The geometry is synthetic, so the test needs no layout engine; it is
+/// shaped like what the layout service produces: every cell a node with a port box per pin (inputs west, outputs east,
 /// others south), module ports down the left edge, and each routed edge an
 /// orthogonal polyline between its two pin boxes. As in the layout service,
 /// a net whose driver × sink product exceeds 32 (the clock) is left

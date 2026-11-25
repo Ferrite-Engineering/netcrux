@@ -111,9 +111,9 @@ dart run tool/build_web_wasm.dart          # writes web/wasm/elk_wasm*.{js,wasm}
 tool/run_web_tests.sh                      # the @TestOn('browser') suite
 ```
 
-Without it the browser build falls back to the vendored `elkjs` bundle
-(`assets/elk/elk.bundled.js`); see [`NOTICES`](NOTICES) for both licenses and
-for the procedure to refresh the bundle.
+Without it the browser build has no layout engine, and every layout fails
+with an error naming the missing file; there is no other engine to fall back
+to. See [`NOTICES`](NOTICES) for the engine's license.
 
 ## Coding conventions
 

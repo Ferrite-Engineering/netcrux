@@ -6,7 +6,8 @@
 // the hand-written worker `elk_wasm_worker.js`, where `flutter build web`
 // picks it up. The artefacts are build outputs and are not committed; CI runs
 // this before the web tests and before every web build. Without them the web
-// viewer still lays out, on the elkjs fallback, and says so on the console.
+// viewer has no layout engine: every layout fails with an error naming the
+// missing file.
 //
 //   dart run tool/build_web_wasm.dart           # release build + size gate
 //   dart run tool/build_web_wasm.dart --check   # size gate only, no build

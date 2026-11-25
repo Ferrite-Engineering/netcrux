@@ -7,7 +7,6 @@
 // designs without any, keep exactly the ELK input they had before.
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
@@ -18,7 +17,6 @@ import 'package:netcrux/domain/models/layout/netlist_layout.dart';
 import 'package:netcrux/domain/models/netlist/module.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
-import 'package:netcrux/services/layout/flutter_js_host_vm.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
 
 import '../../helpers/elk_ffi_library_gate.dart';
@@ -420,7 +418,6 @@ void main() {
       var solves = 0;
       final service = ElkLayoutService(
         solverFactory: () => _CountingSolver(() => solves++),
-        assetLoader: (_) async => '',
       );
       addTearDown(service.dispose);
       final module = _soc();
@@ -435,10 +432,7 @@ void main() {
     test('the native engine puts every anchored pin on its face at its '
         'anchor, and the node keeps the aspect', () async {
       if (!requireElkFfiLibrary()) return;
-      final service = ElkLayoutService(
-        solverFactory: NativeElkSolver.open,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: NativeElkSolver.open);
       addTearDown(service.dispose);
       final symbol = _uartSymbol();
       final layout = await service.layout(_soc(), symbols: _symbols(symbol));
@@ -467,44 +461,6 @@ void main() {
         );
       }
     });
-
-    // elkjs runs under `flutter test` on JavaScriptCore only; elsewhere the
-    // test is not registered rather than skipped (the CI skip guard).
-    if (Platform.isMacOS) {
-      test('elkjs places the pins where the native engine does', () {
-        if (!requireElkFfiLibrary()) return;
-        final input = jsonEncode(buildElkInput(_soc(), symbols: _symbols()));
-        final ElkJsHost host;
-        try {
-          host = createDefaultElkJsHost();
-          initElkRuntime(
-            host,
-            File('assets/elk/elk.bundled.js').readAsStringSync(),
-          );
-        } on Object catch (e) {
-          markTestSkipped('no JavaScript engine here: $e');
-          return;
-        }
-        addTearDown(host.dispose);
-        final js = NetlistLayout.fromJson(
-          jsonDecode(runElkLayoutOnHost(host, input)) as Map<String, Object?>,
-        );
-        final solver = NativeElkSolver.open();
-        addTearDown(solver.dispose);
-        final native = NetlistLayout.fromJson(
-          jsonDecode(solver.solve(input)) as Map<String, Object?>,
-        );
-        _expectPinsAtAnchors(js, _uartSymbol());
-        final a = js.findNode('u_uart')!;
-        final b = native.findNode('u_uart')!;
-        expect(a.bounds.width, b.bounds.width);
-        expect(a.bounds.height, b.bounds.height);
-        for (final id in a.ports.keys) {
-          expect(a.ports[id]!.x, closeTo(b.ports[id]!.x, 1e-6), reason: id);
-          expect(a.ports[id]!.y, closeTo(b.ports[id]!.y, 1e-6), reason: id);
-        }
-      });
-    }
   });
 }
 

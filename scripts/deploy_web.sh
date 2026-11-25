@@ -58,7 +58,7 @@ flutter gen-l10n
 
 echo "=== Layout engine (Rust to WebAssembly) ==="
 # Needs the wasm32-unknown-unknown target and wasm-pack. A deploy without it
-# would still lay out, on the elkjs fallback, so it is a hard step here.
+# could lay nothing out, so it is a hard step here.
 dart run tool/build_web_wasm.dart
 
 echo "=== flutter build web (release) ==="

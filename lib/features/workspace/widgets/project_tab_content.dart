@@ -474,7 +474,7 @@ class _NotifierStatsSink implements RenderStatsSink {
 /// indicator; a large scope (e.g. a ~1 600-cell CPU core) takes seconds.
 /// Shows the cell count so the user understands why a big scope takes
 /// longer, a progress bar with the phase the engine is in (elkrs reports
-/// both; elkjs reports neither, so the bar is then indeterminate), an
+/// both; before its first report the bar is indeterminate), an
 /// elapsed-seconds readout, and Cancel, which stops the solve. There is no
 /// time limit: the bar shows the solve is moving, and the user decides.
 class _SchematicLayoutLoading extends ConsumerStatefulWidget {

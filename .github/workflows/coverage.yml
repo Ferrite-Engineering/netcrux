@@ -122,7 +122,7 @@ jobs:
       - name: Generate l10n
         run: flutter gen-l10n
 
-      # The same engines and QuickJS bridge as ci.yml's test job, so coverage
+      # The same engines as ci.yml's test job, so coverage
       # measures the tests CI runs: without them the elaboration pipeline is
       # reported as untested code while those tests pass one workflow over.
       - name: Install yosys and GHDL
@@ -140,14 +140,6 @@ jobs:
           echo "$g/bin" >> "$GITHUB_PATH"
           yosys -V
           "$g/bin/ghdl" --version
-
-      - name: Point flutter_js at its prebuilt QuickJS bridge
-        run: |
-          set -euo pipefail
-          root="$(python3 -c 'import json; print(next(p["rootUri"] for p in json.load(open(".dart_tool/package_config.json"))["packages"] if p["name"] == "flutter_js"))')"
-          lib="${root#file://}/linux/shared/libquickjs_c_bridge_plugin.so"
-          test -f "$lib"
-          echo "LIBQUICKJSC_TEST_PATH=$lib" >> "$GITHUB_ENV"
 
       - name: Test with coverage + floor gate
         run: |

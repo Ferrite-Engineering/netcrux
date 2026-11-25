@@ -141,10 +141,13 @@ jobs:
           set -euo pipefail
           test -f build/web/index.html
           test -f build/web/main.dart.js
-          # Without these the viewer silently lays out on the elkjs fallback.
+          # The only layout engine: without these every layout fails with an
+          # error naming the missing file.
           test -f build/web/wasm/elk_wasm_worker.js
           test -f build/web/wasm/elk_wasm.js
           test -f build/web/wasm/elk_wasm_bg.wasm
+          # No elkjs in the bundle (netcrux#86).
+          test ! -e build/web/assets/assets/elk/elk.bundled.js
           # The bundle must carry the locale data for all four CJK locales we
           # ship — a tree-shaking regression that dropped them would otherwise
           # only surface as English text in front of a user.

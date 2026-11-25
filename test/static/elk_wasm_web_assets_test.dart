@@ -6,8 +6,8 @@
 // glue and calls the export, the Dart solver that starts the worker by path,
 // and the build tool and workflows that put the artefacts where the worker
 // looks. None of those links is checked by a compiler, and a broken one does
-// not fail loudly: the viewer quietly lays out on the elkjs fallback. This
-// pins every link.
+// not fail at build time: the viewer only finds out when a layout fails on
+// the missing file. This pins every link.
 
 import 'dart:io';
 

@@ -7,7 +7,7 @@
 // Yosys JSON that synthesis wrote, read as File > Open Netlist JSON reads
 // it. Both must draw every instance as the gate the independent oracle
 // (`test/fixtures/liberty/pdk/liberty_oracle.py`) says its cell is, with the
-// same signal pins on the same faces in both layout engines, and the data
+// same signal pins on the same faces in the ELK input and the layout, and the data
 // sheet and the area roll-up must agree with the oracle's areas.
 //
 // The routes differ in one known way. Yosys's `read_liberty -lib` keeps no
@@ -34,7 +34,6 @@ import 'package:netcrux/domain/models/schematic/pin_tie.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
-import 'package:netcrux/services/layout/flutter_js_host_vm.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
 import 'package:netcrux/services/liberty/liberty_cell_index.dart';
 import 'package:netcrux/services/liberty/liberty_library.dart';
@@ -340,32 +339,6 @@ void main() {
         }
       });
 
-      // elkjs runs under `flutter test` on JavaScriptCore only; elsewhere the
-      // test is not registered rather than skipped (the CI skip guard).
-      if (Platform.isMacOS) {
-        test('elkjs lays every pin on the same face', () {
-          final ElkJsHost host;
-          try {
-            host = createDefaultElkJsHost();
-            initElkRuntime(
-              host,
-              File('assets/elk/elk.bundled.js').readAsStringSync(),
-            );
-          } on Object catch (e) {
-            markTestSkipped('no JavaScript engine here: $e');
-            return;
-          }
-          addTearDown(host.dispose);
-          for (final route in <_Opened>[native, json]) {
-            final layout = NetlistLayout.fromJson(
-              jsonDecode(runElkLayoutOnHost(host, jsonEncode(route.elkInput)))
-                  as Map<String, Object?>,
-            );
-            expectFaces(layout, route);
-          }
-        });
-      }
-
       test('the data sheet of one cell of each kind, and the module area, '
           'agree with the oracle', () {
         for (final route in <_Opened>[native, json]) {
@@ -505,29 +478,6 @@ void main() {
         ),
       );
     });
-
-    if (Platform.isMacOS) {
-      test('elkjs lays every supply pin on the same face', () {
-        final ElkJsHost host;
-        try {
-          host = createDefaultElkJsHost();
-          initElkRuntime(
-            host,
-            File('assets/elk/elk.bundled.js').readAsStringSync(),
-          );
-        } on Object catch (e) {
-          markTestSkipped('no JavaScript engine here: $e');
-          return;
-        }
-        addTearDown(host.dispose);
-        expectSupplyFaces(
-          NetlistLayout.fromJson(
-            jsonDecode(runElkLayoutOnHost(host, jsonEncode(powered.elkInput)))
-                as Map<String, Object?>,
-          ),
-        );
-      });
-    }
 
     test('removing the one supply connection of a one-cell scope hides its '
         'unconnected supply pins again', () {

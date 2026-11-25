@@ -17,7 +17,7 @@ ffi.DynamicLibrary _dlopen(String path) => ffi.DynamicLibrary.open(path);
 
 /// The platform file name of the layout engine library, e.g.
 /// `libelk_ffi.dylib`. Throws [UnsupportedError] where no native build
-/// exists (the web edition runs elkjs in the browser instead).
+/// exists (the web edition runs the same port as WebAssembly instead).
 String elkFfiLibraryFileName() {
   if (Platform.isLinux || Platform.isAndroid) return 'libelk_ffi.so';
   if (Platform.isMacOS) return 'libelk_ffi.dylib';

@@ -35,77 +35,52 @@ import 'package:netcrux/services/yosys/yosys_json_parser.dart';
 const _verilogPath = 'test/fixtures/verilog/cdc_capture.v';
 const _topModule = 'cdc_capture';
 
-/// A scripted [ElkJsHost] that lays nodes out in a row AND echoes every
+/// A scripted [ElkSolver] that lays nodes out in a row AND echoes every
 /// input edge back with a short two-point route, preserving the edge id
 /// `buildElkInput` assigned. This reproduces the production divergence:
 /// the laid-out edge ids come from `buildElkInput`, while the schematic
 /// graph the probe selects against is numbered by `SchematicGraphBuilder`.
-class _EchoEdgesHost implements ElkJsHost {
-  Map<String, Object?>? _lastInput;
+class _EchoEdgesSolver implements ElkSolver {
+  @override
+  String get engineDescription => 'echo';
 
   @override
-  String evaluate(String code) {
-    if (code.contains('__elkInstance')) return '';
-    if (code.contains('"pending"')) return 'done';
-    if (code.contains('__elk_error')) return '';
-    if (code.contains('__elk_input = ')) {
-      final eq = code.indexOf('= ');
-      if (eq != -1) {
-        final tail = code.substring(eq + 2).trimRight();
-        final json = tail.replaceAll(RegExp(r';\s*$'), '');
-        try {
-          final decoded = jsonDecode(json);
-          if (decoded is Map<String, Object?>) _lastInput = decoded;
-        } on FormatException {
-          _lastInput = null;
-        }
-      }
-      return '';
-    }
-    if (code.contains('__elk_result')) {
-      final input = _lastInput;
-      if (input == null) return '';
-      final children =
-          (input['children'] as List<Object?>?) ?? const <Object?>[];
-      final laidOutNodes = <Map<String, Object?>>[
-        for (var i = 0; i < children.length; i++)
-          <String, Object?>{
-            'id': (children[i]! as Map<String, Object?>)['id'],
-            'x': 40.0 + (i * 120),
-            'y': 40.0,
-            'width': 80.0,
-            'height': 32.0,
-          },
-      ];
-      final inputEdges =
-          (input['edges'] as List<Object?>?) ?? const <Object?>[];
-      final laidOutEdges = <Map<String, Object?>>[
-        for (var i = 0; i < inputEdges.length; i++)
-          <String, Object?>{
-            'id': (inputEdges[i]! as Map<String, Object?>)['id'],
-            'sections': <Map<String, Object?>>[
-              <String, Object?>{
-                'startPoint': <String, Object?>{'x': 20.0, 'y': 20.0 + i},
-                'endPoint': <String, Object?>{'x': 300.0, 'y': 20.0 + i},
-              },
-            ],
-          },
-      ];
-      return jsonEncode(<String, Object?>{
-        'id': 'root',
-        'x': 0.0,
-        'y': 0.0,
-        'width': 40.0 + (children.length * 120) + 40.0,
-        'height': 160.0,
-        'children': laidOutNodes,
-        'edges': laidOutEdges,
-      });
-    }
-    return '';
+  String solve(String inputJson) {
+    final input = jsonDecode(inputJson) as Map<String, Object?>;
+    final children = (input['children'] as List<Object?>?) ?? const <Object?>[];
+    final laidOutNodes = <Map<String, Object?>>[
+      for (var i = 0; i < children.length; i++)
+        <String, Object?>{
+          'id': (children[i]! as Map<String, Object?>)['id'],
+          'x': 40.0 + (i * 120),
+          'y': 40.0,
+          'width': 80.0,
+          'height': 32.0,
+        },
+    ];
+    final inputEdges = (input['edges'] as List<Object?>?) ?? const <Object?>[];
+    final laidOutEdges = <Map<String, Object?>>[
+      for (var i = 0; i < inputEdges.length; i++)
+        <String, Object?>{
+          'id': (inputEdges[i]! as Map<String, Object?>)['id'],
+          'sections': <Map<String, Object?>>[
+            <String, Object?>{
+              'startPoint': <String, Object?>{'x': 20.0, 'y': 20.0 + i},
+              'endPoint': <String, Object?>{'x': 300.0, 'y': 20.0 + i},
+            },
+          ],
+        },
+    ];
+    return jsonEncode(<String, Object?>{
+      'id': 'root',
+      'x': 0.0,
+      'y': 0.0,
+      'width': 40.0 + (children.length * 120) + 40.0,
+      'height': 160.0,
+      'children': laidOutNodes,
+      'edges': laidOutEdges,
+    });
   }
-
-  @override
-  int executePendingJob() => 0;
 
   @override
   void dispose() {}
@@ -207,8 +182,7 @@ void main() {
         final module = node!.resolve(model)!;
         final graph = const SchematicGraphBuilder().build(model, node);
         final layout = await ElkLayoutService(
-          hostFactory: _EchoEdgesHost.new,
-          assetLoader: (_) async => '// echo host',
+          solverFactory: _EchoEdgesSolver.new,
         ).layout(module);
         final laidOut = LaidOutGraph(graph: graph, layout: layout);
         expect(laidOut.isEmpty, isFalse);

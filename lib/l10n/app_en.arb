@@ -2167,17 +2167,17 @@
   "@aboutDartVersion": {
     "description": "About box row label for the Dart SDK version."
   },
-  "aboutSectionElkjs": "elkjs",
-  "@aboutSectionElkjs": {
-    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  "aboutSectionElk": "Eclipse Layout Kernel",
+  "@aboutSectionElk": {
+    "description": "Section header for the Eclipse Layout Kernel open-source attribution in the About dialog. A product name: keep it in English."
   },
-  "aboutElkjsDescription": "NetCrux uses elkjs, the Eclipse Layout Kernel compiled to JavaScript, for automatic schematic layout. elkjs is EPL-2.0 licensed.",
-  "@aboutElkjsDescription": {
-    "description": "Description text for the elkjs attribution section in the About dialog."
+  "aboutElkDescription": "NetCrux lays out schematics with elkrs, a Rust port of the Eclipse Layout Kernel, built natively on desktop and as WebAssembly in the browser. elkrs is EPL-2.0 licensed.",
+  "@aboutElkDescription": {
+    "description": "Description text for the Eclipse Layout Kernel attribution section in the About dialog. elkrs and WebAssembly are names; keep them in English."
   },
-  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
-  "@aboutElkjsLicenseHeader": {
-    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  "aboutElkLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkLicenseHeader": {
+    "description": "Header label above the EPL-2.0 license text of the Eclipse Layout Kernel in the About dialog."
   },
   "aboutButtonVisitWebsite": "Visit Website",
   "@aboutButtonVisitWebsite": {
@@ -2718,7 +2718,7 @@
   },
   "aboutButtonAcknowledgments": "Acknowledgments",
   "@aboutButtonAcknowledgments": {
-    "description": "About box action button that opens the full open-source license list (every pub dependency plus vendored components such as elkjs)."
+    "description": "About box action button that opens the full open-source license list (every pub dependency plus vendored components such as the elkrs layout engine)."
   },
   "statsStripLabel": "Stats",
   "@statsStripLabel": {
@@ -2740,7 +2740,7 @@
   "@statsSegmentMemory": {
     "description": "Statistics strip segment: process resident memory."
   },
-  "statsSegmentMemoryTooltip": "Resident memory of the NetCrux process, including the Yosys subprocess and the elkjs runtime.",
+  "statsSegmentMemoryTooltip": "Resident memory of the NetCrux process, including the Yosys subprocess and the layout engine.",
   "@statsSegmentMemoryTooltip": {
     "description": "Tooltip for the memory segment."
   },
@@ -3555,9 +3555,15 @@
   "@schematicLayoutErrorGeneric": {
     "description": "Schematic error-view body under 'Layout failed' for a layout failure with no more specific message; the layout engine's own text appears in the expandable details section."
   },
-  "schematicLayoutErrorOutOfStack": "The elkjs layout engine ran out of stack space on this scope, and the native layout engine, which can lay it out, did not start. The design elaborated; a Cone View lays out part of the scope.",
-  "@schematicLayoutErrorOutOfStack": {
-    "description": "Schematic error-view body under 'Layout failed' when the elkjs engine (the fallback layout engine, a product name) recursed too deeply on a large scope and the native engine was not available to retry. Cone View is the feature that lays out the logic driving one cell."
+  "schematicLayoutErrorEngineUnavailable": "The layout engine did not load: {file} is missing or damaged. The design elaborated, but no scope can be laid out until NetCrux is reinstalled, or the page is reloaded in a browser.",
+  "@schematicLayoutErrorEngineUnavailable": {
+    "description": "Schematic error-view body under 'Layout failed' when the layout engine itself could not be loaded: the native library on desktop, or the WebAssembly worker or module in the browser. {file} is the file that failed, verbatim (a file name or path, never translated). There is no other engine to fall back to.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "libelk_ffi.dylib"
+      }
+    }
   },
   "annotationCalloutsShownAnnouncement": "Annotation callouts shown",
   "@annotationCalloutsShownAnnouncement": {

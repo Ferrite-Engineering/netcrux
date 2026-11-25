@@ -7,7 +7,6 @@ import 'dart:isolate';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:meta/meta.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/cell_symbol_geometry.dart';
 import 'package:netcrux/domain/models/custom_cell_symbol/port_anchor.dart';
@@ -19,44 +18,24 @@ import 'package:netcrux/domain/models/schematic/boundary_port_label.dart';
 import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
-// Conditional import: the desktop worker's solver factory picks the native
-// elkrs engine, or elkjs on a JavaScript engine when kept by environment or
-// when the native library cannot start; the same file interrupts an elkjs
-// solve from another isolate. Web never reaches it.
+// Conditional import: the desktop worker's solver factory opens the native
+// elkrs engine. Web never reaches it.
 import 'package:netcrux/services/layout/elk_solver_stub.dart'
     if (dart.library.io) 'package:netcrux/services/layout/elk_solver_io.dart';
 // Conditional import: on web the solve runs in the browser, the elkrs port
-// as WebAssembly in a Web Worker (no flutter_js, no isolate). Off web
+// as WebAssembly in a Web Worker (no isolate). Off web
 // `kElkWebSolverAvailable` is false and the isolate path is used.
 import 'package:netcrux/services/layout/elk_web_solver_stub.dart'
     if (dart.library.js_interop) 'package:netcrux/services/layout/elk_web_solver_web.dart';
-import 'package:netcrux/services/layout/layout_engine_selection.dart';
 import 'package:netcrux/services/layout/selector_bank.dart';
 import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
 
-/// Narrow seam over [JavascriptRuntime] — exposing only what
-/// [ElkLayoutService] actually needs. Implementing a full
-/// [JavascriptRuntime] surface in tests is brittle; this interface keeps
-/// the test fake to four members.
-abstract class ElkJsHost {
-  /// Synchronously evaluates [code] and returns the stringified result.
-  String evaluate(String code);
-
-  /// Advances one pending Promise / microtask job. Returns the number of
-  /// jobs the engine had after this call (0 = idle).
-  int executePendingJob();
-
-  /// Releases the underlying engine. Subsequent calls are no-ops.
-  void dispose();
-}
-
 /// One layout engine behind the worker: ELK JSON in, laid-out ELK JSON out.
 ///
-/// Two implementations share the contract. `NativeElkSolver` calls the
-/// vendored elkrs port through `native/elk_ffi` and is the desktop default;
-/// [JsElkSolver] drives the vendored elkjs bundle on a JavaScript engine and
-/// stays as the escape hatch and the parity reference. The service, the
-/// caches and the renderer never learn which one answered.
+/// The desktop engine is `NativeElkSolver`, the vendored elkrs port through
+/// `native/elk_ffi`; tests inject their own through
+/// [ElkLayoutService.new]'s `solverFactory`. The service, the caches and the
+/// renderer never learn which one answered.
 abstract class ElkSolver {
   /// Lays out [inputJson] and returns the result document. Throws
   /// [LayoutException] when the engine rejects the input.
@@ -70,104 +49,35 @@ abstract class ElkSolver {
   void dispose();
 }
 
-/// How an elkjs solve is stopped from another isolate, see
-/// [ElkInterruptHandle].
-enum ElkInterruptKind {
-  /// The address is a QuickJS `JSRuntime`. Shrinking its stack budget to a
-  /// byte makes the next JavaScript call throw, so the solve unwinds at
-  /// once.
-  quickJsStackLimit,
-
-  /// The address is a 32-bit flag the JavaScriptCore watchdog reads on the
-  /// engine's own thread a few times a second; non-zero terminates the
-  /// script.
-  terminationFlag,
-}
-
-/// What lets the isolate that asked for an elkjs solve stop it.
-///
-/// An elkjs solve is one synchronous call into the JavaScript engine, so
-/// the worker isolate running it cannot read a message, and killing that
-/// isolate only takes effect once the call returns: until then the solve
-/// keeps a core busy. The handle names native state another isolate can
-/// write to end the call early ([interruptElkSolve]).
-@immutable
-class ElkInterruptHandle {
-  /// Creates a handle of [kind] over [address].
-  const ElkInterruptHandle(this.kind, this.address);
-
-  /// Rebuilds a handle from [toMessage]'s output, or `null` for none.
-  static ElkInterruptHandle? fromMessage(Object? message) {
-    if (message is! List<Object?> || message.length != 2) return null;
-    final [kind, address] = message;
-    if (kind is! int || address is! int) return null;
-    if (kind < 0 || kind >= ElkInterruptKind.values.length) return null;
-    return ElkInterruptHandle(ElkInterruptKind.values[kind], address);
-  }
-
-  /// What the native state is.
-  final ElkInterruptKind kind;
-
-  /// Where it is, as a raw address in this process.
-  final int address;
-
-  /// The handle as a message another isolate can receive.
-  List<Object?> toMessage() => <Object?>[kind.index, address];
-}
-
-/// An [ElkJsHost] whose engine another isolate can interrupt.
-abstract interface class InterruptibleElkJsHost implements ElkJsHost {
-  /// The handle for this host's engine, or `null` when the engine offers
-  /// none.
-  ElkInterruptHandle? get interruptHandle;
-}
-
-/// [ElkSolver] over an initialised [ElkJsHost]: the elkjs path.
-class JsElkSolver implements ElkSolver {
-  /// Wraps [host], which must already have run [initElkRuntime].
-  JsElkSolver(this._host);
-
-  final ElkJsHost _host;
-
-  /// What stops a solve of this solver from another isolate, or `null`
-  /// when the host's engine cannot be interrupted.
-  ElkInterruptHandle? get interruptHandle {
-    final host = _host;
-    return host is InterruptibleElkJsHost ? host.interruptHandle : null;
-  }
-
-  @override
-  String get engineDescription => 'elkjs';
-
-  @override
-  String solve(String inputJson) => runElkLayoutOnHost(_host, inputJson);
-
-  @override
-  void dispose() => _host.dispose();
-}
-
-/// Thrown by [ElkLayoutService] when the layout pipeline fails — either
-/// the elkjs bundle cannot be loaded, the JS runtime is unavailable on
-/// the host, or elk itself rejected the input. Carries a short message
-/// suitable for snackbar display and retains the underlying cause for
-/// the diagnostics panel.
+/// Thrown by [ElkLayoutService] when the layout pipeline fails: the layout
+/// engine cannot be loaded ([LayoutFailureKind.engineUnavailable]), or it
+/// rejected the input, or its result could not be read. Carries a short
+/// message for the error view's details and retains the underlying cause
+/// for diagnostics.
 class LayoutException implements Exception {
   /// Creates a layout exception.
   const LayoutException(
     this.message, {
     this.cause,
     this.kind = LayoutFailureKind.other,
+    this.engineFile,
   });
 
-  /// One-line user-facing message.
+  /// One-line message, shown under the error view's Details.
   final String message;
 
-  /// Underlying error (if any) — JS evaluation error, asset load error,
-  /// parse error.
+  /// Underlying error (if any): a `dlopen` failure, a parse error.
   final Object? cause;
 
   /// What went wrong, as far as the canvas words it differently.
   final LayoutFailureKind kind;
+
+  /// For [LayoutFailureKind.engineUnavailable], the file that failed to
+  /// load: the native library's file name on desktop (`libelk_ffi.dylib`,
+  /// `libelk_ffi.so`, `elk_ffi.dll`), or the worker script or module path
+  /// on web (`wasm/elk_wasm_worker.js`, `wasm/elk_wasm.js`,
+  /// `wasm/elk_wasm_bg.wasm`). `null` for every other kind.
+  final String? engineFile;
 
   @override
   String toString() => cause == null
@@ -180,23 +90,43 @@ enum LayoutFailureKind {
   /// Anything not singled out below; the engine's own text is the detail.
   other,
 
-  /// elkjs ran out of stack: ELK's recursive graph walks went deeper than
-  /// the JavaScript engine's stack on the worker thread allows. The input is
-  /// fine and the native engine lays it out, so the service retries there
-  /// when it can.
-  outOfStack;
+  /// The layout engine could not be loaded: the native library on desktop,
+  /// or the worker script or WebAssembly module on web. Nothing can be laid
+  /// out until the file is restored, and there is no other engine to switch
+  /// to; [LayoutException.engineFile] names the file.
+  engineUnavailable,
+}
 
-  /// The kind for a JavaScript engine's error text: QuickJS says "stack
-  /// overflow", JavaScriptCore and V8 "Maximum call stack size exceeded",
-  /// SpiderMonkey "too much recursion".
-  static LayoutFailureKind ofEngineError(String error) {
-    final text = error.toLowerCase();
-    return text.contains('stack overflow') ||
-            text.contains('maximum call stack size exceeded') ||
-            text.contains('too much recursion')
-        ? outOfStack
-        : other;
-  }
+/// [failure] as a message that can cross an isolate boundary, for
+/// [layoutExceptionFromMessage] on the other side.
+Map<String, Object?> layoutExceptionToMessage(LayoutException failure) =>
+    <String, Object?>{
+      'ok': false,
+      'error': failure.message,
+      'kind': failure.kind.name,
+      'engineFile': failure.engineFile,
+    };
+
+/// The [LayoutException] a worker sent as [message] (see
+/// [layoutExceptionToMessage]). A message without a kind is an error that
+/// was not a [LayoutException] on the worker: its text is prefixed with
+/// [prefix] and its kind is [LayoutFailureKind.other], as is a kind this
+/// build does not know.
+LayoutException layoutExceptionFromMessage(
+  Map<Object?, Object?> message, {
+  String prefix = 'elk layout failed: ',
+}) {
+  final kind = message['kind'];
+  if (kind == null) return LayoutException('$prefix${message['error']}');
+  final engineFile = message['engineFile'];
+  return LayoutException(
+    '${message['error']}',
+    kind: LayoutFailureKind.values.firstWhere(
+      (k) => k.name == kind,
+      orElse: () => LayoutFailureKind.other,
+    ),
+    engineFile: engineFile is String ? engineFile : null,
+  );
 }
 
 /// Thrown by [ElkLayoutService.layout] when the solve was abandoned through
@@ -307,8 +237,8 @@ abstract class ElkSolveJob {
 }
 
 /// An [ElkSolver] that can also run a solve in the background, with
-/// progress reports and a cooperative cancel: the native engine. elkjs
-/// cannot, so its worker is killed to cancel it.
+/// progress reports and a cooperative cancel: the native engine. A solver
+/// that cannot (a test's) has its worker killed to cancel it.
 abstract class ElkJobSolver implements ElkSolver {
   /// Starts laying out [inputJson] and returns at once.
   ElkSolveJob start(String inputJson);
@@ -345,10 +275,10 @@ Future<String> driveElkSolveJob(
 }
 
 /// Pluggable persistent store for solved layouts, keyed by a stable content
-/// hash of the ELK input, so a re-opened design skips the multi-second elkjs
-/// solve. Implemented per-platform — `dart:io` files on desktop, a no-op on
-/// web (which renders pre-laid-out netlists and never solves). The value is
-/// the raw elkjs result JSON string. All methods are best-effort: `read`
+/// hash of the ELK input, so a re-opened design skips the solve.
+/// Implemented per-platform: `dart:io` files on desktop, none on web (a
+/// browser has no file system to persist to). The value is the raw engine
+/// result JSON string. All methods are best-effort: `read`
 /// returns null on miss/error, `write` silently drops on error.
 abstract interface class LayoutDiskCache {
   /// Returns the cached layout-result JSON for [key], or null on miss.
@@ -589,8 +519,9 @@ Map<String, Object?> buildElkInput(
   }
 
   // For a large dense scope the layered solve dominates wall-time —
-  // picorv32's 1 599-cell core is ~4.5 s in QuickJS-interpreted elkjs. Two
-  // knobs roughly halve it with comparable layout quality:
+  // picorv32's 1 599-cell core measured ~4.5 s on the elkjs engine NetCrux
+  // used before elkrs. Two knobs roughly halve it with comparable layout
+  // quality:
   //  * `thoroughness: 1` — a single crossing-minimization pass instead of
   //    the default multi-pass search.
   //  * `cycleBreaking: DEPTH_FIRST` — cheaper than the default greedy
@@ -934,87 +865,45 @@ Map<String, Set<String>> symbolCellAnchoredPorts(
 ///
 /// Lifecycle:
 ///   * Lazily start a worker isolate on the first [layout] call. The worker
-///     picks its engine ([ElkSolver]): the vendored elkrs port through
-///     `native/elk_ffi` on desktop, or the vendored `assets/elk/elk.bundled.js`
-///     on a JavaScript engine when kept by `NETCRUX_LAYOUT_ENGINE` or when
-///     the native library cannot start. The browser runs elkjs natively.
+///     opens the one desktop engine ([ElkSolver]), the vendored elkrs port
+///     through `native/elk_ffi`; the browser runs the same port as
+///     WebAssembly in a Web Worker. When the engine cannot be loaded the
+///     layout fails with a [LayoutFailureKind.engineUnavailable]
+///     [LayoutException] naming the file; there is no other engine.
 ///   * On each [layout] call, convert the [Module] to ELK input JSON
 ///     (see [buildElkInput]), solve, and parse the result via
 ///     [NetlistLayout.fromJson].
 ///
-/// All failures (asset missing, JS engine boot failure, elk error,
-/// JSON parse error) surface as [LayoutException]. The service is safe
-/// to share across multiple layout requests — initialization is guarded
-/// by a `Future` so concurrent first-callers see the same initialization
-/// promise.
+/// All failures (engine missing, input rejected, JSON parse error) surface
+/// as [LayoutException]. The service is safe to share across multiple
+/// layout requests.
 class ElkLayoutService {
-  /// Creates a service. Optional [hostFactory], [solverFactory] and
-  /// [assetLoader] are the test seams: an in-process elkjs host, an
-  /// in-process [ElkSolver] of any kind, and the asset loader, which default
-  /// to the worker isolate's own engine choice and the Flutter `rootBundle`.
-  ///
-  /// [workerSolver] makes the worker isolate run that engine whatever
-  /// [kLayoutEngineEnvVar] says (tests); `null` leaves the choice to the
-  /// worker. With [fallBackToNative], a scope elkjs runs out of stack on is
-  /// laid out again by the native engine when it can start.
+  /// Creates a service. [solverFactory] is the test seam: an in-process
+  /// [ElkSolver] of any kind, solved on the calling isolate. Without it the
+  /// solve runs on the worker isolate (desktop) or the browser's Web Worker
+  /// (web).
   ElkLayoutService({
-    ElkJsHost Function()? hostFactory,
     ElkSolver Function()? solverFactory,
-    Future<String> Function(String assetKey)? assetLoader,
     LayoutDiskCache? diskCache,
     this.maxMemCacheEntries = 16,
     this.maxMemCacheBytes = 64 * 1024 * 1024,
     this.maxConeCacheEntries = 8,
-    LayoutSolverKind? workerSolver,
-    bool fallBackToNative = true,
-  }) : // Public named params, private fields: an initializing formal can't
-       // map one to the other.
-       // ignore: prefer_initializing_formals
-       _workerSolver = workerSolver,
-       // Same public-param/private-field mapping as `_workerSolver` above.
-       // ignore: prefer_initializing_formals
-       _fallBackToNative = fallBackToNative,
-       // The public params are `hostFactory` / `diskCache`; an initializing
-       // formal can't map them to the private fields without leaking the
-       // underscore into the API.
-       // ignore: prefer_initializing_formals
-       _hostFactory = hostFactory,
-       // Same public-param/private-field mapping as `_hostFactory` above.
+  }) : // The public params are `solverFactory` / `diskCache`; an
+       // initializing formal can't map them to the private fields without
+       // leaking the underscore into the API.
        // ignore: prefer_initializing_formals
        _solverFactory = solverFactory,
-       _assetLoader = assetLoader ?? rootBundle.loadString,
-       // Same public-param/private-field mapping as `_hostFactory` above.
+       // Same public-param/private-field mapping as `_solverFactory` above.
        // ignore: prefer_initializing_formals
        _diskCache = diskCache;
 
-  /// Asset keys checked, in order, when loading the bundled elkjs UMD.
-  /// The first key is the in-package path that works under
-  /// `flutter test` against the netcrux package itself. The second key
-  /// is the path Flutter rewrites the asset to when netcrux is consumed
-  /// as a path dependency from the Pro overlay (or any other downstream
-  /// app): the bundler prepends `packages/<package>/` to every
-  /// package-declared asset. Without the second fallback the production
-  /// app loads with elkjs missing — every elaboration succeeded but
-  /// the schematic painted blank.
-  static const List<String> _elkAssetKeys = <String>[
-    'assets/elk/elk.bundled.js',
-    'packages/netcrux/assets/elk/elk.bundled.js',
-  ];
-
-  /// In-process host factory. When non-null (the test seam), [layout] runs
-  /// the elkjs solve synchronously on the calling isolate against this host.
-  /// When null (the production default), [layout] offloads the solve to a
-  /// dedicated background isolate so a large scope's multi-second layout
-  /// never blocks the UI isolate.
-  final ElkJsHost Function()? _hostFactory;
-
-  /// In-process solver factory (the other test seam): when non-null,
-  /// [layout] solves synchronously on the calling isolate with the solver it
-  /// makes, whatever engine that is. Lets a test drive the native engine
-  /// without a worker isolate.
+  /// In-process solver factory (the test seam): when non-null, [layout]
+  /// solves on the calling isolate with the solver it makes, whatever engine
+  /// that is. When null (the production default), [layout] offloads the
+  /// solve to a dedicated background isolate so a large scope's
+  /// multi-second layout never blocks the UI isolate.
   final ElkSolver Function()? _solverFactory;
   ElkSolver? _solver;
-  final Future<String> Function(String assetKey) _assetLoader;
 
   /// Persistent (cross-session) layout cache, or null when disabled (tests /
   /// web). Keyed by [_cacheKey].
@@ -1064,49 +953,25 @@ class ElkLayoutService {
   @visibleForTesting
   int get memCacheBytes => _memCacheBytes;
 
-  /// Bumped when the layout result format or the elkjs engine changes, to
+  /// Bumped when the layout result format or the engine changes, to
   /// invalidate persisted layouts (the input-derived part of the key already
   /// covers changes to `buildElkInput`).
   static const String _cacheVersion = 'elk1';
 
-  ElkJsHost? _host;
-  Future<void>? _initialization;
   _ElkLayoutIsolate? _isolate;
 
-  /// The engine the worker isolate is told to run; `null` for its own
-  /// choice.
-  final LayoutSolverKind? _workerSolver;
-
-  /// Whether an out-of-stack elkjs failure is retried on the native engine.
-  final bool _fallBackToNative;
-
-  /// Counts [cancelInFlightLayout] calls, so a native retry that was still
-  /// starting when the user cancelled does not lay out after all.
-  int _cancelGeneration = 0;
-
-  /// The exit of the last elkjs worker a cancel killed; completes when that
-  /// worker has really stopped (see [_ElkLayoutIsolate.exited]).
-  Future<void>? _cancelledWorkerExit;
-
-  /// Completes when the elkjs worker the most recent cancel stopped has
-  /// exited, or `null` when no cancel has stopped one. A killed worker exits
-  /// only after the engine call it is in returns, so this is how a test
-  /// sees that Cancel stopped the solve and did not just stop waiting.
-  @visibleForTesting
-  Future<void>? get cancelledWorkerExit => _cancelledWorkerExit;
-
   /// The engine the worker isolate announced, or `null` before one is
-  /// ready (and in-process, for the test seams).
+  /// ready (and in-process, for the test seam).
   @visibleForTesting
   String? get workerEngine => _isolate?.engine;
 
-  /// Lays out [module] using elkjs. Throws [LayoutException] on any
-  /// failure in the pipeline.
+  /// Lays out [module] on the layout engine. Throws [LayoutException] on
+  /// any failure in the pipeline.
   ///
   /// The ELK input is built and the result parsed on the calling isolate
-  /// (both pure, fast Dart). The elkjs solve itself — the multi-second cost
-  /// for a large scope — runs in-process against the injected [_hostFactory]
-  /// host (tests), or on a dedicated background isolate (production), so it
+  /// (both pure, fast Dart). The solve itself, the multi-second cost for a
+  /// large scope, runs in-process on the injected [_solverFactory] solver
+  /// (tests), or on a dedicated background isolate (production), so it
   /// never blocks the UI isolate. The provider stays in its loading state
   /// while the isolate works, so the canvas can paint a live progress
   /// indicator.
@@ -1185,8 +1050,8 @@ class ElkLayoutService {
 
   /// The progress of the solve in flight, as the engine reports it: `null`
   /// when nothing is in flight or before the engine's first report, and
-  /// always `null` on elkjs, which reports none. The canvas's layout
-  /// progress view listens to it.
+  /// always `null` on a solver that reports none (a test's). The canvas's
+  /// layout progress view listens to it.
   ValueListenable<LayoutProgress?> get progress => _progress;
   final ValueNotifier<LayoutProgress?> _progress =
       ValueNotifier<LayoutProgress?>(null);
@@ -1202,26 +1067,20 @@ class ElkLayoutService {
   /// a scope or view that does not need it. The abandoned [layout] call
   /// completes with a [LayoutCancelledException] at once. The native engine
   /// stops at its next check, within a pipeline step, and its worker stays
-  /// warm for the next layout; an elkjs solve is interrupted inside its
-  /// JavaScript engine and its worker killed, and the next call starts a
-  /// fresh one. A no-op when nothing is in flight, so the warm worker
-  /// survives ordinary navigation.
+  /// warm for the next layout; on web the Web Worker is terminated and the
+  /// next call starts a fresh one. A no-op when nothing is in flight, so the
+  /// warm worker survives ordinary navigation.
   void cancelInFlightLayout() {
-    _cancelGeneration++;
     if (kElkWebSolverAvailable) {
       cancelElkOnWeb();
     } else {
       _inProcessJob?.cancel();
-      final isolate = _isolate;
-      if (isolate != null && isolate.hasInFlight && isolate.runsElkjs) {
-        _cancelledWorkerExit = isolate.exited;
-      }
-      isolate?.cancelInFlight();
+      _isolate?.cancelInFlight();
     }
   }
 
   /// Runs the solve for [inputJson] and returns the result JSON string,
-  /// in-process against the injected solver or host (tests), on the worker
+  /// in-process against the injected solver (tests), on the worker
   /// isolate (desktop) or in the browser's Web Worker (web), publishing the
   /// engine's progress on [progress] while it runs.
   Future<String> _solve(String inputJson) async {
@@ -1253,67 +1112,15 @@ class ElkLayoutService {
         if (identical(_inProcessJob, job)) _inProcessJob = null;
       }
     }
-    if (_hostFactory != null) {
-      await _ensureInitialized();
-      return runElkLayoutOnHost(_host!, inputJson);
-    }
-    // On web the elkrs port runs as WebAssembly in a Web Worker, with elkjs
-    // on the page as the fallback when the module cannot load; there is no
+    // On web the elkrs port runs as WebAssembly in a Web Worker; there is no
     // `dart:ffi` and no `Isolate.spawn` there. Off web this is compiled out
     // (`kElkWebSolverAvailable` is a const `false`) and the solve runs on the
     // background isolate.
     if (kElkWebSolverAvailable) {
-      return await solveElkOnWeb(
-        inputJson,
-        _loadElkSource,
-        onProgress: onProgress,
-      );
+      return await solveElkOnWeb(inputJson, onProgress: onProgress);
     }
-    final isolate = _isolate ??= _ElkLayoutIsolate(
-      _loadElkSource,
-      solver: _workerSolver,
-    );
-    final generation = _cancelGeneration;
-    try {
-      return await isolate.layout(inputJson, onProgress: onProgress);
-    } on LayoutException catch (e, stackTrace) {
-      if (e.kind != LayoutFailureKind.outOfStack ||
-          !_fallBackToNative ||
-          !isolate.runsElkjs) {
-        rethrow;
-      }
-      final native = await _startNativeWorker();
-      // No native engine (the reason elkjs is running at all, on a broken
-      // installation): the out-of-stack failure is the answer.
-      if (native == null) Error.throwWithStackTrace(e, stackTrace);
-      if (generation != _cancelGeneration || !identical(_isolate, isolate)) {
-        // Cancelled, or disposed, while the native worker was starting.
-        native.dispose();
-        throw const LayoutCancelledException();
-      }
-      // elkjs cannot lay this scope out; the native engine can, and lays
-      // out everything elkjs can as well (the parity gate holds them to the
-      // same coordinates), so the rest of the session stays on it.
-      isolate.dispose();
-      _isolate = native;
-      return await native.layout(inputJson, onProgress: onProgress);
-    }
-  }
-
-  /// A ready worker isolate on the native engine, or `null` when the native
-  /// library cannot start.
-  Future<_ElkLayoutIsolate?> _startNativeWorker() async {
-    final native = _ElkLayoutIsolate(
-      _loadElkSource,
-      solver: LayoutSolverKind.native,
-    );
-    try {
-      await native.ensureReady();
-      return native;
-    } on Object {
-      native.dispose();
-      return null;
-    }
+    final isolate = _isolate ??= _ElkLayoutIsolate();
+    return await isolate.layout(inputJson, onProgress: onProgress);
   }
 
   /// Returns the cached layout for [key], promoting it to the LRU tail,
@@ -1345,7 +1152,9 @@ class ElkLayoutService {
   NetlistLayout _parseLayout(String resultJson) {
     final decoded = jsonDecode(resultJson);
     if (decoded is! Map<String, Object?>) {
-      throw const LayoutException('elkjs returned a non-object layout result');
+      throw const LayoutException(
+        'the layout engine returned a non-object layout result',
+      );
     }
     return NetlistLayout.fromJson(decoded);
   }
@@ -1379,295 +1188,46 @@ class ElkLayoutService {
     return await layout(top);
   }
 
-  /// Disposes the in-process host or solver (tests) and tears down the
-  /// layout isolate (production). Call when shutting down the app or to free
-  /// the engine's memory.
+  /// Disposes the in-process solver (tests) and tears down the layout
+  /// isolate (production). Call when shutting down the app or to free the
+  /// engine's memory.
   void dispose() {
-    _host?.dispose();
-    _host = null;
     _inProcessJob?.cancel();
     _progress.value = null;
     _solver?.dispose();
     _solver = null;
-    _initialization = null;
     _isolate?.dispose();
     _isolate = null;
     _memCache.clear();
     _memCacheBytes = 0;
     _coneCache.clear();
   }
-
-  Future<void> _ensureInitialized() {
-    return _initialization ??= _initialize();
-  }
-
-  /// Loads the elkjs UMD bundle, falling back across the keys declared
-  /// in [_elkAssetKeys]. The first key that resolves to a non-empty
-  /// string wins; if every key fails the last error is rethrown so the
-  /// outer try/catch can wrap it in a [LayoutException].
-  Future<String> _loadElkSource() async {
-    Object? lastError;
-    for (final key in _elkAssetKeys) {
-      try {
-        final source = await _assetLoader(key);
-        if (source.isNotEmpty) return source;
-      } on Object catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError is Exception) throw lastError;
-    if (lastError is Error) throw lastError;
-    throw const LayoutException('elkjs asset not found in any known key');
-  }
-
-  Future<void> _initialize() async {
-    try {
-      final host = _hostFactory!();
-      final source = await _loadElkSource();
-      initElkRuntime(host, source);
-      _host = host;
-    } on Object catch (e) {
-      _initialization = null;
-      if (e is LayoutException) rethrow;
-      throw LayoutException(
-        'Failed to initialize the elkjs runtime',
-        cause: e,
-      );
-    }
-  }
 }
 
-/// ELK Layered's `HyperedgeDummyMerger.dfs` as GWT compiled it into the
-/// vendored elkjs 0.9.3 bundle: it labels every port reachable from a port,
-/// through edges and through the ports of long-edge dummy nodes, with one
-/// hyperedge index, recursing once per port. On a scope like VexRiscv (1,463
-/// cells), whose long edges chain thousands of dummy ports, that recursion
-/// outgrew the stack of the layout worker's thread on both JavaScriptCore
-/// and QuickJS, and the layout failed with a stack overflow (netcrux#83).
-final String _elkjsRecursivePortWalk = <String>[
-  'function iac(a,b,c){var d,e,f;b.p=c;',
-  'for(f=Fl(Al(cD(WC(cJ,1),rve,20,0,[new T3b(b),new _3b(b)])));gs(f);)',
-  '{d=RD(hs(f),12);d.p==-1&&iac(a,d,c)}',
-  'if(b.i.k==(r3b(),o3b)){for(e=new Anb(b.i.j);e.a<e.c.c.length;)',
-  '{d=RD(ynb(e),12);d!=b&&d.p==-1&&iac(a,d,c)}}}',
-].join();
-
-/// The same walk on an explicit stack. A port is labelled when it is first
-/// reached instead of when it is first entered, which labels exactly the
-/// same ports with the same index: the walk sets nothing else, and its
-/// caller reads only the labels. The vendored elkrs port made the same
-/// change (`native/vendor/elkrs/VENDORED.md`, change 4).
-final String _elkjsIterativePortWalk = <String>[
-  'function iac(a,b,c){var d,e,f,s;b.p=c;s=[b];while(s.length>0){b=s.pop();',
-  'for(f=Fl(Al(cD(WC(cJ,1),rve,20,0,[new T3b(b),new _3b(b)])));gs(f);)',
-  '{d=RD(hs(f),12);if(d.p==-1){d.p=c;s.push(d)}}',
-  'if(b.i.k==(r3b(),o3b)){for(e=new Anb(b.i.j);e.a<e.c.c.length;)',
-  '{d=RD(ynb(e),12);if(d!=b&&d.p==-1){d.p=c;s.push(d)}}}}}',
-].join();
-
-/// Returns [elkSource] with the recursive port walk of the vendored elkjs
-/// bundle replaced by its explicit-stack form (see
-/// [_elkjsRecursivePortWalk]). A bundle without that exact text, such as a
-/// newer elkjs, is returned unchanged; `elk_layout_service_test.dart`
-/// fails if the vendored bundle stops containing it.
-String patchElkSource(String elkSource) =>
-    elkSource.replaceFirst(_elkjsRecursivePortWalk, _elkjsIterativePortWalk);
-
-/// Whether [elkSource] carries the explicit-stack port walk
-/// [patchElkSource] puts in, for the test that guards the patch.
-@visibleForTesting
-bool elkSourceHasIterativePortWalk(String elkSource) =>
-    elkSource.contains(_elkjsIterativePortWalk) &&
-    !elkSource.contains(_elkjsRecursivePortWalk);
-
-/// Boots the elkjs runtime on [host]: installs the GWT/browser shims, loads
-/// the [elkSource] UMD bundle, and constructs the singleton `ELK` instance.
-/// Throws [LayoutException] if the constructor fails. Top-level so it runs
-/// both in-process and inside the layout worker isolate.
-void initElkRuntime(ElkJsHost host, String elkSource) {
-  host
-    // Shim browser/GWT globals that ELK's bundled JS expects.
-    //
-    // ELK is GWT-compiled — its runtime references `$wnd` (GWT's pointer to
-    // the browser window) at constructor time
-    // (`$wnd.Error.stackTraceLimit = Error.stackTraceLimit = 64`). QuickJS
-    // via flutter_js has no `$wnd`, no `window`, and no
-    // `Error.stackTraceLimit`, so `new ELK()` threw synchronously — the
-    // exception was swallowed by an outer try/catch in the UMD wrapper,
-    // leaving `globalThis.__elkInstance` undefined. Every subsequent
-    // `layout()` call then resolved to an empty result and the schematic
-    // canvas painted nothing. Map `$wnd` / `window` onto `globalThis` so the
-    // GWT runtime sees a host object to drive.
-    //
-    // ELK's PromisedWorker dispatch also wraps every worker message in
-    // `setTimeout(fn, 0)`. QuickJS via flutter_js has no timer driver, so the
-    // default flutter_js runtime lacks `setTimeout`. We polyfill it as a FIFO
-    // queue that the layout loop drains by calling
-    // `globalThis.__drainSetTimeout()` between `executePendingJob` ticks. The
-    // polyfill is good enough for ELK's in-band dispatch — it doesn't honor
-    // the `ms` argument because ELK only ever passes 0.
-    ..evaluate(r'''
-      (function(){
-        var __setTimeoutQueue = [];
-        var __setTimeoutId = 0;
-        globalThis.setTimeout = function(fn, ms){
-          var id = ++__setTimeoutId;
-          __setTimeoutQueue.push({id: id, fn: fn});
-          return id;
-        };
-        globalThis.clearTimeout = function(id){
-          for (var i = 0; i < __setTimeoutQueue.length; i++) {
-            if (__setTimeoutQueue[i].id === id) {
-              __setTimeoutQueue.splice(i, 1);
-              return;
-            }
-          }
-        };
-        globalThis.__drainSetTimeout = function(){
-          while (__setTimeoutQueue.length > 0) {
-            var entry = __setTimeoutQueue.shift();
-            try { entry.fn(); } catch (e) { /* swallow */ }
-          }
-        };
-        // GWT compatibility shims — see comment above.
-        globalThis.$wnd = globalThis;
-        if (typeof globalThis.window === "undefined") {
-          globalThis.window = globalThis;
-        }
-        if (typeof globalThis.Error.stackTraceLimit === "undefined") {
-          globalThis.Error.stackTraceLimit = 64;
-        }
-      })();
-    ''')
-    ..evaluate(patchElkSource(elkSource))
-    // The UMD bundle attaches `ELK` to globalThis via `g.ELK = f()`. Wrap in
-    // a try/catch that surfaces the constructor failure through
-    // __elkInitError so callers see a real error instead of a silently-unset
-    // __elkInstance.
-    ..evaluate('''
-      (function(){
-        globalThis.__elkInitError = null;
-        try {
-          globalThis.__elkInstance = new ELK();
-        } catch (e) {
-          globalThis.__elkInitError = String(e && e.message ? e.message : e);
-        }
-      })();
-    ''');
-  final initError = host.evaluate('globalThis.__elkInitError || ""');
-  if (initError.isNotEmpty) {
-    throw LayoutException('elkjs constructor threw: $initError');
-  }
-}
-
-/// Runs one elkjs solve on an already-[initElkRuntime]-booted [host] and
-/// returns the layout result as a JSON string. Throws [LayoutException] on
-/// an elk error or empty result. Top-level so it runs both in-process and
-/// inside the layout worker isolate.
-String runElkLayoutOnHost(ElkJsHost host, String inputJson) {
-  // Stash the input on globalThis and call elk.layout(...), which returns a
-  // Promise resolved via a then handler that stores the JSON result back on
-  // globalThis under __elk_result. Errors become __elk_error.
-  host
-    ..evaluate('globalThis.__elk_input = $inputJson;')
-    ..evaluate('globalThis.__elk_result = null;')
-    ..evaluate('globalThis.__elk_error = null;')
-    ..evaluate('''
-      globalThis.__elkInstance
-        .layout(globalThis.__elk_input)
-        .then(function(r){ globalThis.__elk_result = JSON.stringify(r); })
-        .catch(function(e){ globalThis.__elk_error = String(e && e.message ? e.message : e); });
-    ''');
-  // Advance the JS event loop until the Promise resolves. ELK schedules its
-  // in-band worker dispatch with `setTimeout(fn, 0)`, which
-  // QuickJS-via-flutter_js doesn't drain through `executePendingJob`
-  // (microtasks only). The setTimeout polyfill (see initElkRuntime) queues
-  // callbacks into a global array; we drain it on every probe tick alongside
-  // the microtask queue. Without this, ELK's PromisedWorker.onmessage
-  // callback never fires and the promise hangs "pending" forever.
-  for (var i = 0; i < 5000; i++) {
-    host
-      ..executePendingJob()
-      ..evaluate(
-        'globalThis.__drainSetTimeout && globalThis.__drainSetTimeout();',
-      )
-      ..executePendingJob();
-    final probe = host.evaluate(
-      'globalThis.__elk_result === null && globalThis.__elk_error === null ? "pending" : "done"',
-    );
-    if (probe != 'pending') break;
-  }
-  final error = host.evaluate('globalThis.__elk_error || ""');
-  if (error.isNotEmpty) {
-    final kind = LayoutFailureKind.ofEngineError(error);
-    throw LayoutException(
-      kind == LayoutFailureKind.outOfStack
-          ? 'elkjs ran out of stack on this scope: $error'
-          : 'elkjs rejected the layout input: $error',
-      kind: kind,
-    );
-  }
-  final resultStr = host.evaluate('globalThis.__elk_result || ""');
-  if (resultStr.isEmpty) {
-    throw const LayoutException('elkjs returned an empty layout');
-  }
-  return resultStr;
-}
-
-/// A dedicated long-lived background isolate that owns a flutter_js elkjs
-/// runtime and services layout requests, so a large scope's multi-second
-/// solve never blocks the UI isolate. The elk UMD source is loaded on the
-/// main isolate (via `rootBundle`) and handed to the worker once at init —
-/// the worker never touches `rootBundle` (which needs a root-isolate token).
+/// A dedicated long-lived background isolate that owns the layout engine
+/// and services layout requests, so a large scope's multi-second solve never
+/// blocks the UI isolate.
 class _ElkLayoutIsolate {
-  _ElkLayoutIsolate(this._loadSource, {this.solver});
-
-  /// Loads the elk UMD bundle on the main isolate.
-  final Future<String> Function() _loadSource;
-
-  /// The engine the worker must run, or `null` for its own choice (the
-  /// native engine unless [kLayoutEngineEnvVar] keeps elkjs).
-  final LayoutSolverKind? solver;
-
   Isolate? _isolate;
   SendPort? _commands;
   ReceivePort? _errors;
   Future<void>? _ready;
 
-  /// Completes when the current worker isolate has exited.
-  Future<void> _exited = Future<void>.value();
-
   /// The engine the running worker announced, or `null` before it is ready.
   String? _engine;
 
-  /// What stops the worker's elkjs solve from here, when its engine offers
-  /// it.
-  ElkInterruptHandle? _interrupt;
-
   Future<void> ensureReady() => _ready ??= _start();
-
-  /// Completes when the current worker isolate has really exited. A killed
-  /// worker exits only once the engine call it is in returns, so this is
-  /// what says a cancelled solve has stopped using the CPU.
-  Future<void> get exited => _exited;
-
-  /// Whether the ready worker runs elkjs.
-  bool get runsElkjs => _engine?.startsWith('elkjs') ?? false;
 
   /// The engine the ready worker runs, as it describes itself.
   String? get engine => _engine;
 
   Future<void> _start() async {
     final handshake = ReceivePort();
-    // The worker has no `WidgetsBinding`, so anything in flutter_js that
-    // reaches for one (its fetch polyfill did, before the host stopped
-    // enabling it) surfaces as an asynchronous error that does not affect
-    // the layout result. Spawn with `errorsAreFatal: false` and drain the
-    // error port — otherwise the default fatal handling tears the worker
-    // down mid-flight and every pending `layout()` hangs forever.
+    // Spawn with `errorsAreFatal: false` and drain the error port: an
+    // asynchronous error on the worker that does not touch the solve must
+    // not tear the worker down mid-flight, which would leave every pending
+    // `layout()` waiting forever.
     _errors = ReceivePort()..listen((_) {});
-    final exit = ReceivePort();
-    _exited = exit.first.then((_) => exit.close());
     try {
       _isolate = await Isolate.spawn(
         _elkIsolateEntry,
@@ -1675,39 +1235,37 @@ class _ElkLayoutIsolate {
         debugName: 'elk-layout',
         errorsAreFatal: false,
         onError: _errors!.sendPort,
-        onExit: exit.sendPort,
       );
       _commands = await handshake.first as SendPort;
-    } on Object {
-      exit.close();
-      rethrow;
     } finally {
       handshake.close();
     }
-    final source = await _loadSource();
     final reply = ReceivePort();
     _commands!.send(<String, Object?>{
       'type': 'init',
-      'source': source,
-      'solver': solver?.name,
       'reply': reply.sendPort,
     });
     final result = await reply.first as Map<Object?, Object?>;
     reply.close();
     if (result['ok'] != true) {
-      _ready = null;
-      throw LayoutException('elkjs isolate init failed: ${result['error']}');
+      // The engine did not start: the worker is no use, and the next layout
+      // tries again from a fresh one. The failure keeps its kind and file
+      // (`engineUnavailable` for a library that will not load).
+      dispose();
+      throw layoutExceptionFromMessage(
+        result,
+        prefix: 'the layout worker did not start: ',
+      );
     }
     _cooperative = result['cooperative'] == true;
     _engine = result['engine'] as String?;
-    _interrupt = ElkInterruptHandle.fromMessage(result['interrupt']);
   }
 
   /// What [Future.any] yields when the solve was abandoned first.
   static const Object _cancelled = Object();
 
   /// Whether the worker's engine stops on request (the native engine), so a
-  /// cancel can keep the worker; elkjs cannot, so its worker is killed.
+  /// cancel can keep the worker; a worker whose engine cannot is killed.
   bool _cooperative = false;
 
   /// Completer for the solve in flight; completed by [cancelInFlight] and
@@ -1760,19 +1318,9 @@ class _ElkLayoutIsolate {
       final result = first! as Map<Object?, Object?>;
       if (result['cancelled'] == true) throw const LayoutCancelledException();
       if (result['ok'] != true) {
-        // An engine's LayoutException crosses with its kind and message;
-        // anything else arrives as text only.
-        final kind = result['kind'];
-        if (kind == null) {
-          throw LayoutException('elk layout failed: ${result['error']}');
-        }
-        throw LayoutException(
-          '${result['error']}',
-          kind: LayoutFailureKind.values.firstWhere(
-            (k) => k.name == kind,
-            orElse: () => LayoutFailureKind.other,
-          ),
-        );
+        // An engine's LayoutException crosses with its kind, message and
+        // file; anything else arrives as text only.
+        throw layoutExceptionFromMessage(result);
       }
       return result['result']! as String;
     } finally {
@@ -1788,16 +1336,12 @@ class _ElkLayoutIsolate {
   /// Abandons the solve in flight, if any: the pending [layout] call
   /// completes with a [LayoutCancelledException] at once. The native engine
   /// is told to stop, which it does within a pipeline step, and the worker
-  /// stays warm. elkjs cannot take a message mid-solve, so its engine is
-  /// interrupted from here where it offers a way ([interruptElkSolve]) and
-  /// its worker is killed; the kill lands when the interrupted engine call
-  /// returns. A no-op when idle, so the warm worker is kept.
+  /// stays warm. A worker whose engine cannot take a message mid-solve is
+  /// killed instead. A no-op when idle, so the warm worker is kept.
   void cancelInFlight() {
     final cancel = _cancelInFlight;
     if (cancel == null) return;
     if (!_cooperative) {
-      final interrupt = _interrupt;
-      if (interrupt != null) interruptElkSolve(interrupt);
       dispose();
       return;
     }
@@ -1820,21 +1364,20 @@ class _ElkLayoutIsolate {
     _ready = null;
     _cooperative = false;
     _engine = null;
-    _interrupt = null;
   }
 }
 
 /// Entry point for the elk layout worker isolate. Owns one [ElkSolver],
-/// chosen by [createDefaultElkSolver] at `init` (or the engine the `init`
-/// message's `solver` names); services `init`, `layout`, `cancel` and
-/// `dispose` commands, replying on each message's port. The `init` reply
-/// carries the engine's description, whether it stops on request, and, for
-/// elkjs, the handle that interrupts it from another isolate.
+/// opened by [createDefaultElkSolver] at `init`; services `init`, `layout`,
+/// `cancel` and `dispose` commands, replying on each message's port. The
+/// `init` reply carries the engine's description and whether it stops on
+/// request, or, when the engine cannot be loaded, the
+/// [LayoutFailureKind.engineUnavailable] failure naming the file.
 ///
 /// A native solve runs as a job on the engine's own thread, so this isolate
 /// stays free while it runs: it polls the job, forwards its progress to the
 /// `layout` message's progress port, and passes a `cancel` for that job's id
-/// on to the engine. An elkjs solve runs synchronously here.
+/// on to the engine.
 Future<void> _elkIsolateEntry(SendPort handshake) async {
   final commands = ReceivePort();
   handshake.send(commands.sendPort);
@@ -1850,20 +1393,11 @@ Future<void> _elkIsolateEntry(SendPort handshake) async {
     try {
       switch (command['type']) {
         case 'init':
-          final requested = command['solver'];
-          final created = solver = createDefaultElkSolver(
-            command['source']! as String,
-            solver: LayoutSolverKind.values
-                .where((k) => k.name == requested)
-                .firstOrNull,
-          );
+          final created = solver = createDefaultElkSolver();
           reply.send(<String, Object?>{
             'ok': true,
             'engine': created.engineDescription,
             'cooperative': created is ElkJobSolver,
-            'interrupt': created is JsElkSolver
-                ? created.interruptHandle?.toMessage()
-                : null,
           });
         case 'layout':
           final input = command['input']! as String;
@@ -1898,11 +1432,7 @@ Future<void> _elkIsolateEntry(SendPort handshake) async {
     } on LayoutCancelledException {
       reply.send(<String, Object?>{'ok': false, 'cancelled': true});
     } on LayoutException catch (e) {
-      reply.send(<String, Object?>{
-        'ok': false,
-        'error': e.message,
-        'kind': e.kind.name,
-      });
+      reply.send(layoutExceptionToMessage(e));
     } on Object catch (e) {
       reply.send(<String, Object?>{'ok': false, 'error': '$e'});
     }

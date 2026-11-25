@@ -18,10 +18,10 @@ Notes:
   `pubspec.lock`. Run `flutter pub deps` after dependency upgrades to
   refresh this list; see §12.
 - §1 covers the external programs NetCrux invokes; §2 covers the vendored
-  Eclipse Layout Kernel in both forms that ship inside the application, the
-  JavaScript bundle and the native Rust port behind `native/elk_ffi`, the
-  one native library NetCrux builds itself; §3 covers the native library
-  flutter_js ships with it.
+  Eclipse Layout Kernel that ships inside the application, the native Rust
+  port behind `native/elk_ffi` (the one native library NetCrux builds
+  itself) and `native/elk_wasm`; §3 records the JavaScript layout engine and
+  runtime that shipped before 2.0 and no longer do.
 
 
 --------------------------------------------------------------------------
@@ -113,88 +113,21 @@ of the bundled-binary distribution work (§11).
 
 
 --------------------------------------------------------------------------
-2. Vendored JavaScript: elkjs (Eclipse Layout Kernel)
+2. Vendored Eclipse Layout Kernel: elkrs
 --------------------------------------------------------------------------
 
-Component: elkjs (the JavaScript build of the Eclipse Layout Kernel)
-Version:   0.9.3 — per the commit that vendored it (`0f48b4b`, "downloaded
-           from jsdelivr at the pinned 0.9.3 release"). The bundle itself
-           carries no in-file version marker.
-File:      `assets/elk/elk.bundled.js` (~1.5 MB), declared as a Flutter
-           asset in `pubspec.yaml`
-Role:      Schematic graph layout fallback. On desktop the bundle is
-           executed in-process by `flutter_js` (§3) when the native port
-           (§2.1) cannot start or `NETCRUX_LAYOUT_ENGINE=elkjs` asks for it;
-           on web it runs natively in the browser
-           (`elk_web_solver_web.dart`) when the WebAssembly build of the
-           port (§2.1) cannot load. It ships in every NetCrux distribution.
-License:   EPL-2.0 (Eclipse Public License 2.0)
-Upstream:  https://github.com/kieler/elkjs
-           https://github.com/eclipse-elk/elk
-
-The bundle is a browserify/UMD wrapper around four CommonJS modules. Their
-license banners, read verbatim from the vendored file:
-
-  Modules 1–3 — `elk-api.js`, the GWT-transpiled `elk-worker.min.js` core,
-  and `elk-node.js` — EPL-2.0:
-
-    /*******************************************************************************
-     * Copyright (c) 2017 Kiel University and others.
-     *
-     * This program and the accompanying materials are made
-     * available under the terms of the Eclipse Public License 2.0
-     * which is available at https://www.eclipse.org/legal/epl-2.0/
-     *
-     * SPDX-License-Identifier: EPL-2.0
-     *******************************************************************************/
-
-    /*******************************************************************************
-     * Copyright (c) 2021 Kiel University and others.
-     * This program and the accompanying materials are made available under the
-     * terms of the Eclipse Public License 2.0 which is available at
-     * http://www.eclipse.org/legal/epl-2.0.
-     *
-     * SPDX-License-Identifier: EPL-2.0
-     *******************************************************************************/
-
-  (The minified `elk-worker.min.js` core carries no banner of its own in the
-  minified output, but is the same upstream release and covered by the same
-  EPL-2.0 grant.)
-
-  Module 4 — an embedded `web-worker` npm polyfill stub, under a DIFFERENT
-  license:
-
-    /**
-     * Copyright 2020 Google LLC
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *     http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-
-  That stub sits behind a Node-only `require('web-worker')` branch that
-  NetCrux's QuickJS and browser runtimes never reach, but it is byte-present
-  in the shipped asset and is therefore attributed here. Its Apache-2.0
-  terms are the same as this repository's LICENSE.
+NetCrux lays out schematics with one engine, elkrs (§2.1), the Rust port of
+the Eclipse Layout Kernel, on desktop and on web. Until 2.0 it also shipped
+elkjs, the JavaScript build of ELK, as a fallback; that bundle and the
+runtime that hosted it are gone from every distribution (§3).
 
 **EPL-2.0 obligation — satisfied.** EPL-2.0 §3.1(b) requires that a copy of
 the Agreement accompany the Program when it is distributed in object-code
-form. The full license text ships alongside the bundle as
-`assets/elk/LICENSE.epl-2.0.txt` (the canonical SPDX EPL-2.0 text), declared
-as a Flutter asset in `pubspec.yaml` so it travels inside every desktop and
-web distribution — not merely in the source tree. See §11.3.
-
-To refresh the bundle, download the pinned elkjs release from the upstream
-project and replace `assets/elk/elk.bundled.js`, then re-check the banners
-above — a newer release may add or drop embedded modules.
+form. The full license text ships as `assets/elk/LICENSE.epl-2.0.txt` (the
+canonical SPDX EPL-2.0 text), declared as a Flutter asset in `pubspec.yaml`
+so it travels inside every desktop and web distribution, not merely in the
+source tree, and the About box and its Acknowledgments page show it. See
+§11.3.
 
 2.1 Native port: elkrs, wrapped by elk_ffi (desktop) and elk_wasm (web)
 
@@ -213,20 +146,16 @@ Files:     `native/vendor/elkrs/` (the crate source, its 201-case golden
            `wasm/elk_wasm.js`) by the first-party wrapper crate in
            `native/elk_wasm/`, run by `web/wasm/elk_wasm_worker.js` (both
            wrappers and the worker Apache-2.0, this repository's LICENSE)
-Role:      The schematic layout engine on desktop and, from 1.2, on web.
-           Same ELK JSON contract as the bundle above, the same layout as
-           elkjs for NetCrux's inputs (held to that by
+Role:      The schematic layout engine on desktop and, from 1.2, on web;
+           from 2.0 the only one. It produces the same layout as ELK itself
+           for NetCrux's inputs (held to stored elkjs 0.9.3 output, made
+           outside the app, by
            `test/services/layout/native_elk_parity_test.dart` on desktop and
-           `test/services/layout/elk_wasm_web_test.dart` in the browser), at
-           native speed and memory. The elkjs bundle stays as the fallback on
-           both: on desktop when the library cannot start or
-           `NETCRUX_LAYOUT_ENGINE=elkjs` asks for it, on web when the
-           WebAssembly module cannot load.
+           `test/services/layout/elk_wasm_web_test.dart` in the browser).
 License:   Labelled Apache-2.0 by its author. It is a translation of
            Eclipse Layout Kernel source, which is EPL-2.0, so NetCrux treats
-           the vendored tree as EPL-2.0, the licence it already accepts for
-           the bundle above, and satisfies EPL-2.0 §3.1(b) the same way: the
-           Agreement ships as `assets/elk/LICENSE.epl-2.0.txt`. Any change
+           the vendored tree as EPL-2.0 and satisfies EPL-2.0 §3.1(b) as §2
+           says: the Agreement ships as `assets/elk/LICENSE.epl-2.0.txt`. Any change
            NetCrux makes under `native/vendor/elkrs/src/` stays in that
            tree, which is public with the open core.
 Upstream:  https://github.com/depetrol/elkrs
@@ -247,57 +176,17 @@ Verbatim license text of the port as labelled (Apache-2.0):
 
 
 --------------------------------------------------------------------------
-3. flutter_js and the QuickJS engine it ships
+3. Removed in 2.0: elkjs, flutter_js and QuickJS
 --------------------------------------------------------------------------
 
-3.1 flutter_js (MIT)
-
-  Component: flutter_js
-  Version:   0.8.7
-  Role:      In-process JavaScript runtime hosting the elkjs bundle on
-             desktop (`lib/services/layout/elk_layout_service.dart`).
-  License:   MIT
-  Upstream:  https://github.com/abner/flutter_js
-  Copyright: (c) 2019 Ábner Oliveira
-
-  flutter_js's own README credits two upstream packages whose code it
-  incorporates, both MIT: `flutter_qjs`
-  (https://github.com/ekibun/flutter_qjs — the QuickJS dart:ffi bridge) and
-  `flutter_jscore` (https://github.com/xuelongqy/flutter_jscore — the
-  JavaScriptCore bindings).
-
-3.2 QuickJS — a native binary that ships on Linux and Windows
-
-  The `flutter_js` package ships **prebuilt native libraries** that are
-  copied into NetCrux's Linux and Windows application bundles:
-
-    linux/shared/libquickjs_c_bridge_plugin.so
-    windows/shared/quickjs_c_bridge.dll
-
-  Symbol inspection of the Linux artifact confirms it embeds QuickJS
-  itself — it contains the strings `quickjs.c`, `libregexp.c`,
-  `libunicode.c`, and the banner `QuickJS memory usage -- 2021-03-27
-  version`.
-
-  Component: QuickJS
-  Version:   2021-03-27 (per the string embedded in the shipped binary)
-  License:   MIT
-  Upstream:  https://bellard.org/quickjs/
-  Copyright: (c) 2017-2021 Fabrice Bellard and Charlie Gordon
-
-  **Verification gap.** The `flutter_js` package ships only its own MIT
-  LICENSE file; it carries no QuickJS license text alongside the prebuilt
-  binaries, and the bridge repository
-  (https://github.com/abner/quickjs-c-bridge) exposes no machine-readable
-  license. The MIT attribution above is taken from QuickJS's own
-  well-established upstream terms, **not** from a license file present in
-  the distributed artifact. See §11.
-
-  On macOS and iOS, `flutter_js` uses the operating system's own
-  JavaScriptCore (a Swift plugin, no bundled engine), so no QuickJS binary
-  ships in the macOS distribution. On web, NetCrux does not use `flutter_js`
-  at all: the layout runs as WebAssembly (§2.1), and its elkjs fallback runs
-  directly in the browser's JavaScript engine.
+NetCrux 1.x shipped three more third-party components for its layout
+fallback, attributed here in those releases: the elkjs 0.9.3 bundle
+(`assets/elk/elk.bundled.js`, EPL-2.0, with an embedded Apache-2.0
+`web-worker` stub), the `flutter_js` 0.8.7 package (MIT) that ran it on
+desktop, and the QuickJS 2021-03-27 binaries (MIT) that package carried
+into the Linux and Windows bundles. From 2.0 none of them is in the source
+tree's dependency set or in any desktop or web distribution (netcrux#86);
+`test/static/bundled_license_assets_test.dart` fails if one comes back.
 
 
 --------------------------------------------------------------------------
@@ -486,9 +375,7 @@ Representative verbatim license text:
               https://github.com/rrousselGit/state_notifier
     Copyright (c) 2020 Remi Rousselet
 
-8.3 flutter_js (MIT) — see §3.1 for the native libraries it ships
-    Version:  0.8.7
-    Copyright (c) 2019 Ábner Oliveira
+8.3 (flutter_js, listed here until 2.0, no longer ships; see §3)
 
 8.4 xml / petitparser (MIT)
     Versions: xml 6.6.1, petitparser 7.0.2
@@ -588,18 +475,14 @@ open-source flip.
 
 11.3 EPL-2.0 text is now shipped. Resolved 2026-07-23: the canonical
     SPDX EPL-2.0 text ships as `assets/elk/LICENSE.epl-2.0.txt`, declared
-    as a Flutter asset so it accompanies elkjs (§2) in every desktop and
-    web build. This satisfies EPL-2.0 §3.1(b). If an in-app attributions
+    as a Flutter asset so it accompanies the layout engine, elkrs (§2), in
+    every desktop and web build. This satisfies EPL-2.0 §3.1(b). If an in-app attributions
     surface later lands (§11.8), it should surface or link this file rather
     than duplicate it.
 
-11.4 QuickJS attribution is not sourced from the shipped artifact.
-    See §3.2 — the `flutter_js` package ships prebuilt QuickJS-containing
-    binaries on Linux and Windows with no accompanying QuickJS license
-    text, and the bridge repository publishes no machine-readable license.
-    QuickJS's MIT terms (Fabrice Bellard, Charlie Gordon) are recorded from
-    upstream, not from the artifact. Confirm the exact QuickJS revision and
-    obtain its LICENSE for redistribution alongside the binaries.
+11.4 QuickJS attribution. Resolved in 2.0 by removal: the QuickJS
+    binaries that `flutter_js` carried into the Linux and Windows bundles,
+    whose license text the package never supplied, no longer ship (§3).
 
 11.5 ghdl-yosys-plugin license — not applicable. NetCrux neither loads nor
     ships the GPL-3.0 plugin (§1.3), so the question of combining it with
@@ -633,10 +516,8 @@ For each new or upgraded dependency, locate its license file (typically
 `LICENSE`, `LICENSE.md`) under `~/.pub-cache/hosted/pub.dev/<name>-<version>/`
 and either add a new section here or extend the relevant existing section.
 
-Re-check §2 after any refresh of `assets/elk/elk.bundled.js` (the embedded
-module set can change between elkjs releases), §3 after any `flutter_js`
-upgrade (the shipped native libraries can change), and §1 after any change
-to `tool/bundled_engines.yaml`.
+Re-check §2.1 after any refresh of `native/vendor/elkrs` or the crates its
+wrappers lock, and §1 after any change to `tool/bundled_engines.yaml`.
 
 -- BEGIN GENERATED INVENTORY --
 
@@ -656,7 +537,7 @@ only direct dev dependencies as such, so the shipped subset
 cannot be computed exactly, and over-listing is the safe side
 of an attribution question.
 
-  Apache-2.0 5,  BSD-3-Clause 114,  MIT 23,  MPL-2.0 1,  SDK 50
+  Apache-2.0 5,  BSD-3-Clause 114,  MIT 22,  MPL-2.0 1,  SDK 50
 
   _fe_analyzer_shared                          99.0.0           BSD-3-Clause
   analyzer                                     12.1.0           BSD-3-Clause
@@ -735,7 +616,6 @@ of an attribution question.
   fixnum                                       1.1.1            BSD-3-Clause
   flutter                                      0.0.0            SDK
   flutter_driver                               0.0.0            SDK
-  flutter_js                                   0.8.7            MIT
   flutter_localizations                        0.0.0            SDK
   flutter_markdown_plus                        1.0.12           BSD-3-Clause
   flutter_plugin_android_lifecycle             2.0.35           BSD-3-Clause

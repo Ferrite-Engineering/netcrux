@@ -11,6 +11,8 @@ import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/layout_disk_cache_vm.dart';
 import 'package:path/path.dart' as p;
 
+import '../../helpers/elk_ffi_library_gate.dart';
+
 const _andJson = <String, Object?>{
   'creator': 'Yosys test',
   'modules': <String, Object?>{
@@ -93,45 +95,29 @@ Map<String, Object?> _chainJson(int n) {
   };
 }
 
-/// Minimal scripted host: simulates the JS engine by returning the
-/// caller-specified layout JSON / error string when the service probes
-/// `__elk_result` / `__elk_error`.
-class _ScriptedHost implements ElkJsHost {
-  _ScriptedHost({this.layoutJson, this.errorMessage});
+/// Minimal scripted solver: returns the caller-specified layout JSON, or
+/// rejects every input with [errorMessage], and records each input it was
+/// asked to solve.
+class _ScriptedSolver implements ElkSolver {
+  _ScriptedSolver({this.layoutJson, this.errorMessage});
 
   final String? layoutJson;
   final String? errorMessage;
 
-  final List<String> evaluatedScripts = <String>[];
-  int pendingJobs = 0;
+  final List<String> inputs = <String>[];
   bool disposed = false;
-  bool _layoutCalled = false;
 
   @override
-  String evaluate(String code) {
-    evaluatedScripts.add(code);
-    if (code.contains('__elkInstance')) {
-      _layoutCalled = true;
-      return '';
-    }
-    if (code.contains('"pending"')) {
-      // First probe reports pending; after one job tick, we say done.
-      if (_layoutCalled && pendingJobs >= 1) return 'done';
-      return 'pending';
-    }
-    if (code.contains('__elk_error')) {
-      return errorMessage ?? '';
-    }
-    if (code.contains('__elk_result')) {
-      return layoutJson ?? '';
-    }
-    return '';
-  }
+  String get engineDescription => 'scripted';
 
   @override
-  int executePendingJob() {
-    pendingJobs++;
-    return 0;
+  String solve(String inputJson) {
+    inputs.add(inputJson);
+    final error = errorMessage;
+    if (error != null) {
+      throw LayoutException('elk rejected the layout input: $error');
+    }
+    return layoutJson ?? '';
   }
 
   @override
@@ -214,7 +200,7 @@ void main() {
         );
 
         // Large (>500 cells): single crossing-min pass + depth-first cycle
-        // breaking — ~halves the QuickJS solve on a dense register-heavy core.
+        // breaking: ~halved the elkjs solve on a dense register-heavy core.
         final big =
             buildElkInput(
                   NetlistModel.fromJson(_fanoutJson(600)).modules['m']!,
@@ -277,8 +263,8 @@ void main() {
   });
 
   group('ElkLayoutService', () {
-    test('layout returns a NetlistLayout when elkjs reports success', () async {
-      final host = _ScriptedHost(
+    test('layout returns a NetlistLayout when the engine succeeds', () async {
+      final solver = _ScriptedSolver(
         layoutJson: '''
 {
   "id": "root",
@@ -290,56 +276,26 @@ void main() {
 }
 ''',
       );
-      final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (key) async => '// fake elk bundle',
-      );
+      final service = ElkLayoutService(solverFactory: () => solver);
       final model = NetlistModel.fromJson(_andJson);
       final layout = await service.layout(model.modules['and2']!);
       expect(layout.bounds.width, 200);
       expect(layout.nodes, hasLength(1));
       expect(layout.nodes.first.id, 'u_and');
-      // The service wrote the input + layout call to the host.
-      expect(
-        host.evaluatedScripts.any((s) => s.contains('__elk_input')),
-        isTrue,
-      );
+      // The service handed the ELK input to the engine.
+      expect(solver.inputs.single, contains('"u_and"'));
     });
 
-    test('layout surfaces elk-reported errors as LayoutException', () async {
-      final host = _ScriptedHost(errorMessage: 'invalid layout input');
-      final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (key) async => '// fake elk bundle',
-      );
+    test('layout surfaces engine-reported errors as LayoutException', () async {
+      final solver = _ScriptedSolver(errorMessage: 'invalid layout input');
+      final service = ElkLayoutService(solverFactory: () => solver);
       final model = NetlistModel.fromJson(_andJson);
       expect(
         () => service.layout(model.modules['and2']!),
         throwsA(
-          isA<LayoutException>().having(
-            (e) => e.message,
-            'message',
-            contains('elkjs rejected'),
-          ),
-        ),
-      );
-    });
-
-    test('layout treats an asset-load failure as LayoutException', () async {
-      final host = _ScriptedHost();
-      final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (key) async => throw const FormatException('no asset'),
-      );
-      final model = NetlistModel.fromJson(_andJson);
-      expect(
-        () => service.layout(model.modules['and2']!),
-        throwsA(
-          isA<LayoutException>().having(
-            (e) => e.message,
-            'message',
-            contains('initialize'),
-          ),
+          isA<LayoutException>()
+              .having((e) => e.message, 'message', contains('rejected'))
+              .having((e) => e.kind, 'kind', LayoutFailureKind.other),
         ),
       );
     });
@@ -356,91 +312,55 @@ void main() {
           },
         },
       };
-      final service = ElkLayoutService(
-        hostFactory: _ScriptedHost.new,
-        assetLoader: (key) async => '// fake',
-      );
+      final service = ElkLayoutService(solverFactory: _ScriptedSolver.new);
       expect(await service.layoutTop(NetlistModel.fromJson(noTopJson)), isNull);
     });
 
-    test('dispose tears down the host and resets initialization', () async {
-      final host = _ScriptedHost(
+    test('dispose tears down the solver', () async {
+      final solver = _ScriptedSolver(
         layoutJson: '{"id":"root","x":0,"y":0,"width":1,"height":1}',
       );
-      final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (key) async => '// fake',
-      );
+      final service = ElkLayoutService(solverFactory: () => solver);
       final model = NetlistModel.fromJson(_andJson);
       await service.layout(model.modules['and2']!);
       service.dispose();
-      expect(host.disposed, isTrue);
+      expect(solver.disposed, isTrue);
     });
   });
 
   group('ElkLayoutService — isolate offload (production path)', () {
-    // No injected hostFactory → production path → the elkjs solve runs on a
-    // dedicated background isolate. Drives real flutter_js + the committed
-    // elk bundle, so it proves the offload end-to-end (init handshake, the
-    // benign "Binding not initialized" non-fatal worker error is tolerated,
-    // result marshalled back, warm reuse).
+    // No injected solver: the production path, where the solve runs on a
+    // dedicated background isolate on the native engine. Proves the offload
+    // end to end (init handshake, result marshalled back, warm reuse).
     test(
       'lays out a real design on a background isolate + reuses it warm',
       () async {
+        if (!requireElkFfiLibrary()) return;
         final module = NetlistModel.fromJson(_andJson).modules['and2']!;
-        final service = ElkLayoutService(
-          assetLoader: (_) async =>
-              File('assets/elk/elk.bundled.js').readAsStringSync(),
-        );
+        final service = ElkLayoutService();
         addTearDown(service.dispose);
 
-        try {
-          final first = await service.layout(module);
-          // and2 = 1 cell (u_and) + 3 boundary ports → 4 nodes, all positioned.
-          expect(first.nodes, hasLength(4));
-          // A second layout reuses the warm worker isolate (no re-spawn/re-init).
-          final second = await service.layout(module);
-          expect(second.nodes, hasLength(4));
-        } on LayoutException catch (e) {
-          // The production path drives flutter_js (QuickJS) on a background
-          // isolate, which needs the libquickjs_c_bridge_plugin native library.
-          // Plain `flutter test` (the CI unit-test VM) doesn't build/ship plugin
-          // natives, so the isolate can't load it. Skip rather than fail — the
-          // offload is exercised where the native lib is present (a full app
-          // build / local dev), mirroring other native-lib-gated suites.
-          if (e.message.contains('Failed to load dynamic library')) {
-            markTestSkipped(
-              'flutter_js (QuickJS) native library unavailable in this '
-              'environment; isolate-offload path skipped.',
-            );
-            return;
-          }
-          rethrow;
-        }
+        final first = await service.layout(module);
+        // and2 = 1 cell (u_and) + 3 boundary ports → 4 nodes, all positioned.
+        expect(first.nodes, hasLength(4));
+        expect(service.workerEngine, startsWith('native (elkrs '));
+        // A second, different layout (no cache hit) reuses the warm worker
+        // isolate (no re-spawn/re-init): 3 inverters + 2 boundary ports.
+        final second = await service.layout(
+          NetlistModel.fromJson(_chainJson(3)).modules['chain']!,
+        );
+        expect(second.nodes, hasLength(5));
       },
       timeout: const Timeout(Duration(minutes: 2)),
     );
 
     test('cancelInFlightLayout abandons a running solve', () async {
-      final service = ElkLayoutService(
-        assetLoader: (_) async =>
-            File('assets/elk/elk.bundled.js').readAsStringSync(),
-      );
+      if (!requireElkFfiLibrary()) return;
+      final service = ElkLayoutService();
       addTearDown(service.dispose);
       // Warm the worker on a tiny module so the cancel races a real solve,
-      // not the init handshake; skip where no engine can start.
-      try {
-        await service.layout(NetlistModel.fromJson(_andJson).modules['and2']!);
-      } on LayoutException catch (e) {
-        if (e.message.contains('Failed to load dynamic library')) {
-          markTestSkipped(
-            'flutter_js native library unavailable in this environment; '
-            'cancellation skipped.',
-          );
-          return;
-        }
-        rethrow;
-      }
+      // not the init handshake.
+      await service.layout(NetlistModel.fromJson(_andJson).modules['and2']!);
       final pending = service.layout(
         NetlistModel.fromJson(_chainJson(600)).modules['chain']!,
       );
@@ -463,7 +383,7 @@ void main() {
         ),
       );
       expect(service.hasLayoutInFlight, isFalse);
-      // The next call starts a fresh worker and lays out normally.
+      // The next call lays out normally on the same warm worker.
       final next = await service.layout(
         NetlistModel.fromJson(_chainJson(3)).modules['chain']!,
       );
@@ -473,8 +393,7 @@ void main() {
 
   group('ElkLayoutService — layout cache', () {
     Module andModule() => NetlistModel.fromJson(_andJson).modules['and2']!;
-    int solves(_ScriptedHost host) =>
-        host.evaluatedScripts.where((s) => s.contains('__elk_input =')).length;
+    int solves(_ScriptedSolver solver) => solver.inputs.length;
 
     // Distinct modules produce distinct ELK inputs, hence distinct cache
     // keys — renaming the cell is enough to make the key differ.
@@ -520,10 +439,9 @@ void main() {
     test(
       'memory cache: evicts least-recently-used past the entry cap',
       () async {
-        final host = _ScriptedHost(layoutJson: _kLayoutJson);
+        final host = _ScriptedSolver(layoutJson: _kLayoutJson);
         final service = ElkLayoutService(
-          hostFactory: () => host,
-          assetLoader: (_) async => '// fake',
+          solverFactory: () => host,
           maxMemCacheEntries: 2,
         );
         addTearDown(service.dispose);
@@ -547,10 +465,9 @@ void main() {
     );
 
     test('memory cache: evicts on the byte bound too', () async {
-      final host = _ScriptedHost(layoutJson: _kLayoutJson);
+      final host = _ScriptedSolver(layoutJson: _kLayoutJson);
       final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (_) async => '// fake',
+        solverFactory: () => host,
         // Smaller than a single result document, so every store evicts
         // everything except the entry just stored.
         maxMemCacheBytes: 1,
@@ -571,11 +488,8 @@ void main() {
     });
 
     test('memory cache: dispose resets the byte accounting', () async {
-      final host = _ScriptedHost(layoutJson: _kLayoutJson);
-      final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (_) async => '// fake',
-      );
+      final host = _ScriptedSolver(layoutJson: _kLayoutJson);
+      final service = ElkLayoutService(solverFactory: () => host);
       await service.layout(distinctModule(1));
       expect(service.memCacheBytes, greaterThan(0));
       service.dispose();
@@ -584,11 +498,8 @@ void main() {
     });
 
     test('memory cache: re-laying the same module does not re-solve', () async {
-      final host = _ScriptedHost(layoutJson: _kLayoutJson);
-      final service = ElkLayoutService(
-        hostFactory: () => host,
-        assetLoader: (_) async => '// fake',
-      );
+      final host = _ScriptedSolver(layoutJson: _kLayoutJson);
+      final service = ElkLayoutService(solverFactory: () => host);
       addTearDown(service.dispose);
       await service.layout(andModule());
       await service.layout(andModule());
@@ -600,10 +511,9 @@ void main() {
       () async {
         final disk = _MapDiskCache();
         // First service solves once and persists.
-        final host1 = _ScriptedHost(layoutJson: _kLayoutJson);
+        final host1 = _ScriptedSolver(layoutJson: _kLayoutJson);
         final s1 = ElkLayoutService(
-          hostFactory: () => host1,
-          assetLoader: (_) async => '// fake',
+          solverFactory: () => host1,
           diskCache: disk,
         );
         await s1.layout(andModule());
@@ -615,10 +525,9 @@ void main() {
 
         // A fresh service over the same disk cache must read it back without
         // ever solving (the cross-session re-open path).
-        final host2 = _ScriptedHost(layoutJson: _kLayoutJson);
+        final host2 = _ScriptedSolver(layoutJson: _kLayoutJson);
         final s2 = ElkLayoutService(
-          hostFactory: () => host2,
-          assetLoader: (_) async => '// fake',
+          solverFactory: () => host2,
           diskCache: disk,
         );
         addTearDown(s2.dispose);
@@ -708,10 +617,7 @@ void main() {
           fraction: 0.5,
         ),
       ]);
-      final service = ElkLayoutService(
-        solverFactory: () => solver,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: () => solver);
       addTearDown(service.dispose);
       final published = <LayoutProgress?>[];
       service.progress.addListener(() => published.add(service.progress.value));
@@ -739,10 +645,7 @@ void main() {
         const LayoutProgress(phase: LayoutPhase.nodePlacement, fraction: 0.3),
         const LayoutProgress(phase: LayoutPhase.edgeRouting, fraction: 0.4),
       ]);
-      final service = ElkLayoutService(
-        solverFactory: () => solver,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: () => solver);
       addTearDown(service.dispose);
       final published = <LayoutProgress>[];
       service.progress.addListener(() {
@@ -805,10 +708,7 @@ void main() {
           const LayoutProgress(phase: LayoutPhase.layering, fraction: 0.1),
         ),
       );
-      final service = ElkLayoutService(
-        solverFactory: () => solver,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: () => solver);
       addTearDown(service.dispose);
       final pending = service.layout(
         NetlistModel.fromJson(_chainJson(4)).modules['chain']!,
@@ -838,80 +738,65 @@ void main() {
       expect(b.toString(), allOf(contains('with cause'), contains('inner')));
     });
 
-    // netcrux#83: elkjs running out of stack is told apart from an input
-    // the engine rejects, so the canvas can say so and the service can
-    // retry on the native engine.
-    test('an engine running out of stack is classified as outOfStack', () {
-      for (final error in <String>[
-        'InternalError: stack overflow', // QuickJS
-        'RangeError: Maximum call stack size exceeded.', // JavaScriptCore, V8
-        'InternalError: too much recursion', // SpiderMonkey
-      ]) {
-        expect(
-          LayoutFailureKind.ofEngineError(error),
-          LayoutFailureKind.outOfStack,
-          reason: error,
-        );
-      }
-      for (final error in <String>[
-        'invalid layout input',
-        'TypeError: undefined is not an object',
-        'Referenced shape does not exist: n7',
-      ]) {
-        expect(
-          LayoutFailureKind.ofEngineError(error),
-          LayoutFailureKind.other,
-          reason: error,
-        );
-      }
-      expect(const LayoutException('x').kind, LayoutFailureKind.other);
+    test('defaults to kind other with no file', () {
+      const e = LayoutException('x');
+      expect(e.kind, LayoutFailureKind.other);
+      expect(e.engineFile, isNull);
     });
 
-    test('an elkjs stack overflow surfaces as an outOfStack LayoutException '
-        'naming the engine text', () async {
-      final service = ElkLayoutService(
-        hostFactory: () =>
-            _ScriptedHost(errorMessage: 'InternalError: stack overflow'),
-        assetLoader: (key) async => '// fake elk bundle',
+    // netcrux#86: the worker isolate opens the engine, so an engine that
+    // does not load reaches the canvas only through this message. It must
+    // keep its kind and the file it names, or the canvas words it as a
+    // generic failure and the file is lost.
+    test('crosses the worker boundary with its kind, message and file', () {
+      const failure = LayoutException(
+        'the layout engine library libelk_ffi.so could not be loaded: gone',
+        kind: LayoutFailureKind.engineUnavailable,
+        engineFile: 'libelk_ffi.so',
       );
-      addTearDown(service.dispose);
-      await expectLater(
-        service.layout(NetlistModel.fromJson(_andJson).modules['and2']!),
-        throwsA(
-          isA<LayoutException>()
-              .having((e) => e.kind, 'kind', LayoutFailureKind.outOfStack)
-              .having(
-                (e) => e.message,
-                'message',
-                allOf(contains('ran out of stack'), contains('stack overflow')),
-              ),
+      final message = layoutExceptionToMessage(failure);
+      expect(message['ok'], isFalse);
+      final back = layoutExceptionFromMessage(message);
+      expect(back.kind, LayoutFailureKind.engineUnavailable);
+      expect(back.engineFile, 'libelk_ffi.so');
+      expect(back.message, failure.message);
+    });
+
+    test('an engine rejection crosses as kind other with no file', () {
+      final back = layoutExceptionFromMessage(
+        layoutExceptionToMessage(
+          const LayoutException('elk rejected the layout input: bad port'),
         ),
       );
-    });
-  });
-
-  group('elkjs bundle patch', () {
-    // The vendored elkjs walks hyperedge ports recursively; the runtime
-    // swaps in an explicit-stack walk (netcrux#83). Re-vendoring elkjs must
-    // not silently drop the patch: this fails until it is redone or removed.
-    test('the vendored bundle carries the recursive port walk the patch '
-        'replaces, and the patch replaces it', () {
-      final bundle = File('assets/elk/elk.bundled.js').readAsStringSync();
-      expect(elkSourceHasIterativePortWalk(bundle), isFalse);
-      final patched = patchElkSource(bundle);
-      expect(patched, isNot(bundle));
-      expect(elkSourceHasIterativePortWalk(patched), isTrue);
-      expect(patched.length - bundle.length, lessThan(64));
+      expect(back.kind, LayoutFailureKind.other);
+      expect(back.engineFile, isNull);
+      expect(back.message, 'elk rejected the layout input: bad port');
     });
 
-    test('a bundle without the walk is left alone', () {
-      const other = 'function iac(a){return a}';
-      expect(patchElkSource(other), other);
+    test('an error that was not a LayoutException arrives as text', () {
+      final back = layoutExceptionFromMessage(<Object?, Object?>{
+        'ok': false,
+        'error': 'StateError: boom',
+      }, prefix: 'the layout worker did not start: ');
+      expect(back.kind, LayoutFailureKind.other);
+      expect(back.engineFile, isNull);
+      expect(back.message, 'the layout worker did not start: StateError: boom');
+    });
+
+    test('a kind this build does not know arrives as other', () {
+      final back = layoutExceptionFromMessage(<Object?, Object?>{
+        'ok': false,
+        'error': 'x',
+        'kind': 'somethingNewer',
+        'engineFile': 7,
+      });
+      expect(back.kind, LayoutFailureKind.other);
+      expect(back.engineFile, isNull);
     });
   });
 }
 
-/// A minimal elkjs result JSON the scripted host returns — a root with one
+/// A minimal result JSON the scripted solver returns: a root with one
 /// positioned child, so `NetlistLayout.fromJson` yields a non-empty layout.
 const String _kLayoutJson =
     '{"id":"root","x":0,"y":0,"width":100,'

@@ -9,7 +9,7 @@ import 'package:netcrux/domain/models/layout/node_position.dart';
 import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/trace/cone_view.dart';
 
-/// A [SchematicGraph] paired with the [NetlistLayout] elkjs produced
+/// A [SchematicGraph] paired with the [NetlistLayout] the engine produced
 /// for it. Carries enough metadata that the renderer can paint
 /// without holding references back to the parent design / scope.
 ///
@@ -40,7 +40,7 @@ class LaidOutGraph {
   /// Connectivity, cells, boundary ports.
   final SchematicGraph graph;
 
-  /// Positions and routed paths from elkjs.
+  /// Positions and routed paths from the layout engine.
   final NetlistLayout layout;
 
   /// The cells drawn with a custom symbol, by cell id, each with the names

@@ -308,8 +308,8 @@ Future<void> bootstrap({
   // failure) is already captured by the time a user opens the issue reporter.
   attachDiagnosticSinks();
   // Flutter builds LicenseRegistry from every pub package's LICENSE file,
-  // which misses anything vendored — elkjs ships as an asset, not a
-  // package, and EPL-2.0 §3.1(b) is the obligation that most needs to be
+  // which misses anything vendored: the elkrs layout engine is compiled in,
+  // not a package, and EPL-2.0 §3.1(b) is the obligation that most needs to be
   // visible. Registering here (a stream factory, so the asset is read only
   // if the user opens the license page) puts it alongside the rest.
   registerCruxVendoredLicenses(kNetcruxVendoredLicenses);

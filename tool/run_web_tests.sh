@@ -30,10 +30,12 @@ for f in elk_wasm_worker.js elk_wasm.js elk_wasm_bg.wasm; do
   fi
 done
 rm -rf test/.web_wasm
-mkdir -p test/.web_wasm/no_module
+mkdir -p test/.web_wasm/no_module test/.web_wasm/no_wasm
 cp web/wasm/elk_wasm_worker.js web/wasm/elk_wasm.js web/wasm/elk_wasm_bg.wasm test/.web_wasm/
-# The worker without its module, for the load-failure fallback test.
+# The worker without its glue or module, and the worker and glue without the
+# module, for the tests that a load failure names the file that failed.
 cp web/wasm/elk_wasm_worker.js test/.web_wasm/no_module/
+cp web/wasm/elk_wasm_worker.js web/wasm/elk_wasm.js test/.web_wasm/no_wasm/
 
 if [[ $# -gt 0 ]]; then
   files=("$@")

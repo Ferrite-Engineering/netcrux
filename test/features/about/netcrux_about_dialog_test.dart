@@ -215,14 +215,18 @@ void main() {
     });
   });
 
-  // ── elkjs attribution ───────────────────────────────────────────────────────
+  // ── Eclipse Layout Kernel attribution ───────────────────────────────────────
 
-  group('elkjs attribution', () {
-    testWidgets('shows elkjs section header and description', (tester) async {
+  group('Eclipse Layout Kernel attribution', () {
+    testWidgets('shows the section header and names elkrs, not elkjs', (
+      tester,
+    ) async {
       await tester.pumpWidget(_buildApp());
       await _openDialog(tester);
-      expect(find.text('elkjs'), findsOneWidget);
-      expect(find.textContaining('Eclipse Layout Kernel'), findsWidgets);
+      expect(find.text('Eclipse Layout Kernel'), findsOneWidget);
+      expect(find.textContaining('elkrs'), findsWidgets);
+      // netcrux#86: elkjs no longer ships, so the box must not credit it.
+      expect(find.textContaining('elkjs'), findsNothing);
     });
 
     testWidgets('license expander reveals the EPL-2.0 text on tap', (

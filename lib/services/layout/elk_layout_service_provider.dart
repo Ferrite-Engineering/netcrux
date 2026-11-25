@@ -11,15 +11,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'elk_layout_service_provider.g.dart';
 
-/// The [ElkLayoutService] used by the schematic pipeline. `keepAlive`
-/// so the elkjs JS runtime survives across screens (initializing it is
-/// a noticeable cost — ~half a second on a cold start — and re-using
-/// the runtime across layouts is essential for interactive zoom/pan
-/// performance later).
+/// The [ElkLayoutService] used by the schematic pipeline. `keepAlive` so
+/// the layout worker and its memory caches survive across screens.
 ///
 /// Wired with a disk-backed layout cache so a re-opened design skips the
-/// multi-second elkjs solve — the result is keyed by a stable content hash
-/// and persisted under the OS app-support directory.
+/// solve: the result is keyed by a stable content hash and persisted under
+/// the OS app-support directory.
 @Riverpod(keepAlive: true)
 ElkLayoutService elkLayoutService(Ref ref) {
   final service = ElkLayoutService(diskCache: createDefaultLayoutDiskCache());

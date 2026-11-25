@@ -22,14 +22,15 @@ import 'package:netcrux/shared/widgets/glowing_app_icon.dart';
 /// A thin builder over the cross-suite [CruxAboutDialog] (from
 /// `crux_about_dialog`): it maps NetCrux's branding / build-info / edition
 /// providers and ARB strings onto the shared surface and supplies the
-/// NetCrux-specific pieces — the glowing app icon, the elkjs attribution
-/// section, and the canonical suite action row (Visit Website, Documentation,
-/// Report Issue, Check for Updates, Privacy Policy, Terms of Service, Copy
-/// Version Info). Tier and beta-period chips are driven by `crux_license`
-/// providers inside the shared widget.
+/// NetCrux-specific pieces: the glowing app icon, the Eclipse Layout Kernel
+/// attribution section, and the canonical suite action row (Visit Website,
+/// Documentation, Report Issue, Check for Updates, Privacy Policy, Terms of
+/// Service, Copy Version Info). Tier and beta-period chips are driven by
+/// `crux_license` providers inside the shared widget.
 ///
-/// The [AboutAttributionSection] for elkjs (EPL-2.0, vendored as
-/// `assets/elk/elk.bundled.js`) makes the attribution visible in-app; the
+/// The [AboutAttributionSection] for the layout engine (elkrs, the Rust port
+/// of the Eclipse Layout Kernel, EPL-2.0, vendored under
+/// `native/vendor/elkrs`) makes the attribution visible in-app; the
 /// `NOTICES` file and `assets/elk/LICENSE.epl-2.0.txt` continue to ship the
 /// full Agreement text per EPL-2.0 §3.1(b) (guarded by
 /// `test/static/bundled_license_assets_test.dart`).
@@ -80,10 +81,10 @@ abstract final class NetcruxAboutDialog {
       strings: NetcruxAboutStrings(l10n),
       attributions: [
         AboutAttributionSection(
-          title: l10n.aboutSectionElkjs,
-          description: l10n.aboutElkjsDescription,
-          licenseHeader: l10n.aboutElkjsLicenseHeader,
-          licenseText: _elkjsLicenseText,
+          title: l10n.aboutSectionElk,
+          description: l10n.aboutElkDescription,
+          licenseHeader: l10n.aboutElkLicenseHeader,
+          licenseText: _elkLicenseText,
         ),
       ],
       actions: [
@@ -128,7 +129,7 @@ abstract final class NetcruxAboutDialog {
         ),
         // The full open-source license list: every transitive pub package
         // (collected by Flutter at build time) plus the vendored components
-        // registered in `kNetcruxVendoredLicenses`. The inline elkjs
+        // registered in `kNetcruxVendoredLicenses`. The inline layout engine
         // attribution section above is the prominent one because it carries
         // a redistribution obligation; this is the complete inventory.
         AboutAction(
@@ -198,7 +199,7 @@ abstract final class NetcruxAboutDialog {
   // mirrors the first paragraph of the bundled license file
   // (`assets/elk/LICENSE.epl-2.0.txt`), which ships the full text per
   // EPL-2.0 §3.1(b) alongside the `NOTICES` file.
-  static const _elkjsLicenseText = '''
+  static const _elkLicenseText = '''
 Eclipse Public License - v 2.0
 
 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC

@@ -83,8 +83,8 @@ const String _designJson = '''
   "core": {"attributes": {}, "ports": {}, "cells": {}, "netnames": {}}}}
 ''';
 
-/// Lays every cell out in a row without elkjs, which has no JS runtime under
-/// `flutter test`.
+/// Lays every cell out in a row without the layout engine, whose native
+/// library a widget test need not have built.
 class _RowLayoutService extends ElkLayoutService {
   @override
   Future<NetlistLayout> layout(

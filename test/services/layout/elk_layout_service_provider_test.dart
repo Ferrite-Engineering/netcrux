@@ -15,8 +15,7 @@ void main() {
 
   test('elkLayoutServiceProvider can be overridden', () {
     final injected = ElkLayoutService(
-      hostFactory: () => throw UnimplementedError(),
-      assetLoader: (_) async => '',
+      solverFactory: () => throw UnimplementedError(),
     );
     final container = ProviderContainer(
       overrides: [elkLayoutServiceProvider.overrideWithValue(injected)],

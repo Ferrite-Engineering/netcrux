@@ -7,7 +7,6 @@
 // layout put them, and the SVG export draws what the canvas draws.
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/layout/netlist_layout.dart';
@@ -21,7 +20,6 @@ import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 import 'package:netcrux/services/export/scope_render.dart';
 import 'package:netcrux/services/export/svg_exporter.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
-import 'package:netcrux/services/layout/flutter_js_host_vm.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
 import 'package:netcrux/services/liberty/liberty_cell_index.dart';
 import 'package:netcrux/services/liberty/liberty_library.dart';
@@ -322,31 +320,6 @@ void main() {
       );
       _expectFaces(layout);
     });
-
-    // elkjs runs under `flutter test` on JavaScriptCore only; elsewhere the
-    // test is not registered rather than skipped (the CI skip guard).
-    if (Platform.isMacOS) {
-      test('elkjs puts each pin on the face the native engine does', () {
-        if (!requireElkFfiLibrary()) return;
-        final input = jsonEncode(buildElkInput(module, liberty: symbols));
-        final ElkJsHost host;
-        try {
-          host = createDefaultElkJsHost();
-          initElkRuntime(
-            host,
-            File('assets/elk/elk.bundled.js').readAsStringSync(),
-          );
-        } on Object catch (e) {
-          markTestSkipped('no JavaScript engine here: $e');
-          return;
-        }
-        addTearDown(host.dispose);
-        final js = NetlistLayout.fromJson(
-          jsonDecode(runElkLayoutOnHost(host, input)) as Map<String, Object?>,
-        );
-        _expectFaces(js);
-      });
-    }
   });
 
   group('the SVG export of a laid-out scope', () {

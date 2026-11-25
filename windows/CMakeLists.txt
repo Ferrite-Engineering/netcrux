@@ -56,7 +56,7 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 # This mirrors the macOS Runner's cargo phase and linux/CMakeLists.txt: build
 # elk_ffi.dll, copy it next to the runner exe (runner/CMakeLists.txt), and
 # bundle it on install. Without it, DynamicLibrary.open('elk_ffi.dll') finds
-# nothing and every layout falls back to elkjs on the QuickJS interpreter.
+# nothing and every layout fails with an error naming elk_ffi.dll.
 #
 # This target is defined BEFORE add_subdirectory("runner") so the runner's
 # CMakeLists can attach the exe-bound add_dependencies and POST_BUILD copy.

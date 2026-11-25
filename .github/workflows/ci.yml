@@ -277,20 +277,6 @@ jobs:
           yosys -V
           "$g/bin/ghdl" --version
 
-      # The ELK layout service's production path runs QuickJS on a worker
-      # isolate. flutter_js opens its bridge library by name, which a plain
-      # `flutter test` never builds, so the "isolate offload (production
-      # path)" test skipped on every run. The package ships the Linux library
-      # prebuilt and, under `flutter test`, reads LIBQUICKJSC_TEST_PATH.
-      - name: Point flutter_js at its prebuilt QuickJS bridge (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          set -euo pipefail
-          root="$(python3 -c 'import json; print(next(p["rootUri"] for p in json.load(open(".dart_tool/package_config.json"))["packages"] if p["name"] == "flutter_js"))')"
-          lib="${root#file://}/linux/shared/libquickjs_c_bridge_plugin.so"
-          test -f "$lib"
-          echo "LIBQUICKJSC_TEST_PATH=$lib" >> "$GITHUB_ENV"
-
       - name: Run tests
         # The JSON file reporter feeds the count check below; the console
         # keeps the GitHub reporter.
@@ -581,8 +567,8 @@ jobs:
         # The `@TestOn('browser')` files the VM test job skips: the web
         # viewer's no-Yosys, no-isolate, no-CXP branches only compile with
         # kIsWeb true, and the layout engine runs as WebAssembly in a Web
-        # Worker (parity with the stored elkjs references, cancel, the elkjs
-        # fallback). ubuntu-latest ships Chrome.
+        # Worker (parity with the stored ELK references, cancel, and the error
+        # that names a file that did not load). ubuntu-latest ships Chrome.
         run: tool/run_web_tests.sh
 
       - name: Build web (release)
@@ -596,6 +582,8 @@ jobs:
           test -f build/web/wasm/elk_wasm_worker.js
           test -f build/web/wasm/elk_wasm.js
           test -f build/web/wasm/elk_wasm_bg.wasm
+          # elkrs is the only layout engine: no elkjs in the bundle.
+          test ! -e build/web/assets/assets/elk/elk.bundled.js
           ls -la build/web/ build/web/wasm/
 
       - name: Upload web artifact

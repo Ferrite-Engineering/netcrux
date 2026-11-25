@@ -47,10 +47,11 @@ Future<void> _openDialog(WidgetTester tester) async {
 
 void main() {
   group('vendored license list', () {
-    test('names elkjs and the elkrs port, each with the shipped EPL text', () {
+    test('names the elkrs port, with the shipped EPL text', () {
+      // netcrux#86: elkjs no longer ships, so it is no longer listed.
       expect(
         kNetcruxVendoredLicenses.map((l) => l.packageName.split(' ').first),
-        <String>['elkjs', 'elkrs'],
+        <String>['elkrs'],
       );
       for (final license in kNetcruxVendoredLicenses) {
         expect(license.licenseAssetPath, 'assets/elk/LICENSE.epl-2.0.txt');
@@ -66,13 +67,9 @@ void main() {
       // the actual file rather than a mock — which is the point: it proves
       // the shipped text is what the Acknowledgments page will render.
       final entries = await LicenseRegistry.licenses.toList();
-      final elk = entries.where(
-        (e) => e.packages.any((p) => p.contains('elkjs')),
-      );
-      expect(elk, hasLength(1));
       expect(
-        elk.single.paragraphs.first.text,
-        contains('Eclipse Public License'),
+        entries.where((e) => e.packages.any((p) => p.contains('elkjs'))),
+        isEmpty,
       );
       final port = entries.where(
         (e) => e.packages.any((p) => p.contains('elkrs')),

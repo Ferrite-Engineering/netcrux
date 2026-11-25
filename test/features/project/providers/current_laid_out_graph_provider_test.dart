@@ -33,62 +33,37 @@ import 'package:netcrux/services/layout/elk_layout_service.dart';
 import 'package:netcrux/services/layout/elk_layout_service_provider.dart';
 import 'package:netcrux/services/schematic/transitive_cone_resolver_provider.dart';
 
-/// Scripted [ElkJsHost] that pretends elkjs ran successfully and
-/// emits a deterministic row-of-boxes layout for whatever input the
-/// service stashed. Mirrors the pipeline integration tests so
-/// the laid-out-graph pipeline can be exercised without QuickJS.
-class _DeterministicHost implements ElkJsHost {
-  Map<String, Object?>? _lastInput;
+/// Scripted [ElkSolver] that emits a deterministic row-of-boxes layout for
+/// whatever input the service hands it. Mirrors the pipeline integration
+/// tests so the laid-out-graph pipeline can be exercised without an engine.
+class _DeterministicSolver implements ElkSolver {
+  @override
+  String get engineDescription => 'deterministic';
 
   @override
-  String evaluate(String code) {
-    if (code.contains('__elkInstance')) return '';
-    if (code.contains('"pending"')) return 'done';
-    if (code.contains('__elk_error')) return '';
-    if (code.contains('__elk_input = ')) {
-      final eq = code.indexOf('= ');
-      if (eq != -1) {
-        final tail = code.substring(eq + 2).trimRight();
-        final json = tail.replaceAll(RegExp(r';\s*$'), '');
-        try {
-          final decoded = jsonDecode(json);
-          if (decoded is Map<String, Object?>) _lastInput = decoded;
-        } on FormatException {
-          _lastInput = null;
-        }
-      }
-      return '';
-    }
-    if (code.contains('__elk_result')) {
-      final input = _lastInput;
-      if (input == null) return '';
-      final children =
-          (input['children'] as List<Object?>?) ?? const <Object?>[];
-      final nodes = <Map<String, Object?>>[
-        for (var i = 0; i < children.length; i++)
-          <String, Object?>{
-            'id': (children[i]! as Map<String, Object?>)['id'],
-            'x': 50.0 + (i * 100),
-            'y': 50.0,
-            'width': 80.0,
-            'height': 32.0,
-          },
-      ];
-      return jsonEncode(<String, Object?>{
-        'id': 'root',
-        'x': 0.0,
-        'y': 0.0,
-        'width': 50.0 + (children.length * 100) + 50.0,
-        'height': 132.0,
-        'children': nodes,
-        'edges': <Map<String, Object?>>[],
-      });
-    }
-    return '';
+  String solve(String inputJson) {
+    final input = jsonDecode(inputJson) as Map<String, Object?>;
+    final children = (input['children'] as List<Object?>?) ?? const <Object?>[];
+    final nodes = <Map<String, Object?>>[
+      for (var i = 0; i < children.length; i++)
+        <String, Object?>{
+          'id': (children[i]! as Map<String, Object?>)['id'],
+          'x': 50.0 + (i * 100),
+          'y': 50.0,
+          'width': 80.0,
+          'height': 32.0,
+        },
+    ];
+    return jsonEncode(<String, Object?>{
+      'id': 'root',
+      'x': 0.0,
+      'y': 0.0,
+      'width': 50.0 + (children.length * 100) + 50.0,
+      'height': 132.0,
+      'children': nodes,
+      'edges': <Map<String, Object?>>[],
+    });
   }
-
-  @override
-  int executePendingJob() => 0;
 
   @override
   void dispose() {}
@@ -112,8 +87,7 @@ ProviderContainer _container({NetlistModel? netlist}) {
     overrides: <Override>[
       elkLayoutServiceProvider.overrideWith((ref) {
         final service = ElkLayoutService(
-          hostFactory: _DeterministicHost.new,
-          assetLoader: (_) async => '// deterministic test host',
+          solverFactory: _DeterministicSolver.new,
         );
         ref.onDispose(service.dispose);
         return service;
@@ -286,8 +260,7 @@ void main() {
         overrides: <Override>[
           elkLayoutServiceProvider.overrideWith((ref) {
             final service = ElkLayoutService(
-              hostFactory: _DeterministicHost.new,
-              assetLoader: (_) async => '// deterministic test host',
+              solverFactory: _DeterministicSolver.new,
             );
             ref.onDispose(service.dispose);
             return service;

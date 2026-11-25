@@ -25,8 +25,7 @@ void cancelElkOnWeb() {}
 /// gates the call site; present only to satisfy the conditional-import
 /// contract.
 Future<String> solveElkOnWeb(
-  String inputJson,
-  Future<String> Function() loadSource, {
+  String inputJson, {
   void Function(LayoutProgress progress)? onProgress,
 }) {
   throw UnsupportedError(

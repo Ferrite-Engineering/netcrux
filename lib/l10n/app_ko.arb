@@ -2032,17 +2032,17 @@
   "@aboutDartVersion": {
     "description": "About box row label for the Dart SDK version."
   },
-  "aboutSectionElkjs": "elkjs",
-  "@aboutSectionElkjs": {
-    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  "aboutSectionElk": "Eclipse Layout Kernel",
+  "@aboutSectionElk": {
+    "description": "Section header for the Eclipse Layout Kernel open-source attribution in the About dialog. A product name: keep it in English."
   },
-  "aboutElkjsDescription": "NetCrux는 회로도 자동 배치에 elkjs(Eclipse Layout Kernel의 JavaScript 버전)를 사용합니다. elkjs는 EPL-2.0 라이선스입니다.",
-  "@aboutElkjsDescription": {
-    "description": "Description text for the elkjs attribution section in the About dialog."
+  "aboutElkDescription": "NetCrux는 회로도 배치에 elkrs(Eclipse Layout Kernel의 Rust 포트)를 사용합니다. 데스크톱에서는 네이티브로, 브라우저에서는 WebAssembly로 빌드됩니다. elkrs는 EPL-2.0 라이선스입니다.",
+  "@aboutElkDescription": {
+    "description": "Description text for the Eclipse Layout Kernel attribution section in the About dialog. elkrs and WebAssembly are names; keep them in English."
   },
-  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
-  "@aboutElkjsLicenseHeader": {
-    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  "aboutElkLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkLicenseHeader": {
+    "description": "Header label above the EPL-2.0 license text of the Eclipse Layout Kernel in the About dialog."
   },
   "aboutButtonVisitWebsite": "웹사이트 방문",
   "@aboutButtonVisitWebsite": {
@@ -2396,7 +2396,7 @@
   "statsStripCollapseTooltip": "라이브 통계 숨기기",
   "statisticsStripTitle": "통계",
   "statsSegmentMemory": "메모리",
-  "statsSegmentMemoryTooltip": "Yosys 하위 프로세스와 elkjs 런타임을 포함한 NetCrux 프로세스의 상주 메모리입니다.",
+  "statsSegmentMemoryTooltip": "Yosys 하위 프로세스와 배치 엔진을 포함한 NetCrux 프로세스의 상주 메모리입니다.",
   "statsSegmentFps": "FPS",
   "statsSegmentFpsTooltip": "최근 60개 프레임의 초당 프레임 수입니다.",
   "statsSegmentJank": "드롭",
@@ -2748,7 +2748,7 @@
   "schematicLayoutRetry": "다시 배치",
   "schematicLayoutErrorTitle": "배치 실패",
   "schematicLayoutErrorGeneric": "설계는 엘라보레이션되었지만 이 스코프를 배치하지 못했습니다. 아래 세부 정보를 확인하세요.",
-  "schematicLayoutErrorOutOfStack": "elkjs 배치 엔진이 이 스코프에서 스택 공간을 모두 사용했고, 이 스코프를 배치할 수 있는 네이티브 배치 엔진은 시작되지 않았습니다. 설계는 엘라보레이션되었으며, 콘 보기로 스코프의 일부를 배치할 수 있습니다.",
+  "schematicLayoutErrorEngineUnavailable": "배치 엔진을 불러오지 못했습니다. {file} 파일이 없거나 손상되었습니다. 설계는 엘라보레이션되었지만, NetCrux를 다시 설치하거나 브라우저에서 페이지를 새로 고칠 때까지 어떤 스코프도 배치할 수 없습니다.",
   "annotationCalloutsShownAnnouncement": "주석 말풍선을 표시했습니다",
   "annotationCalloutsHiddenAnnouncement": "주석 말풍선을 숨겼습니다",
   "annotationCalloutSemantics": "주석 {number}: {heading}, {kind} {element}",

@@ -2032,17 +2032,17 @@
   "@aboutDartVersion": {
     "description": "About box row label for the Dart SDK version."
   },
-  "aboutSectionElkjs": "elkjs",
-  "@aboutSectionElkjs": {
-    "description": "Section header for the elkjs open-source attribution in the About dialog."
+  "aboutSectionElk": "Eclipse Layout Kernel",
+  "@aboutSectionElk": {
+    "description": "Section header for the Eclipse Layout Kernel open-source attribution in the About dialog. A product name: keep it in English."
   },
-  "aboutElkjsDescription": "NetCrux は自動回路図レイアウトに elkjs(Eclipse Layout Kernel の JavaScript 版)を使用しています。elkjs は EPL-2.0 ライセンスです。",
-  "@aboutElkjsDescription": {
-    "description": "Description text for the elkjs attribution section in the About dialog."
+  "aboutElkDescription": "NetCrux は回路図のレイアウトに elkrs(Eclipse Layout Kernel の Rust 移植版)を使用しています。デスクトップではネイティブに、ブラウザーでは WebAssembly としてビルドされます。elkrs は EPL-2.0 ライセンスです。",
+  "@aboutElkDescription": {
+    "description": "Description text for the Eclipse Layout Kernel attribution section in the About dialog. elkrs and WebAssembly are names; keep them in English."
   },
-  "aboutElkjsLicenseHeader": "Eclipse Public License 2.0",
-  "@aboutElkjsLicenseHeader": {
-    "description": "Header label above the elkjs EPL-2.0 license text in the About dialog."
+  "aboutElkLicenseHeader": "Eclipse Public License 2.0",
+  "@aboutElkLicenseHeader": {
+    "description": "Header label above the EPL-2.0 license text of the Eclipse Layout Kernel in the About dialog."
   },
   "aboutButtonVisitWebsite": "ウェブサイトを開く",
   "@aboutButtonVisitWebsite": {
@@ -2396,7 +2396,7 @@
   "statsStripCollapseTooltip": "ライブ統計を非表示",
   "statisticsStripTitle": "統計",
   "statsSegmentMemory": "メモリ",
-  "statsSegmentMemoryTooltip": "Yosys サブプロセスと elkjs ランタイムを含む NetCrux プロセスの常駐メモリ。",
+  "statsSegmentMemoryTooltip": "Yosys サブプロセスとレイアウトエンジンを含む NetCrux プロセスの常駐メモリ。",
   "statsSegmentFps": "FPS",
   "statsSegmentFpsTooltip": "直近 60 フレームの 1 秒あたりのフレーム数。",
   "statsSegmentJank": "ドロップ",
@@ -2748,7 +2748,7 @@
   "schematicLayoutRetry": "再レイアウト",
   "schematicLayoutErrorTitle": "レイアウトに失敗しました",
   "schematicLayoutErrorGeneric": "設計のエラボレーションは成功しましたが、このスコープをレイアウトできませんでした。下の詳細を確認してください。",
-  "schematicLayoutErrorOutOfStack": "elkjs レイアウトエンジンがこのスコープでスタック領域を使い切り、このスコープをレイアウトできるネイティブのレイアウトエンジンは起動しませんでした。設計のエラボレーションは成功しています。コーンビューならスコープの一部をレイアウトできます。",
+  "schematicLayoutErrorEngineUnavailable": "レイアウトエンジンを読み込めませんでした。{file} が見つからないか破損しています。設計のエラボレーションは成功していますが、NetCrux を再インストールするか、ブラウザーではページを再読み込みするまで、どのスコープもレイアウトできません。",
   "annotationCalloutsShownAnnouncement": "注釈の吹き出しを表示しました",
   "annotationCalloutsHiddenAnnouncement": "注釈の吹き出しを非表示にしました",
   "annotationCalloutSemantics": "注釈 {number}: {heading}、{kind} {element}",

@@ -39,8 +39,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_boot_overrides.dart';
 
-/// Lays every cell out in a row without elkjs, which has no JS runtime under
-/// `flutter test` — and whose real isolate would outlive the test.
+/// Lays every cell out in a row without the layout engine, whose native
+/// library a widget test need not have built, and whose real isolate would
+/// outlive the test.
 class RowLayoutService extends ElkLayoutService {
   @override
   Future<NetlistLayout> layout(

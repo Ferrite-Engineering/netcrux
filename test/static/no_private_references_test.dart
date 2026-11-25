@@ -13,7 +13,7 @@
 // permanent.
 //
 // Every tracked text file is scanned (`git ls-files`), except generated
-// localizations, build output, the vendored elkjs bundle, the `crux-shared`
+// localizations, build output, the vendored license text, the `crux-shared`
 // submodule, captured third-party RTL, and this file. Four classes fail:
 //
 //  1. Private repository names — the planning repository, the Pro overlay
@@ -153,7 +153,7 @@ const _excludedPrefixes = <String>[
   'lib/l10n/generated/', // gen-l10n output
   'build/',
   'docs-site/site/', // mkdocs output
-  'assets/elk/', // the vendored elkjs bundle
+  'assets/elk/', // the vendored EPL-2.0 text of the layout engine
   // The vendored elkrs port: ELK Layered's "Phase 1" to "Phase 5" in its
   // comments are the algorithm's phases, not sections of a private plan.
   'native/vendor/',

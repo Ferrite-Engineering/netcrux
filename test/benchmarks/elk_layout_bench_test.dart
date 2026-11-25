@@ -13,13 +13,12 @@ import 'package:netcrux/services/yosys/streaming_yosys_json_reader.dart';
 /// `ElkLayoutService.layout` over the committed `chain_1k` / `chain_10k`
 /// scopes and records wall-time to `build/perf/elk_layout.jsonl` (gitignored).
 ///
-/// **Caveat:** the real elkjs solve runs in a `flutter_js` runtime that does
-/// not initialize cleanly under `flutter test`, so this benchmark drives the
-/// layout pipeline through the same deterministic [ElkJsHost] the integration
-/// tests use. It therefore measures the **Dart-side** cost (elk-graph build +
-/// result parse + `NetlistLayout` construction), not the JS layout solve —
-/// the real elkjs wall-time is captured in the running app. No hard
-/// assertion; the goal is < 2 s for a typical scope change.
+/// **Caveat:** this benchmark drives the layout pipeline through the same
+/// deterministic [ElkSolver] the integration tests use. It therefore measures
+/// the **Dart-side** cost (elk-graph build + result parse + `NetlistLayout`
+/// construction), not the engine's solve, which the elkrs benches and the
+/// running app measure. No hard assertion; the goal is < 2 s for a typical
+/// scope change.
 ///
 /// Gated behind `--dart-define=RUN_BENCHMARKS=true`.
 void main() {
@@ -31,10 +30,7 @@ void main() {
       final rows = <Map<String, Object?>>[];
       for (final name in <String>['chain_1k', 'chain_10k']) {
         final module = _loadModule(name);
-        final service = ElkLayoutService(
-          hostFactory: _DeterministicHost.new,
-          assetLoader: (_) async => '// deterministic test host',
-        );
+        final service = ElkLayoutService(solverFactory: _RowSolver.new);
         // Warm once, then time.
         await service.layout(module);
         final stopwatch = Stopwatch()..start();
@@ -75,61 +71,37 @@ Module _loadModule(String name) {
   return model.modules[name]!;
 }
 
-/// Deterministic [ElkJsHost] that fabricates a row-of-boxes layout for the
-/// stashed input — avoids spinning up QuickJS. Mirrors the integration tests'
-/// host so the pipeline runs end-to-end without real elkjs.
-class _DeterministicHost implements ElkJsHost {
-  Map<String, Object?>? _lastInput;
+/// Deterministic [ElkSolver] that fabricates a row-of-boxes layout for its
+/// input, so the pipeline runs end to end without a real engine. Mirrors the
+/// integration tests' solver.
+class _RowSolver implements ElkSolver {
+  @override
+  String get engineDescription => 'row';
 
   @override
-  String evaluate(String code) {
-    if (code.contains('__elkInstance')) return '';
-    if (code.contains('"pending"')) return 'done';
-    if (code.contains('__elk_error')) return '';
-    if (code.contains('__elk_input = ')) {
-      final eq = code.indexOf('= ');
-      if (eq != -1) {
-        final tail = code.substring(eq + 2).trimRight();
-        final json = tail.replaceAll(RegExp(r';\s*$'), '');
-        try {
-          final decoded = jsonDecode(json);
-          if (decoded is Map<String, Object?>) _lastInput = decoded;
-        } on FormatException {
-          _lastInput = null;
-        }
-      }
-      return '';
-    }
-    if (code.contains('__elk_result')) {
-      final input = _lastInput;
-      if (input == null) return '';
-      final children =
-          (input['children'] as List<Object?>?) ?? const <Object?>[];
-      final laidOutNodes = <Map<String, Object?>>[
-        for (var i = 0; i < children.length; i++)
-          <String, Object?>{
-            'id': (children[i]! as Map<String, Object?>)['id'],
-            'x': 50.0 + (i * 100),
-            'y': 50.0,
-            'width': 80.0,
-            'height': 32.0,
-          },
-      ];
-      return jsonEncode(<String, Object?>{
-        'id': 'root',
-        'x': 0.0,
-        'y': 0.0,
-        'width': 50.0 + (children.length * 100) + 50.0,
-        'height': 132.0,
-        'children': laidOutNodes,
-        'edges': <Map<String, Object?>>[],
-      });
-    }
-    return '';
+  String solve(String inputJson) {
+    final input = jsonDecode(inputJson) as Map<String, Object?>;
+    final children = (input['children'] as List<Object?>?) ?? const <Object?>[];
+    final laidOutNodes = <Map<String, Object?>>[
+      for (var i = 0; i < children.length; i++)
+        <String, Object?>{
+          'id': (children[i]! as Map<String, Object?>)['id'],
+          'x': 50.0 + (i * 100),
+          'y': 50.0,
+          'width': 80.0,
+          'height': 32.0,
+        },
+    ];
+    return jsonEncode(<String, Object?>{
+      'id': 'root',
+      'x': 0.0,
+      'y': 0.0,
+      'width': 50.0 + (children.length * 100) + 50.0,
+      'height': 132.0,
+      'children': laidOutNodes,
+      'edges': <Map<String, Object?>>[],
+    });
   }
-
-  @override
-  int executePendingJob() => 0;
 
   @override
   void dispose() {}

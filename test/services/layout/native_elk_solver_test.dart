@@ -5,8 +5,8 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/services/layout/elk_ffi_library_io.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
-import 'package:netcrux/services/layout/layout_engine_selection.dart';
 import 'package:netcrux/services/layout/native_elk_solver.dart';
 
 import '../../helpers/elk_ffi_library_gate.dart';
@@ -157,29 +157,80 @@ String _loopInput(int n) {
 }
 
 void main() {
-  group('selectLayoutSolver', () {
-    test('defaults to the native engine', () {
-      expect(selectLayoutSolver(requested: null), LayoutSolverKind.native);
-      expect(selectLayoutSolver(requested: ''), LayoutSolverKind.native);
-      expect(selectLayoutSolver(requested: 'native'), LayoutSolverKind.native);
-      expect(selectLayoutSolver(requested: 'v8'), LayoutSolverKind.native);
+  // netcrux#86: the native library is the only desktop engine. When it does
+  // not load, the failure names the file instead of switching engines.
+  group('a library that does not load', () {
+    /// Every `dlopen` fails, the way it does with the library deleted from
+    /// the bundle (the development-build probe may still find a path, and
+    /// that open fails too). Records each path tried in [tried].
+    ElkFfiLibraryOpener never([List<String>? tried]) => (path) {
+      tried?.add(path);
+      throw ArgumentError(
+        'Failed to load dynamic library $path: image not found',
+      );
+    };
+
+    test('is an engineUnavailable LayoutException naming the file', () {
+      final tried = <String>[];
+      expect(
+        () => NativeElkSolver.open(opener: never(tried)),
+        throwsA(
+          isA<LayoutException>()
+              .having(
+                (e) => e.kind,
+                'kind',
+                LayoutFailureKind.engineUnavailable,
+              )
+              .having(
+                (e) => e.engineFile,
+                'engineFile',
+                elkFfiLibraryFileName(),
+              )
+              .having(
+                (e) => e.message,
+                'message',
+                allOf(
+                  contains(elkFfiLibraryFileName()),
+                  contains('image not found'),
+                ),
+              )
+              .having((e) => e.cause, 'cause', isA<ArgumentError>()),
+        ),
+      );
+      // The bare name, the production path, was tried first.
+      expect(tried.first, elkFfiLibraryFileName());
     });
 
-    test('every elkjs spelling keeps elkjs', () {
-      for (final value in <String>[
-        'elkjs',
-        ' ElkJS ',
-        'jsc',
-        'javascriptcore',
-        'quickjs',
-      ]) {
-        expect(
-          selectLayoutSolver(requested: value),
-          LayoutSolverKind.elkjs,
-          reason: value,
+    test(
+      'reaches the service unchanged, and the next layout tries again',
+      () async {
+        var opens = 0;
+        final service = ElkLayoutService(
+          solverFactory: () {
+            opens++;
+            return NativeElkSolver.open(opener: never());
+          },
         );
-      }
-    });
+        addTearDown(service.dispose);
+        final module = NetlistModel.fromJson(_andJson).modules['and2']!;
+        final unavailable = throwsA(
+          isA<LayoutException>()
+              .having(
+                (e) => e.kind,
+                'kind',
+                LayoutFailureKind.engineUnavailable,
+              )
+              .having(
+                (e) => e.engineFile,
+                'engineFile',
+                elkFfiLibraryFileName(),
+              ),
+        );
+        await expectLater(service.layout(module), unavailable);
+        await expectLater(service.layout(module), unavailable);
+        expect(opens, 2);
+      },
+    );
   });
 
   group('NativeElkSolver', () {
@@ -192,10 +243,7 @@ void main() {
 
     test('lays out a module through the service seam', () async {
       if (!requireElkFfiLibrary()) return;
-      final service = ElkLayoutService(
-        solverFactory: NativeElkSolver.open,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: NativeElkSolver.open);
       addTearDown(service.dispose);
       final layout = await service.layout(
         NetlistModel.fromJson(_andJson).modules['and2']!,
@@ -211,10 +259,7 @@ void main() {
 
     test('honours FIXED_SIDE: inputs on the west face, outputs east', () async {
       if (!requireElkFfiLibrary()) return;
-      final service = ElkLayoutService(
-        solverFactory: NativeElkSolver.open,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: NativeElkSolver.open);
       addTearDown(service.dispose);
       final layout = await service.layout(
         NetlistModel.fromJson(_feedbackJson).modules['loop']!,

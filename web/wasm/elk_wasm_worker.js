@@ -14,7 +14,11 @@
 //
 // Messages to the page:
 //   {type: 'ready'}                         the module loaded
-//   {type: 'load-error', message}           it did not (the page falls back)
+//   {type: 'load-error', file, message}     it did not: `file` is the one that
+//                                           failed, 'elk_wasm.js' (the glue)
+//                                           or 'elk_wasm_bg.wasm' (the
+//                                           module); the page names it in
+//                                           its error
 //   {type: 'progress', id, phase, fraction} the solve reached a pipeline step:
 //                                           `phase` an elkrs phase name such
 //                                           as 'node placement', `fraction`
@@ -71,15 +75,17 @@ self.onmessage = (event) => {
 // read from a blob URL because a blob worker cannot resolve a relative path.
 // A page that serves this directory normally never defines it.
 (async () => {
+  let file = 'elk_wasm.js';
   try {
     const hosted = self.cruxLayoutHosted;
     const glue = hosted ? hosted.glue : await import('./elk_wasm.js');
+    file = 'elk_wasm_bg.wasm';
     await glue.default({
       module_or_path: hosted ? hosted.wasmUrl : new URL('./elk_wasm_bg.wasm', import.meta.url),
     });
     solveLayout = glue.layoutJsonWithProgress;
     self.postMessage({ type: 'ready' });
   } catch (err) {
-    self.postMessage({ type: 'load-error', message: describe(err) });
+    self.postMessage({ type: 'load-error', file, message: describe(err) });
   }
 })();

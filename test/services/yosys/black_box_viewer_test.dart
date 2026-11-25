@@ -111,10 +111,7 @@ void main() {
 
   test('a native layout places the black boxes', () async {
     if (!requireElkFfiLibrary()) return;
-    final service = ElkLayoutService(
-      solverFactory: NativeElkSolver.open,
-      assetLoader: (_) async => throw StateError('elkjs must not load'),
-    );
+    final service = ElkLayoutService(solverFactory: NativeElkSolver.open);
     addTearDown(service.dispose);
     final layout = await service.layout(model.modules['top']!);
     for (final id in <String>['u1', 'u2', 'u3', 'm1']) {

@@ -4,7 +4,8 @@
 // The parity gate's shared parts, free of `dart:io` so the desktop gate
 // (`test/services/layout/native_elk_parity_test.dart`) and the browser gate
 // (`test/services/layout/elk_wasm_web_test.dart`) compare engines against the
-// same stored elkjs references the same way.
+// same stored ELK references (elkjs 0.9.3 output, made outside the app) the
+// same way.
 
 import 'dart:convert';
 
@@ -26,13 +27,13 @@ class LayoutParityScope {
   /// The module laid out.
   final String module;
 
-  /// Whether the live comparison only runs with `NETCRUX_PARITY_LARGE=1`
-  /// (elkjs takes seconds and, on an interpreter, minutes).
+  /// Whether the scope is too large for a stored reference: the browser gate
+  /// lays it out and checks its pin faces only.
   final bool large;
 
   String get name => '${fixture.split('/').first}/$module';
 
-  /// The stored elkjs reference, relative to `test/`.
+  /// The stored ELK reference (elkjs output), relative to `test/`.
   String get referencePath =>
       'fixtures/layout/${name.replaceAll('/', '.')}.elkjs.json.gz';
 }

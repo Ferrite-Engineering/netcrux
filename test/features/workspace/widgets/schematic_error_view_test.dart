@@ -205,30 +205,46 @@ void main() {
         );
         expect(find.text(l10n.schematicLayoutErrorTitle), findsOneWidget);
         expect(find.text(l10n.schematicLayoutErrorGeneric), findsOneWidget);
+        expect(
+          find.text(l10n.schematicLayoutErrorEngineUnavailable('elk_ffi')),
+          findsNothing,
+        );
         expect(find.text(l10n.elaborationErrorTitle), findsNothing);
         expect(find.text(l10n.elaborationErrorGeneric), findsNothing);
         expect(find.textContaining('LayoutException'), findsNothing);
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('[$tag] elkjs running out of stack has its own message', (
-        tester,
-      ) async {
-        final l10n = await L10N.delegate.load(locale);
-        await _pump(
+      // netcrux#86: there is no other engine to switch to, so a layout
+      // engine that does not load is said, with the file that failed.
+      for (final file in <String>[
+        'libelk_ffi.dylib',
+        'elk_ffi.dll',
+        'wasm/elk_wasm_bg.wasm',
+      ]) {
+        testWidgets('[$tag] an engine that did not load names $file', (
           tester,
-          const LayoutException(
-            'elkjs ran out of stack on this scope: InternalError: stack '
-            'overflow',
-            kind: LayoutFailureKind.outOfStack,
-          ),
-          locale: locale,
-        );
-        expect(find.text(l10n.schematicLayoutErrorTitle), findsOneWidget);
-        expect(find.text(l10n.schematicLayoutErrorOutOfStack), findsOneWidget);
-        expect(find.text(l10n.elaborationErrorTitle), findsNothing);
-        expect(tester.takeException(), isNull);
-      });
+        ) async {
+          final l10n = await L10N.delegate.load(locale);
+          await _pump(
+            tester,
+            LayoutException(
+              'the layout engine library $file could not be loaded: gone',
+              kind: LayoutFailureKind.engineUnavailable,
+              engineFile: file,
+            ),
+            locale: locale,
+          );
+          final body = l10n.schematicLayoutErrorEngineUnavailable(file);
+          expect(body, contains(file));
+          expect(find.text(l10n.schematicLayoutErrorTitle), findsOneWidget);
+          expect(find.text(body), findsOneWidget);
+          expect(find.text(l10n.schematicLayoutErrorGeneric), findsNothing);
+          expect(find.text(l10n.elaborationErrorTitle), findsNothing);
+          expect(find.textContaining('LayoutException'), findsNothing);
+          expect(tester.takeException(), isNull);
+        });
+      }
     }
 
     testWidgets('the black-box action calls back once per tap', (tester) async {

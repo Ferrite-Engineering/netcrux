@@ -46,7 +46,7 @@ void main() {
       );
       final tab = seeded.tab;
 
-      // The top scope lays out asynchronously (elkjs) after the model is
+      // The top scope lays out asynchronously (elkrs) after the model is
       // injected — wait for it, mirroring
       // `design/seeded_design_journey_test.dart`.
       final topLaidOut = await pumpUntil(

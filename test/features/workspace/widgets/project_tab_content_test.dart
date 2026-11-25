@@ -339,10 +339,7 @@ void main() {
     testWidgets('the bar follows the engine, Cancel stops the solve, and Lay '
         'out again starts it over', (tester) async {
       final solver = _EndlessJobSolver();
-      final service = ElkLayoutService(
-        solverFactory: () => solver,
-        assetLoader: (_) async => throw StateError('elkjs must not load'),
-      );
+      final service = ElkLayoutService(solverFactory: () => solver);
       final module = NetlistModel.fromJson(_and2Json).modules['and2']!;
       var layouts = 0;
       final root = ProviderContainer(

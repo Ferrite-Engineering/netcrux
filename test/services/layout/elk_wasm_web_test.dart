@@ -6,11 +6,12 @@
 // browser test server can serve it from):
 //
 // - the elkrs port as WebAssembly, in its Web Worker, matches the stored
-//   elkjs references the desktop gate (`native_elk_parity_test.dart`) holds
-//   the native engine to;
+//   ELK references (elkjs output, made outside the app) the desktop gate
+//   (`native_elk_parity_test.dart`) holds the native engine to;
 // - the solve runs off the page, so the page keeps running and cancel
 //   returns at once, terminating the worker;
-// - a module that cannot load falls back to elkjs, and says so.
+// - a worker script, glue or module that cannot load is an error naming
+//   that file; there is no other engine to fall back to.
 //
 // A missing staged engine or fixture fails here; nothing skips.
 @TestOn('browser')
@@ -82,19 +83,6 @@ Future<String> _inputFor(LayoutParityScope scope) async => elkInputForModule(
   scope.module,
 );
 
-Future<String> _noElkjs() async =>
-    throw StateError('the wasm engine loaded; elkjs must not be read');
-
-/// A stand-in for the elkjs bundle: defines `ELK` with a `layout` that
-/// resolves to a marker document, so a test can tell the fallback ran.
-const String _fakeElkjs = '''
-globalThis.ELK = function () {
-  this.layout = function (graph) {
-    return Promise.resolve({id: 'elkjs-fallback', children: []});
-  };
-};
-''';
-
 const String _tiny =
     '{"id":"root","layoutOptions":{"elk.algorithm":"layered"},'
     '"children":[{"id":"a","width":10,"height":10},'
@@ -111,7 +99,7 @@ void main() {
 
   tearDown(debugResetElkWebSolver);
 
-  group('wasm engine matches the stored elkjs references', () {
+  group('wasm engine matches the stored ELK references', () {
     setUpAll(() => useWorker(_worker));
 
     for (final scope in layoutParityScopes.where((s) => !s.large)) {
@@ -120,11 +108,10 @@ void main() {
         expect(
           (await _read('${scope.referencePath}.input')).trim(),
           layoutInputFingerprint(input),
-          reason: 'the stored elkjs reference for ${scope.name} is stale',
+          reason: 'the stored ELK reference for ${scope.name} is stale',
         );
         final expected = parseLayout(await _read(scope.referencePath));
-        final actual = parseLayout(await solveElkOnWeb(input, _noElkjs));
-        expect(await debugElkWebEngine, ElkWebEngine.wasm);
+        final actual = parseLayout(await solveElkOnWeb(input));
         // Exact: the port reproduces elkjs's doubles, and wasm computes the
         // same IEEE-754 results as the desktop build.
         final diffs = layoutDifferences(actual, expected, tolerance: 0);
@@ -134,16 +121,15 @@ void main() {
     }
   });
 
-  // No stored reference for these (the desktop gate compares them live with
-  // NETCRUX_PARITY_LARGE=1); here they prove the worker's stack holds the
-  // deepest walks a real netlist makes, and the fixed port sides hold.
+  // No stored reference for these; here they prove the worker's stack holds
+  // the deepest walks a real netlist makes, and the fixed port sides hold.
   group('large scopes lay out in the worker', () {
     setUpAll(() => useWorker(_worker));
 
     for (final scope in layoutParityScopes.where((s) => s.large)) {
       test(scope.name, () async {
         final input = await _inputFor(scope);
-        final layout = parseLayout(await solveElkOnWeb(input, _noElkjs));
+        final layout = parseLayout(await solveElkOnWeb(input));
         final cells = (jsonDecode(input) as Map<String, Object?>)['children']!;
         expect(layout.nodes, hasLength((cells as List<Object?>).length));
         final sides = portSideViolations(layout, input);
@@ -213,7 +199,7 @@ void main() {
       expect(service.hasLayoutInFlight, isFalse);
 
       // A fresh worker serves the next solve.
-      final again = await solveElkOnWeb(_tiny, _noElkjs);
+      final again = await solveElkOnWeb(_tiny);
       expect(parseLayout(again).nodes, hasLength(2));
       expect(logs, isEmpty);
     }, timeout: const Timeout(Duration(minutes: 2)));
@@ -222,11 +208,7 @@ void main() {
         'as a solve that listens to none', () async {
       final input = await _inputFor(layoutParityScopes.last);
       final reports = <LayoutProgress>[];
-      final watched = await solveElkOnWeb(
-        input,
-        _noElkjs,
-        onProgress: reports.add,
-      );
+      final watched = await solveElkOnWeb(input, onProgress: reports.add);
       expect(reports, isNotEmpty);
       final phases = <LayoutPhase>{for (final p in reports) p.phase};
       expect(phases, containsAll(LayoutPhase.values));
@@ -235,47 +217,93 @@ void main() {
         expect(fractions[i], greaterThanOrEqualTo(fractions[i - 1]));
       }
       expect(fractions.last, lessThan(1));
-      expect(await solveElkOnWeb(input, _noElkjs), watched);
+      expect(await solveElkOnWeb(input), watched);
       expect(elkWebLayoutInFlight, isFalse);
     }, timeout: const Timeout(Duration(minutes: 2)));
 
-    test('a rejected input is a LayoutException, not a fallback', () async {
+    test('a rejected input is a plain LayoutException', () async {
       await expectLater(
-        solveElkOnWeb('{ not json', _noElkjs),
+        solveElkOnWeb('{ not json'),
         throwsA(
-          isA<LayoutException>().having(
-            (e) => e.message,
-            'message',
-            contains('rejected'),
-          ),
+          isA<LayoutException>()
+              .having((e) => e.message, 'message', contains('rejected'))
+              .having((e) => e.kind, 'kind', LayoutFailureKind.other)
+              .having((e) => e.engineFile, 'engineFile', isNull),
         ),
       );
-      expect(
-        parseLayout(await solveElkOnWeb(_tiny, _noElkjs)).nodes,
-        hasLength(2),
-      );
-      expect(await debugElkWebEngine, ElkWebEngine.wasm);
+      expect(parseLayout(await solveElkOnWeb(_tiny)).nodes, hasLength(2));
       expect(logs, isEmpty);
     });
   });
 
-  group('falls back to elkjs only when the module cannot load', () {
-    for (final (what, url) in const <(String, String)>[
-      ('the worker script is missing', '/.web_wasm/missing/elk_wasm_worker.js'),
-      ('the wasm module is missing', '/.web_wasm/no_module/elk_wasm_worker.js'),
+  // netcrux#86: no elkjs to fall back to; a file that does not load is named.
+  group('an engine file that cannot load is named in the error', () {
+    for (final (what, url, file) in const <(String, String, String)>[
+      (
+        'the worker script is missing',
+        '/.web_wasm/missing/elk_wasm_worker.js',
+        '/.web_wasm/missing/elk_wasm_worker.js',
+      ),
+      (
+        'the glue is missing',
+        '/.web_wasm/no_module/elk_wasm_worker.js',
+        '/.web_wasm/no_module/elk_wasm.js',
+      ),
+      (
+        'the wasm module is missing',
+        '/.web_wasm/no_wasm/elk_wasm_worker.js',
+        '/.web_wasm/no_wasm/elk_wasm_bg.wasm',
+      ),
     ]) {
       test(what, () async {
         useWorker(url);
-        final result = await solveElkOnWeb(_tiny, () async => _fakeElkjs);
-        expect(result, contains('elkjs-fallback'));
-        expect(await debugElkWebEngine, ElkWebEngine.elkjs);
+        final unavailable = isA<LayoutException>()
+            .having(
+              (e) => e.kind,
+              'kind',
+              LayoutFailureKind.engineUnavailable,
+            )
+            .having((e) => e.engineFile, 'engineFile', file)
+            .having((e) => e.message, 'message', contains(file));
+        await expectLater(solveElkOnWeb(_tiny), throwsA(unavailable));
         expect(logs, hasLength(1));
-        expect(logs.single, contains('falling back to elkjs'));
-        // Decided once: the next solve goes straight to elkjs, unlogged.
-        await solveElkOnWeb(_tiny, () async => _fakeElkjs);
-        expect(logs, hasLength(1));
+        expect(logs.single, contains(file));
+        expect(elkWebLayoutInFlight, isFalse);
+        // Not latched: the next solve tries a fresh worker, and fails the
+        // same way while the file is still missing.
+        await expectLater(solveElkOnWeb(_tiny), throwsA(unavailable));
+        expect(logs, hasLength(2));
       });
     }
+
+    test('the service surfaces it unchanged', () async {
+      useWorker('/.web_wasm/no_wasm/elk_wasm_worker.js');
+      final netlist = NetlistModel.fromJson(
+        jsonDecode(
+              await _read(
+                'fixtures/netlist/design_seed/generated/'
+                'design_seed.netlist.json',
+              ),
+            )
+            as Map<String, Object?>,
+      );
+      await expectLater(
+        ElkLayoutService().layout(netlist.modules['top']!),
+        throwsA(
+          isA<LayoutException>()
+              .having(
+                (e) => e.kind,
+                'kind',
+                LayoutFailureKind.engineUnavailable,
+              )
+              .having(
+                (e) => e.engineFile,
+                'engineFile',
+                '/.web_wasm/no_wasm/elk_wasm_bg.wasm',
+              ),
+        ),
+      );
+    });
   });
 
   group('an editor host stages the worker as a blob', () {
@@ -309,9 +337,8 @@ void main() {
       // No worker path given: the solver reads the host's global.
       logs.clear();
       debugConfigureElkWebSolver(log: logs.add);
-      final layout = parseLayout(await solveElkOnWeb(_tiny, _noElkjs));
+      final layout = parseLayout(await solveElkOnWeb(_tiny));
       expect(layout.nodes, hasLength(2));
-      expect(await debugElkWebEngine, ElkWebEngine.wasm);
       expect(logs, isEmpty);
     });
   });
