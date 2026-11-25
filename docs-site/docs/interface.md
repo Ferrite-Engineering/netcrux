@@ -91,7 +91,7 @@ The **status bar** along the bottom of each tab shows the first source file, the
 
 The downloaded app adds **License** and **Collaboration**. From NetCrux 1.1, `Settings → Collaboration` is open to everyone, because a guest joining somebody else's session needs a display name and, where their organization runs its own relay, the relay address; hosting is gated where hosting happens, at **Share Session…**.
 
-The **About box** (++f1++) shows the name and tagline, version, build and commit, platform details, the edition, Ferrite Engineering branding, and the elkjs (EPL-2.0) attribution, plus **Visit Website**, **Documentation**, **Submit Issue…**, **Check for Updates**, **Privacy Policy**, **Terms of Service**, **Acknowledgments** (the full open-source license list) and **Copy Version Info** actions.
+The **About box** (++f1++) shows the name and tagline, version, build and commit, platform details, the edition, Ferrite Engineering branding, and the **Eclipse Layout Kernel** attribution (elkrs, EPL-2.0), plus **Visit Website**, **Documentation**, **Submit Issue…**, **Check for Updates**, **Privacy Policy**, **Terms of Service**, **Acknowledgments** (the full open-source license list) and **Copy Version Info** actions.
 
 !!! note "Next steps"
 
