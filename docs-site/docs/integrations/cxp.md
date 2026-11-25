@@ -34,6 +34,9 @@ that make interop work. The protocol itself is specified at
 - **Request attention on cross-probe**, on by default. Bounces the dock
   icon (or flashes the taskbar) when a peer's cross-probe is acted on. It
   never steals focus.
+- **Bring the target forward on a directed cross-probe**. When you
+  cross-probe to one named app, that app comes to the front. Both apps need
+  this on. A broadcast selection never brings an app forward.
 - **Broadcast selection automatically**, on by default. Announces your
   selection to connected peers as you select. When off, only explicit
   sends from the Cross-Probe panel go out.

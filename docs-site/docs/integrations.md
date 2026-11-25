@@ -13,6 +13,7 @@ Cross-probe is configured in `Settings → CXP Cross-Probe`:
 - **Enable CXP server**, on by default. Cross-probe is meant to work without setup.
 - **CXP port**: default `54323`, any value from 1 to 65535, applied when you press ++enter++.
 - **Request attention on cross-probe**: bounce the dock icon or flash the taskbar when a peer's cross-probe is acted on. It never steals focus.
+- **Bring the target forward on a directed cross-probe**: when you cross-probe to one named app, that app comes to the front. Both apps need this on. A broadcast selection never brings an app forward.
 - **Broadcast selection automatically**: announce your selection to connected peers as you select.
 - **CXP Status**: **Running on port 54323** or **Stopped**, and the number of connected peers.
 
