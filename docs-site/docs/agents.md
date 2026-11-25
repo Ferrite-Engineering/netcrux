@@ -26,7 +26,7 @@ module.
 | `search` | Cells, nets, ports or modules whose name contains the query (or matches a glob): path, module, type, width and location |
 | `connections` | For a cell, each pin with its direction and net; for a net, the pins that drive it and the pins it drives. One step, inside the module that holds it |
 
-NetCrux Pro adds two, served by the `netcrux_pro` binary:
+NetCrux Pro adds two, served by the Pro command in the desktop bundle:
 
 | Tool | What it returns |
 |---|---|
@@ -57,7 +57,7 @@ agent read the same document.
 The `netcrux` command must be on the `PATH` of the program that starts the
 server. The instructions below were checked against each host's own
 documentation on 2026-11-24; hosts change, so check theirs if a step differs.
-To use Pro, replace `netcrux` with `netcrux_pro`.
+To use Pro, replace `netcrux` with the Pro command from the desktop bundle.
 
 === "Claude Code"
 
@@ -92,9 +92,10 @@ To use Pro, replace `netcrux` with `netcrux_pro`.
     configure. The extension registers the server with the editor for each
     workspace folder you open, with that folder as `--root`, and the editor asks
     you before it first runs. It needs a folder open in a trusted workspace.
-    It finds `netcrux_pro` or `netcrux` through the `edacrux.net.executable`
-    setting, then your `PATH`. Turn registration off with the
-    `edacrux.net.mcp.enabled` setting.
+    It finds the Pro command or `netcrux` through the extension's executable
+    setting, then your `PATH`. Turn registration off with the extension's MCP
+    registration setting, both in the editor's Settings under the NetCrux
+    extension.
 
     Without the extension, add the server to `.vscode/mcp.json` in the
     workspace (VS Code's own file uses `servers`, not `mcpServers`):
