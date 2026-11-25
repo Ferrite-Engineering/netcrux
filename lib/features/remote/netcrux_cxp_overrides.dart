@@ -41,6 +41,11 @@ final List<Override> netcruxCxpOverrides = <Override>[
   // A dock bounce or taskbar flash, when a request was honoured and the user
   // has the setting on. It never steals focus.
   cruxCxpAttentionRequesterProvider.overrideWithValue(requestUserAttention),
+  // A directed cross-probe hands the foreground to the target, on a desktop.
+  // Wiring it also shows the bring-forward switch in Settings.
+  cruxCxpForegroundHandoffProvider.overrideWith(
+    (ref) => cruxCxpDesktopHost() ? kNetcruxForegroundHandoff : null,
+  ),
   // The organization's allowlist, if it set one. Every cross-probe surface
   // (the panel, the badge, the menus, the buttons) reads the one filtered
   // list, so filtering once is filtering everywhere. Dropped rather than
@@ -61,6 +66,22 @@ final List<Override> netcruxCxpOverrides = <Override>[
         (record) => recordCrossProbeSend(ref.read, record),
   ),
 ];
+
+/// The directed cross-probe's foreground hand-off: `crux_window_chrome`'s
+/// `windowForegroundHandoff`, answered by each runner's
+/// `crux_window_chrome/foreground` channel. Read through the settable global
+/// at each call, so a test can swap it.
+const CruxCxpForegroundHandoff kNetcruxForegroundHandoff =
+    CruxCxpForegroundHandoff(
+      yieldTo: _yieldForegroundTo,
+      take: _takeForeground,
+    );
+
+Future<String?> _yieldForegroundTo(int processId) =>
+    windowForegroundHandoff.yieldForegroundTo(processId);
+
+Future<bool> _takeForeground(String activationToken) =>
+    windowForegroundHandoff.takeForeground(activationToken);
 
 /// Counts one outbound cross-probe (`cxp.crossprobe`, direction `outbound`),
 /// from whichever surface sent it.

@@ -119,6 +119,44 @@ void main() {
     );
   });
 
+  test('the foreground hand-off is wired and every runner answers it', () {
+    final overrides =
+        sources['lib/features/remote/netcrux_cxp_overrides.dart']!;
+    for (final needle in const <String>[
+      'cruxCxpForegroundHandoffProvider.overrideWith(',
+      'windowForegroundHandoff.yieldForegroundTo(',
+      'windowForegroundHandoff.takeForeground(',
+    ]) {
+      expect(overrides, contains(needle), reason: needle);
+    }
+    // The Dart side hands over through `crux_window_chrome/foreground`; a
+    // runner that does not answer it degrades to "no hand-off" in silence.
+    for (final runner in const <String>[
+      'macos/Runner/WindowForegroundPlugin.swift',
+      'windows/runner/flutter_window.cpp',
+      'linux/runner/my_application.cc',
+    ]) {
+      final source = File(runner).readAsStringSync();
+      expect(
+        source,
+        contains('"crux_window_chrome/foreground"'),
+        reason: '$runner does not register the foreground channel',
+      );
+      expect(source, contains('yieldForeground'), reason: runner);
+      expect(source, contains('takeForeground'), reason: runner);
+    }
+    expect(
+      File('macos/Runner/MainFlutterWindow.swift').readAsStringSync(),
+      contains('WindowForegroundPlugin(messenger:'),
+      reason: 'the macOS plugin is written but never registered',
+    );
+    expect(
+      File('macos/Runner.xcodeproj/project.pbxproj').readAsStringSync(),
+      contains('WindowForegroundPlugin.swift in Sources'),
+      reason: 'the macOS plugin is not compiled into the Runner target',
+    );
+  });
+
   test('every open records itself in a Recent list', () {
     final screen =
         sources['lib/features/workspace/screens/workspace_screen.dart']!;
