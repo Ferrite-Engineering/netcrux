@@ -79,6 +79,54 @@ Set<String> _mnemonicLabels(WidgetTester tester) {
 }
 
 void main() {
+  group('DesktopMenuBar Edit commands', () {
+    testWidgets('the macOS Edit menu leads with Cut, Copy, Paste and Select '
+        'All on their Cmd chords', (tester) async {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+      final l10n = L10N.of(tester.element(find.byType(PlatformMenuBar)));
+      final bar = tester.widget<PlatformMenuBar>(find.byType(PlatformMenuBar));
+      final edit = bar.menus.whereType<PlatformMenu>().firstWhere(
+        (m) => m.label == l10n.actionCategoryEdit,
+      );
+      final first = (edit.menus.first as PlatformMenuItemGroup).members;
+      expect(
+        [for (final i in first) i.label],
+        [
+          l10n.menuEditCut,
+          l10n.menuEditCopy,
+          l10n.menuEditPaste,
+          l10n.menuEditSelectAll,
+        ],
+      );
+      expect(
+        [for (final i in first) i.label],
+        [
+          'Cut',
+          'Copy',
+          'Paste',
+          'Select All',
+        ],
+      );
+      for (final item in first) {
+        final chord = item.shortcut! as SingleActivator;
+        expect(chord.meta, isTrue, reason: item.label);
+      }
+    });
+
+    for (final platform in [TargetPlatform.windows, TargetPlatform.linux]) {
+      testWidgets('on $platform the in-window menu does not carry them', (
+        tester,
+      ) async {
+        await tester.pumpWidget(_harness(platform: platform));
+        await tester.pumpAndSettle();
+        final labels = _mnemonicLabels(tester);
+        expect(labels, isNot(contains('Copy')));
+        expect(labels, isNot(contains('Select All')));
+      });
+    }
+  });
+
   group('DesktopMenuBar tier suffix', () {
     testWidgets('a Pro action label carries the tier suffix; a free action '
         'does not', (tester) async {
