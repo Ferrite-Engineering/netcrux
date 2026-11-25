@@ -193,6 +193,10 @@ A link `netcrux://open?file=<path>&cell=<name>` (or `&net=<name>`) opens a desig
 - **Contract.** `spec/mcp/` holds the body schemas and a hand-written golden for every outcome of every tool, from `spec/fixtures/counter.json`; `test/headless/spec_goldens_test.dart` holds both doors to them and parses every link. `docs/agent/NETCRUX.md` is the instruction file.
 - **Another edition.** `NetCruxCli` takes another edition's commands, its `instructions` and its `--license-file` help, and serves these three unchanged beside its own; the Pro binary, `netcrux_pro`, adds `cone` and `trace-x` that way. `findNetElement` (the rule a command reads a cell or net name by) and `NetBitNames` (how a bit is named) are public so that every command reads names and names bits as `connections` does.
 
+### 6.11 `netcrux --help` and the desktop runners
+
+A desktop runner creates its window and starts the Flutter engine before Dart's `main` runs, so a `--help` answered in `bootstrap` (`lib/app.dart`) comes after the renderer has started: on a machine with no display or no working OpenGL it would fail or log renderer lines first. The Linux and Windows runners (`linux/runner/main.cc`, `windows/runner/main.cpp`, and the same two files of a Pro build) therefore answer `--help` and `-h` themselves, before GTK, COM, the window or the engine exist, from `native/cli_help/netcrux_cli_help.h`, and exit 0. A launch that carries a `netcrux:` link is that link and nothing else, as in `bootstrap`. The header's text is a copy of `cliHelpText()` (`lib/services/cli/cli_args.dart`); `test/static/cli_help_runner_test.dart` keeps the two identical and ASCII, and keeps the check ahead of everything that starts a window. `bootstrap` keeps its own check for embedders that do not use these runners. The macOS runner is not changed.
+
 ## 8. Coding Standards & Conventions
 
 See `CLAUDE.md` for the binding day-to-day rules. The detailed rationale and the cross-platform mobile UI rules live in WaveCrux's `ARCHITECTURE.md` §8. netcrux inherits the Dart style, Riverpod, and testing conventions verbatim.

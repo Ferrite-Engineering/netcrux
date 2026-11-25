@@ -568,6 +568,38 @@ void main() {
     });
   });
 
+  group('Search during a layout', () {
+    // While the schematic is being laid out there is no laid-out graph, so
+    // hasNetlist is false; the design itself is elaborated.
+    const laying = NetcruxActionContext(hasOpenTab: true, designLoaded: true);
+
+    test('stays enabled while a layout runs', () {
+      expect(isActionEnabled(NetcruxAction.openSearch, laying), isTrue);
+    });
+
+    test('greys out with no design at all', () {
+      expect(
+        isActionEnabled(
+          NetcruxAction.openSearch,
+          const NetcruxActionContext(hasOpenTab: true),
+        ),
+        isFalse,
+      );
+    });
+
+    test('the viewport actions still wait for the laid-out schematic', () {
+      for (final action in const [
+        NetcruxAction.zoomIn,
+        NetcruxAction.zoomOut,
+        NetcruxAction.zoomFitAll,
+        NetcruxAction.jumpToTop,
+        NetcruxAction.exportPng,
+      ]) {
+        expect(isActionEnabled(action, laying), isFalse, reason: '$action');
+      }
+    });
+  });
+
   group('collaborative sessions', () {
     const overlay = NetcruxActionContext(collaborationAvailable: true);
     const live = NetcruxActionContext(

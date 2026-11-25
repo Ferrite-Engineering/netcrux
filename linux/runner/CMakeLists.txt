@@ -41,3 +41,7 @@ target_link_libraries(${BINARY_NAME} PRIVATE ${CMAKE_DL_LIBS})
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 target_include_directories(${BINARY_NAME} PRIVATE
   "${CMAKE_SOURCE_DIR}/../crux-shared/packages/crux_file_dialogs/native/linux")
+# netcrux_cli_help.h: the `--help` text main.cc prints before any window or
+# engine exists.
+target_include_directories(${BINARY_NAME} PRIVATE
+  "${CMAKE_SOURCE_DIR}/../native/cli_help")

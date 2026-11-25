@@ -728,6 +728,75 @@ void main() {
       expect(service.hasLayoutInFlight, isFalse);
     });
 
+    test('published progress never goes back to an earlier phase', () async {
+      // The engine can run a phase again for a nested part of the design.
+      final solver = _ScriptedJobSolver(<LayoutProgress?>[
+        const LayoutProgress(phase: LayoutPhase.nodePlacement, fraction: 0.5),
+        const LayoutProgress(
+          phase: LayoutPhase.crossingMinimization,
+          fraction: 0.2,
+        ),
+        const LayoutProgress(phase: LayoutPhase.nodePlacement, fraction: 0.3),
+        const LayoutProgress(phase: LayoutPhase.edgeRouting, fraction: 0.4),
+      ]);
+      final service = ElkLayoutService(
+        solverFactory: () => solver,
+        assetLoader: (_) async => throw StateError('elkjs must not load'),
+      );
+      addTearDown(service.dispose);
+      final published = <LayoutProgress>[];
+      service.progress.addListener(() {
+        final value = service.progress.value;
+        if (value != null) published.add(value);
+      });
+
+      await service.layout(NetlistModel.fromJson(_andJson).modules['and2']!);
+
+      final phases = published.map((p) => p.phase.index).toList();
+      expect(phases, orderedEquals([...phases]..sort()));
+      final fractions = published.map((p) => p.fraction!).toList();
+      expect(fractions, orderedEquals([...fractions]..sort()));
+      expect(published.last.phase, LayoutPhase.edgeRouting);
+    });
+
+    test('monotonicLayoutProgress keeps the furthest phase and share', () {
+      const placing = LayoutProgress(
+        phase: LayoutPhase.nodePlacement,
+        fraction: 0.6,
+      );
+      expect(monotonicLayoutProgress(null, placing), placing);
+      // An earlier phase is dropped.
+      expect(
+        monotonicLayoutProgress(
+          placing,
+          const LayoutProgress(
+            phase: LayoutPhase.crossingMinimization,
+            fraction: 0.7,
+          ),
+        ),
+        placing,
+      );
+      // The same phase with a smaller share keeps the share.
+      expect(
+        monotonicLayoutProgress(
+          placing,
+          const LayoutProgress(phase: LayoutPhase.nodePlacement, fraction: 0.3),
+        ),
+        placing,
+      );
+      // A later phase is taken, and its share does not drop below the last.
+      expect(
+        monotonicLayoutProgress(
+          placing,
+          const LayoutProgress(phase: LayoutPhase.edgeRouting, fraction: 0.5),
+        ),
+        const LayoutProgress(phase: LayoutPhase.edgeRouting, fraction: 0.6),
+      );
+      // An engine that reports no share is passed through.
+      const unknown = LayoutProgress(phase: LayoutPhase.edgeRouting);
+      expect(monotonicLayoutProgress(placing, unknown), unknown);
+    });
+
     test('cancelInFlightLayout stops the job: LayoutCancelledException, and '
         'the next layout runs', () async {
       final solver = _ScriptedJobSolver(

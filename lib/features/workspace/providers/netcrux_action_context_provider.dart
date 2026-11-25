@@ -25,6 +25,7 @@ final netcruxActionContextProvider = Provider<NetcruxActionContext>((ref) {
   return NetcruxActionContext(
     hasOpenTab: workspace?.activeTabId != null,
     hasNetlist: flags.hasNetlist,
+    designLoaded: flags.designLoaded,
     hasSelection: flags.hasSelection,
     hasTraceOverlay: flags.hasTraceOverlay,
     hasXTraceResult: flags.hasXTraceResult,

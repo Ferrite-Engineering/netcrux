@@ -268,6 +268,24 @@ class LayoutProgress {
   String toString() => 'LayoutProgress(${phase.name}, $fraction)';
 }
 
+/// The progress to publish after [current] when the engine reports [next]:
+/// one that never goes backwards. The engine can run a phase again for a
+/// nested part of the design, which would show "Placing cells", then
+/// "Reducing wire crossings", then "Placing cells" again; the user sees the
+/// furthest phase reached, and the share done only grows.
+@visibleForTesting
+LayoutProgress monotonicLayoutProgress(
+  LayoutProgress? current,
+  LayoutProgress next,
+) {
+  if (current == null) return next;
+  if (next.phase.index < current.phase.index) return current;
+  final before = current.fraction;
+  final after = next.fraction;
+  if (before == null || after == null || after >= before) return next;
+  return LayoutProgress(phase: next.phase, fraction: before);
+}
+
 /// A solve running off the calling thread, started by [ElkJobSolver.start]:
 /// the caller polls it, may cancel it, and collects the result with
 /// [finish].
@@ -1119,7 +1137,8 @@ class ElkLayoutService {
   Future<String> _solve(String inputJson) async {
     final generation = ++_solveGeneration;
     void report(LayoutProgress p) {
-      if (generation == _solveGeneration) _progress.value = p;
+      if (generation != _solveGeneration) return;
+      _progress.value = monotonicLayoutProgress(_progress.value, p);
     }
 
     _progress.value = null;

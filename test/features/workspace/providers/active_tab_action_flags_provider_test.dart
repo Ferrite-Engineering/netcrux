@@ -1,7 +1,9 @@
 // Copyright 2026 Ferrite Engineering LLC
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
 import 'dart:io';
+
 import 'package:crux_cxp/crux_cxp.dart';
 import 'package:crux_workspace/crux_workspace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,10 +17,14 @@ import 'package:netcrux/domain/models/cdc/cdc_crossing_kind.dart';
 import 'package:netcrux/domain/models/cdc/cdc_severity.dart';
 import 'package:netcrux/domain/models/cdc/cdc_synchronizer_status.dart';
 import 'package:netcrux/domain/models/cdc/clock_domain.dart';
+import 'package:netcrux/domain/models/netlist/netlist_model.dart';
+import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/selection/selected_element.dart';
 import 'package:netcrux/domain/models/trace/trace_overlay.dart';
 import 'package:netcrux/domain/models/workspace/netcrux_tab_payload.dart';
 import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart';
+import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
 import 'package:netcrux/features/viewer/providers/trace_overlay_notifier.dart';
 import 'package:netcrux/features/workspace/providers/active_tab_action_flags_provider.dart';
@@ -27,7 +33,19 @@ import 'package:netcrux/services/workspace/netcrux_tab_overrides.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_codec.dart';
 import 'package:netcrux/services/workspace/netcrux_workspace_notifier.dart';
 import 'package:netcrux/services/workspace/tab_container_manager_holder.dart';
+import 'package:netcrux/services/yosys/yosys_json_parser.dart';
+
 import '../../../helpers/telemetry_test_overrides.dart';
+
+/// The tab's elaboration, already answered.
+class _FixedNetlist extends LoadedNetlist {
+  _FixedNetlist(this.model);
+
+  final NetlistModel model;
+
+  @override
+  Future<NetlistModel?> build() async => model;
+}
 
 /// Exercises the root-scope mirror against a real workspace + per-tab
 /// container manager: flags must track the ACTIVE tab's per-tab state and
@@ -37,6 +55,9 @@ void main() {
 
   late ProviderContainer root;
   late TabContainerManager manager;
+  var tabOverrides = netcruxTabOverridesFactory;
+
+  setUp(() => tabOverrides = netcruxTabOverridesFactory);
 
   Future<void> setUpHarness() async {
     root = ProviderContainer(
@@ -57,7 +78,7 @@ void main() {
     addTearDown(root.dispose);
     manager = TabContainerManager(
       rootContainer: root,
-      overridesFactory: netcruxTabOverridesFactory,
+      overridesFactory: tabOverrides,
     );
     addTearDown(manager.dispose);
     root.read(tabContainerManagerHolderProvider).manager = manager;
@@ -177,6 +198,46 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(sub.read().hasTraceOverlay, isFalse);
   });
+
+  test(
+    'the design counts as loaded while its layout is still running',
+    () async {
+      // Search reads the netlist, so it must not grey out for the seconds a
+      // whole-scope layout takes: hasNetlist (a laid-out schematic) is false
+      // then, designLoaded is not.
+      final model = const YosysJsonParser().parse(
+        File(
+          'test/fixtures/netlist/design_seed/generated/design_seed.netlist.json',
+        ).readAsStringSync(),
+      );
+      tabOverrides = (id) => [
+        for (final override in netcruxTabOverridesFactory(id))
+          if (override.origin != loadedNetlistProvider &&
+              override.origin != currentLaidOutGraphProvider)
+            override,
+        loadedNetlistProvider.overrideWith(() => _FixedNetlist(model)),
+        // A layout that never finishes.
+        currentLaidOutGraphProvider.overrideWith(
+          (ref) => Completer<LaidOutGraph>().future,
+        ),
+      ];
+      await setUpHarness();
+      final sub = root.listen(activeTabActionFlagsProvider, (_, _) {});
+      addTearDown(sub.close);
+
+      final tabId = await root
+          .read(netcruxWorkspaceProvider.notifier)
+          .openTab(displayName: 'a', payload: NetcruxTabPayload.empty);
+      await root.read(netcruxWorkspaceProvider.future);
+      final tab = manager.containerFor(tabId);
+      expect(sub.read().designLoaded, isFalse);
+
+      await tab.read(loadedNetlistProvider.future);
+      await Future<void>.delayed(Duration.zero);
+      expect(sub.read().designLoaded, isTrue);
+      expect(sub.read().hasNetlist, isFalse, reason: 'the layout is running');
+    },
+  );
 
   test('a note a session wrote is mirrored; a private note is not', () async {
     await setUpHarness();

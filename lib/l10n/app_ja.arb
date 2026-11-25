@@ -2742,6 +2742,8 @@
   "schematicLayoutPhaseCrossingMinimization": "配線の交差を削減中",
   "schematicLayoutPhaseNodePlacement": "セルを配置中",
   "schematicLayoutPhaseEdgeRouting": "配線ルートを計算中",
+  "schematicLayoutPhasePreparing": "レイアウトを準備中",
+  "schematicLayoutConeHint": "代わりに一部を見るには、セルを選んでから「表示」>「コーンビュー」を選びます。",
   "schematicLayoutStopped": "レイアウトを中止しました。",
   "schematicLayoutRetry": "再レイアウト",
   "schematicLayoutErrorTitle": "レイアウトに失敗しました",

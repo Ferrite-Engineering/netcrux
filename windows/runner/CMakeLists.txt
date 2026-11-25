@@ -35,6 +35,10 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
+# netcrux_cli_help.h: the `--help` text main.cpp prints before any window or
+# engine exists.
+target_include_directories(${BINARY_NAME} PRIVATE
+  "${CMAKE_SOURCE_DIR}/../native/cli_help")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)

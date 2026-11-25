@@ -2742,6 +2742,8 @@
   "schematicLayoutPhaseCrossingMinimization": "배선 교차를 줄이는 중",
   "schematicLayoutPhaseNodePlacement": "셀 배치 중",
   "schematicLayoutPhaseEdgeRouting": "배선 경로 계산 중",
+  "schematicLayoutPhasePreparing": "배치를 준비하는 중",
+  "schematicLayoutConeHint": "대신 일부만 보려면 셀을 선택한 다음 보기 > 콘 보기를 선택하세요.",
   "schematicLayoutStopped": "배치를 중지했습니다.",
   "schematicLayoutRetry": "다시 배치",
   "schematicLayoutErrorTitle": "배치 실패",

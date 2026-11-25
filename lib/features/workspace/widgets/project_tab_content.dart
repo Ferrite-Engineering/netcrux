@@ -490,6 +490,11 @@ class _SchematicLayoutLoadingState
   final Stopwatch _stopwatch = Stopwatch()..start();
   Timer? _ticker;
 
+  /// What the layout on show is for: the scope and the cone on it, if any.
+  /// This view stays mounted when the layout it reports is replaced (a cone
+  /// opened over a whole-scope run), so a change restarts the elapsed time.
+  Object? _run;
+
   @override
   void initState() {
     super.initState();
@@ -519,8 +524,20 @@ class _SchematicLayoutLoadingState
     // would overstate the work.
     final cone = ref.watch(coneViewProvider);
     final inCone = cone != null && cone.scope == scope;
+    final run = (scope, inCone ? cone : null);
+    if (_run != null && _run != run) _stopwatch.reset();
+    _run = run;
     final seconds = (_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
     final service = ref.watch(elkLayoutServiceProvider);
+    // The hint names the way to a Cone View for a whole-scope layout the user
+    // asked for on a scope above the limit, which selecting a cell no longer
+    // opens: the layout is approved, so the selection is not held back.
+    final gate = ref.watch(scopeLayoutGateProvider);
+    final showConeHint =
+        !inCone &&
+        gate.approved &&
+        gate.limit > 0 &&
+        gate.cellCount > gate.limit;
     final secondary = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -543,19 +560,27 @@ class _SchematicLayoutLoadingState
               builder: (context, progress, _) => Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  LinearProgressIndicator(value: progress?.fraction),
+                  LinearProgressIndicator(
+                    value: layoutBarValue(progress?.fraction),
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    progress == null
-                        ? l10n.schematicLayoutElapsed(seconds)
-                        : '${layoutPhaseLabel(l10n, progress.phase)} · '
-                              '${l10n.schematicLayoutElapsed(seconds)}',
+                    '${progress == null ? l10n.schematicLayoutPhasePreparing : layoutPhaseLabel(l10n, progress.phase)} · '
+                    '${l10n.schematicLayoutElapsed(seconds)}',
                     textAlign: TextAlign.center,
                     style: secondary,
                   ),
                 ],
               ),
             ),
+            if (showConeHint) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                l10n.schematicLayoutConeHint,
+                textAlign: TextAlign.center,
+                style: secondary,
+              ),
+            ],
             const SizedBox(height: 8),
             TextButton(
               onPressed: service.cancelInFlightLayout,
@@ -567,6 +592,13 @@ class _SchematicLayoutLoadingState
     );
   }
 }
+
+/// The value the progress bar shows for the engine's [fraction]: `null`, the
+/// bar sweeping, when the engine reports none or reports the layout as done
+/// while it still has work to do (routing the wires after the last placement
+/// step), so a full bar never sits there for seconds.
+double? layoutBarValue(double? fraction) =>
+    fraction == null || fraction >= 1 ? null : fraction;
 
 /// The localized name of a layout [phase], for the progress view.
 String layoutPhaseLabel(L10N l10n, LayoutPhase phase) => switch (phase) {

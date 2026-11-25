@@ -3531,6 +3531,14 @@
   "@schematicLayoutPhaseEdgeRouting": {
     "description": "Line under the schematic layout progress bar naming the layout phase that is running: the last one, which draws the wires between the placed cells."
   },
+  "schematicLayoutPhasePreparing": "Preparing the layout",
+  "@schematicLayoutPhasePreparing": {
+    "description": "Line under the schematic layout progress bar before the layout engine has reported its first phase: the layout is being set up. Replaces a blank phase line."
+  },
+  "schematicLayoutConeHint": "To look at part of it instead, select a cell and choose View > Cone View.",
+  "@schematicLayoutConeHint": {
+    "description": "Hint under the progress bar of a whole-scope layout of a scope above the layout limit, which the user asked for with Lay out anyway. Selecting a cell does not stop that layout, so it names the menu route to a Cone View, which does."
+  },
   "schematicLayoutStopped": "Layout stopped.",
   "@schematicLayoutStopped": {
     "description": "Shown on the schematic canvas after the user pressed Cancel under the layout progress bar, in place of the schematic."

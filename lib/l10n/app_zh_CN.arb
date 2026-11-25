@@ -2742,6 +2742,8 @@
   "schematicLayoutPhaseCrossingMinimization": "正在减少连线交叉",
   "schematicLayoutPhaseNodePlacement": "正在放置单元",
   "schematicLayoutPhaseEdgeRouting": "正在布线",
+  "schematicLayoutPhasePreparing": "正在准备布局",
+  "schematicLayoutConeHint": "要改为查看其中一部分，请选中一个单元，然后选择“视图 > 锥视图”。",
   "schematicLayoutStopped": "布局已停止。",
   "schematicLayoutRetry": "重新布局",
   "schematicLayoutErrorTitle": "布局失败",

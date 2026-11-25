@@ -40,10 +40,9 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   ),
 
   // ── Toolbar + menu + palette, requires a laid-out design ────────────
-  // Design search and the scope-navigation / viewport actions operate on
-  // the elaborated schematic; they grey out until one is on canvas.
+  // The scope-navigation / viewport actions operate on the elaborated
+  // schematic; they grey out until one is on canvas.
   // Zoom In / Out are toolbar buttons as well as menu and palette entries.
-  NetcruxAction.openSearch ||
   NetcruxAction.jumpToTop ||
   NetcruxAction.popOutScope ||
   NetcruxAction.zoomIn ||
@@ -51,6 +50,14 @@ NetcruxActionDescriptor descriptorFor(NetcruxAction action) => switch (action) {
   NetcruxAction.zoomFitAll => const NetcruxActionDescriptor(
     surfaces: _everywhere,
     isEnabled: _requiresNetlist,
+  ),
+
+  // Design search reads the elaborated netlist, not the schematic, so it
+  // stays enabled while a layout runs (Search is how a user finds a cell for
+  // a Cone View while a whole-scope layout is still going).
+  NetcruxAction.openSearch => const NetcruxActionDescriptor(
+    surfaces: _everywhere,
+    isEnabled: _requiresNetlistOrDesign,
   ),
 
   // ── Browsable (menu + palette), always enabled ──────────────────────
@@ -551,6 +558,8 @@ bool _requiresTab(NetcruxActionContext c) => c.hasOpenTab;
 bool _requiresMultipleTabs(NetcruxActionContext c) =>
     c.tabCountInActivePane > 1;
 bool _requiresNetlist(NetcruxActionContext c) => c.hasNetlist;
+bool _requiresNetlistOrDesign(NetcruxActionContext c) =>
+    c.hasNetlist || c.designLoaded;
 bool _requiresSelection(NetcruxActionContext c) => c.hasSelection;
 bool _requiresConeView(NetcruxActionContext c) => c.inConeView;
 bool _requiresSelectionOrConeView(NetcruxActionContext c) =>

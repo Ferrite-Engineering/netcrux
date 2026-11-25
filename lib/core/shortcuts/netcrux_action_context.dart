@@ -25,6 +25,7 @@ class NetcruxActionContext {
   const NetcruxActionContext({
     this.hasOpenTab = false,
     this.hasNetlist = false,
+    this.designLoaded = false,
     this.hasSelection = false,
     this.hasTraceOverlay = false,
     this.hasXTraceResult = false,
@@ -54,6 +55,11 @@ class NetcruxActionContext {
   /// design search, and the full-design analysis runs — all of which
   /// operate on the elaborated design.
   final bool hasNetlist;
+
+  /// Whether the active tab has an elaborated design, even while its schematic
+  /// is still being laid out. Keeps Search available during a layout: it reads
+  /// the netlist, not the schematic.
+  final bool designLoaded;
 
   /// Whether the active tab has at least one schematic element selected.
   /// Gates the selection-seeded actions (fanin / fanout, cone of
@@ -148,6 +154,7 @@ class NetcruxActionContext {
       other is NetcruxActionContext &&
       other.hasOpenTab == hasOpenTab &&
       other.hasNetlist == hasNetlist &&
+      other.designLoaded == designLoaded &&
       other.hasSelection == hasSelection &&
       other.hasTraceOverlay == hasTraceOverlay &&
       other.hasXTraceResult == hasXTraceResult &&
@@ -170,6 +177,7 @@ class NetcruxActionContext {
   int get hashCode => Object.hash(
     hasOpenTab,
     hasNetlist,
+    designLoaded,
     hasSelection,
     hasTraceOverlay,
     hasXTraceResult,

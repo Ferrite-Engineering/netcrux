@@ -436,6 +436,36 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    test('a full bar is never shown for a layout that is still running', () {
+      expect(layoutBarValue(null), isNull);
+      expect(layoutBarValue(0), 0);
+      expect(layoutBarValue(0.4), 0.4);
+      // The engine reports 1 when routing starts, seconds before it ends.
+      expect(layoutBarValue(1), isNull);
+    });
+
+    test(
+      'the preparing line and the Cone View hint exist in every locale',
+      () async {
+        for (final locale in const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh'),
+          Locale('ja'),
+          Locale('ko'),
+        ]) {
+          final l10n = await L10N.delegate.load(locale);
+          final preparing = l10n.schematicLayoutPhasePreparing;
+          expect(preparing, isNotEmpty, reason: '$locale');
+          for (final phase in LayoutPhase.values) {
+            expect(preparing, isNot(layoutPhaseLabel(l10n, phase)));
+          }
+          expect(l10n.schematicLayoutConeHint, isNotEmpty, reason: '$locale');
+          expect(l10n.schematicLayoutConeHint, isNot(contains('—')));
+        }
+      },
+    );
+
     test('every phase has a label in every supported locale', () async {
       for (final locale in const <Locale>[
         Locale('en'),

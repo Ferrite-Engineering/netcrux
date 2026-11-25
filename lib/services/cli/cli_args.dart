@@ -74,8 +74,13 @@ List<String> stripLaunchFlags(List<String> args) => List<String>.unmodifiable(
 /// One-line `--help` blurb listing every supported CLI flag and bare
 /// positional argument. Surfaced by `netcrux --help` on stdout before the
 /// UI starts.
+///
+/// The desktop runners print `--help` themselves, before any window or engine
+/// exists, from a C++ copy of this text in `native/cli_help/netcrux_cli_help.h`.
+/// A test keeps the two identical, so edit both together and keep this text
+/// ASCII.
 String cliHelpText() => '''
-NetCrux — netlist schematic browser for Verilog, SystemVerilog, and VHDL
+NetCrux: netlist schematic browser for Verilog, SystemVerilog, and VHDL
 
 Usage:
   netcrux [options] [files...]

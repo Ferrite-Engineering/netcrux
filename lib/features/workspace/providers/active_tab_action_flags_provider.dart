@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netcrux/domain/interfaces/annotation_store.dart';
 import 'package:netcrux/domain/interfaces/x_trace_service.dart';
 import 'package:netcrux/domain/models/activity/waveform_source.dart';
+import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/scope_layout_gate.dart';
 import 'package:netcrux/domain/models/selection/selection.dart';
@@ -16,6 +17,7 @@ import 'package:netcrux/features/cdc/providers/cdc_analysis_state_provider.dart'
 import 'package:netcrux/features/diff/providers/diff_pane_state_provider.dart';
 import 'package:netcrux/features/fsm/providers/selected_fsm_provider.dart';
 import 'package:netcrux/features/project/providers/current_laid_out_graph_provider.dart';
+import 'package:netcrux/features/project/providers/loaded_netlist_provider.dart';
 import 'package:netcrux/features/project/providers/scope_layout_gate_provider.dart';
 import 'package:netcrux/features/reset_domain/providers/reset_domain_analysis_state_provider.dart';
 import 'package:netcrux/features/viewer/providers/selected_element_notifier.dart';
@@ -43,6 +45,7 @@ class ActiveTabActionFlags {
   /// Creates a flags snapshot. Defaults describe an empty tab.
   const ActiveTabActionFlags({
     this.hasNetlist = false,
+    this.designLoaded = false,
     this.hasSelection = false,
     this.hasTraceOverlay = false,
     this.hasXTraceResult = false,
@@ -60,6 +63,11 @@ class ActiveTabActionFlags {
 
   /// Whether the active tab has a non-empty laid-out schematic.
   final bool hasNetlist;
+
+  /// Whether the active tab has an elaborated design, whether or not its
+  /// schematic is laid out yet. True while a layout runs, when [hasNetlist] is
+  /// not, so what works from the netlist alone (Search) stays available.
+  final bool designLoaded;
 
   /// Whether the active tab has at least one selected element.
   final bool hasSelection;
@@ -109,6 +117,7 @@ class ActiveTabActionFlags {
   /// Returns a copy with the given fields replaced.
   ActiveTabActionFlags copyWith({
     bool? hasNetlist,
+    bool? designLoaded,
     bool? hasSelection,
     bool? hasTraceOverlay,
     bool? hasXTraceResult,
@@ -124,6 +133,7 @@ class ActiveTabActionFlags {
     bool? inConeView,
   }) => ActiveTabActionFlags(
     hasNetlist: hasNetlist ?? this.hasNetlist,
+    designLoaded: designLoaded ?? this.designLoaded,
     hasSelection: hasSelection ?? this.hasSelection,
     hasTraceOverlay: hasTraceOverlay ?? this.hasTraceOverlay,
     hasXTraceResult: hasXTraceResult ?? this.hasXTraceResult,
@@ -144,6 +154,7 @@ class ActiveTabActionFlags {
   bool operator ==(Object other) =>
       other is ActiveTabActionFlags &&
       other.hasNetlist == hasNetlist &&
+      other.designLoaded == designLoaded &&
       other.hasSelection == hasSelection &&
       other.hasTraceOverlay == hasTraceOverlay &&
       other.hasXTraceResult == hasXTraceResult &&
@@ -161,6 +172,7 @@ class ActiveTabActionFlags {
   @override
   int get hashCode => Object.hash(
     hasNetlist,
+    designLoaded,
     hasSelection,
     hasTraceOverlay,
     hasXTraceResult,
@@ -259,6 +271,13 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
         final inCone = coneView(next);
         _apply((s) => s.copyWith(hasNetlist: loaded, inConeView: inCone));
       }),
+      container.listen<AsyncValue<NetlistModel?>>(loadedNetlistProvider, (
+        _,
+        next,
+      ) {
+        final loaded = next.value != null;
+        _apply((s) => s.copyWith(designLoaded: loaded));
+      }),
       container.listen<ScopeLayoutGate>(scopeLayoutGateProvider, (_, next) {
         final loaded =
             next.deferred ||
@@ -327,6 +346,7 @@ class ActiveTabActionFlagsNotifier extends Notifier<ActiveTabActionFlags> {
 
     return ActiveTabActionFlags(
       hasNetlist: netlistLoaded(container.read(currentLaidOutGraphProvider)),
+      designLoaded: container.read(loadedNetlistProvider).value != null,
       inConeView: coneView(container.read(currentLaidOutGraphProvider)),
       hasSelection: container.read(selectedElementProvider).isNotEmpty,
       hasTraceOverlay: !container.read(traceOverlayProvider).isEmpty,
