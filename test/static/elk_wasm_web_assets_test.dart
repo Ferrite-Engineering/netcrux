@@ -96,10 +96,27 @@ void main() {
     expect(deploy, contains('test -f build/web/wasm/elk_wasm_bg.wasm'));
 
     final script = _read('scripts/deploy_web.sh');
+    // Match the executed commands (a line that starts with them), not the
+    // first mention: the script also echoes the build command earlier.
+    final engineLine = RegExp(
+      r'^dart run tool/build_web_wasm\.dart',
+      multiLine: true,
+    ).firstMatch(script);
+    final buildLine = RegExp(
+      '^flutter build web --release',
+      multiLine: true,
+    ).firstMatch(script);
     expect(
-      script.indexOf('dart run tool/build_web_wasm.dart'),
-      lessThan(script.indexOf('flutter build web --release')),
+      engineLine,
+      isNotNull,
+      reason: 'deploy_web.sh never runs the engine',
     );
+    expect(
+      buildLine,
+      isNotNull,
+      reason: 'deploy_web.sh never builds the web app',
+    );
+    expect(engineLine!.start, lessThan(buildLine!.start));
   });
 
   test('the browser tests load the engine where the runner stages it', () {
