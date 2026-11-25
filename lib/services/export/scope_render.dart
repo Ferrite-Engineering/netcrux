@@ -14,6 +14,7 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/schematic/laid_out_graph.dart';
 import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
 import 'package:netcrux/services/layout/elk_layout_service.dart';
+import 'package:netcrux/services/layout/selector_bank.dart';
 import 'package:netcrux/services/schematic/schematic_graph_builder.dart';
 import 'package:netcrux/services/schematic/schematic_scope_module.dart';
 
@@ -82,12 +83,15 @@ LaidOutGraph layOutScope(
     );
   }
   final graph = SchematicGraphBuilder(liberty: liberty).build(model, node);
-  final input = buildElkInput(
+  final (:input, :banks) = buildElkLayoutInput(
     schematicScopeModule(model, module, liberty: liberty),
     liberty: liberty,
   );
-  final layout = NetlistLayout.fromJson(
-    jsonDecode(solve(jsonEncode(input))) as Map<String, Object?>,
+  final layout = expandSelectorBanks(
+    NetlistLayout.fromJson(
+      jsonDecode(solve(jsonEncode(input))) as Map<String, Object?>,
+    ),
+    banks,
   );
   return LaidOutGraph(graph: graph, layout: layout);
 }

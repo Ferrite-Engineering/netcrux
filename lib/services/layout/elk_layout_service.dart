@@ -17,6 +17,7 @@ import 'package:netcrux/domain/models/netlist/netlist_model.dart';
 import 'package:netcrux/domain/models/netlist/port_direction.dart';
 import 'package:netcrux/domain/models/schematic/boundary_port_label.dart';
 import 'package:netcrux/domain/models/schematic/liberty_cell_symbols.dart';
+import 'package:netcrux/domain/models/schematic/schematic_graph.dart';
 import 'package:netcrux/domain/models/schematic/symbol_shapes.dart';
 // Conditional import: the desktop worker's solver factory picks the native
 // elkrs engine, or elkjs on a JavaScript engine when kept by environment or
@@ -30,6 +31,7 @@ import 'package:netcrux/services/layout/elk_solver_stub.dart'
 import 'package:netcrux/services/layout/elk_web_solver_stub.dart'
     if (dart.library.js_interop) 'package:netcrux/services/layout/elk_web_solver_web.dart';
 import 'package:netcrux/services/layout/layout_engine_selection.dart';
+import 'package:netcrux/services/layout/selector_bank.dart';
 import 'package:netcrux/services/schematic/net_edge_enumeration.dart';
 
 /// Narrow seam over [JavascriptRuntime] — exposing only what
@@ -408,7 +410,27 @@ class ElkSubgraph {
 /// stays unrouted in the part, so a cone view draws a global net the way
 /// the whole scope does. With no [only] the input is the whole scope's,
 /// byte for byte, so the cached layouts of whole scopes keep their keys.
+///
+/// A bank of cells that feeds one `$pmux` select input (a wide `case`
+/// statement's comparators, see [findSelectorBanks]) is one node and one
+/// wire in this input; lay out with [buildElkLayoutInput] and pass the
+/// result through [expandSelectorBanks] to place the bank's cells.
 Map<String, Object?> buildElkInput(
+  Module module, {
+  CellSymbolGeometries symbols = CellSymbolGeometries.none,
+  LibertyCellSymbols liberty = LibertyCellSymbols.none,
+  ElkSubgraph? only,
+}) => buildElkLayoutInput(
+  module,
+  symbols: symbols,
+  liberty: liberty,
+  only: only,
+).input;
+
+/// [buildElkInput]'s input, with the selector banks folded into it, which
+/// [expandSelectorBanks] needs to turn the engine's result into the layout
+/// of every cell.
+({Map<String, Object?> input, List<SelectorBank> banks}) buildElkLayoutInput(
   Module module, {
   CellSymbolGeometries symbols = CellSymbolGeometries.none,
   LibertyCellSymbols liberty = LibertyCellSymbols.none,
@@ -534,16 +556,36 @@ Map<String, Object?> buildElkInput(
   // The edges come from the enumeration the schematic graph is built
   // from, with their ids unchanged: a skipped net renumbers nothing, so a
   // routed edge's id names the same wire in the graph.
+  final routed = <SchematicEdge>[];
   for (final group in netEdges) {
     if (group.edges.length > highFanoutEdgeCap) continue;
     for (final edge in group.edges) {
       if (only != null && !only.edgeIds.contains(edge.id)) continue;
+      routed.add(edge);
       edges.add(<String, Object?>{
         'id': edge.id,
         'sources': <String>[edge.sourcePortId],
         'targets': <String>[edge.targetPortId],
       });
     }
+  }
+
+  // A bank of cells that feeds one `$pmux` select input goes to the engine
+  // as one node and one wire (see `selector_bank.dart`); the layout is
+  // expanded back to the bank's cells by [expandSelectorBanks]. A scope with
+  // no bank keeps its input byte for byte.
+  final banks = findSelectorBanks(
+    [
+      for (final cell in module.cells.values)
+        if (only == null || only.cellIds.contains(cell.name)) cell,
+    ],
+    routed,
+    drawnBuiltIn: (cell) =>
+        symbols[cell.type] == null &&
+        !(liberty[cell.type]?.hasSupplyPins ?? false),
+  );
+  if (banks.isNotEmpty) {
+    _foldSelectorBanks(banks, children, edges);
   }
 
   // For a large dense scope the layered solve dominates wall-time —
@@ -570,12 +612,55 @@ Map<String, Object?> buildElkInput(
       'elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
     },
   };
-  return <String, Object?>{
-    'id': 'root',
-    'layoutOptions': layoutOptions,
-    'children': children,
-    'edges': edges,
+  return (
+    input: <String, Object?>{
+      'id': 'root',
+      'layoutOptions': layoutOptions,
+      'children': children,
+      'edges': edges,
+    },
+    banks: banks,
+  );
+}
+
+/// Replaces each of [banks]' cells in [children] by the bank's one node, at
+/// the place of its first cell, and its wires in [edges] by the bank's one
+/// wire, at the place of its first wire.
+void _foldSelectorBanks(
+  List<SelectorBank> banks,
+  List<Map<String, Object?>> children,
+  List<Map<String, Object?>> edges,
+) {
+  final bankOfCell = <String, SelectorBank>{
+    for (final bank in banks)
+      for (final cell in bank.cells) cell.id: bank,
   };
+  final bankOfWire = <String, SelectorBank>{
+    for (final bank in banks)
+      for (final wire in bank.wires) wire.id: bank,
+  };
+  void fold(
+    List<Map<String, Object?>> items,
+    Map<String, SelectorBank> owner,
+    Map<String, Object?> Function(SelectorBank bank) standIn,
+  ) {
+    final done = <SelectorBank>{};
+    final kept = <Map<String, Object?>>[];
+    for (final item in items) {
+      final bank = owner[item['id']];
+      if (bank == null) {
+        kept.add(item);
+      } else if (done.add(bank)) {
+        kept.add(standIn(bank));
+      }
+    }
+    items
+      ..clear()
+      ..addAll(kept);
+  }
+
+  fold(children, bankOfCell, (bank) => bank.elkNode());
+  fold(edges, bankOfWire, (bank) => bank.elkEdge());
 }
 
 /// The ELK `port.side` of a cell pin with [direction]: `WEST` for an input,
@@ -583,8 +668,9 @@ Map<String, Object?> buildElkInput(
 ///
 /// A pin with no recorded direction is an input, the same fallback
 /// `SchematicGraphBuilder` uses, so the face ELK puts it on agrees with the
-/// pin the canvas draws and with the edges, which treat it as a sink.
-@visibleForTesting
+/// pin the canvas draws and with the edges, which treat it as a sink. A
+/// selector bank's cells (`selector_bank.dart`) take their faces from here
+/// too.
 String elkPortSideFor(PortDirection? direction) {
   switch (direction) {
     case PortDirection.input:
@@ -1041,7 +1127,7 @@ class ElkLayoutService {
     LibertyCellSymbols liberty = LibertyCellSymbols.none,
     ElkSubgraph? only,
   }) async {
-    final input = buildElkInput(
+    final (:input, :banks) = buildElkLayoutInput(
       module,
       symbols: symbols,
       liberty: liberty,
@@ -1049,6 +1135,10 @@ class ElkLayoutService {
     );
     final inputJson = jsonEncode(input);
     final key = _cacheKey(inputJson);
+    // The engine's result, with every selector bank's cells placed: what
+    // both caches hold, and what the disk cache's raw result becomes.
+    NetlistLayout parse(String resultJson) =>
+        expandSelectorBanks(_parseLayout(resultJson), banks);
 
     if (only != null) {
       final cone = _coneCache.remove(key);
@@ -1057,7 +1147,7 @@ class ElkLayoutService {
         return cone;
       }
       final resultJson = await _solve(inputJson);
-      final layout = _parseLayout(resultJson);
+      final layout = parse(resultJson);
       _coneCache[key] = layout;
       while (_coneCache.length > maxConeCacheEntries) {
         _coneCache.remove(_coneCache.keys.first);
@@ -1071,7 +1161,7 @@ class ElkLayoutService {
     final diskJson = await _diskCache?.read(key);
     if (diskJson != null) {
       try {
-        final fromDisk = _parseLayout(diskJson);
+        final fromDisk = parse(diskJson);
         _storeMemCache(key, fromDisk, diskJson.length);
         return fromDisk;
       } on Object {
@@ -1080,7 +1170,7 @@ class ElkLayoutService {
     }
 
     final resultJson = await _solve(inputJson);
-    final layout = _parseLayout(resultJson);
+    final layout = parse(resultJson);
     _storeMemCache(key, layout, resultJson.length);
     // Fire-and-forget: persisting must not delay the first paint.
     unawaited(_diskCache?.write(key, resultJson) ?? Future<void>.value());

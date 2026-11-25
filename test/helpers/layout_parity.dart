@@ -49,6 +49,12 @@ const layoutParityScopes = <LayoutParityScope>[
     'serv_ice40/captured/serv_ice40.netlist.json.gz',
     'service',
   ),
+  // A wide case statement: its comparators reach the layout engine as one
+  // selector-bank node (`selector_bank.dart`).
+  LayoutParityScope(
+    'case_decoder/captured/case_decoder.netlist.json',
+    'case_decoder',
+  ),
   LayoutParityScope(
     'picorv32/captured/picorv32.netlist.json.gz',
     'picorv32',
