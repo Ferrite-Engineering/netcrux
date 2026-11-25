@@ -16,15 +16,23 @@ const String kFakeYosysPath = '/fake/yosys';
 /// every run with [result], and records each request.
 class FakeElaborator implements NetElaborator {
   /// A Yosys that is found and answers every run with [result].
-  FakeElaborator(this.result, {this.available = true});
+  FakeElaborator(
+    this.result, {
+    this.available = true,
+    this.executablePath = kFakeYosysPath,
+  });
 
   /// A Yosys that elaborates every design into the netlist in [jsonFile].
-  factory FakeElaborator.writing(String jsonFile) => FakeElaborator(
+  factory FakeElaborator.writing(
+    String jsonFile, {
+    String executablePath = kFakeYosysPath,
+  }) => FakeElaborator(
     YosysRunSuccess(
       rawJson: File(jsonFile).readAsStringSync(),
       stdout: '',
       stderr: '',
     ),
+    executablePath: executablePath,
   );
 
   /// A Yosys that stops with exit code 1 and a syntax error.
@@ -45,13 +53,17 @@ class FakeElaborator implements NetElaborator {
   /// Whether the probe finds it.
   final bool available;
 
+  /// The path the probe reports: a bare command name such as `yosys` when
+  /// Yosys was found on `PATH`.
+  final String executablePath;
+
   /// Every request run, in order.
   final List<YosysRunRequest> requests = <YosysRunRequest>[];
 
   @override
   Future<YosysAvailability> probe() async => available
-      ? const YosysAvailability.available(
-          executablePath: kFakeYosysPath,
+      ? YosysAvailability.available(
+          executablePath: executablePath,
           versionString: kFakeYosysBanner,
         )
       : const YosysAvailability.notFound();

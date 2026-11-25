@@ -89,6 +89,43 @@ void main() {
     });
   });
 
+  group("the engine's path in the document", () {
+    // Contracts section 2.3: `path` is the absolute path of the executable
+    // that ran, or null when the product did not resolve one. A probe that
+    // finds Yosys on PATH reports the bare name, which is not a path.
+    Future<Object?> enginePath(String executablePath) async {
+      // A source, so that Yosys is the engine that runs.
+      final d = await doc(
+        <String>['info', p.join(fixtures, 'top.v'), '--top', 'top'],
+        yosys: FakeElaborator.writing(netlist, executablePath: executablePath),
+      );
+      expect(d['outcome'], 'completed');
+      final engine =
+          (d['engines']! as List<Object?>).single! as Map<String, Object?>;
+      expect(engine['name'], 'yosys');
+      return engine['path'];
+    }
+
+    test('a bare command name found on PATH is null', () async {
+      expect(await enginePath('yosys'), isNull);
+    });
+
+    test('a path with a directory is written as the probe gave it', () async {
+      expect(
+        await enginePath('/opt/oss-cad-suite/bin/yosys'),
+        '/opt/oss-cad-suite/bin/yosys',
+      );
+      expect(await enginePath(r'C:\tools\yosys.exe'), r'C:\tools\yosys.exe');
+    });
+
+    test('engineDocumentPath: null stays null, a bare name is null', () {
+      expect(engineDocumentPath(null), isNull);
+      expect(engineDocumentPath('yosys'), isNull);
+      expect(engineDocumentPath('yosys.exe'), isNull);
+      expect(engineDocumentPath('./yosys'), './yosys');
+    });
+  });
+
   group('the request Yosys gets', () {
     test("a filelist's sources, defines and include directories, in "
         'order', () async {

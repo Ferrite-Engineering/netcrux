@@ -44,6 +44,18 @@ const String kNetDesignFingerprintScheme = 'netcrux-design-sha256/1';
 /// The engine a document names when Yosys elaborated the design.
 const String kYosysEngineName = 'yosys';
 
+/// What an engine's `path` member holds for a probe that reported
+/// [executablePath]: the path when it names a directory (the binary that ran,
+/// as the probe gave it), `null` when it is a bare command name such as
+/// `yosys`, which the operating system resolved from `PATH` and this product
+/// did not. LintCrux and WaveCrux write `null` for the same situation.
+@visibleForTesting
+String? engineDocumentPath(String? executablePath) {
+  if (executablePath == null) return null;
+  final named = executablePath.contains('/') || executablePath.contains(r'\');
+  return named ? executablePath : null;
+}
+
 /// A design argument refused before anything was elaborated: the command
 /// writes a document with [outcome] and [diagnostic], and runs nothing more.
 class NetDesignException implements Exception {
@@ -772,7 +784,7 @@ class NetDesignReader {
     final engine = McpEngine(
       name: kYosysEngineName,
       version: _yosysVersion(availability.versionString ?? ''),
-      path: availability.executablePath,
+      path: engineDocumentPath(availability.executablePath),
     );
     final request = elaborationRequestFor(project);
     const policy = DefaultElaborationTimeoutPolicy();
